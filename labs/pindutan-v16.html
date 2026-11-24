@@ -243,7 +243,6 @@
       font-family: inherit;
     }
     .room-row input:focus { border-color: var(--amber); }
-    #joinCodeInput { text-transform: uppercase; letter-spacing: 0.18em; text-align: center; flex: 0 1 92px; }
 
     .room-code-display {
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -661,7 +660,6 @@
       color: var(--cyan); background: rgba(61, 214, 245, 0.1); border: 1px solid rgba(61, 214, 245, 0.3);
       padding: 5px 6px; border-radius: 7px; flex: none;
     }
-    #roomsCard { display: none; }
 
     .card-box {
       background: linear-gradient(165deg, #111826, #0a0f18);
@@ -806,7 +804,7 @@
     </div>
 
     <div class="top-pills">
-      <span class="pill room" id="roomPill">NO ROOM</span>
+      <span class="pill room live" id="roomPill">LOBBY</span>
       <span class="pill relay" id="relayPill">RELAY 0/3</span>
       <button class="primary" id="lobbyBtn" style="padding:6px 11px;font-size:0.62rem;border-radius:9px;">🌐 Lobby</button>
     </div>
@@ -841,7 +839,7 @@
       <div class="sheet-head">
         <div>
           <h2>PINDUTAN</h2>
-          <div class="hero-sub">neon block arena · v16 · lobby</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -849,47 +847,33 @@
         </div>
       </div>
 
-      <div class="card-box" id="roomsCard">
-        <div class="card-title"><span>Open rooms</span><span>tap to join</span></div>
-        <div id="roomsList"></div>
-      </div>
-
       <div class="card-box">
-        <div class="card-title"><span>Connection</span><span id="connHint">local tabs + 3 public relays</span></div>
+        <div class="card-title"><span>Lobby</span><span id="lobbyPillCount">1 in</span></div>
         <div class="conn-row">
           <span class="conn"><span class="dot" id="dotLocal"></span>Local tabs</span>
           <span class="conn"><span class="dot wait" id="dotB0"></span>EMQX</span>
           <span class="conn"><span class="dot wait" id="dotB1"></span>HiveMQ</span>
           <span class="conn"><span class="dot wait" id="dotB2"></span>Mosquitto</span>
         </div>
-        <div class="room-status" id="roomStatus" style="margin-top:9px">
-          Not in a room yet. Create one, or type a friend's 6-letter code.
-        </div>
-      </div>
-
-      <div class="card-box">
-        <div class="card-title"><span>Room</span></div>
-        <div class="room-row">
+        <div class="room-row" style="margin-top:9px;">
           <input type="text" id="nicknameInput" maxlength="14" placeholder="Your nickname" />
-          <button class="primary" id="createRoomBtn">Create room</button>
+          <button id="watchToggle">👁 Watch</button>
         </div>
-        <div class="room-row" style="margin-top:7px">
-          <span class="room-code-display" id="roomCodeText">------</span>
-          <button id="copyCodeBtn">Copy</button>
-          <input type="text" id="joinCodeInput" maxlength="6" placeholder="CODE" />
-          <button class="primary" id="joinRoomBtn">Join</button>
-          <button class="stream-btn" id="watchStreamBtn">📺 Watch</button>
-        </div>
-        <div class="room-row" style="margin-top:7px">
-          <button id="leaveRoomBtn" style="font-size:0.6rem;">Leave room</button>
-          <span style="font-size:0.56rem;color:var(--mut);line-height:1.4;">
-            Same Wi-Fi or not — the relays carry the room across phones.
-          </span>
+        <div class="room-status" id="roomStatus" style="margin-top:8px;">
+          Everyone who opens the game lands here. No codes, no joining — you are already in.
         </div>
       </div>
 
       <div class="card-box">
-        <div class="card-title"><span>Play as</span></div>
+        <div class="card-title"><span>Who is here</span><span id="lobbyCount">1 / 7</span></div>
+        <div class="lobby-list" id="lobbyList">
+          <div style="color:var(--mut);font-size:0.62rem;padding:6px;">Nobody here yet.</div>
+        </div>
+        <button class="primary" id="inviteAllBtn" style="width:100%;margin-top:9px;">⚔ Invite everyone to a group battle</button>
+      </div>
+
+      <div class="card-box">
+        <div class="card-title"><span>What do you want to play?</span></div>
         <div class="play-bar" id="lobbyPlayBar">
           <button data-play="solo">Solo</button>
           <button data-play="bot">VS CPU</button>
@@ -904,20 +888,11 @@
         </div>
         <div id="cpuBlurb">steady, clears when it can</div>
         <div class="room-status" id="playHint" style="margin-top:8px">
-          Solo and VS CPU work right away. For 1v1 or group, be in a room and pick a player.
+          Solo and VS CPU start at once. For a human, tap ⚔ 1v1 on their name above.
         </div>
-      </div>
-
-      <div class="card-box">
-        <div class="card-title"><span>Players</span><span id="lobbyCount">0 / 7</span></div>
-        <div class="lobby-list" id="lobbyList">
-          <div style="color:var(--mut);font-size:0.62rem;padding:6px;">Nobody here yet.</div>
-        </div>
-        <button class="primary" id="inviteAllBtn" style="width:100%;margin-top:9px;">⚔ Invite everyone to a group battle</button>
       </div>
     </div>
   </div>
-
 
   <!-- MAIN ARENA -->
   <main class="arena">
@@ -1935,7 +1910,6 @@
        ========================================================= */
     const MAX_PLAYERS = 7;
     const RELAY_TOPIC = "pindutan/v16/";
-    const DIR_TOPIC = "pindutan/v16/directory";
     const BROKERS = [
       { name: "EMQX", url: "wss://broker.emqx.io:8084/mqtt", client: null, state: "off" },
       { name: "HiveMQ", url: "wss://broker.hivemq.com:8884/mqtt", client: null, state: "off" },
@@ -1956,8 +1930,6 @@
     const seen = new Set();
     const seenOrder = [];
 
-    let dirChannel = null;
-    let rooms = {};              /* code -> { code, name, count, ts } */
 
     function remember(n) {
       if (!n || seen.has(n)) return;
@@ -1976,13 +1948,6 @@
       const nick = (el.value || "").trim().slice(0, 14) || "Player";
       localStorage.setItem("pindutan_nick", nick);
       return nick;
-    }
-
-    function generateRoomCode() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let res = "";
-      for (let i = 0; i < 6; i++) res += chars[Math.floor(Math.random() * chars.length)];
-      return res;
     }
 
     function myState(withBoard) {
@@ -2167,7 +2132,6 @@
         b.client.on("connect", () => {
           b.state = "ok";
           paintConn();
-          try { b.client.subscribe(DIR_TOPIC, { qos: 0 }); } catch (e) { /* fine */ }
           if (roomCode) subscribeBroker(b);
           if (roomCode) sendPacket(Object.assign({ t: "HI" }, myState()));
         });
@@ -2177,7 +2141,6 @@
         b.client.on("message", (topic, payload) => {
           let data = null;
           try { data = JSON.parse(payload.toString()); } catch (e) { return; }
-          if (topic === DIR_TOPIC) { onDirectory(data); return; }
           if (topic !== RELAY_TOPIC + roomCode) return;
           onPacket(data);
         });
@@ -2212,173 +2175,39 @@
       });
     }
 
-    /* ---------- open-rooms directory (so you land in a lobby, not a blank board) ---------- */
-    function publishDirectory(p) {
-      p.from = myId;
-      p.n = nextNonce();
-      p.ts = Date.now();
-      remember(p.n);
-      const raw = JSON.stringify(p);
-      if (dirChannel) { try { dirChannel.postMessage(p); } catch (e) {} }
-      BROKERS.forEach(b => {
-        if (b.state === "ok" && b.client) {
-          try { b.client.publish(DIR_TOPIC, raw); } catch (e) { /* broker hiccup */ }
-        }
-      });
-    }
+    /* ---------- room lifecycle: there is exactly one lobby ---------- */
+    const LOBBY_CODE = "LOBBY";
 
-    function announceRoom() {
-      if (!roomCode) return;
-      publishDirectory({
-        t: "ROOM",
-        code: roomCode,
-        name: getMyName(),
-        count: Object.keys(peers).length + 1
-      });
-    }
-
-    function onDirectory(p) {
-      if (!p || !p.code || !/^[A-Z0-9]{6}$/.test(p.code)) return;
-      if (p.from === myId) return;
-      if (p.n) {
-        if (seen.has(p.n)) return;
-        remember(p.n);
-      }
-      if (p.t === "ROOM") {
-        rooms[p.code] = {
-          code: p.code,
-          name: (p.name || "Room").slice(0, 14),
-          count: Math.max(1, p.count | 0),
-          ts: Date.now()
-        };
-      } else if (p.t === "ROOM_OFF") {
-        delete rooms[p.code];
-      } else {
-        return;
-      }
-      renderRooms();
-    }
-
-    function renderRooms() {
-      const card = document.getElementById("roomsCard");
-      const list = document.getElementById("roomsList");
-      if (!card || !list) return;
-
-      const now = Date.now();
-      const codes = Object.keys(rooms)
-        .filter(c => now - rooms[c].ts < 26000 && c !== roomCode)
-        .sort((a, b) => rooms[b].count - rooms[a].count);
-
-      if (!codes.length) { card.style.display = "none"; list.innerHTML = ""; return; }
-      card.style.display = "block";
-      list.innerHTML = "";
-
-      codes.forEach(code => {
-        const r = rooms[code];
-        const row = document.createElement("div");
-        row.className = "room-item";
-
-        const tag = document.createElement("span");
-        tag.className = "room-tag";
-        tag.textContent = code;
-
-        const body = document.createElement("div");
-        body.className = "p-body";
-        body.innerHTML = '<div class="p-name">' + escapeHtml(r.name) + '</div>' +
-          '<div class="p-sub">' + r.count + ' player' + (r.count === 1 ? "" : "s") + '</div>';
-
-        const btn = document.createElement("button");
-        btn.className = "primary";
-        btn.textContent = "Join";
-        btn.addEventListener("click", () => {
-          if (enterRoom(code, false)) {
-            announceRoom();
-            roomStatusText("✅ In room " + roomCode + ". Wave at the others, then pick a game.");
-          }
-        });
-
-        row.appendChild(tag);
-        row.appendChild(body);
-        row.appendChild(btn);
-        list.appendChild(row);
-      });
-    }
-
-    /* ---------- room lifecycle ---------- */
-    function enterRoom(code, spectate) {
-      const clean = String(code || "").trim().toUpperCase();
-      if (!/^[A-Z0-9]{6}$/.test(clean)) return false;
-
-      if (roomCode && roomCode !== clean) sendPacket({ t: "BYE" });
-      unsubscribeRelays();
+    function joinLobby() {
+      if (roomCode === LOBBY_CODE && localChannel) return true;
       if (localChannel) { try { localChannel.close(); } catch (e) {} localChannel = null; }
 
-      roomCode = clean;
+      roomCode = LOBBY_CODE;
       peers = {};
       battle = null;
       battlePlayers = {};
       subscribedTopic = "";
-      isSpectator = !!spectate;
 
       if (typeof BroadcastChannel !== "undefined") {
-        localChannel = new BroadcastChannel("pindutan_v16_" + roomCode);
+        localChannel = new BroadcastChannel("pindutan_v16_lobby");
         localChannel.onmessage = e => onPacket(e.data);
       }
 
-      try { localStorage.setItem("pindutan_room", roomCode); } catch (e) {}
-
-      document.getElementById("roomCodeText").textContent = roomCode;
-      document.getElementById("joinCodeInput").value = roomCode;
       const pill = document.getElementById("roomPill");
-      pill.textContent = "ROOM " + roomCode;
+      pill.textContent = "LOBBY";
       pill.classList.add("live");
 
-      toggleSpectatorLayout(isSpectator);
       startRelays();
       ensureRelaySubs();
       sendPacket(Object.assign({ t: "HI" }, myState()));
 
       roomStatusText(isSpectator
-        ? "📺 Watching room " + roomCode + ". You see every player, you do not play."
-        : "✅ In room " + roomCode + " · up to " + MAX_PLAYERS + " players. Share the code or invite everyone.");
+        ? "👁 Watching the lobby. You see every board, you do not play."
+        : "✅ You are in the lobby. No code to type — everyone arrives here.");
       renderLobby();
       renderOpponentsGrid();
-      renderRooms();
       paintConn();
-      setTimeout(announceRoom, 1200);
       return true;
-    }
-
-    function leaveRoom(silent) {
-      if (roomCode) {
-        sendPacket({ t: "BYE" });
-        publishDirectory({ t: "ROOM_OFF", code: roomCode });
-      }
-      try { localStorage.removeItem("pindutan_room"); } catch (e) {}
-      unsubscribeRelays();
-      if (localChannel) { try { localChannel.close(); } catch (e) {} }
-      localChannel = null;
-      roomCode = "";
-      subscribedTopic = "";
-      peers = {};
-      battle = null;
-      battlePlayers = {};
-      pendingInvite = null;
-      showInviteBar(null);
-      if (!silent) {
-        const pill = document.getElementById("roomPill");
-        pill.textContent = "NO ROOM";
-        pill.classList.remove("live");
-        document.getElementById("roomCodeText").textContent = "------";
-        isSpectator = false;
-        toggleSpectatorLayout(false);
-        roomStatusText("Left the room. You can still play solo or vs CPU.");
-        document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
-        renderLobby();
-        renderOpponentsGrid();
-        renderRooms();
-        paintConn();
-      }
     }
 
     function roomStatusText(t) {
@@ -2396,7 +2225,7 @@
 
     function hostStartBattle() {
       if (!battle || battle.host !== myId) return;
-      const ids = [myId].concat(Object.keys(battle.joiners));
+      const ids = [myId].concat(Object.keys(battle.joiners).slice(0, MAX_PLAYERS - 1));
       battle.players = ids;
       battle.started = true;
       sendPacket({ t: "START", battleId: battle.id, mode: battle.mode, players: ids });
@@ -2420,7 +2249,7 @@
 
     function inviteAll() {
       if (!roomCode) {
-        roomStatusText("Create or join a room first, then invite everyone.");
+        roomStatusText("Not connected yet — give the relays a second, then try again.");
         openLobby();
         return;
       }
@@ -2432,7 +2261,7 @@
     }
 
     function challenge(id) {
-      if (!roomCode) { roomStatusText("Room needed for a 1v1."); return; }
+      if (!roomCode) { roomStatusText("Still connecting — try again in a second."); return; }
       if (!peers[id]) return;
       const battleId = "D" + Date.now().toString(36).toUpperCase();
       battle = { id: battleId, mode: "1v1", host: myId, joiners: {}, started: false };
@@ -2503,13 +2332,11 @@
       st.t = "SYNC";
       sendPacket(st);
 
-      /* keep this room visible in everyone else's lobby */
-      announceRoom();
       sweepPresence();
       paintConn();
     }, 4000);
 
-    /* drop players who went quiet, and rooms nobody is announcing any more */
+    /* drop players who went quiet */
     function sweepPresence() {
       const now = Date.now();
       let dropped = false;
@@ -2519,11 +2346,7 @@
       if (dropped) {
         renderLobby();
         renderOpponentsGrid();
-        if (roomCode) announceRoom();
       }
-      const stale = Object.keys(rooms).filter(c => now - rooms[c].ts > 26000);
-      stale.forEach(c => { delete rooms[c]; });
-      if (stale.length) renderRooms();
       return dropped;
     }
 
@@ -2540,7 +2363,7 @@
       const limit = currentMode === "1v1" ? 2 : MAX_PLAYERS;
       document.getElementById("opponentsTitle").textContent =
         (isSpectator ? "LIVE ROOM (" : "OPPONENTS (") + (ids.length + 1) + "/" + limit + ")";
-      document.getElementById("spectatorCount").textContent = "👁 " + (roomCode ? Object.keys(peers).length + 1 : 0) + " in room";
+      document.getElementById("spectatorCount").textContent = "👁 " + (Object.keys(peers).length + 1) + " in lobby";
 
       if (!ids.length) {
         grid.innerHTML = '<div style="color:var(--mut);font-size:0.66rem;padding:10px;text-align:center;line-height:1.6;">' +
@@ -2603,7 +2426,10 @@
       const list = document.getElementById("lobbyList");
       if (!list) return;
       const ids = Object.keys(peers);
-      document.getElementById("lobbyCount").textContent = (roomCode ? ids.length + 1 : 1) + " / " + MAX_PLAYERS;
+      const here = ids.length + 1;
+      document.getElementById("lobbyCount").textContent = here + " here";
+      const pillCount = document.getElementById("lobbyPillCount");
+      if (pillCount) pillCount.textContent = here + (here === 1 ? " player" : " players") + " in";
 
       list.innerHTML = "";
 
@@ -2614,18 +2440,11 @@
         '<div class="p-sub">' + modeLabel(currentMode) + (gameRunning ? " · live" : "") + '</div></div>';
       list.appendChild(me);
 
-      if (!roomCode) {
-        const hint = document.createElement("div");
-        hint.style.cssText = "color:var(--mut);font-size:0.62rem;padding:6px 2px;line-height:1.6;";
-        hint.textContent = "Make a room, or type a code, and everyone who joins shows up here.";
-        list.appendChild(hint);
-        return;
-      }
-
       if (!ids.length) {
         const hint = document.createElement("div");
         hint.style.cssText = "color:var(--mut);font-size:0.62rem;padding:6px 2px;line-height:1.6;";
-        hint.textContent = "Nobody else yet. Share " + roomCode + " — the relays carry it to other phones.";
+        hint.textContent = ("Nobody else is here yet. Anyone who opens the game joins this same lobby — " +
+          "or invite a friend to open it too.");
         list.appendChild(hint);
         return;
       }
@@ -2677,9 +2496,8 @@
       document.getElementById("lobbySheet").style.display = "block";
       document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
       renderLobby();
-      renderRooms();
       paintConn();
-      startRelays();   /* warm the relays up so the room list fills in */
+      startRelays();   /* warm the relays up while you are deciding */
     }
 
     function closeLobby() {
@@ -2714,14 +2532,10 @@
         startNewGame();
       } else if (mode === "duel") {
         openLobby();
-        document.getElementById("playHint").textContent = roomCode
-          ? "Tap ⚔ 1v1 on a player to challenge them."
-          : "Join a room first, then challenge a player.";
+        document.getElementById("playHint").textContent = "Tap ⚔ 1v1 on any player above to challenge them.";
       } else if (mode === "group") {
         openLobby();
-        document.getElementById("playHint").textContent = roomCode
-          ? "Tap “Invite everyone” at the bottom of the lobby."
-          : "Join a room first, then invite everyone to a group battle.";
+        document.getElementById("playHint").textContent = "Tap “Invite everyone…” under the player list.";
       }
     }
 
@@ -3092,27 +2906,17 @@
     document.getElementById("lobbyClose").addEventListener("click", closeLobby);
     document.getElementById("roomPill").addEventListener("click", openLobby);
 
-    document.getElementById("createRoomBtn").addEventListener("click", () => {
-      if (enterRoom(generateRoomCode(), false)) roomStatusText("✅ Room " + roomCode + " made. Share the code, or invite everyone.");
+    document.getElementById("watchToggle").addEventListener("click", () => {
+      isSpectator = !isSpectator;
+      toggleSpectatorLayout(isSpectator);
+      const btn = document.getElementById("watchToggle");
+      btn.textContent = isSpectator ? "▶ Play" : "👁 Watch";
+      btn.className = isSpectator ? "primary" : "";
+      roomStatusText(isSpectator
+        ? "👁 Watching. You see every board, you do not play."
+        : "✅ You are in the lobby. Pick a game below.");
     });
-    document.getElementById("joinRoomBtn").addEventListener("click", () => {
-      const code = document.getElementById("joinCodeInput").value.trim().toUpperCase();
-      if (!enterRoom(code, false)) roomStatusText("That is not a 6-letter room code.");
-    });
-    document.getElementById("watchStreamBtn").addEventListener("click", () => {
-      const code = document.getElementById("joinCodeInput").value.trim().toUpperCase();
-      if (!enterRoom(code, true)) roomStatusText("That is not a 6-letter room code.");
-    });
-    document.getElementById("leaveRoomBtn").addEventListener("click", () => leaveRoom(false));
-    document.getElementById("copyCodeBtn").addEventListener("click", () => {
-      if (!roomCode) { roomStatusText("No room yet."); return; }
-      const done = () => roomStatusText("Copied room code " + roomCode + ".");
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(roomCode).then(done).catch(() => roomStatusText("Room code: " + roomCode));
-      } else {
-        roomStatusText("Room code: " + roomCode);
-      }
-    });
+
     document.getElementById("inviteAllBtn").addEventListener("click", inviteAll);
     document.getElementById("inviteJoin").addEventListener("click", acceptInvite);
     document.getElementById("inviteNo").addEventListener("click", () => { pendingInvite = null; showInviteBar(null); });
@@ -3234,14 +3038,6 @@
       drawBoard();
     });
 
-    /* the on-device directory channel, so rooms show up even with no internet */
-    if (typeof BroadcastChannel !== "undefined") {
-      try {
-        dirChannel = new BroadcastChannel("pindutan_v16_directory");
-        dirChannel.onmessage = e => onDirectory(e.data);
-      } catch (e) { dirChannel = null; }
-    }
-
     document.getElementById("backToGameBtn").addEventListener("click", () => {
       closeLobby();
       if (!gameRunning) setPlay("solo");
@@ -3251,21 +3047,13 @@
     paintCpuLevels();
     paintConn();
     renderLobby();
-    renderRooms();
     drawQueue();
     drawBoard();
     botRender();
 
-    /* open straight into the lobby, and quietly rejoin the room you were in */
+    /* straight into the lobby — no codes, no joining */
+    joinLobby();
     openLobby();
-    try {
-      const lastRoom = localStorage.getItem("pindutan_room");
-      if (lastRoom && /^[A-Z0-9]{6}$/.test(lastRoom)) {
-        if (enterRoom(lastRoom, false)) {
-          roomStatusText("✅ Back in room " + roomCode + ". Pick a game below.");
-        }
-      }
-    } catch (e) { /* private mode */ }
   </script>
 </body>
 </html>

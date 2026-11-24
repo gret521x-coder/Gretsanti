@@ -741,8 +741,99 @@
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
-        { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v2.html", newTab: true }
+        { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v4.html", newTab: true }
     ];
+
+    const APP_URL_UPGRADES = {
+        "gc.html": "https://aidekupal.unaux.com/gc.html",
+        "gc-v5.html": "https://aidekupal.unaux.com/gc.html",
+        "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html",
+        "Aurora.html": "https://aidekupal.unaux.com/aurora-v4.html",
+        "aurora-v2.html": "https://aidekupal.unaux.com/aurora-v4.html",
+        "aurora-v3.html": "https://aidekupal.unaux.com/aurora-v4.html"
+    };
+
+    /* Where the payloads actually live. Relative card links ("tns.html") are resolved against
+       this host, so the launcher keeps working when it is opened from unaux, from a download
+       folder, or from anywhere else — it no longer depends on the file sitting beside it. */
+    const PAYLOAD_HOST = "https://aidekupal.unaux.com/";
+
+    function resolveUrl(url) {
+        if (!url) return url;
+        if (/^(https?:|mailto:|tel:|data:|blob:|#)/i.test(url)) return url;
+        try { return new URL(url, PAYLOAD_HOST).href; } catch (e) { return url; }
+    }
+
+    /* The file manager keeps the names you typed: "Aurora.html", "gc.html". This launcher is
+       not going to argue with that. Each payload lists the names it might have on the host, and
+       a tap opens the first one that actually answers. No renaming, no upload order. */
+    const ALT_NAMES = {
+        "aurora-v4.html": ["aurora-v4.html", "Aurora.html", "aurora-v3.html", "aurora-v2.html"],
+        "gc.html": ["gc-v5.html", "gc.html", "gc-v4.html"],   /* the v5 build is the one that talks to api-v5.php */
+        "screenshot.html": ["Screenshot.html", "screenshot.html"]
+    };
+
+    function candidatesFor(url) {
+        const target = resolveUrl(url);
+        if (!/^https?:\/\//i.test(target)) return [target];
+        const cut = target.lastIndexOf("/") + 1;
+        const dir = target.slice(0, cut);
+        const file = target.slice(cut);
+        const alts = ALT_NAMES[file.toLowerCase()];
+        if (!alts) return [target];
+        return alts.map(n => dir + n);
+    }
+
+    function go(url) {
+        const w = window.open(url, "_blank");
+        if (w) { try { w.opener = null; } catch (e) {} }
+        else { location.href = url; }        /* popup blocked — same tab instead */
+    }
+
+    /* Ask before opening, with a GET and a one-byte range: HEAD is refused by some free hosts,
+       and a refused HEAD used to be read as "file missing", so the launcher quietly fell back to
+       the old copy — the one whose PHP dot is red. 404 and 410 mean missing; anything else the
+       host answers with means the file is there. No answer at all means stop asking. */
+    function pickKey(url) {
+        return "kdl_pick_" + String(url || "").split("/").pop().toLowerCase();
+    }
+    function knownPick(url) {
+        try { return localStorage.getItem(pickKey(url)) || ""; } catch (e) { return ""; }
+    }
+    function rememberPick(url, chosen) {
+        try { localStorage.setItem(pickKey(url), chosen); } catch (e) {}
+    }
+    async function probeExists(cand) {
+        try {
+            const r = await fetch(cand, { method: "GET", cache: "no-store", headers: { Range: "bytes=0-1" } });
+            if (r && (r.status === 404 || r.status === 410)) return false;
+            return true;
+        } catch (e) {
+            return null;                      /* cross-origin, offline, or refused */
+        }
+    }
+    async function openPayload(url) {
+        const list = candidatesFor(url);
+        const target = resolveUrl(url);
+        let pick = target;
+
+        const remembered = knownPick(url);
+        if (remembered) { go(remembered); return; }
+
+        let answered = false;
+        if (list.length > 1) {
+            for (const cand of list) {
+                const exists = await probeExists(cand);
+                if (exists === null) break;   /* cannot ask — keep the card's own target */
+                answered = true;
+                if (exists) { pick = cand; break; }
+            }
+        }
+        /* only remember a name the host actually voted on; a failed probe must not stick */
+        if (answered) rememberPick(url, pick);
+        go(pick);
+    }
+
 
     let missionStart = Date.now();
     let pendingBardagulanUrl = null;
@@ -812,7 +903,7 @@
         e.preventDefault();
         e.stopPropagation();
         if (isBardagulanUnlocked()) {
-            window.open(url, "_blank", "noopener");
+            openPayload(url);
             return;
         }
         pendingBardagulanUrl = url;
@@ -832,7 +923,7 @@
             closeModal("bardagulanModal");
             const url = pendingBardagulanUrl || "https://aidekupal.unaux.com/gc.html";
             pendingBardagulanUrl = null;
-            window.open(url, "_blank", "noopener");
+            openPayload(url);
         } else {
             errBox.innerText = "ACCESS DENIED // INVALID CODE";
         }
@@ -882,8 +973,6 @@
     // =========================================================================
     // Saved grids keep whatever filenames they were stored with — move the two
     // that were renamed so an existing localStorage still opens the live pages.
-    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v2.html" };
-
     function upgradeAppLinks(apps) {
         let touched = false;
         apps.forEach(app => {
@@ -927,13 +1016,16 @@
             const card = document.createElement("a");
             card.className = "payload-card";
 
+            const target = resolveUrl(app.url);
+
             if (app.lock) {
                 card.href = "#";
-                card.onclick = (e) => requestBardagulanAccess(e, app.url);
+                card.onclick = (e) => requestBardagulanAccess(e, target);
             } else {
-                card.href = app.url;
+                card.href = target;
                 card.target = "_blank";
                 card.rel = "noopener noreferrer";
+                card.onclick = (e) => { e.preventDefault(); openPayload(app.url); };
             }
 
             const lockTag = app.lock ? " <span style=\"font-size:0.68rem;\">🔒</span>" : "";

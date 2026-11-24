@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AUTO CLICKER</string>
+    <string name="stage">STEP 1 · IT OPENS</string>
+    <string name="idle">Nothing taps yet. Press the button.</string>
+    <string name="start">PRESS ME</string>
+</resources>

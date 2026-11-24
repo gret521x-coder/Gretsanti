@@ -2,6 +2,19 @@
 
 Launcher + group chat for XAMPP. Plain HTML files, no build step.
 
+**Right now the live copies sit on the PHP host**, not on GitHub — the repository is private, and a private
+repository stops publishing Pages on a free account.
+
+| Page | Address |
+|---|---|
+| Launcher | `https://aidekupal.unaux.com/index.html` (`index-v5.html`) |
+| Aurora | `https://aidekupal.unaux.com/Aurora.html` |
+| Group chat | `https://aidekupal.unaux.com/gc-v5.html` (or `gc.html`) |
+| FreeModel relay | `https://aidekupal.unaux.com/api-free.php` |
+
+The launcher resolves relative cards against the PHP host and asks which name actually exists before it
+opens one, so `Aurora.html` and `aurora-v4.html` both work without renaming anything on the server.
+
 ## Files
 
 | File | Size | Description |
@@ -11,7 +24,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `index-v2.html` | 43 KB | SpaceX / orbital redesign |
 | `index-v3.html` | 45 KB | Facebook dark mode |
 | `index-v4.html` | 25 KB | v1 without the API / SYNC / OpenRouter / add-payload UI |
-| `index-v5.html` | 49 KB | Same launcher as `index.html` plus motion: starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards, boot sequence |
+| `index-v5.html` | 54 KB | The launcher in use — motion (starfield, satellites, rockets, telemetry), pointer-lit cards, and cards that resolve `Aurora.html`/`gc-v5.html` names by asking the host |
 | `gc.html` | 43 KB | Original **Black Cat Group Chat** upload, unchanged |
 | `gc-v2.html` | 61 KB | Chat v2 — presence fix, lightning joins, new design |
 | `api-v2.php` | 22 KB | Backend used by `gc-v2.html` |
@@ -19,10 +32,15 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v3.php` | 32 KB | Backend used by `gc-v3.html` (v2 plus edit, delete, link preview) |
 | `gc-v4.html` | 101 KB | Chat v4 — pinned banner, voice notes, end-to-end encrypted text |
 | `api-v4.php` | 35 KB | Backend used by `gc-v4.html` (v3 plus voice notes and the banner) |
-| `gc-v5.html` | 118 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
+| `gc-v5.html` | 140 KB | Chat v5 in the KDL skin — secret admin, encrypted text, plus a sky of stars, satellites and rockets and a cyan lightning storm |
 | `api-v5.php` | 41 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot and CORS) |
 | `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
+| `labs/index.html` | 9 KB | Experimental build area — a card per experiment, empty state, nothing linked from the launcher |
+| `labs/autoclicker/` | Android project | Auto clicker for Clash of Clans — Java, built into an APK by GitHub Actions |
+| `labs/call-spider.html` | 31 KB | Call Spider as one file — paste a transcript, get notes; live capture through a copyable snippet |
+| `labs/transcript-spider/` | Extension | Call Spider — harvests the live transcript on a page, floats a panel, summarizes the call |
+| `.github/workflows/build-apk.yml` | 1 KB | Builds that APK on every change, artifact download from the Actions tab |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
 | `diag.html` | 5 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `Screenshot.html` | 3 KB | **Collectibles** vault — password-gated image board |
@@ -30,7 +48,33 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `tns.html` | 33 KB | **TNS — Safety Dispatch**, self-contained |
 | `pindutan.html` | 42 KB | **Pindutan v14** arcade game, scores kept in `localStorage` |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
-| `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features; uses the proxy on Pages |
+| `aurora-v2.html` | 82 KB | Aurora v2 — kept as the fallback; defaults to the free-token host / proxy |
+| `aurora-v3.html` | 90 KB | Aurora v3 — the provider follows the key (Google, OpenRouter, Groq, OpenAI, custom), models discovered from the key |
+| `aurora-v4.html` | 118 KB | **Aurora v4** — FreeModel only, KDL skin, key kept on the server, CORS explained instead of guessed |
+| `api-free.php` | 10 KB | The FreeModel relay — key typed once in a browser form, streamed answers, model list |
+| `worker-free.js` | 6 KB | The same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
+
+---
+
+## labs
+
+`labs/` is where work in progress goes so the shipped pages stay untouched. It is reachable at
+`/labs/index.html` and nothing on the launcher points at it.
+
+- `labs/call-spider.html` — Call Spider as a single file: paste a transcript, press Summarise, get
+  Summary / Decisions / Action items. Offline by default, OpenRouter when a key is saved. Live capture
+  is a snippet the page copies for you, pasted into the transcript tab's console — no extension. The
+  snippet's panel docks itself under the transcript box, captures everything that arrives, and can pop
+  out into its own always-available window. The key decides the provider: `AIza…` talks to Google AI
+  Studio, `sk-or-…` to OpenRouter, and **list models** asks the key what it can actually run instead of
+  hardcoding model names that get retired.
+- `labs/transcript-spider/` — the same spider as a Chrome extension, if Developer mode is not a bother.
+- `labs/autoclicker/` — the Android project built into an APK by GitHub Actions.
+
+
+Adding an experiment is one object in the `EXPERIMENTS` array in `labs/index.html`
+plus a file next to it; `labs/README.md` has the details and the `git subtree split --prefix=labs` line
+for moving the folder into a repository of its own.
 
 ---
 
@@ -42,7 +86,7 @@ Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship tod
 |---|---|
 | Bardagulan (locked) | `https://aidekupal.unaux.com/gc.html` — the copy next to the PHP |
 | Collectibles | `https://aidekupal.unaux.com/Screenshot.html` — it needs `save.php` |
-| Aurora | `aurora-v2.html` — was `Aurora.html` |
+| Aurora | `aurora-v4.html` — was `Aurora.html`, then v2, then v3 |
 | TNS, Pindutan | still local, they are pure static |
 
 The chat and the vault point at the PHP host because that host refuses cross-site
@@ -317,7 +361,146 @@ The strike was gated behind `prefers-reduced-motion`, and that media query didn'
 
 ---
 
-## What changed in Aurora (`aurora-v2.html`)
+### The KDL skin and the sky (chat, latest)
+
+The chat wears the same KDL // MISSION CONTROL skin as the launcher now: pure black deck, hairline grid
+and cyan horizon, square corners, mono-caps labels, one cyan accent, green ok / amber wait / red stop.
+The cat wallpaper and the violet gradients are gone; your own bubbles are cyan on a dark panel and the
+quick-action chips read like terminal keys.
+
+**A sky runs behind the messages.** The launcher's motion pack, moved into the chat: stars drifting down,
+two or three satellites on slow elliptical orbits (solar panels, a green beacon blinking on the bus), and a
+rocket crossing the deck every three to six seconds with a flickering flame and a fading trail. It is a
+separate canvas at `z-index:0` under the app, dimmed to 62% so text stays readable, paused when the tab is
+hidden, and switched off entirely under `prefers-reduced-motion`. `window.KDL_SKY` exposes the counts for
+the tests.
+
+**The ⚡ storm stays** — it was already in the chat — but its light is colder: bolts and flash in
+`#dff6ff` with a cyan glow, still shaking the deck on arrival. It now also strikes when **you** send a
+message, not only when one arrives.
+
+---
+
+## What changed in Aurora v4 (`aurora-v4.html`)
+
+One platform: **FreeModel**, `https://freemodel.in/v1`, OpenAI-compatible, keys starting `fm_`.
+Every other provider, host and model name is gone from the page.
+
+**The key problem, stated plainly.** A key inside an HTML file is readable by anyone who opens the
+source, and hashing is one-way — the browser could not un-hash it to send. Obfuscation is a curtain, not a
+lock. So v4 ships both halves:
+
+| Mode | Where the key is | Who can read it |
+|---|---|---|
+| **Proxy** (recommended) | `FREEMODEL_KEY` inside `api-free.php` on your PHP host | only you, on the server |
+| **Key** | this browser's `localStorage` | this device only |
+
+In proxy mode the page sends **no** `Authorization` header at all — there is nothing to steal from the
+browser. `api-free.php` streams the answer through (SSE, no buffering), answers `?models=1` so "list
+models" still works, refuses to run until the key is filled in, and only replies with CORS headers for
+the origins listed at the top of the file.
+
+**It looks like the launcher now.** Aurora wears the same KDL // MISSION CONTROL skin as
+`index-v5.html`: pure black deck, hairline grid and cyan horizon, square corners, hairline borders,
+mono-caps labels, one cyan accent (`#38bdf8`), green for ok (`#00e676`) and red for stop (`#ff3d00`).
+The light/dark toggle is gone — the launcher has one theme, so Aurora does too.
+
+**Green when gc is opened directly, red when it comes from the launcher** meant the launcher was falling
+back to the *old* `gc.html` — the probe used `HEAD`, one free host refused the `HEAD`, and a refusal was read
+as "file missing". The probe is a `GET` with a one-byte `Range` now: `404`/`410` mean missing, any other
+answer means present, and no answer at all means stop asking. The chosen name is remembered in
+`localStorage` (`kdl_pick_*`) so later taps open straight away — but only when the host actually voted, so a
+failed probe can never stick.
+
+**The launcher asks the host instead of assuming.** Each payload lists the names it might have
+(`aurora-v4.html` or `Aurora.html`, `gc.html` or `gc-v5.html`); a tap sends one `HEAD` request and opens
+the first name that answers, so nothing has to be renamed on the server. If the browser refuses the
+probe (page opened from a download folder), the first name is used without asking.
+
+**The launcher no longer depends on where it sits.** `index-v5.html` resolves every relative card
+(`tns.html`, `pindutan.html`, `aurora-v4.html`) against `https://aidekupal.unaux.com/`, so the cards open
+whether the file is opened from the PHP host, from a download folder, or from anywhere else — and a saved
+`aurora-v2`/`aurora-v3` bookmark is repointed at `aurora-v4` on sight. The hardcoded resolutions have to be
+declared *before* the first `renderApps()` call, or the first paint silently falls back to relative links.
+
+**If the repository is made private**, GitHub Pages stops serving it on a free account — the
+`github.io` link dies the moment the visibility flips. The relay and the page can live together on
+unaux instead: upload `aurora-v4.html` next to `api-free.php`, open
+`https://aidekupal.unaux.com/aurora-v4.html`, and set the relay address to
+`https://aidekupal.unaux.com/api-free.php`. Both files are then on one host, so there is no CORS
+conversation at all — `api-free.php` allows its own origin by default now.
+
+**Setup is one form now.** Upload the file, open its address in a browser once, paste the key, press
+Save — no code editing at all. The key is written to `.fmkey.php` beside it, a file that starts with
+`<?php exit; ?>` so the web server runs it instead of printing it. Prefer editing? Fine, `FREEMODEL_KEY`
+in the file still works and wins over the form.
+
+Other changes: the old five-platform catalogue is dropped on load, `auto` is no longer offered (FreeModel
+has no such model), the default is `deepseek-v4.1-flash`, keep-alive lines (`: ping`) no longer confuse the
+stream parser, and `429`/`503` retry once then move to another model in the same catalogue.
+
+### The `Failed to fetch` wall
+
+**FreeModel does not let a page on another website call it.** The browser stops the request before it
+leaves — the message is `Failed to fetch`, and it looks identical to a dead network or a bad key, which is
+exactly how it was misread the first time. Nothing in a page can get around this: it is CORS, a browser
+rule, and a page cannot step outside the browser. A relay is the only way, and the page now says so:
+
+| What went wrong | What the page now says |
+|---|---|
+| FreeModel's own address pasted into **Proxy URL** | the box turns red, says `Failed to fetch` is coming, and names what belongs there |
+| Key mode on `github.io` | "your browser was stopped before it reached FreeModel — this is CORS, your key is not the problem" |
+| Relay address dead or blocking | "your relay did not answer", the exact address it called, and the free-host warning |
+
+There is also a **🩺 Test connection** button in Settings. It checks both doors: the model list (a `GET`)
+and then one real chat request (a `POST`, one word). Green means both answered and the address is saved;
+red says which door failed. That second probe exists because the first round of this ended with a green
+list, an empty box and a page still in direct mode.
+
+Two smaller things came out of the same screenshot: a direct key-mode request now sends **only**
+`Content-Type` and `Authorization` — a stray `X-Title` header makes the browser ask FreeModel's
+permission for a header it never granted, and the refusal arrives as `Failed to fetch` with the key
+never sent — and a green test now saves the address it proved instead of leaving it unsaved.
+
+**Two relays ship.** `api-free.php` for a PHP host, and `worker-free.js` for a free Cloudflare Worker
+(paste it in the dashboard, add the key as a `FREEMODEL_KEY` secret, deploy — no card, no domain). The
+Worker one exists because several free PHP hosts, unaux included, refuse calls that come from another
+website, which shows up as the same `Failed to fetch` even though the file is perfect.
+
+---
+
+## What changed in Aurora v3 (`aurora-v3.html`)
+
+The old file sent every request either to `freetoken.website` (direct) or to the PHP proxy on the PHP
+host (Pages), and both became unreliable. v3 decides from the key instead:
+
+| Key starts with | Goes to | Streaming |
+|---|---|---|
+| `AIza…` or `AQ.…` | Google AI Studio (`generativelanguage.googleapis.com`) | `streamGenerateContent?alt=sse` |
+| `sk-or-…` | OpenRouter | OpenAI-style SSE |
+| `gsk_…` | Groq | OpenAI-style SSE |
+| `sk-…` | OpenAI | OpenAI-style SSE |
+| *custom base URL typed in Settings* | that host, unchanged | OpenAI-style SSE |
+
+- **Busy models heal themselves.** Google answers `503 high demand` and `429 quota` under load. Neither is
+  a bad request, so v3 retries the same model once after a moment, then moves to another Flash model the
+  key can run — announced in the thinking panel. It never restarts after text has started arriving, and a
+  genuine error (`400 API key not valid`) is shown at once instead of being retried.
+- **Both Google key shapes work** — the older `AIza…` and the newer `AQ.…`. The key is sent as the
+  `key` query value and as an `x-goog-api-key` header, so neither shape can fail quietly.
+- **`list models`** asks the key what it can actually run and drops the answers into the model chips, so
+  a retired model name can't strand you. Google's `auto` is resolved by asking for a Flash model.
+- **A stale base URL is retired on load.** Anyone who saved `freetoken.website` or the PHP proxy keeps
+  working — the saved value is dropped so the key decides again.
+- Gemini's dialect is translated both ways: `system` becomes `systemInstruction`, the transcript becomes
+  `contents`, and thinking-style deltas still stream into the panel.
+- Errors name the provider and quote what it said, with a checklist that no longer mentions a base URL
+  that isn't being used.
+- The PHP proxy still works if you paste its URL — it is just no longer the default.
+
+---
+
+## What changed in Aurora v2 (`aurora-v2.html`)
 
 The original file had two `</html>` tags, four stacked `<style>` blocks and five `<script>` blocks — with `callAPI`, `renderRich`, `renderModels` and `renderModelChips` each defined twice. v2 is one clean document: one stylesheet, one script, no duplicate definitions.
 
@@ -447,14 +630,17 @@ keep keys on the server side (`api-ai.php`) when you can.
 | `index-v2.html` | SpaceX / orbital redesign |
 | `index-v3.html` | Facebook dark mode |
 | `index-v4.html` | v1 with the API, SYNC, OpenRouter and add-payload UI removed |
-| `index-v5.html` | same launcher plus starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards and a boot sequence (off with `?still=1`) |
+| `index-v5.html` | same launcher plus starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards, a boot sequence (off with `?still=1`), and cards that resolve the real file name on the host before opening |
 | `gc.html` | original group chat |
 | `gc-v2.html` | presence fix, lightning joins, new design |
 | `gc-v3.html` | replies, edit/delete, link previews, delivery ticks + outbox, unread jump, paste & drop |
 | `gc-v4.html` | pinned banner, voice notes, end-to-end encrypted text |
-| `gc-v5.html` | one secret admin owns the banner, delete and clear-chat |
+| `gc-v5.html` | one secret admin owns the banner, delete and clear-chat; KDL skin, a sky of stars/satellites/rockets and a cyan lightning storm |
 | `Aurora.html` | original AI chatbot |
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
+| `aurora-v3.html` | provider auto-detected from the key, model discovery, no dead hosts, stale base URLs retired |
+| `aurora-v4.html` | FreeModel only, key kept on the server via `api-free.php`, catalogue fetched from the platform |
+| `worker-free.js` | the same relay for a free Cloudflare Worker, when the PHP host blocks other sites |
 
 ## Checks
 
@@ -472,6 +658,14 @@ keep keys on the server side (`api-ai.php`) when you can.
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **Chat skin and sky: 31 checks** — palette and square corners applied, mono caps, the cat wallpaper gone,
+  the storm retuned but still firing on send and on arrival, plus a canvas that seeds stars and satellites,
+  runs its loop, survives a missing canvas and disappears under reduced motion
+- **Launcher: 70 checks** — every card resolves to the PHP host, `Aurora.html` is found when
+  `aurora-v4.html` is missing, a refused probe is never mistaken for a missing file, and a chosen name is
+  remembered for the next tap
+- **Aurora v4 relay: 54 checks** — the CORS wall is named instead of guessed, a dead relay gets a different
+  message, Test connection proves a real chat request, and a green test saves the address it proved
 - **`diag.html`: 6 checks** — correct verdict for a working host, a headers-only block,
   an outright refusal and an HTTP error page
 - **Chat failure messages: 14 checks** — a refused cross-origin call names the PHP host,
@@ -481,7 +675,7 @@ keep keys on the server side (`api-ai.php`) when you can.
   uploads routed to the PHP host from Pages and to the sibling `save.php` on the host,
   TNS and Pindutan load clean, Pindutan unlock with and without SubtleCrypto
 - **Launcher grids: 60 checks** — all six launchers default to `gc.html` on the PHP host and
-  `aurora-v2.html`, the grid renders, Bardagulan stays locked and its code still opens
+  `aurora-v3.html`, the grid renders, Bardagulan stays locked and its code still opens
   the right page, an old saved grid is upgraded and written back, corrupt storage
   falls back to defaults
 - **Launcher motion (`index-v5.html`): 29 checks** — boots with no errors, telemetry ticks,
@@ -489,6 +683,18 @@ keep keys on the server side (`api-ai.php`) when you can.
   their own and never exceed two on screen, cards arrive staggered and take the pointer position, the
   lock screen still covers the viewport, and `prefers-reduced-motion` / `?still=1` leave a plain
   working launcher
+- **Aurora v4 / FreeModel: 36 checks** — no other platform string survives in the page, an `fm_live_` key
+  posts to `freemodel.in/v1/chat/completions` with a bearer token and `stream:true`, a `.php` URL alone is
+  enough to connect and sends **no** authorization header, `reasoning_content` reaches the thinking panel,
+  `: keep-alive` lines do not break the parser, the catalogue is fetched from `/models` (or `?models=1`
+  through the proxy), `429` retries then falls back, `401` is shown on the first hit, the old five-platform
+  catalogue is dropped, and `api-free.php` streams, answers the model list, holds the key and never echoes it
+- **Aurora v3 providers: 29 checks** — an `AIza` key reaches Google with `systemInstruction` and
+  `contents` and no bearer header, `sk-or` reaches OpenRouter as `openrouter/auto`, a typed base URL
+  wins over everything, `auto` resolves to a Flash model while embedding models are never chosen, a
+  refused key quotes Google verbatim, no key means demo mode with zero network calls, the settings hint
+  follows the key as it is typed, a saved `freetoken.website` base URL is retired on load, and an
+  `AQ.…` key reaches Google with the header plus the query without breaking the `AIza…` path
 - **Aurora through the proxy: 15 checks** — proxy picked on `github.io`, direct provider on
   localhost, no key and no `Authorization` header sent through the proxy, no
   `/chat/completions` appended to a `.php` base, system prompt and transcript in the body,

@@ -1,0 +1,94 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'labs/autoclicker/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Assemble debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v5
+
+      - name: Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build
+        working-directory: labs/autoclicker
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Collect and inspect the APK
+        working-directory: labs/autoclicker
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          APK=$(ls app/build/outputs/apk/debug/*.apk | head -1)
+          cp "$APK" artifacts/autoclicker-debug.apk
+
+          SIZE=$(stat -c%s artifacts/autoclicker-debug.apk)
+          SHA=$(sha256sum artifacts/autoclicker-debug.apk | cut -d' ' -f1)
+
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)
+          BADGING=$( ("$AAPT" dump badging artifacts/autoclicker-debug.apk || true) \
+                     | grep -E "^(package|sdkVersion|targetSdkVersion|application-label:|launchable-activity)" || true)
+
+          {
+            echo "Built from commit ${GITHUB_SHA:0:7} on $(date -u '+%Y-%m-%d %H:%M UTC')."
+            echo
+            echo '```'
+            echo "file    : autoclicker-debug.apk"
+            echo "size    : $SIZE bytes"
+            echo "sha256  : $SHA"
+            echo "$BADGING"
+            echo '```'
+            echo
+            echo "Step 1 build: the app opens and answers the button. It does not tap yet."
+            echo
+            echo "Install: download \`autoclicker-debug.apk\`, tap it, allow the unknown-source prompt, install."
+          } > artifacts/build-info.txt
+
+          cat artifacts/build-info.txt
+          unzip -l artifacts/autoclicker-debug.apk
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoclicker-debug-apk
+          path: labs/autoclicker/artifacts/autoclicker-debug.apk
+          if-no-files-found: error
+
+      - name: Publish as a release
+        if: github.ref == 'refs/heads/arena/aa77ad27-gretsanti'
+        working-directory: labs/autoclicker
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view apk-latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit apk-latest --repo "$GITHUB_REPOSITORY" \
+              --notes-file artifacts/build-info.txt --target "$GITHUB_SHA"
+          else
+            gh release create apk-latest --repo "$GITHUB_REPOSITORY" \
+              --title "Auto Clicker — latest build" \
+              --notes-file artifacts/build-info.txt --target "$GITHUB_SHA"
+          fi
+          gh release upload apk-latest artifacts/autoclicker-debug.apk --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Job summary
+        run: cat labs/autoclicker/artifacts/build-info.txt >> "$GITHUB_STEP_SUMMARY"

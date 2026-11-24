@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<title>Call Spider — transcript notes</title>
+<style>
+    :root{
+        --void:#000; --panel:#08090b; --card:#0d0f13; --line:#1f242d;
+        --text:#e6edf3; --dim:#7d8794; --cyan:#38bdf8; --green:#00e676; --amber:#ffb020;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+        background:var(--void);color:var(--text);font-family:var(--mono);
+        display:flex;flex-direction:column;min-height:100vh;
+        background-image:radial-gradient(ellipse at 80% -10%, rgba(56,189,248,.08), transparent 55%);
+        background-repeat:no-repeat;
+    }
+    a{color:var(--cyan)}
+    button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+
+    /* ---------------------------------------------------------------- header */
+    header{
+        display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+        padding:14px 20px;border-bottom:1px solid var(--line);position:relative;overflow:hidden;
+    }
+    .brand{display:flex;align-items:baseline;gap:10px}
+    .brand b{font-size:13px;letter-spacing:.22em;color:var(--cyan);font-weight:600}
+    .brand span{font-size:11px;color:var(--dim);letter-spacing:.08em}
+    .pill{
+        font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;border-radius:999px;
+        border:1px solid var(--line);color:var(--dim);
+    }
+    .pill.on{color:var(--green);border-color:rgba(0,230,118,.4)}
+    .pill.key{color:var(--cyan);border-color:rgba(56,189,248,.4)}
+    .spacer{flex:1}
+    .ghost{
+        font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#c7d2de;
+        border:1px solid var(--line);border-radius:7px;padding:6px 10px;background:#11151b;
+    }
+    .ghost:hover{border-color:var(--cyan);color:#fff}
+    .web{position:absolute;right:-30px;top:-40px;width:220px;height:220px;opacity:.5;pointer-events:none}
+    .spider-body{animation:walk 22s linear infinite}
+    @keyframes walk{
+        0%{transform:translate(14px,96px) rotate(-4deg)}
+        25%{transform:translate(70px,52px) rotate(6deg)}
+        50%{transform:translate(120px,110px) rotate(-6deg)}
+        75%{transform:translate(74px,150px) rotate(5deg)}
+        100%{transform:translate(14px,96px) rotate(-4deg)}
+    }
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+
+    /* ------------------------------------------------------------------ main */
+    main{
+        flex:1;display:grid;gap:16px;padding:18px 20px 26px;
+        grid-template-columns:minmax(300px,1fr) minmax(320px,1.1fr);align-items:start;
+    }
+    @media (max-width: 900px){ main{grid-template-columns:1fr} .web{display:none} }
+
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+    .card-head{
+        display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+        padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel);
+    }
+    .card-head h2{font-size:11px;letter-spacing:.16em;color:var(--dim);font-weight:600;text-transform:uppercase}
+    .card-body{padding:12px}
+
+    textarea{
+        width:100%;min-height:300px;resize:vertical;background:#0a0c10;color:var(--text);
+        border:1px solid var(--line);border-radius:8px;padding:12px;font:12px/1.7 var(--mono);
+    }
+    textarea:focus{outline:none;border-color:rgba(56,189,248,.55)}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .row + .row{margin-top:10px}
+    .meta{font-size:10px;color:var(--dim);letter-spacing:.06em}
+    .primary{
+        background:var(--green);color:#000;font-size:11px;font-weight:700;letter-spacing:.12em;
+        text-transform:uppercase;border-radius:8px;padding:10px 16px;
+    }
+    .primary:disabled{opacity:.45;cursor:not-allowed}
+
+    /* spider crawling over the input while it works */
+    .hunting{position:relative}
+    .crawler{
+        position:absolute;left:-40px;bottom:14px;width:34px;height:22px;opacity:0;transition:opacity .2s;
+    }
+    .hunting.busy .crawler{opacity:1;animation:crawl 3.2s linear infinite}
+    @keyframes crawl{
+        0%{transform:translateX(0) rotate(-3deg)}
+        50%{transform:translateX(calc(100% + 260px)) rotate(3deg)}
+        100%{transform:translateX(0) rotate(-3deg)}
+    }
+
+    /* ----------------------------------------------------------------- out */
+    .summary{font-size:12.5px;line-height:1.75;color:#cdd7e2;max-height:52vh;overflow:auto;padding-right:4px}
+    .summary h3{font-size:11px;letter-spacing:.16em;color:var(--cyan);margin:14px 0 6px;text-transform:uppercase}
+    .summary h3:first-child{margin-top:0}
+    .summary ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .summary li{position:relative;padding-left:16px;color:#c7d2de}
+    .summary li::before{content:"•";position:absolute;left:2px;color:var(--cyan)}
+    .summary p{margin:6px 0}
+    .summary em{color:var(--dim)}
+    .hint{color:var(--dim);font-size:11.5px;line-height:1.7}
+    .hint b{color:#c7d2de}
+    .hint ol{margin:8px 0 0 18px;display:flex;flex-direction:column;gap:4px}
+
+    /* ------------------------------------------------------------- settings */
+    .drawer{border-top:1px solid var(--line);background:var(--panel);padding:0 20px;overflow:hidden;max-height:0;transition:max-height .25s ease}
+    .drawer.open{max-height:280px}
+    .drawer-inner{padding:14px 0 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+    .field input{
+        background:#0d0f13;border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+        color:var(--text);font:12px var(--mono);min-width:260px;
+    }
+    .field input:focus{outline:none;border-color:var(--cyan)}
+    .note{width:100%;font-size:11px;color:var(--dim);line-height:1.7}
+    .note b{color:#c7d2de}
+
+    /* ----------------------------------------------------------------- toast */
+    #toast{
+        position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(12px);
+        background:#0d0f13;border:1px solid var(--line);color:var(--text);border-radius:999px;
+        padding:8px 16px;font-size:11px;letter-spacing:.06em;opacity:0;pointer-events:none;
+        transition:opacity .2s, transform .2s;z-index:50;
+    }
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    @media (prefers-reduced-motion: reduce){
+        .spider-body{animation:none}
+        .hunting.busy .crawler{animation:none;opacity:0}
+        #toast{transition:none}
+        .drawer{transition:none}
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <svg class="web" viewBox="0 0 200 200" aria-hidden="true">
+        <g stroke="#38bdf8" stroke-width="0.6" opacity="0.35" fill="none">
+            <path d="M100 10 L100 190 M20 40 L180 160 M20 160 L180 40 M10 100 L190 100"/>
+            <path d="M100 46 A54 54 0 1 1 99.9 46 M100 68 A32 32 0 1 0 100.1 68"/>
+            <path d="M100 84 A16 16 0 1 1 99.9 84"/>
+        </g>
+        <g class="spider-body" fill="#38bdf8">
+            <ellipse cx="0" cy="0" rx="5" ry="6.5"/>
+            <circle cx="0" cy="-8" r="3"/>
+            <g stroke="#38bdf8" stroke-width="1.1" stroke-linecap="round" fill="none">
+                <path d="M-4 -3 L-13 -8 M-4 0 L-14 -1 M-4 3 L-13 7 M-4 6 L-11 12"/>
+                <path d="M4 -3 L13 -8 M4 0 L14 -1 M4 3 L13 7 M4 6 L11 12"/>
+            </g>
+            <g fill="#00e676"><circle cx="-1.4" cy="-8.6" r="0.9"/><circle cx="1.4" cy="-8.6" r="0.9"/></g>
+        </g>
+    </svg>
+
+    <div class="brand"><b>CALL SPIDER</b><span>transcript → notes</span></div>
+    <span class="pill" id="enginePill">offline</span>
+    <span class="spacer"></span>
+    <button class="ghost" id="settingsBtn">key / model</button>
+    <button class="ghost" id="liveBtn">live capture</button>
+</header>
+
+<section class="drawer" id="drawer">
+    <div class="drawer-inner">
+        <div class="field">
+            <label for="key">OpenRouter key (optional)</label>
+            <input id="key" type="password" placeholder="sk-or-v1-… or AIza… / AQ.…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+            <label for="model">model</label>
+            <input id="model" type="text" placeholder="openai/gpt-4o-mini" spellcheck="false" style="min-width:220px" list="modelList">
+            <datalist id="modelList"></datalist>
+        </div>
+        <button class="primary" id="saveKey">Save</button>
+        <button class="ghost" id="checkModels">list models</button>
+        <button class="ghost" id="forgetKey">Forget</button>
+        <p class="note">
+            <b>Nothing leaves this computer unless you set a key.</b> With no key the summary is built here
+            from word frequency and action words. The key is recognised by its prefix — <b>AIza…</b> or <b>AQ.…</b> goes to
+            Google AI Studio (Gemini), <b>sk-or-…</b> goes to OpenRouter. Only the transcript you press
+            Summarise on is sent, with the model above, and the key stays in this browser's localStorage.
+            <br><br>
+            <b>On a free Google key:</b> free-tier prompts are used to improve Google's products, so do not
+            paste a call you would not want reviewed. <b>list models</b> asks the provider what your key can
+            actually run — Google no longer publishes a fixed list.
+        </p>
+    </div>
+</section>
+
+<main>
+    <section class="card hunting" id="inputCard">
+        <div class="card-head">
+            <h2>Transcript</h2>
+            <span class="spacer"></span>
+            <span class="meta" id="counts">0 words</span>
+        </div>
+        <div class="card-body">
+            <textarea id="transcript" placeholder="Paste the transcript here — or copy it out of the live capture panel and drop it in.
+Ctrl+V works, so does dragging a .txt file onto this box."></textarea>
+            <svg class="crawler" viewBox="0 0 64 40" aria-hidden="true">
+                <g fill="#38bdf8">
+                    <ellipse cx="32" cy="20" rx="8" ry="10"/>
+                    <circle cx="32" cy="8" r="4.5"/>
+                    <g stroke="#38bdf8" stroke-width="2" stroke-linecap="round" fill="none">
+                        <path d="M26 14 L10 6 M26 19 L8 18 M26 24 L10 31 M27 28 L16 36"/>
+                        <path d="M38 14 L54 6 M38 19 L56 18 M38 24 L54 31 M37 28 L48 36"/>
+                    </g>
+                </g>
+            </svg>
+            <div class="row" style="margin-top:12px">
+                <button class="primary" id="summarize">Summarise call</button>
+                <button class="ghost" id="pasteBtn">Paste clipboard</button>
+                <button class="ghost" id="clearBtn">Clear</button>
+                <button class="ghost" id="sampleBtn">Sample</button>
+            </div>
+            <div class="row">
+                <span class="meta" id="durNote"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-head">
+            <h2>Notes</h2>
+            <span class="spacer"></span>
+            <span class="meta" id="engineNote"></span>
+            <button class="ghost" id="copyNotes">copy</button>
+            <button class="ghost" id="saveNotes">.md</button>
+        </div>
+        <div class="card-body">
+            <div class="summary" id="out">
+                <p class="hint">Nothing summarised yet. Paste a transcript on the left and press
+                <b>Summarise call</b> — or use <b>live capture</b> above to collect the words while the call runs.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div id="toast"></div>
+
+<!-- The live-capture code, kept as text so it can be copied verbatim. -->
+<script type="text/plain" id="snippet">
+(function () {
+  if (window.__spiderLive) { alert('Spider is already running on this page.'); return; }
+  window.__spiderLive = true;
+
+  var lines = [], counts = {}, target = null, obs = null, timer = null, popup = null, docked = true, raf = null;
+
+  /* --------------------------------------------------------------- the panel */
+  var host = document.createElement('div');
+  host.style.cssText = 'position:fixed;left:18px;bottom:18px;z-index:2147483647';
+  var sh = host.attachShadow({ mode: 'open' });
+  sh.innerHTML =
+    '<style>' +
+    '.p{width:340px;background:#08090b;color:#e6edf3;border:1px solid #1f242d;border-radius:10px;' +
+    'font:11px/1.55 ui-monospace,Menlo,Consolas,monospace;box-shadow:0 16px 44px rgba(0,0,0,.65);overflow:hidden}' +
+    '.b{display:flex;gap:4px;align-items:center;padding:6px 8px;background:#0d0f13;border-bottom:1px solid #1f242d;cursor:move}' +
+    '.b b{color:#38bdf8;letter-spacing:.16em;font-size:10px}' +
+    '.b span.n{color:#7d8794;font-size:10px}' +
+    '.g{flex:1}' +
+    'button{font:inherit;font-size:10px;color:#c7d2de;background:#11151b;border:1px solid #1f242d;' +
+    'border-radius:5px;padding:3px 6px;cursor:pointer}button:hover{border-color:#38bdf8;color:#fff}' +
+    'pre{max-height:210px;overflow:auto;margin:0;padding:8px;white-space:pre-wrap;color:#aab6c3}' +
+    '.dot{width:6px;height:6px;border-radius:50%;background:#00e676;box-shadow:0 0 7px #00e676}' +
+    '</style>' +
+    '<div class="p">' +
+    '  <div class="b" id="bar"><span class="dot"></span><b>SPIDER</b><span class="n" id="n">0 lines</span>' +
+    '    <span class="g"></span>' +
+    '    <button id="pick">pick</button><button id="pop">pop-out</button>' +
+    '    <button id="cp">copy</button><button id="x">hide</button></div>' +
+    '  <pre id="t"></pre>' +
+    '</div>';
+
+  function el(id) { return sh.getElementById(id); }
+  function panel() { return sh.querySelector('.p'); }
+
+  /* --------------------------------------------------------- dock under the box */
+  function place(node) {
+    if (!node || !node.getBoundingClientRect) return;
+    var r = node.getBoundingClientRect();
+    var width = Math.round(Math.max(280, Math.min(window.innerWidth - 24, r.width || 340)));
+    var left = Math.round(Math.max(8, Math.min(window.innerWidth - width - 8, r.left)));
+    var top = Math.round(Math.min(window.innerHeight - 150, r.bottom + 8));
+    panel().style.width = width + 'px';
+    host.style.left = left + 'px';
+    host.style.top = Math.max(8, top) + 'px';
+    host.style.bottom = 'auto';
+  }
+
+  function redock() {
+    if (!docked || !target || raf) return;
+    raf = requestAnimationFrame(function () { raf = null; place(target); });
+  }
+  window.addEventListener('scroll', redock, true);
+  window.addEventListener('resize', redock);
+
+  /* -------------------------------------------------------------------- feed */
+  function stamp() {
+    var d = new Date(), p = function (n) { return String(n).length < 2 ? '0' + n : String(n); };
+    return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function asText() {
+    return lines.map(function (l) { return '[' + l.t + '] ' + l.s; }).join('\n');
+  }
+
+  function render() {
+    el('n').textContent = lines.length + ' lines';
+    el('t').textContent = lines.slice(-120).map(function (l) { return l.t + '  ' + l.s; }).join('\n');
+    el('t').scrollTop = el('t').scrollHeight;
+    push();
+  }
+
+  function harvest() {
+    if (!target) return;
+    var text = target.innerText || target.textContent || '';
+    var seen = {}, fresh = [];
+    text.split(/\r?\n/)
+      .map(function (l) { return l.replace(/\s+/g, ' ').trim(); })
+      .filter(Boolean)
+      .forEach(function (line) {
+        seen[line] = (seen[line] || 0) + 1;
+        if (seen[line] > (counts[line] || 0)) fresh.push(line);
+      });
+    counts = seen;
+    if (!fresh.length) return;
+    fresh.forEach(function (text2) { lines.push({ t: stamp(), s: text2 }); });
+    render();
+  }
+
+  /* watch a box: capture what is already there, then everything that arrives */
+  function watch(node) {
+    if (obs) obs.disconnect();
+    target = node;
+    docked = true;
+    place(node);
+    obs = new MutationObserver(function () {
+      if (timer) return;
+      timer = setTimeout(function () { timer = null; harvest(); }, 200);
+    });
+    obs.observe(node, { childList: true, subtree: true, characterData: true });
+    harvest();
+    render();
+    el('pick').textContent = 're-pick';
+  }
+
+  function pick() {
+    var shade = document.createElement('div');
+    shade.style.cssText = 'position:fixed;inset:0;z-index:2147483646;cursor:crosshair;background:rgba(0,0,0,.18)';
+    document.body.appendChild(shade);
+    shade.addEventListener('click', function (e) {
+      e.preventDefault();
+      var node = document.elementFromPoint(e.clientX, e.clientY);
+      shade.remove();
+      if (node && node !== host && !host.contains(node)) watch(node);
+    }, true);
+  }
+
+  /* ------------------------------------------------------------- pop-out window */
+  var POP = 'body{margin:0;background:#08090b;color:#e6edf3;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace}' +
+    'header{display:flex;gap:6px;align-items:center;padding:8px 10px;background:#0d0f13;border-bottom:1px solid #1f242d;position:sticky;top:0}' +
+    'header b{color:#38bdf8;letter-spacing:.16em;font-size:11px}' +
+    'header span{color:#7d8794;font-size:10px}' +
+    'header .g{flex:1}' +
+    'button{font:inherit;font-size:10px;color:#c7d2de;background:#11151b;border:1px solid #1f242d;border-radius:5px;padding:4px 7px;cursor:pointer}' +
+    'button:hover{border-color:#38bdf8;color:#fff}' +
+    '#feed{margin:0;padding:10px;white-space:pre-wrap;color:#b9c4d1}';
+
+  function push() {
+    if (!popup || popup.closed) return;
+    try {
+      var doc = popup.document;
+      var feed = doc.getElementById('feed');
+      if (!feed) return;
+      feed.textContent = asText();
+      var n = doc.getElementById('n');
+      if (n) n.textContent = lines.length + ' lines';
+      feed.scrollTop = feed.scrollHeight;
+    } catch (e) { /* the popup went away mid-write */ }
+  }
+
+  function copyAll() {
+    navigator.clipboard.writeText(asText()).then(function () {
+      alert('Copied ' + lines.length + ' lines.');
+    }, function () {
+      alert('The browser blocked the clipboard. Select the text in the window and copy it by hand.');
+    });
+  }
+
+  function saveTxt() {
+    var blob = new Blob([asText()], { type: 'text/plain' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'transcript-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  }
+
+  function popout() {
+    popup = window.open('', 'spider-feed', 'width=460,height=620');
+    if (!popup) { alert('Pop-ups are blocked. Allow them for this site, then press pop-out again.'); return; }
+    popup.document.open();
+    popup.document.write('<!doctype html><html><head><meta charset="utf-8">' +
+      '<title>Spider — live feed</title><style>' + POP + '</style></head><body>' +
+      '<header><b>SPIDER</b><span id="n">0 lines</span><span class="g"></span>' +
+      '<button id="c">copy</button><button id="d">save .txt</button></header>' +
+      '<pre id="feed"></pre></body></html>');
+    popup.document.close();
+    try {
+      popup.document.getElementById('c').onclick = copyAll;
+      popup.document.getElementById('d').onclick = saveTxt;
+      popup.document.title = 'Spider — live feed';
+    } catch (e) { /* cross-origin popup: the panel still works */ }
+    push();
+  }
+
+  /* ------------------------------------------------------------------ wiring */
+  el('pick').onclick = pick;
+  el('cp').onclick = copyAll;
+  el('x').onclick = function () { host.style.display = 'none'; };
+  el('pop').onclick = function () {
+    if (popup && !popup.closed) { popup.focus(); push(); } else { popout(); }
+  };
+
+  var drag = null;
+  el('bar').addEventListener('mousedown', function (e) {
+    if (e.target.tagName === 'BUTTON') return;
+    var r = host.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    docked = false;                       /* dragged means the user chose where it sits */
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', function (e) {
+    if (!drag) return;
+    host.style.left = Math.max(0, e.clientX - drag.dx) + 'px';
+    host.style.top = Math.max(0, e.clientY - drag.dy) + 'px';
+    host.style.bottom = 'auto';
+  });
+  window.addEventListener('mouseup', function () { drag = null; });
+
+  document.documentElement.appendChild(host);
+  render();
+
+  /* a handle for tinkering from the console, and for the tests */
+  window.__spider = { watch: watch, popout: popout, place: place, lines: function () { return lines; } };
+
+  console.log('%cSpider is awake — press "pick", click the transcript box, and it will sit right under it. ' +
+              'Press "pop-out" for a window of its own.', 'color:#38bdf8');
+})();
+</script>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ------------------------------------------------------------- summariser */
+    var STOP = ('a about above after again against all am an and any are as at be because been before being below ' +
+        'between both but by can could did do does doing down during each few for from further had has have having ' +
+        'he her here hers herself him himself his how i if in into is it its itself just me more most my myself no ' +
+        'nor not now of off on once only or other our ours out over own same she should so some such than that the ' +
+        'their them then there these they this those through to too under until up very was we were what when where ' +
+        'which while who why will with would you your yours ok okay yeah yes right like going gonna um uh hmm well ' +
+        'really thing things know think mean got get also said say').split(' ').reduce(function (m, w) { m[w] = 1; return m; }, {});
+
+    var ACTION = /\b(will|i'll|we'll|you'll|need to|needs to|have to|has to|should|must|make sure|follow up|follow-up|send|schedule|by (mon|tues|wednes|thurs|fri|satur|sun)day|by (tomorrow|tonight|eod|end of (day|week))|by \d|deadline|todo|to-do|action item|next step|take care of|look into|check with)\b/i;
+    var DECISION = /\b(decided|decision|agreed|we('| a)re going with|we'll go with|final(i[sz]ed)?|approved|sign(ed)? off|locked in|conclusion)\b/i;
+
+    function splitSentences(text) {
+        return String(text || '').replace(/\s+/g, ' ')
+            .split(/(?<=[.!?])\s+(?=[A-Z0-9"'(])/).map(function (s) { return s.trim(); })
+            .filter(function (s) { return s.length > 24; });
+    }
+
+    function frequency(text) {
+        var f = {};
+        String(text || '').toLowerCase().replace(/[^a-z0-9'\s]/g, ' ').split(/\s+/)
+            .forEach(function (w) {
+                if (w.length < 4 || STOP[w] || /^\d+$/.test(w)) return;
+                f[w] = (f[w] || 0) + 1;
+            });
+        return f;
+    }
+
+    function score(sentence, freq) {
+        var words = sentence.toLowerCase().replace(/[^a-z0-9'\s]/g, ' ').split(/\s+/);
+        var total = 0;
+        words.forEach(function (w) { if (freq[w]) total += freq[w]; });
+        return words.length ? total / Math.sqrt(words.length) : 0;
+    }
+
+    function offlineSummary(text, bullets) {
+        var sentences = splitSentences(text);
+        if (!sentences.length) return '_Not enough transcript to summarise yet._';
+        var freq = frequency(text);
+        var ranked = sentences.map(function (s, i) { return { s: s, i: i, v: score(s, freq) }; })
+            .sort(function (a, b) { return b.v - a.v; });
+
+        var top = ranked.slice(0, bullets || 6).sort(function (a, b) { return a.i - b.i; });
+        var out = ['## Summary'].concat(top.map(function (r) { return '- ' + r.s; }));
+
+        var decisions = sentences.filter(function (s) { return DECISION.test(s); }).slice(0, 4);
+        if (decisions.length) out = out.concat(['## Decisions']).concat(decisions.map(function (s) { return '- ' + s; }));
+
+        var actions = sentences.filter(function (s) { return ACTION.test(s); }).slice(0, 6);
+        if (actions.length) out = out.concat(['## Action items']).concat(actions.map(function (s) { return '- ' + s; }));
+
+        out = out.concat(['_Offline summary — no key set, nothing left this computer._']);
+        return out.join('\n');
+    }
+
+    function buildPrompt(text) {
+        var limit = 60000;
+        var body = text.length > limit ? text.slice(text.length - limit) : text;
+        return {
+            system: 'You are a minute-taker. From the meeting transcript, reply in markdown with exactly ' +
+                    'these sections, each a short bullet list: "## Summary" (3-6 bullets), "## Decisions", ' +
+                    '"## Action items" (name an owner when the transcript says one), "## Open questions". ' +
+                    'Write only what the transcript supports. No preamble, no closing remarks. ' +
+                    'If a section has nothing, write "- none".',
+            user: (text.length > limit ? '(earlier part of the call was dropped — this is the tail)\n\n' : '') +
+                  'Transcript:\n' + body
+        };
+    }
+
+    /* Markdown, but only the four things this produces: ## headings, - bullets, **bold**, _italic_. */
+    function renderMarkdown(markdown) {
+        var root = document.createElement('div');
+        var list = null;
+
+        function inline(text) {
+            var span = document.createElement('span');
+            var parts = text.split(/(\*\*[^*]+\*\*|_[^_]+_)/g);
+            parts.forEach(function (part) {
+                if (!part) return;
+                if (/^\*\*[^*]+\*\*$/.test(part)) {
+                    var b = document.createElement('b');
+                    b.textContent = part.slice(2, -2);
+                    span.appendChild(b);
+                } else if (/^_[^_]+_$/.test(part)) {
+                    var em = document.createElement('em');
+                    em.textContent = part.slice(1, -1);
+                    span.appendChild(em);
+                } else {
+                    span.appendChild(document.createTextNode(part));
+                }
+            });
+            return span;
+        }
+
+        markdown.split('\n').forEach(function (raw) {
+            var line = raw.trim();
+            if (!line) { list = null; return; }
+            var heading = line.match(/^#{1,4}\s+(.*)$/);
+            if (heading) {
+                list = null;
+                var h = document.createElement('h3');
+                h.textContent = heading[1];
+                root.appendChild(h);
+                return;
+            }
+            if (/^[*-]\s+/.test(line)) {
+                if (!list) { list = document.createElement('ul'); root.appendChild(list); }
+                var li = document.createElement('li');
+                li.appendChild(inline(line.replace(/^[*-]\s+/, '')));
+                list.appendChild(li);
+                return;
+            }
+            list = null;
+            var p = document.createElement('p');
+            p.appendChild(inline(line));
+            root.appendChild(p);
+        });
+
+        return root;
+    }
+
+    /* ------------------------------------------------------------------- app */
+    var KEY = 'callspider.key';
+    var MODEL = 'callspider.model';
+    var DEFAULT_MODEL = 'openai/gpt-4o-mini';
+
+    var els = {
+        transcript: document.getElementById('transcript'),
+        out: document.getElementById('out'),
+        counts: document.getElementById('counts'),
+        durNote: document.getElementById('durNote'),
+        enginePill: document.getElementById('enginePill'),
+        engineNote: document.getElementById('engineNote'),
+        key: document.getElementById('key'),
+        model: document.getElementById('model'),
+        drawer: document.getElementById('drawer'),
+        inputCard: document.getElementById('inputCard'),
+        toast: document.getElementById('toast')
+    };
+
+    var state = { summary: '', engine: '' };
+
+    function toast(text) {
+        els.toast.textContent = text;
+        els.toast.classList.add('show');
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(function () { els.toast.classList.remove('show'); }, 2200);
+    }
+
+    function getKey() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+    function getModel() { try { return localStorage.getItem(MODEL) || DEFAULT_MODEL; } catch (e) { return DEFAULT_MODEL; } }
+
+    /* The key says which provider it belongs to — no dropdown to get wrong. */
+    function providerOf(key) {
+        /* Google issues two key shapes: AIza… and AQ.… */
+        if (/^(AIza|AQ\.)/.test(key)) return 'google';
+        return 'openrouter';
+    }
+
+    function modelFor(key) {
+        var model = getModel();
+        if (providerOf(key) === 'google' && (model.indexOf('/') > -1 || model === DEFAULT_MODEL)) return '';
+        return model;
+    }
+
+    function paintEngine() {
+        var key = getKey();
+        var model = modelFor(key);
+        els.enginePill.textContent = key ? providerOf(key) + ' · ' + (model || 'auto') : 'offline';
+        els.enginePill.className = 'pill ' + (key ? 'key' : 'on');
+        els.key.value = key;
+        els.model.value = model || (providerOf(key) === 'google' ? '' : DEFAULT_MODEL);
+    }
+
+    function listModels(key) {
+        var provider = providerOf(key);
+        var url = provider === 'google'
+            ? 'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key)
+            : 'https://openrouter.ai/api/v1/models';
+        return fetch(url, provider === 'google' ? { headers: { 'x-goog-api-key': key } } : undefined).then(function (res) {
+            return res.text().then(function (body) {
+                var json = null;
+                try { json = JSON.parse(body); } catch (e) {}
+                if (!res.ok) {
+                    var msg = json && json.error && json.error.message ? json.error.message : String(body).slice(0, 200);
+                    throw new Error((provider === 'google' ? 'Google: ' : 'OpenRouter: ') + msg);
+                }
+                if (provider === 'google') {
+                    return (json.models || [])
+                        .filter(function (m) { return (m.supportedGenerationMethods || []).indexOf('generateContent') > -1; })
+                        .map(function (m) { return m.name.replace(/^models\//, ''); });
+                }
+                return (json.data || []).map(function (m) { return m.id; });
+            });
+        });
+    }
+
+    /* Google retires model names; rather than hardcode one that dies, ask the key. */
+    function pickGoogleModel(key) {
+        return listModels(key).then(function (models) {
+            if (!models.length) throw new Error('That key can run no text model.');
+            var flash = models.filter(function (m) { return /flash/i.test(m) && !/lite|preview|exp|tts|image|audio|live/i.test(m); });
+            var lite = models.filter(function (m) { return /flash-lite/i.test(m) && !/preview|exp/i.test(m); });
+            var chosen = flash[0] || lite[0] || models[0];
+            try { localStorage.setItem(MODEL, chosen); } catch (e) {}
+            els.model.value = chosen;
+            return chosen;
+        });
+    }
+
+    function callOpenRouter(key, model, prompt) {
+        return fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + key,
+                'X-Title': 'Call Spider'
+            },
+            body: JSON.stringify({
+                model: model || DEFAULT_MODEL,
+                temperature: 0.2,
+                messages: [
+                    { role: 'system', content: prompt.system },
+                    { role: 'user', content: prompt.user }
+                ]
+            })
+        }).then(function (res) {
+            return res.text().then(function (body) {
+                var json = null;
+                try { json = JSON.parse(body); } catch (e) {}
+                if (!res.ok) {
+                    var msg = json && json.error && json.error.message ? json.error.message : String(body).slice(0, 300);
+                    throw new Error(msg);
+                }
+                var text = json && json.choices && json.choices[0] && json.choices[0].message
+                    ? (json.choices[0].message.content || '') : '';
+                if (!text) throw new Error('The provider returned an empty answer.');
+                return text;
+            });
+        });
+    }
+
+    function callGemini(key, model, prompt) {
+        var url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
+            encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+            body: JSON.stringify({
+                system_instruction: { parts: [{ text: prompt.system }] },
+                contents: [{ role: 'user', parts: [{ text: prompt.user }] }],
+                generationConfig: { temperature: 0.2 }
+            })
+        }).then(function (res) {
+            return res.text().then(function (body) {
+                var json = null;
+                try { json = JSON.parse(body); } catch (e) {}
+                if (!res.ok) {
+                    var msg = json && json.error && json.error.message ? json.error.message : String(body).slice(0, 300);
+                    throw new Error('Google: ' + msg);
+                }
+                var candidate = (json && json.candidates && json.candidates[0]) || {};
+                var parts = (candidate.content && candidate.content.parts) || [];
+                var text = parts.map(function (p) { return p.text || ''; }).join('');
+                if (!text) throw new Error('Google returned an empty answer.');
+                return text;
+            });
+        });
+    }
+
+    function counts() {
+        var text = els.transcript.value.trim();
+        var words = text ? text.split(/\s+/).length : 0;
+        els.counts.textContent = words + (words === 1 ? ' word' : ' words');
+        var minutes = Math.round(words / 140);
+        els.durNote.textContent = words
+            ? 'roughly ' + Math.max(1, minutes) + ' min of talking at 140 wpm'
+            : 'paste or drop a transcript, or use live capture';
+    }
+
+    function show(text, engine) {
+        state.summary = text;
+        state.engine = engine;
+        els.out.innerHTML = '';
+        els.out.appendChild(renderMarkdown(text));
+        els.engineNote.textContent = engine;
+    }
+
+    function busy(on) {
+        els.inputCard.classList.toggle('busy', !!on);
+        els.summarize.disabled = !!on;
+        els.summarize.textContent = on ? 'summarising…' : 'Summarise call';
+    }
+
+    function summarize() {
+        var text = els.transcript.value.trim();
+        if (!text) { toast('Paste a transcript first'); return; }
+        var key = getKey();
+
+        if (!key) {
+            show(offlineSummary(text), 'offline');
+            toast('Summarised offline');
+            return;
+        }
+
+        busy(true);
+        var prompt = buildPrompt(text);
+        var provider = providerOf(key);
+        var model = modelFor(key);
+
+        var job = provider === 'google'
+            ? (model ? Promise.resolve(model) : pickGoogleModel(key)).then(function (chosen) {
+                  return callGemini(key, chosen, prompt).then(function (answer) {
+                      return { answer: answer, engine: 'google · ' + chosen };
+                  });
+              })
+            : callOpenRouter(key, model, prompt).then(function (answer) {
+                  return { answer: answer, engine: 'ai · ' + (model || DEFAULT_MODEL) };
+              });
+
+        job.then(function (result) {
+            busy(false);
+            show(result.answer || offlineSummary(text), result.engine);
+        }, function (err) {
+            busy(false);
+            show('_Summary failed — ' + (err && err.message ? err.message : 'unknown error') +
+                 '_\n\n' + offlineSummary(text), 'offline fallback');
+        });
+    }
+
+    function copyText(text, what) {
+        if (!text) { toast('Nothing to copy yet'); return; }
+        navigator.clipboard.writeText(text).then(function () { toast(what + ' copied'); },
+            function () { toast('The browser blocked the clipboard'); });
+    }
+
+    function download(text) {
+        if (!text) { toast('Nothing to save yet'); return; }
+        var blob = new Blob([text], { type: 'text/markdown' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'call-notes-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.md';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        toast('Saved');
+    }
+
+    /* ---------------------------------------------------------------- wiring */
+    var els2 = { summarize: document.getElementById('summarize') };
+    els.summarize = els2.summarize;
+
+    document.getElementById('summarize').addEventListener('click', summarize);
+
+    document.getElementById('pasteBtn').addEventListener('click', function () {
+        navigator.clipboard.readText().then(function (text) {
+            if (!text.trim()) { toast('The clipboard is empty'); return; }
+            els.transcript.value = text;
+            counts();
+            toast('Pasted ' + text.split(/\s+/).length + ' words');
+        }, function () { toast('The browser blocked reading the clipboard — press Ctrl+V in the box'); });
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', function () {
+        els.transcript.value = '';
+        els.out.innerHTML = '<p class="hint">Cleared. Paste a transcript or use live capture.</p>';
+        state.summary = '';
+        els.engineNote.textContent = '';
+        counts();
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', function () {
+        els.transcript.value = [
+            'Alice: Thanks for joining. We need to lock the launch date today.',
+            'Bob: The design is ready, I will send the final deck by Thursday.',
+            'Alice: Good. We decided to ship on Friday, is everybody fine with that?',
+            'Cara: Fine by me, but I have to check with the vendor first.',
+            'Bob: One open question, is the budget for next quarter approved yet?',
+            'Alice: Not yet. Cara, can you follow up with finance next week?',
+            'Cara: Yes, I will look into it and report back on Monday.'
+        ].join('\n');
+        counts();
+        toast('Sample transcript loaded');
+    });
+
+    document.getElementById('copyNotes').addEventListener('click', function () { copyText(state.summary, 'Notes'); });
+    document.getElementById('saveNotes').addEventListener('click', function () { download(state.summary); });
+
+    document.getElementById('settingsBtn').addEventListener('click', function () {
+        els.drawer.classList.toggle('open');
+    });
+
+    document.getElementById('checkModels').addEventListener('click', function () {
+        var key = (document.getElementById('key').value || getKey()).trim();
+        if (!key) { toast('Paste a key first'); return; }
+        toast('asking the provider…');
+        listModels(key).then(function (models) {
+            var list = document.getElementById('modelList');
+            list.innerHTML = '';
+            models.slice(0, 60).forEach(function (id) {
+                var opt = document.createElement('option');
+                opt.value = id;
+                list.appendChild(opt);
+            });
+            var free = models.filter(function (m) { return /:free$/.test(m); });
+            if (providerOf(key) === 'google') {
+                toast(models.length + ' models; pick one in the field');
+                if (!document.getElementById('model').value && models.length) {
+                    var guess = models.filter(function (m) { return /flash/i.test(m) && !/lite|preview|exp/i.test(m); })[0] || models[0];
+                    document.getElementById('model').value = guess;
+                }
+            } else {
+                toast(models.length + ' models, ' + free.length + ' of them free');
+                if (!document.getElementById('model').value && free.length) {
+                    document.getElementById('model').value = free[0];
+                }
+            }
+        }, function (err) {
+            toast(err && err.message ? err.message : 'could not list models');
+        });
+    });
+
+    document.getElementById('saveKey').addEventListener('click', function () {
+        try {
+            localStorage.setItem(KEY, document.getElementById('key').value.trim());
+            var typed = document.getElementById('model').value.trim();
+            localStorage.setItem(MODEL, typed || (providerOf(document.getElementById('key').value.trim()) === 'google' ? '' : DEFAULT_MODEL));
+        } catch (e) { toast('This browser refuses localStorage here'); return; }
+        paintEngine();
+        toast(getKey() ? 'Key saved' : 'Saved — still offline without a key');
+    });
+
+    document.getElementById('forgetKey').addEventListener('click', function () {
+        try { localStorage.removeItem(KEY); } catch (e) {}
+        document.getElementById('key').value = '';
+        paintEngine();
+        toast('Key forgotten — offline again');
+    });
+
+    document.getElementById('liveBtn').addEventListener('click', function () {
+        var code = document.getElementById('snippet').textContent.trim();
+        navigator.clipboard.writeText(code).then(function () {
+            alert('The capture code is on your clipboard.\n\n' +
+                  '1. Open the tab with the live transcript.\n' +
+                  '2. Press F12 (or Ctrl+Shift+J) to open the console.\n' +
+                  '3. Paste with Ctrl+V and press Enter.\n' +
+                  '4. In the small dark panel press pick, then click the transcript box.\n\n' +
+                  'The panel docks itself right under that box and captures everything from then on,\n' +
+                  'including the lines already there.\n\n' +
+                  'Press pop-out for a window of its own, or copy at the end and paste here to summarise.');
+        }, function () { toast('The browser blocked the clipboard'); });
+    });
+
+    els.transcript.addEventListener('input', counts);
+    els.transcript.addEventListener('dragover', function (e) { e.preventDefault(); });
+    els.transcript.addEventListener('drop', function (e) {
+        e.preventDefault();
+        var file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () { els.transcript.value = String(reader.result || ''); counts(); toast('Loaded ' + file.name); };
+        reader.readAsText(file);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); summarize(); }
+    });
+
+    paintEngine();
+    counts();
+})();
+</script>
+</body>
+</html>

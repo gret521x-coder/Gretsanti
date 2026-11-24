@@ -169,18 +169,25 @@
     <div class="drawer-inner">
         <div class="field">
             <label for="key">OpenRouter key (optional)</label>
-            <input id="key" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false">
+            <input id="key" type="password" placeholder="sk-or-v1-… or AIza…" autocomplete="off" spellcheck="false">
         </div>
         <div class="field">
             <label for="model">model</label>
-            <input id="model" type="text" placeholder="openai/gpt-4o-mini" spellcheck="false" style="min-width:220px">
+            <input id="model" type="text" placeholder="openai/gpt-4o-mini" spellcheck="false" style="min-width:220px" list="modelList">
+            <datalist id="modelList"></datalist>
         </div>
         <button class="primary" id="saveKey">Save</button>
+        <button class="ghost" id="checkModels">list models</button>
         <button class="ghost" id="forgetKey">Forget</button>
         <p class="note">
             <b>Nothing leaves this computer unless you set a key.</b> With no key the summary is built here
-            from word frequency and action words. With a key, only the transcript you press Summarize on is
-            sent to OpenRouter, with the model above. The key is stored in this browser's localStorage.
+            from word frequency and action words. The key is recognised by its prefix — <b>AIza…</b> goes to
+            Google AI Studio (Gemini), <b>sk-or-…</b> goes to OpenRouter. Only the transcript you press
+            Summarise on is sent, with the model above, and the key stays in this browser's localStorage.
+            <br><br>
+            <b>On a free Google key:</b> free-tier prompts are used to improve Google's products, so do not
+            paste a call you would not want reviewed. <b>list models</b> asks the provider what your key can
+            actually run — Google no longer publishes a fixed list.
         </p>
     </div>
 </section>
@@ -604,12 +611,121 @@ Ctrl+V works, so does dragging a .txt file onto this box."></textarea>
     function getKey() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
     function getModel() { try { return localStorage.getItem(MODEL) || DEFAULT_MODEL; } catch (e) { return DEFAULT_MODEL; } }
 
+    /* The key says which provider it belongs to — no dropdown to get wrong. */
+    function providerOf(key) {
+        if (/^AIza/.test(key)) return 'google';
+        return 'openrouter';
+    }
+
+    function modelFor(key) {
+        var model = getModel();
+        if (providerOf(key) === 'google' && (model.indexOf('/') > -1 || model === DEFAULT_MODEL)) return '';
+        return model;
+    }
+
     function paintEngine() {
-        var has = !!getKey();
-        els.enginePill.textContent = has ? 'ai · ' + getModel() : 'offline';
-        els.enginePill.className = 'pill ' + (has ? 'key' : 'on');
-        els.key.value = getKey();
-        els.model.value = getModel();
+        var key = getKey();
+        var model = modelFor(key);
+        els.enginePill.textContent = key ? providerOf(key) + ' · ' + (model || 'auto') : 'offline';
+        els.enginePill.className = 'pill ' + (key ? 'key' : 'on');
+        els.key.value = key;
+        els.model.value = model || (providerOf(key) === 'google' ? '' : DEFAULT_MODEL);
+    }
+
+    function listModels(key) {
+        var provider = providerOf(key);
+        var url = provider === 'google'
+            ? 'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key)
+            : 'https://openrouter.ai/api/v1/models';
+        return fetch(url).then(function (res) {
+            return res.text().then(function (body) {
+                var json = null;
+                try { json = JSON.parse(body); } catch (e) {}
+                if (!res.ok) {
+                    var msg = json && json.error && json.error.message ? json.error.message : String(body).slice(0, 200);
+                    throw new Error((provider === 'google' ? 'Google: ' : 'OpenRouter: ') + msg);
+                }
+                if (provider === 'google') {
+                    return (json.models || [])
+                        .filter(function (m) { return (m.supportedGenerationMethods || []).indexOf('generateContent') > -1; })
+                        .map(function (m) { return m.name.replace(/^models\//, ''); });
+                }
+                return (json.data || []).map(function (m) { return m.id; });
+            });
+        });
+    }
+
+    /* Google retires model names; rather than hardcode one that dies, ask the key. */
+    function pickGoogleModel(key) {
+        return listModels(key).then(function (models) {
+            if (!models.length) throw new Error('That key can run no text model.');
+            var flash = models.filter(function (m) { return /flash/i.test(m) && !/lite|preview|exp|tts|image|audio|live/i.test(m); });
+            var lite = models.filter(function (m) { return /flash-lite/i.test(m) && !/preview|exp/i.test(m); });
+            var chosen = flash[0] || lite[0] || models[0];
+            try { localStorage.setItem(MODEL, chosen); } catch (e) {}
+            els.model.value = chosen;
+            return chosen;
+        });
+    }
+
+    function callOpenRouter(key, model, prompt) {
+        return fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + key,
+                'X-Title': 'Call Spider'
+            },
+            body: JSON.stringify({
+                model: model || DEFAULT_MODEL,
+                temperature: 0.2,
+                messages: [
+                    { role: 'system', content: prompt.system },
+                    { role: 'user', content: prompt.user }
+                ]
+            })
+        }).then(function (res) {
+            return res.text().then(function (body) {
+                var json = null;
+                try { json = JSON.parse(body); } catch (e) {}
+                if (!res.ok) {
+                    var msg = json && json.error && json.error.message ? json.error.message : String(body).slice(0, 300);
+                    throw new Error(msg);
+                }
+                var text = json && json.choices && json.choices[0] && json.choices[0].message
+                    ? (json.choices[0].message.content || '') : '';
+                if (!text) throw new Error('The provider returned an empty answer.');
+                return text;
+            });
+        });
+    }
+
+    function callGemini(key, model, prompt) {
+        var url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
+            encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                system_instruction: { parts: [{ text: prompt.system }] },
+                contents: [{ role: 'user', parts: [{ text: prompt.user }] }],
+                generationConfig: { temperature: 0.2 }
+            })
+        }).then(function (res) {
+            return res.text().then(function (body) {
+                var json = null;
+                try { json = JSON.parse(body); } catch (e) {}
+                if (!res.ok) {
+                    var msg = json && json.error && json.error.message ? json.error.message : String(body).slice(0, 300);
+                    throw new Error('Google: ' + msg);
+                }
+                var candidate = (json && json.candidates && json.candidates[0]) || {};
+                var parts = (candidate.content && candidate.content.parts) || [];
+                var text = parts.map(function (p) { return p.text || ''; }).join('');
+                if (!text) throw new Error('Google returned an empty answer.');
+                return text;
+            });
+        });
     }
 
     function counts() {
@@ -649,43 +765,26 @@ Ctrl+V works, so does dragging a .txt file onto this box."></textarea>
 
         busy(true);
         var prompt = buildPrompt(text);
-        fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + key,
-                'X-Title': 'Call Spider'
-            },
-            body: JSON.stringify({
-                model: getModel(),
-                temperature: 0.2,
-                messages: [
-                    { role: 'system', content: prompt.system },
-                    { role: 'user', content: prompt.user }
-                ]
-            })
-        }).then(function (res) {
-            return res.text().then(function (body) {
-                busy(false);
-                if (!res.ok) {
-                    var detail = body;
-                    try { detail = JSON.parse(body).error.message || body; } catch (e) {}
-                    show('_The model refused: ' + String(detail).slice(0, 300) + '_\n\n' + offlineSummary(text), 'offline fallback');
-                    return;
-                }
-                var answer = '';
-                try {
-                    var json = JSON.parse(body);
-                    answer = json.choices[0].message.content || '';
-                } catch (e) {
-                    show('_The provider sent something that is not JSON._\n\n' + offlineSummary(text), 'offline fallback');
-                    return;
-                }
-                show(answer || offlineSummary(text), 'ai · ' + getModel());
-            });
-        }).catch(function (err) {
+        var provider = providerOf(key);
+        var model = modelFor(key);
+
+        var job = provider === 'google'
+            ? (model ? Promise.resolve(model) : pickGoogleModel(key)).then(function (chosen) {
+                  return callGemini(key, chosen, prompt).then(function (answer) {
+                      return { answer: answer, engine: 'google · ' + chosen };
+                  });
+              })
+            : callOpenRouter(key, model, prompt).then(function (answer) {
+                  return { answer: answer, engine: 'ai · ' + (model || DEFAULT_MODEL) };
+              });
+
+        job.then(function (result) {
             busy(false);
-            show('_Network error: ' + (err && err.message ? err.message : 'unknown') + '_\n\n' + offlineSummary(text), 'offline fallback');
+            show(result.answer || offlineSummary(text), result.engine);
+        }, function (err) {
+            busy(false);
+            show('_Summary failed — ' + (err && err.message ? err.message : 'unknown error') +
+                 '_\n\n' + offlineSummary(text), 'offline fallback');
         });
     }
 
@@ -751,10 +850,41 @@ Ctrl+V works, so does dragging a .txt file onto this box."></textarea>
         els.drawer.classList.toggle('open');
     });
 
+    document.getElementById('checkModels').addEventListener('click', function () {
+        var key = (document.getElementById('key').value || getKey()).trim();
+        if (!key) { toast('Paste a key first'); return; }
+        toast('asking the provider…');
+        listModels(key).then(function (models) {
+            var list = document.getElementById('modelList');
+            list.innerHTML = '';
+            models.slice(0, 60).forEach(function (id) {
+                var opt = document.createElement('option');
+                opt.value = id;
+                list.appendChild(opt);
+            });
+            var free = models.filter(function (m) { return /:free$/.test(m); });
+            if (providerOf(key) === 'google') {
+                toast(models.length + ' models; pick one in the field');
+                if (!document.getElementById('model').value && models.length) {
+                    var guess = models.filter(function (m) { return /flash/i.test(m) && !/lite|preview|exp/i.test(m); })[0] || models[0];
+                    document.getElementById('model').value = guess;
+                }
+            } else {
+                toast(models.length + ' models, ' + free.length + ' of them free');
+                if (!document.getElementById('model').value && free.length) {
+                    document.getElementById('model').value = free[0];
+                }
+            }
+        }, function (err) {
+            toast(err && err.message ? err.message : 'could not list models');
+        });
+    });
+
     document.getElementById('saveKey').addEventListener('click', function () {
         try {
             localStorage.setItem(KEY, document.getElementById('key').value.trim());
-            localStorage.setItem(MODEL, document.getElementById('model').value.trim() || DEFAULT_MODEL);
+            var typed = document.getElementById('model').value.trim();
+            localStorage.setItem(MODEL, typed || (providerOf(document.getElementById('key').value.trim()) === 'google' ? '' : DEFAULT_MODEL));
         } catch (e) { toast('This browser refuses localStorage here'); return; }
         paintEngine();
         toast(getKey() ? 'Key saved' : 'Saved — still offline without a key');

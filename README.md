@@ -39,7 +39,7 @@ Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship tod
 
 | Card | Opens |
 |---|---|
-| Bardagulan (locked) | `https://aidekupal.unaux.com/gc-v5.html` — the copy next to the PHP |
+| Bardagulan (locked) | `https://aidekupal.unaux.com/gc.html` — the copy next to the PHP |
 | Collectibles | `https://aidekupal.unaux.com/Screenshot.html` — it needs `save.php` |
 | Aurora | `aurora-v2.html` — was `Aurora.html` |
 | TNS, Pindutan | still local, they are pure static |
@@ -47,8 +47,8 @@ Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship tod
 The chat and the vault point at the PHP host because that host refuses cross-site
 requests outright (a plain `<script>` tag is refused too — `diag.html` proves it), so a
 copy on Pages can never reach it. Opened from unaux, the chat finds `api-v5.php` beside
-itself and everything works. **`gc-v5.html` has to exist on unaux** for that card to
-open.
+itself and everything works. The file on unaux is called `gc.html` (the same name your old chat had, so old
+bookmarks now open the new one) — keep it in step with `gc-v5.html` in this repo.
 
 Grids are saved in `localStorage`, so an existing one would have kept the old
 filenames forever. `getApps()` now rewrites `gc.html` → `gc-v5.html` and

@@ -24,7 +24,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
-| `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
+| `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features; uses the proxy on Pages |
 
 ---
 
@@ -343,6 +343,12 @@ Opened from XAMPP or from unaux itself, it uses the `api-v5.php` next to the pag
 To move hosts, set the value by hand before the script runs. Relative `uploads/x.png`
 paths are rewritten onto that host, so images, voice notes and GIFs keep working.
 
+**Aurora needs a key too, and it has none.** On `*.github.io` it now posts to
+`api-ai.php` instead of a provider, so the key lives on the server and the page stays
+public-safe. `api-ai.php` accepts Aurora's own system prompt (capped at 3000 chars) and
+always answers as a stream. Anywhere else Aurora still talks to its provider directly,
+with the key from Settings.
+
 **3. Upload the new `api-v5.php`.** It sends CORS headers for `*.github.io`,
 `*.unaux.com`, `localhost` and `127.0.0.1` and answers the preflight `OPTIONS`
 request — without it the browser blocks every call from Pages. Any other host goes
@@ -390,6 +396,10 @@ keep keys on the server side (`api-ai.php`) when you can.
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **Aurora through the proxy: 15 checks** — proxy picked on `github.io`, direct provider on
+  localhost, no key and no `Authorization` header sent through the proxy, no
+  `/chat/completions` appended to a `.php` base, system prompt and transcript in the body,
+  SSE frames rendered even with streaming switched off, plain-text answer rendered
 - **GitHub Pages mode: 9 checks** — sibling `api-v5.php` by default, absolute `KDL_API_BASE` used for
   every endpoint when set, relative uploads rewritten onto the PHP host, absolute image URLs untouched
 - **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire

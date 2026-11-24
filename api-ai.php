@@ -51,11 +51,50 @@ const RATE_MAX       = 30;      // requests per IP…
 const RATE_WINDOW    = 600;     // …per 10 minutes
 const UPSTREAM_TIMEOUT = 120;
 const ALLOWED_MODELS = ['openai/gpt-4o-mini', 'openai/gpt-4o', 'anthropic/claude-3.5-haiku'];
+const ALLOW_CLIENT_SYSTEM = true;   // Aurora brings its own persona — it replaces $SYSTEM
+const MAX_SYSTEM          = 3000;   // cap on a client-supplied system prompt
 
 /* ------------------------------------------------------------------ setup */
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store, max-age=0');
+
+/* -------------------------------------------------------------------- CORS
+ *  The page may be served from GitHub Pages while this file keeps running on
+ *  the PHP host. Only the hosts below may call it; the key stays here either
+ *  way. Add your own host to $CORS_HOSTS if you move the site again.
+ */
+$CORS_HOSTS = [
+    'gret521x-coder.github.io',   // the GitHub Pages copy
+    'unaux.com',                  // the current site
+    'localhost', '127.0.0.1'      // XAMPP while testing
+];
+
+$__origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if ($__origin !== '') {
+    $__host = parse_url($__origin, PHP_URL_HOST);
+    if (is_string($__host) && $__host !== '') {
+        $__allowed = false;
+        foreach ($CORS_HOSTS as $__h) {
+            if ($__host === $__h || substr($__host, -strlen('.' . $__h)) === '.' . $__h) {
+                $__allowed = true;
+                break;
+            }
+        }
+        if ($__allowed) {
+            header('Access-Control-Allow-Origin: ' . $__origin);
+            header('Vary: Origin');
+            header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+            header('Access-Control-Max-Age: 86400');
+        }
+    }
+}
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 $dataDir = __DIR__ . '/data';
 $rateFile = $dataDir . '/agent-rate.json';
@@ -150,13 +189,25 @@ $model = isset($in['model']) && in_array((string)$in['model'], ALLOWED_MODELS, t
     : $MODEL;
 
 $msgs = [];
+$sysExtra = '';
 foreach (array_slice($in['messages'], -MAX_MESSAGES) as $m) {
     if (!is_array($m)) {
         continue;
     }
     $role = (string)($m['role'] ?? '');
+    if ($role === 'system') {
+        /* A page with its own persona (Aurora) may bring its own instructions.
+           They replace the built-in prompt, capped so nobody smuggles a novel
+           into the request. Set $ALLOW_CLIENT_SYSTEM = false to ignore them. */
+        if (ALLOW_CLIENT_SYSTEM && strlen($sysExtra) < MAX_SYSTEM) {
+            $chunk = (string)($m['content'] ?? '');
+            $chunk = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u', '', $chunk) ?? '';
+            $sysExtra = trim($sysExtra . "\n" . trim(substr($chunk, 0, MAX_SYSTEM - strlen($sysExtra))));
+        }
+        continue;
+    }
     if ($role !== 'user' && $role !== 'assistant') {
-        continue;                      // never accept a client-side system prompt
+        continue;
     }
     $text = (string)($m['content'] ?? '');
     $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u', '', $text) ?? '';
@@ -174,7 +225,7 @@ rate_limit($rateFile, client_ip());
 
 $payload = json_encode([
     'model'       => $model,
-    'messages'    => array_merge([['role' => 'system', 'content' => $SYSTEM]], $msgs),
+    'messages'    => array_merge([['role' => 'system', 'content' => $sysExtra !== '' ? $sysExtra : $SYSTEM]], $msgs),
     'stream'      => true,
     'max_tokens'  => MAX_TOKENS,
     'temperature' => 0.6

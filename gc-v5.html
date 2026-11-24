@@ -892,6 +892,18 @@ body.lb-open{overflow:hidden}
 </div>
 
 <script>
+/* ============================================================================
+   SITE CONFIG — the one line you edit when the page is not served next to
+   its PHP (e.g. the page is on GitHub Pages while api-v5.php stays on unaux).
+
+     window.KDL_API_BASE = 'https://yoursite.unaux.com/api-v5.php';
+
+   Leave it empty when the PHP sits in the same folder — that is the default
+   and it is what XAMPP does.
+   ============================================================================ */
+window.KDL_API_BASE = window.KDL_API_BASE || '';
+</script>
+<script>
 'use strict';
 /* ================================================================
    Black Cat Group Chat — fixed room, triple MQTT relay + PHP fallback
@@ -950,6 +962,26 @@ var lastTypingSent = 0;
 var lastReactAt = 0;
 var phpState = 'wait';
 var lastServerTs = 0;   /* server-side monotonic timestamp for incremental loads */
+/* ------------------------------------------------------------------
+   Where does the PHP live?
+   Empty  → api-v5.php sitting next to this file (XAMPP, your own host)
+   Set    → absolute URL of your PHP host, e.g. on GitHub Pages:
+            window.KDL_API_BASE = 'https://yoursite.unaux.com/api-v5.php';
+   ------------------------------------------------------------------ */
+var API_BASE = (window.KDL_API_BASE || 'api-v5.php');
+var API_Q = API_BASE + '?action=';
+
+/* relative upload paths (uploads/x.png) must point at the PHP host */
+function apiDir(){
+  var i = API_BASE.lastIndexOf('/');
+  return i < 0 ? '' : API_BASE.slice(0, i + 1);
+}
+function mediaUrl(u){
+  if(!u) return u;
+  if(/^(https?:|data:|blob:)/i.test(u)) return u;
+  return apiDir() + u;
+}
+
 var serverOnline = null; /* Set(uid) from api-v5.php?action=online, or null = unsupported */
 var leaveSent = false;
 var popEl = null;
@@ -1363,7 +1395,7 @@ function mkMsg(type, text, extra){
 }
 function persist(m){
   try{
-    return fetch('api-v5.php?action=send', {
+    return fetch(API_Q + 'send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(m)
@@ -1388,7 +1420,7 @@ function toggleReact(id, emoji){
   lastReactAt = Date.now();
   sendPacket({ t:'react', id: id, emoji: emoji, uid: uid, name: myName() });
   try{
-    fetch('api-v5.php?action=react', {
+    fetch(API_Q + 'react', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: id, emoji: emoji, uid: uid, name: myName() })
@@ -1458,7 +1490,7 @@ function sendAway(){
 function sendBeatToPhp(){
   if(phpState !== 'ok') return;
   try{
-    fetch('api-v5.php?action=beat', {
+    fetch(API_Q + 'beat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid: uid, name: myName(), joinTs: myJoinTs })
@@ -1467,7 +1499,7 @@ function sendBeatToPhp(){
 }
 function phpPresence(){
   if(phpState !== 'ok'){ serverOnline = null; return; }
-  fetch('api-v5.php?action=online&t=' + nowMs(), { cache:'no-store' })
+  fetch(API_Q + 'online&t=' + nowMs(), { cache:'no-store' })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || d.ok !== true || !Array.isArray(d.online)){ serverOnline = null; return; }
@@ -1516,7 +1548,7 @@ function announceLeave(){
     });
   }catch(e){}
   try{
-    if(navigator.sendBeacon) navigator.sendBeacon('api-v5.php?action=leave', new Blob([JSON.stringify({uid:uid, name:myName()})], {type:'application/json'}));
+    if(navigator.sendBeacon) navigator.sendBeacon(API_Q + 'leave', new Blob([JSON.stringify({uid:uid, name:myName()})], {type:'application/json'}));
   }catch(e){}
 }
 
@@ -1663,7 +1695,7 @@ el('clearBtn').addEventListener('click', function(){
   doClearLocal();
   publishAll({ t:'clear', uid: uid });
   try{
-    fetch('api-v5.php?action=clear', {
+    fetch(API_Q + 'clear', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ uid: uid })
     }).catch(function(){});
@@ -1684,7 +1716,7 @@ function doClearLocal(){
 
 /* ================= PHP fallback sync (3.5s) ================= */
 function phpPoll(){
-  fetch('api-v5.php?action=load&t=' + nowMs() + '&since=' + lastServerTs, { cache: 'no-store' })
+  fetch(API_Q + 'load&t=' + nowMs() + '&since=' + lastServerTs, { cache: 'no-store' })
     .then(function(r){ return r.json(); })
     .then(function(d){
       phpOk(!!(d && d.ok === true));
@@ -1745,6 +1777,7 @@ el('fileInp').addEventListener('change', function(){
 
 /* ================= Lightbox ================= */
 function openLightbox(src){
+  src = mediaUrl(src);
   el('lbImg').src = src;
   el('lbOpen').href = src;
   el('lightbox').classList.add('open');
@@ -1849,7 +1882,7 @@ function fetchDirect(q){
     });
 }
 function fetchProxy(q){
-  return fetch('api-v5.php?action=gif&q=' + encodeURIComponent(q), { cache: 'no-store' })
+  return fetch(API_Q + 'gif&q=' + encodeURIComponent(q), { cache: 'no-store' })
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(d){
       if(!d || !d.ok || !Array.isArray(d.gifs)) throw 0;
@@ -1864,7 +1897,7 @@ function renderGifItems(items){
     if(!g || !g.url) return;
     var prev = (g.animated_preview && g.animated_preview.url) || g.preview_url || g.url;
     var img = document.createElement('img');
-    img.src = prev;
+    img.src = mediaUrl(prev);
     img.alt = 'gif';
     img.loading = 'lazy';
     img.addEventListener('click', function(){ sendGif(g.url); });
@@ -1890,7 +1923,7 @@ function loadGifs(q){
 function checkServers(){
   var ctl = new AbortController();
   setTimeout(function(){ ctl.abort(); }, 5000);
-  fetch('api-v5.php?action=load&t=' + nowMs(), { signal: ctl.signal, cache: 'no-store' })
+  fetch(API_Q + 'load&t=' + nowMs(), { signal: ctl.signal, cache: 'no-store' })
     .then(function(r){ return r.json(); })
     .then(function(d){ phpOk(!!(d && d.ok === true)); })
     .catch(function(){ phpOk(false); });
@@ -1933,7 +1966,7 @@ function joinRoom(){
 function tryFreeGhost(){
   return probeAdmin().then(function(p){
     if(!p.ok) return false;                       /* an admin answered — leave it */
-    return fetch('api-v5.php?action=freeadmin', {
+    return fetch(API_Q + 'freeadmin', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ uid: uid })
     })
@@ -2078,7 +2111,7 @@ function previewCard(data, url){
   a.addEventListener('click', function(ev){ ev.stopPropagation(); });
   if(data.image){
     var img = document.createElement('img');
-    img.src = data.image;
+    img.src = mediaUrl(data.image);
     img.alt = '';
     img.loading = 'lazy';
     img.onerror = function(){ img.remove(); };
@@ -2108,7 +2141,7 @@ function linkPreview(bub, text){
   if(cached){ bub.appendChild(previewCard(cached, u)); return; }
   linkCache[u] = 'pending';
   var domain = u.replace(/^https?:\/\//i, '').split('/')[0];
-  fetch('api-v5.php?action=link&u=' + encodeURIComponent(u), { cache: 'no-store' })
+  fetch(API_Q + 'link&u=' + encodeURIComponent(u), { cache: 'no-store' })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || d.ok !== true || !d.title){ linkCache[u] = 'no'; return; }
@@ -2247,7 +2280,7 @@ function startEditMsg(m){
       var body = enc ? { id: m.id, uid: uid, enc: enc } : { id: m.id, uid: uid, text: v };
       publishAll({ t:'edit', id: m.id, uid: uid, enc: enc || '', text: enc ? '' : v });
       try{
-        fetch('api-v5.php?action=edit', {
+        fetch(API_Q + 'edit', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         }).catch(function(){});
@@ -2262,7 +2295,7 @@ function deleteOwnMessage(m){
   applyDelete(m);
   sendPacket({ t: 'del', id: m.id, uid: uid });
   try{
-    fetch('api-v5.php?action=del', {
+    fetch(API_Q + 'del', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: m.id, uid: uid })
     }).catch(function(){});
@@ -2348,7 +2381,7 @@ function uploadAndSend(f){
   toast('Uploading ' + f.name + '…');
   var fd = new FormData();
   fd.append('file', f);
-  fetch('api-v5.php?action=upload', { method: 'POST', body: fd })
+  fetch(API_Q + 'upload', { method: 'POST', body: fd })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || !d.ok){ toast((d && d.error) || 'Upload failed'); return; }
@@ -2479,7 +2512,7 @@ function buildMsg(m){
     if(m.url){
       var img = document.createElement('img');
       img.className = 'mimg';
-      img.src = m.url;
+      img.src = mediaUrl(m.url);
       img.alt = m.type;
       img.loading = 'lazy';
       img.addEventListener('click', function(ev){ ev.stopPropagation(); openLightbox(m.url); });
@@ -2488,7 +2521,7 @@ function buildMsg(m){
   } else if(m.type === 'file'){
     var a = document.createElement('a');
     a.className = 'fcard';
-    a.href = m.url || '#';
+    a.href = mediaUrl(m.url) || '#';
     a.download = m.fname || 'file';
     a.addEventListener('click', function(ev){ ev.stopPropagation(); });
     var fi = document.createElement('span'); fi.className = 'fi'; fi.textContent = '📄';
@@ -2722,7 +2755,7 @@ function saveAnnounce(text){
     renderAnn();
     publishAll({ t:'announce', enc: enc, text: enc ? '' : t, uid: uid, name: myName(), ts: announce.ts });
     try{
-      fetch('api-v5.php?action=announce', {
+      fetch(API_Q + 'announce', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ enc: enc, text: enc ? '' : t, uid: uid, name: myName() })
       }).catch(function(){});
@@ -2734,7 +2767,7 @@ function clearAnnounce(){
   renderAnn();
   publishAll({ t:'announce', clear: true, uid: uid, name: myName() });
   try{
-    fetch('api-v5.php?action=announce', {
+    fetch(API_Q + 'announce', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ uid: uid, name: myName(), text: '' })
     }).catch(function(){});
@@ -2792,7 +2825,7 @@ function voiceBubble(m){
   tm.textContent = fmtDur(m.dur);
   var au = document.createElement('audio');
   au.preload = 'metadata';
-  au.src = m.url;
+  au.src = mediaUrl(m.url);
   au.style.display = 'none';
 
   btn.addEventListener('click', function(ev){
@@ -2887,7 +2920,7 @@ function onRecStop(){
   var fd = new FormData();
   fd.append('file', blob, 'voice.' + ext);
   fd.append('kind', 'voice');
-  fetch('api-v5.php?action=upload', { method:'POST', body: fd })
+  fetch(API_Q + 'upload', { method:'POST', body: fd })
     .then(function(res){ return res.json(); })
     .then(function(d){
       if(!d || !d.ok){ toast((d && d.error) || 'Voice upload failed'); return; }
@@ -3009,7 +3042,7 @@ function probeAdmin(){
   });
 }
 function requestAdmin(){
-  return fetch('api-v5.php?action=claimadmin', {
+  return fetch(API_Q + 'claimadmin', {
     method:'POST', headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({ uid: uid, name: myName() })
   })
@@ -3029,7 +3062,7 @@ function becomeAdmin(){
   updateAdminUI();
   publishAll({ t:'adminClaim', uid: uid, name: adminName, ts: nowMs() });
   try{
-    fetch('api-v5.php?action=claimadmin', {
+    fetch(API_Q + 'claimadmin', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ uid: uid, name: adminName })
     }).catch(function(){});
@@ -3041,9 +3074,9 @@ function releaseAdmin(){
   try{
     var body = JSON.stringify({ uid: uid });
     if(navigator.sendBeacon){
-      navigator.sendBeacon('api-v5.php?action=releaseadmin', new Blob([body], { type:'application/json' }));
+      navigator.sendBeacon(API_Q + 'releaseadmin', new Blob([body], { type:'application/json' }));
     } else {
-      fetch('api-v5.php?action=releaseadmin', {
+      fetch(API_Q + 'releaseadmin', {
         method:'POST', headers:{ 'Content-Type':'application/json' }, body: body
       }).catch(function(){});
     }
@@ -3059,7 +3092,7 @@ setInterval(function(){
   if(isAdmin()){
     publishAll({ t:'adminBeat', uid: uid, name: myName() });
     try{
-      fetch('api-v5.php?action=adminbeat', {
+      fetch(API_Q + 'adminbeat', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ uid: uid })
       }).catch(function(){});

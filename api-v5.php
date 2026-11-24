@@ -98,6 +98,46 @@ header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store, max-age=0');
 header('Referrer-Policy: no-referrer');
 
+/* ------------------------------------------------------------ CORS
+ *  Lets the page be served from somewhere else (GitHub Pages, a CDN)
+ *  while this file keeps running here. Only hosts listed below may talk to
+ *  it; anything else is refused by the browser. No cookies are used, so a
+ *  careful allow-list costs nothing.
+ *  Add your own host to $CORS_HOSTS if you move the site again.
+ */
+$CORS_HOSTS = [
+    'gret521x-coder.github.io',   // the GitHub Pages copy
+    'unaux.com',                  // the current site
+    'localhost', '127.0.0.1'      // XAMPP while testing
+];
+
+$__origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if ($__origin !== '') {
+    $__host = parse_url($__origin, PHP_URL_HOST);
+    if (is_string($__host) && $__host !== '') {
+        $__allowed = false;
+        foreach ($CORS_HOSTS as $__h) {
+            if ($__host === $__h || substr($__host, -strlen('.' . $__h)) === '.' . $__h) {
+                $__allowed = true;
+                break;
+            }
+        }
+        if ($__allowed) {
+            header('Access-Control-Allow-Origin: ' . $__origin);
+            header('Vary: Origin');
+            header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type');
+            header('Access-Control-Max-Age: 86400');
+        }
+    }
+}
+
+/* preflight: every JSON POST from another origin sends one of these first */
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 set_exception_handler(static function (Throwable $e): void {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => 'server error']);

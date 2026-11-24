@@ -18,8 +18,8 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v3.php` | 32 KB | Backend used by `gc-v3.html` (v2 plus edit, delete, link preview) |
 | `gc-v4.html` | 101 KB | Chat v4 — pinned banner, voice notes, end-to-end encrypted text |
 | `api-v4.php` | 35 KB | Backend used by `gc-v4.html` (v3 plus voice notes and the banner) |
-| `gc-v5.html` | 109 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
-| `api-v5.php` | 39 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot) |
+| `gc-v5.html` | 118 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
+| `api-v5.php` | 41 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot and CORS) |
 | `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
@@ -321,6 +321,41 @@ The key lives in `api-ai.php`, never in the page. The proxy also
 
 ### Known limitations (both chat versions)
 
+## Hosting the pages on GitHub Pages
+
+The HTML is static, so GitHub can serve it. The PHP cannot run there — keep
+`api-v5.php` on your normal host and let the page call it.
+
+**1. Turn Pages on.** Settings → Pages → Source: *Deploy from a branch* → pick the
+branch that has the files → folder `/ (root)` → Save. The site appears at
+`https://<user>.github.io/<repo>/`. Pages needs a **public** repo on a free plan, or
+Pro for a private one.
+
+**2. Point the chat at your PHP.** Open `gc-v5.html`, find the config block just
+before the main script, and set one line:
+
+```js
+window.KDL_API_BASE = 'https://yoursite.unaux.com/api-v5.php';
+```
+
+Empty (the default) means "the api-v5.php next to this file", which is what XAMPP
+does. With that line set, uploads, GIFs, history, the banner and the admin slot
+keep working from Pages — relative `uploads/x.png` paths are rewritten to that host
+automatically.
+
+**3. Allow the new origin in the PHP.** `api-v5.php` already sends CORS headers for
+`*.github.io`, `*.unaux.com`, `localhost` and `127.0.0.1`, and answers the preflight
+`OPTIONS` request. If you host the site anywhere else, add that host to `$CORS_HOSTS`
+at the top of the file (only those hosts may call the API).
+
+`.nojekyll` is present so GitHub serves the files exactly as they are.
+
+**What still will not work from Pages:** nothing in PHP, obviously — but also any
+page that needs a key must carry it publicly. `index-v*.html` ship a
+`PASTE-YOUR-KEY-HERE` placeholder, so they ask for the key at runtime; pasting a real
+key into a page on a public repo publishes it to everyone. `aurora-v2.html` already
+carries one — rotate it if the repo goes public.
+
 ## Version history
 
 | Version | Notes |
@@ -354,6 +389,8 @@ The key lives in `api-ai.php`, never in the page. The proxy also
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **GitHub Pages mode: 9 checks** — sibling `api-v5.php` by default, absolute `KDL_API_BASE` used for
+  every endpoint when set, relative uploads rewritten onto the PHP host, absolute image URLs untouched
 - **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire
   and in the request body with no plaintext, local echo still readable, decryption of incoming text, locked
   bubble for a bad payload, encrypted edits both ways, banner write/decrypt/host-only buttons/clear/escaping,

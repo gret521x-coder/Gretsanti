@@ -364,6 +364,11 @@ browser. `api-free.php` streams the answer through (SSE, no buffering), answers 
 models" still works, refuses to run until the key is filled in, and only replies with CORS headers for
 the origins listed at the top of the file.
 
+**It looks like the launcher now.** Aurora wears the same KDL // MISSION CONTROL skin as
+`index-v5.html`: pure black deck, hairline grid and cyan horizon, square corners, hairline borders,
+mono-caps labels, one cyan accent (`#38bdf8`), green for ok (`#00e676`) and red for stop (`#ff3d00`).
+The light/dark toggle is gone — the launcher has one theme, so Aurora does too.
+
 **Setup is one form now.** Upload the file, open its address in a browser once, paste the key, press
 Save — no code editing at all. The key is written to `.fmkey.php` beside it, a file that starts with
 `<?php exit; ?>` so the web server runs it instead of printing it. Prefer editing? Fine, `FREEMODEL_KEY`

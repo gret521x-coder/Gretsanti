@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Aurora — AI Workspace Assistant</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
@@ -15,7 +16,7 @@
 --bg:#ffffff;--panel:#f0f4f9;--surface:#ffffff;--input:#f0f4f9;
 --text:#1f1f1f;--muted:#5f6368;--border:#dadce0;--hover:#e8eef7;
 --bubble:#f0f4f9;--active:#d3e3fd;--code-bg:#1b1b1d;--code-text:#e6e6e6;
---grad:linear-gradient(74deg,#4285F4 0%,#9B72CB 33%,#D96570 100%);
+--grad:linear-gradient(74deg,#4285F4 0%,#9B72CB 33%,#ff3d00 100%);
 --shadow:0 4px 18px rgba(0,0,0,.14);--mono:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
 [data-theme=dark]{
 --bg:#1e1f20;--panel:#282a2c;--surface:#2d2f31;--input:#333537;
@@ -211,7 +212,7 @@ body{line-height:1.5}
 
 /* ---------- layer 3 ---------- */
 /* ═══════ UI ELEVATION — premium polish layer (compact density preserved) ═══════ */
-:root{--grad:linear-gradient(74deg,#4285F4 0%,#7B5BE6 33%,#D96570 66%,#F2A60C 100%);
+:root{--grad:linear-gradient(74deg,#4285F4 0%,#7B5BE6 33%,#ff3d00 66%,#F2A60C 100%);
 --ring:0 0 0 1px rgba(66,133,244,.28);--shadow:0 8px 32px rgba(0,0,0,.18);--shadow-soft:0 2px 10px rgba(0,0,0,.08)}
 [data-theme=dark]{--shadow:0 8px 32px rgba(0,0,0,.45);--shadow-soft:0 2px 10px rgba(0,0,0,.3)}
 /* ---------- Sidebar ---------- */
@@ -252,7 +253,7 @@ body{line-height:1.5}
 /* ---------- Export & image cards ---------- */
 .export-card{border-radius:18px;box-shadow:var(--shadow-soft);transition:box-shadow .2s,transform .2s;overflow:hidden}
 .export-card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-.export-head{background:linear-gradient(90deg,color-mix(in srgb,#4285F4 12%,var(--surface)),color-mix(in srgb,#D96570 10%,var(--surface)))}
+.export-head{background:linear-gradient(90deg,color-mix(in srgb,#4285F4 12%,var(--surface)),color-mix(in srgb,#ff3d00 10%,var(--surface)))}
 .export-head .ico{filter:drop-shadow(0 1px 2px rgba(0,0,0,.2))}
 .badge{background:var(--grad);color:#fff;letter-spacing:.5px}
 .chip-btn{border-radius:20px;transition:transform .12s,box-shadow .15s}
@@ -336,12 +337,12 @@ body{line-height:1.5}
  border-radius:10px;padding:4px 9px;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500;
 }
 #stop-btn{
- width:36px;height:36px;border:none;border-radius:50%;background:#D96570;color:#fff;
+ width:36px;height:36px;border:none;border-radius:50%;background:#ff3d00;color:#fff;
  font-size:13px;display:none;align-items:center;justify-content:center;
  box-shadow:0 3px 12px rgba(217,101,112,.4);
 }
 #stop-btn.show{display:flex}
-#mic-btn.rec{background:#D96570;color:#fff;animation:pulseRec 1.2s infinite}
+#mic-btn.rec{background:#ff3d00;color:#fff;animation:pulseRec 1.2s infinite}
 @keyframes pulseRec{50%{opacity:.55}}
 .msg-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .msg-actions button{
@@ -426,6 +427,207 @@ body{line-height:1.5}
  .tok{display:none}
  .modal-card.wide{height:88vh}
 }
+
+/* ---------- layer 6 ---------- */
+/* ═══════ KDL // MISSION CONTROL — the index-v5 skin ═══════
+   Same palette, same grammar as index-v5: pure black, hairline borders, square corners,
+   mono labels in caps, one cyan accent, green for "ok", amber for "careful", red for "stop".
+   No gradients on controls, no rounded pills, no glow except a single thin focus ring. */
+:root,[data-theme=dark],[data-theme=light]{
+  --bg:#000000;--panel:#08090b;--surface:#0d0f13;--input:#0d0f13;
+  --text:#ffffff;--muted:#8b949e;--border:#1f242d;--hover:#14181f;--active:#14181f;
+  --bubble:#0d0f13;--code-bg:#05070a;--code-text:#dbe4ee;
+  --grad:linear-gradient(90deg,#005288 0%,#38bdf8 100%);
+  --ring:0 0 0 1px rgba(56,189,248,.45);
+  --shadow:0 24px 64px rgba(0,0,0,.8);--shadow-soft:0 1px 0 rgba(255,255,255,.03);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;
+  --sans:"DIN Alternate","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --cyan:#38bdf8;--ok:#00e676;--warn:#ffab00;--stop:#ff3d00;--dim:#484f58;
+}
+body{background:#000;font-family:var(--sans)}
+/* the deck: hairline grid + horizon glow, straight from the launcher */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(to right,rgba(255,255,255,.025) 1px,transparent 1px),
+                   linear-gradient(to bottom,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:48px 48px}
+body::after{content:'';position:fixed;top:-35vh;left:50%;transform:translateX(-50%);
+  width:140vw;height:60vh;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at bottom,rgba(0,82,136,.25) 0%,transparent 70%);
+  border-bottom:1px solid rgba(56,189,248,.18)}
+#app{position:relative;z-index:1;background:transparent}
+/* nothing is round any more, except the two things that must be (status dots) */
+.spark,.avatar,#new-chat-btn,.chat-item,.suggest,.suggest .em,.export-card,.export-head,.export-preview,
+.chip-btn,.model-chip,#composer,.settings-card,.modal-card,.menu-pop,#toast,.btn,.icon-btn,#attach-menu,
+.attach-item,.think,.att,.side-search input,.field input,.edit-box textarea,.modal-body textarea,
+.modal-body input[type=text],.modal-foot button,.edit-actions button,.mini-btn,.tok,#stop-btn,#send-btn,
+.msg-actions button,.content pre,.content code,.content table th,.content table td,.img-card,
+.settings-card::before,.think .tm,.list-label{border-radius:0 !important}
+/* ---------- sidebar ---------- */
+#sidebar{background:rgba(8,9,11,.94);backdrop-filter:blur(8px);border-right:1px solid var(--border)}
+.spark{width:30px;height:30px;background:#0d0f13;border:1px solid var(--cyan);color:var(--cyan);
+  box-shadow:none;animation:none;display:flex;align-items:center;justify-content:center;font-size:13px}
+.brand{font-family:var(--mono);font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:500}
+.side-top{border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:6px}
+#new-chat-btn{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:10.5px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--text);padding:11px 12px;gap:10px}
+#new-chat-btn span{background:none;color:var(--cyan);-webkit-text-fill-color:var(--cyan);font-weight:700}
+#new-chat-btn:hover{transform:none;box-shadow:none;border-color:var(--cyan);background:#14181f}
+.list-label{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.chat-item{font-family:var(--sans);font-size:13px;padding-left:12px;border:1px solid transparent}
+.chat-item:hover{background:#0d0f13;transform:none;border-color:var(--border)}
+.chat-item.active{background:#0d0f13;border-color:var(--border);box-shadow:inset 2px 0 0 var(--cyan)}
+.chat-item .del:hover,.att button:hover,.model-chip button:hover{color:var(--stop)}
+.side-foot{font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim);opacity:1;border-top:1px solid var(--border)}
+.side-search input{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:11.5px;letter-spacing:.5px}
+.side-search input:focus{border-color:var(--cyan);box-shadow:none}
+.tok{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:10px;letter-spacing:1px}
+/* ---------- header ---------- */
+#header{background:rgba(0,0,0,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);padding:10px 16px}
+#model-select{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);border:1px solid transparent;padding:7px 10px}
+#model-select:hover,#model-select:focus{background:#0d0f13;border-color:var(--border);box-shadow:none;color:#fff}
+#model-select option{background:#08090b;color:#fff}
+.icon-btn{border:1px solid transparent;color:var(--muted);font-size:14px;width:34px;height:34px}
+.icon-btn:hover{background:#0d0f13;border-color:var(--border);color:var(--cyan);transform:none}
+#theme-btn{display:none}
+/* ---------- welcome ---------- */
+#welcome{padding-top:8vh}
+#welcome h1{font-family:var(--mono);text-transform:uppercase;letter-spacing:.16em;font-weight:500;
+  font-size:clamp(20px,4.6vw,34px);margin-bottom:6px;color:#fff}
+.grad-text{background:linear-gradient(90deg,#ffffff 0%,#38bdf8 55%,#005288 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+#welcome h1::after{font-family:var(--mono);font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-top:10px}
+.suggest{background:#0d0f13;border:1px solid var(--border);box-shadow:none;font-size:12.5px;color:var(--muted);text-align:left}
+.suggest::before{display:none}
+.suggest:hover{border-color:var(--cyan);background:#14181f;transform:none;box-shadow:none;color:#fff}
+.suggest .em{background:#08090b;border:1px solid var(--border);width:28px;height:28px;font-size:14px;margin-bottom:10px}
+.suggest .em{color:var(--cyan)}
+/* ---------- messages ---------- */
+.msg{border-top:1px solid rgba(255,255,255,.045)}
+.msg:first-child{border-top:none}
+.avatar{background:#0d0f13;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:10px;box-shadow:none;animation:none}
+.avatar.ai{border-color:rgba(56,189,248,.5);color:var(--cyan);background:rgba(56,189,248,.07)}
+.avatar.user{background:#0d0f13}
+.who{font-family:var(--mono);font-size:9px;letter-spacing:2.4px;text-transform:uppercase;color:var(--dim);font-weight:500}
+.content{color:#e6edf3;font-size:14px}
+.content code{background:#12161c;border:1px solid var(--border);color:#7dd3fc;font-size:12px;padding:1px 5px}
+.content pre{background:#05070a;border:1px solid var(--border);box-shadow:none}
+.content pre::before{content:'▚ CODE';position:absolute;top:6px;right:10px;font-family:var(--mono);font-size:8.5px;
+  letter-spacing:2px;color:var(--dim);pointer-events:none}
+.content pre code{color:#dbe4ee;border:none;background:none;padding:0}
+.content table{border:1px solid var(--border)}
+.content th,.content td{border:1px solid var(--border);font-size:12.5px}
+.content th{background:#0d0f13;font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--cyan);font-weight:500}
+.content blockquote{border-left:2px solid var(--cyan);color:var(--muted)}
+.content :is(h1,h2,h3,h4){font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;font-size:13px;color:#fff}
+.thinking{font-family:var(--mono);font-size:11px;font-style:normal;color:var(--dim)}
+.msg-actions button{border:1px solid var(--border);background:transparent;font-family:var(--mono);
+  font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);padding:4px 9px}
+.msg-actions button:hover{background:#0d0f13;border-color:var(--cyan);color:var(--cyan)}
+.dots span{background:var(--cyan);border-radius:50%}
+/* ---------- thinking panel ---------- */
+.think{background:#0d0f13;border:1px solid var(--border)}
+.think-head{font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+.think-head:hover{background:#14181f}
+.think .brain{background:var(--cyan);color:#000;border-radius:0;box-shadow:none}
+.think:not(.live) .brain{background:var(--dim)}
+.think .tm{background:#08090b;border:1px solid var(--border);color:var(--cyan);font-size:9px;letter-spacing:1px}
+.think-body .dot{color:var(--cyan)}
+/* ---------- cards ---------- */
+.export-card,.img-card{border:1px solid var(--border);background:#0d0f13;box-shadow:none;transform:none}
+.export-card:hover,.img-card:hover{transform:none;box-shadow:none;border-color:var(--cyan)}
+.export-head{background:#08090b;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9.5px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--cyan);font-weight:500}
+.export-head .name{font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:none}
+.export-preview{background:#05070a;border:1px solid var(--border)}
+.export-actions .chip-btn{border-color:var(--border)}
+.badge{background:#08090b;border:1px solid var(--cyan);color:var(--cyan);font-family:var(--mono);font-size:8.5px;letter-spacing:1.6px}
+.img-card{background:#0d0f13}
+.img-card .cap{border-top:1px solid var(--border);font-family:var(--mono);font-size:10.5px}
+.chip-btn{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:9.5px;
+  letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);padding:7px 12px}
+.chip-btn:hover{background:#14181f;border-color:var(--cyan);color:var(--cyan);transform:none;box-shadow:none}
+.chip-btn.primary{background:var(--cyan);border:1px solid var(--cyan);color:#000;font-weight:700;box-shadow:none}
+.chip-btn.primary:hover{background:#5bcbfb;color:#000}
+/* ---------- composer ---------- */
+#composer-wrap{background:linear-gradient(transparent,#000 30%)}
+#composer{background:#0d0f13;border:1px solid var(--border);box-shadow:none;padding:6px 8px 6px 14px}
+#composer:hover{border-color:#2b3340;box-shadow:none}
+#composer.focused{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(56,189,248,.35)}
+#prompt{font-family:var(--sans);font-size:14.5px;color:#fff}
+#prompt::placeholder{color:var(--dim);font-family:var(--mono);font-size:12px;letter-spacing:1px}
+#send-btn{background:var(--cyan);color:#000;box-shadow:none;width:38px;height:38px;font-size:14px}
+#send-btn:not(:disabled):hover{background:#5bcbfb;transform:none;box-shadow:0 0 18px rgba(56,189,248,.35)}
+#send-btn:disabled{background:#1f242d;color:var(--dim);filter:none}
+#stop-btn{background:var(--stop);color:#fff;box-shadow:none;width:34px;height:34px}
+#mic-btn.rec{background:var(--stop);color:#fff}
+.comp-note{font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim);backdrop-filter:none}
+.comp-note b{color:var(--muted);font-weight:500}
+#attach-menu{background:#08090b;border:1px solid var(--border);box-shadow:0 18px 48px rgba(0,0,0,.9)}
+.attach-item{font-family:var(--mono);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.attach-item:hover{background:#14181f;color:var(--cyan)}
+.att{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:10.5px}
+/* ---------- settings + modals ---------- */
+#settings,.modal{background:rgba(0,0,0,.82);backdrop-filter:blur(6px)}
+.settings-card{background:#08090b;border:1px solid var(--border);box-shadow:0 24px 64px rgba(0,0,0,.9)}
+.settings-card::before{background:linear-gradient(90deg,var(--cyan),rgba(56,189,248,0));height:2px;margin-bottom:0}
+.settings-head{font-family:var(--mono);font-size:11px;letter-spacing:2.4px;text-transform:uppercase;color:#fff;
+  border-bottom:1px solid var(--border);padding:16px 20px 13px}
+.group{font-family:var(--mono);font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:var(--cyan);margin-top:20px}
+.field label{font-family:var(--mono);font-size:8.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--dim)}
+.field input,.field textarea{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:12.5px;color:#fff}
+.field input:focus,.field textarea:focus{border-color:var(--cyan);box-shadow:none}
+.field textarea{width:100%;border-radius:0}
+#proxy-note{font-family:var(--mono);font-size:9.5px;letter-spacing:.6px;text-transform:none}
+#proxy-note code,#provider-hint code{font-size:9.5px}
+#provider-hint{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase}
+.model-chip{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:10px;letter-spacing:1px;padding:5px 10px}
+.model-chip:hover{border-color:var(--cyan);box-shadow:none;transform:none}
+.switch-row{font-family:var(--mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);
+  border-top:1px solid rgba(255,255,255,.04)}
+.slider{background:#1f242d;border:1px solid var(--border)}
+.slider:before{background:var(--dim);border-radius:50%}
+.switch input:checked+.slider{background:rgba(56,189,248,.18);border-color:var(--cyan)}
+.switch input:checked+.slider:before{background:var(--cyan)}
+.settings-foot{border-top:1px solid var(--border);padding:12px 20px}
+.btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);
+  font-size:10px;letter-spacing:1.8px;text-transform:uppercase;font-weight:500;padding:10px 18px}
+.btn:hover{background:#0d0f13;border-color:var(--cyan);color:var(--cyan);filter:none;transform:none;box-shadow:none}
+.btn.primary{background:var(--cyan);border-color:var(--cyan);color:#000;font-weight:700;box-shadow:none}
+.btn.primary:hover{background:#5bcbfb;border-color:#5bcbfb;color:#000}
+.modal-card{background:#08090b;border:1px solid var(--border)}
+.modal-head{font-family:var(--mono);font-size:10px;letter-spacing:2.2px;text-transform:uppercase;border-bottom:1px solid var(--border);color:var(--cyan)}
+.modal-body label{font-family:var(--mono);font-size:8.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--dim)}
+.modal-body textarea,.modal-body input[type=text]{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:12.5px}
+.modal-body textarea:focus,.modal-body input[type=text]:focus{border-color:var(--cyan)}
+.modal-foot button{background:transparent;border:1px solid var(--border);font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+.modal-foot button:hover{border-color:var(--cyan);color:var(--cyan)}
+.modal-foot button.primary{background:var(--cyan);border-color:var(--cyan);color:#000;font-weight:700}
+.menu-pop{background:#08090b;border:1px solid var(--border);box-shadow:0 18px 48px rgba(0,0,0,.9)}
+.menu-pop button{font-family:var(--mono);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.menu-pop button:hover{background:#14181f;color:var(--cyan)}
+.prompt-row{border-bottom:1px solid var(--border)}
+.prompt-row .pn{font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--cyan)}
+.edit-actions button{background:transparent;border:1px solid var(--border);font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.edit-actions button.primary{background:var(--cyan);border-color:var(--cyan);color:#000;font-weight:700}
+.edit-box textarea{background:#0d0f13;border:1px solid var(--border);font-family:var(--mono);font-size:12.5px}
+.edit-box textarea:focus{border-color:var(--cyan)}
+.mini-btn{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.mini-btn:hover{background:#0d0f13;color:var(--cyan)}
+/* ---------- toast + scroll ---------- */
+#toast{background:#08090b;border:1px solid var(--cyan);color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.9);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;padding:11px 18px;backdrop-filter:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#1f242d;border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:var(--cyan)}
+::selection{background:rgba(56,189,248,.28);color:#fff}
+/* keep the density layer's compact rhythm */
+@media(max-width:760px){
+  #header{padding:8px 12px}
+  #composer{border-radius:0}
+  .suggest{border-radius:0}
+  #sidebar{border-right:1px solid var(--border)}
+}
+
 </style>
 </head>
 <body>
@@ -534,7 +736,7 @@ body{line-height:1.5}
    <div class="switch-row">Highlight code <label class="switch"><input type="checkbox" id="in-hl" checked><span class="slider"></span></label></div>
   </div>
   <div class="settings-foot">
-   <button class="btn" id="wipe-chats" style="margin-right:auto;color:#D96570">Delete all chats</button>
+   <button class="btn" id="wipe-chats" style="margin-right:auto;color:#ff3d00">Delete all chats</button>
    <button class="btn" id="settings-cancel">Cancel</button>
    <button class="btn primary" id="settings-save">Save</button>
   </div>
@@ -712,11 +914,11 @@ function paintProxyNote(){
   if(!note || !box) return;
   const v = (box.value || '').trim();
   if(/freemodel\.in/i.test(v)){
-    note.style.color = '#D96570';
+    note.style.color = '#ff3d00';
     note.innerHTML = 'That is FreeModel itself. Your browser is not allowed to call another site — it will only say ' +
       '<b>Failed to fetch</b>. Put your helper here: <code>api-free.php</code> on your host, or a Worker address.';
   } else if(v && !/^https?:\/\//i.test(v)){
-    note.style.color = '#D96570';
+    note.style.color = '#ff3d00';
     note.innerHTML = 'That does not look like an address. It must start with <code>https://</code>.';
   } else {
     note.style.color = 'var(--muted)';
@@ -2061,7 +2263,7 @@ function wire(){
     });
     const provider = detectProvider(draft);
     if(provider.kind === 'none'){
-      say('#D96570', 'Nothing to test yet — paste a helper address, or an <code>fm_live_…</code> key.');
+      say('#ff3d00', 'Nothing to test yet — paste a helper address, or an <code>fm_live_…</code> key.');
       toast('Nothing to test yet');
       return;
     }
@@ -2076,7 +2278,7 @@ function wire(){
             ? 'No answer from that address. Open it in a new tab to see what your host says — if it opens there but fails here, that host blocks other websites.'
             : 'Your browser was stopped before it reached FreeModel (CORS) — a helper address is required.')
         : (err && err.message ? String(err.message).slice(0, 200) : 'Unknown failure.');
-      say('#D96570', reason);
+      say('#ff3d00', reason);
       toast('Connection failed');
       return;
     }
@@ -2095,13 +2297,13 @@ function wire(){
       return;
     }
     if(chat.network){
-      say('#D96570', provider.kind === 'proxy'
+      say('#ff3d00', provider.kind === 'proxy'
         ? 'The model list works, but chat requests to that address are blocked. Check that the relay accepts POST.'
         : 'The model list answers, but chat requests are blocked. That is the browser wall — put a helper address in Proxy URL and test again.');
       toast('List works, chat does not');
       return;
     }
-    say('#D96570', 'FreeModel answered ' + esc(chat.detail || 'with an error') + ' for the test message.');
+    say('#ff3d00', 'FreeModel answered ' + esc(chat.detail || 'with an error') + ' for the test message.');
     toast('Chat request refused');
   };
 

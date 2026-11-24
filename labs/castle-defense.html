@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>KDL // CASTLE DEFENSE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000;--panel:#08090b;--card:#0d0f13;--line:#1f242d;--line-2:#2b3340;
+  --text:#fff;--dim:#8b949e;--faint:#484f58;
+  --cyan:#38bdf8;--ok:#00e676;--warn:#ffab00;--stop:#ff3d00;--gold:#ffd166;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{position:fixed;inset:0;color:var(--text);font-family:var(--sans);
+  background-image:linear-gradient(to right,rgba(255,255,255,.025) 1px,transparent 1px),
+                   linear-gradient(to bottom,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:48px 48px}
+body::after{content:'';position:fixed;top:-40vh;left:50%;transform:translateX(-50%);
+  width:140vw;height:62vh;border-radius:50%;pointer-events:none;
+  background:radial-gradient(ellipse at bottom,rgba(0,82,136,.25) 0%,transparent 70%);
+  border-bottom:1px solid rgba(56,189,248,.18)}
+#game{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;max-width:820px;margin:0 auto}
+
+/* ---------- top readout ---------- */
+#hud{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:10px 12px;
+  border-bottom:1px solid var(--line);background:rgba(0,0,0,.86);backdrop-filter:blur(8px)}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--mono);font-size:14px;font-weight:500;line-height:1;letter-spacing:.5px}
+.stat i{font-family:var(--mono);font-size:8px;font-style:normal;letter-spacing:1.6px;color:var(--faint);text-transform:uppercase}
+.stat.gold b{color:var(--gold)}
+.stat.hp b{color:var(--ok)}
+.stat.wave b{color:var(--cyan)}
+#hpbar{flex:1;height:6px;background:#14181f;border:1px solid var(--line);position:relative;overflow:hidden}
+#hpfill{position:absolute;inset:0;width:100%;background:var(--ok);transition:width .18s,background .18s}
+#hud .sep{width:1px;height:26px;background:var(--line)}
+
+/* ---------- battlefield ---------- */
+#field-wrap{position:relative;flex:1;min-height:0}
+#field{display:block;width:100%;height:100%;touch-action:manipulation}
+#hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--faint);
+  pointer-events:none;transition:opacity .3s;text-align:center}
+#overlay{position:absolute;inset:0;display:none;place-items:center;background:rgba(0,0,0,.86);backdrop-filter:blur(4px)}
+#overlay.on{display:grid}
+.card{width:min(92%,380px);background:var(--panel);border:1px solid var(--line);padding:22px;text-align:center}
+.card h2{font-family:var(--mono);font-size:13px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--stop);margin-bottom:10px;font-weight:500}
+.card.win h2{color:var(--ok)}
+.card p{font-size:13px;color:var(--dim);line-height:1.6;margin-bottom:16px}
+.card .row{display:flex;gap:8px;justify-content:center}
+.btn{border:1px solid var(--line);background:transparent;color:var(--dim);font-family:var(--mono);
+  font-size:9.5px;letter-spacing:1.8px;text-transform:uppercase;padding:11px 16px}
+.btn.primary{background:var(--cyan);border-color:var(--cyan);color:#000;font-weight:700}
+.btn:active{filter:brightness(1.15)}
+
+/* ---------- shop ---------- */
+#shop{flex:0 0 auto;border-top:1px solid var(--line);background:rgba(0,0,0,.9);backdrop-filter:blur(8px);
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px}
+.rowshop{display:flex;gap:6px}
+.unit{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);padding:8px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.unit .g{font-size:16px;line-height:1}
+.unit .n{font-family:var(--mono);font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text)}
+.unit .c{font-family:var(--mono);font-size:8.5px;letter-spacing:.6px;color:var(--gold)}
+.unit.sel{border-color:var(--cyan);background:rgba(56,189,248,.1)}
+.unit.sel::after{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:var(--cyan)}
+.unit.poor{opacity:.4}
+.unit:active{transform:scale(.98)}
+.upg{flex:1;border:1px solid var(--line);background:var(--card);padding:7px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:2px}
+.upg .n{font-family:var(--mono);font-size:8px;letter-spacing:1.1px;text-transform:uppercase;color:var(--dim)}
+.upg .c{font-family:var(--mono);font-size:8px;color:var(--gold)}
+.upg.max{opacity:.35}
+.upg:active{transform:scale(.98)}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(10px);
+  background:var(--panel);border:1px solid var(--cyan);color:#fff;font-family:var(--mono);
+  font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;padding:9px 14px;
+  opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:88vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-height:560px){.unit .g{font-size:14px}.stat b{font-size:12px}}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div class="stat gold"><b id="s-gold">120</b><i>Gold</i></div>
+    <div class="sep"></div>
+    <div class="stat hp"><b id="s-hp">100</b><i>Castle</i></div>
+    <div id="hpbar"><div id="hpfill"></div></div>
+    <div class="sep"></div>
+    <div class="stat wave"><b id="s-wave">1</b><i>Wave</i></div>
+  </div>
+
+  <div id="field-wrap">
+    <canvas id="field"></canvas>
+    <div id="hint">tap a lane to place</div>
+    <div id="overlay">
+      <div class="card" id="over-card">
+        <h2 id="over-title">Castle lost</h2>
+        <p id="over-text"></p>
+        <div class="row"><button class="btn primary" id="again">Try again</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="shop">
+    <div class="rowshop">
+      <button class="unit sel" data-unit="knight"><span class="g">⚔️</span><span class="n">Knight</span><span class="c">50</span></button>
+      <button class="unit" data-unit="archer"><span class="g">🏹</span><span class="n">Archer</span><span class="c">75</span></button>
+      <button class="unit" data-unit="mage"><span class="g">🔮</span><span class="n">Mage</span><span class="c">130</span></button>
+    </div>
+    <div class="rowshop">
+      <button class="upg" id="u-dmg"><span class="n">Forge · +25% dmg</span><span class="c" id="u-dmg-c">90</span></button>
+      <button class="upg" id="u-gold"><span class="n">Mine · +1 gold/s</span><span class="c" id="u-gold-c">110</span></button>
+      <button class="upg" id="u-wall"><span class="n">Wall · +50 castle</span><span class="c" id="u-wall-c">140</span></button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ==========================================================================
+   KDL // CASTLE DEFENSE — one file, no build.
+   Three lanes, invaders marching right to left, you place defenders in a lane
+   and they fight on their own. Gold comes from time and from kills; three
+   upgrades decide whether you survive wave 12 or fall at 6.
+   ========================================================================== */
+
+var cv = document.getElementById('field');
+var ctx = cv && cv.getContext ? cv.getContext('2d') : null;
+
+var LANES = 3;
+var START_GOLD = 120;
+var START_HP = 100;
+var WAVE_GAP = 9000;          /* ms of calm between waves */
+
+var UNIT = {
+  knight: { cost: 50,  hp: 70,  dmg: 9,  rate: 900,  range: 46,  glyph: '⚔' },
+  archer: { cost: 75,  hp: 40,  dmg: 7,  rate: 700,  range: 190, glyph: '➶' },
+  mage:   { cost: 130, hp: 55,  dmg: 22, rate: 1400, range: 150, glyph: '✦' }
+};
+var FOE = {
+  grunt:  { hp: 34,  speed: 13, gold: 9,  dmg: 4,  w: 1.0, color: '#ff8a65' },
+  runner: { hp: 20,  speed: 26, gold: 7,  dmg: 3,  w: 0.8, color: '#ffab00' },
+  brute:  { hp: 130, speed: 8,  gold: 22, dmg: 10, w: 1.45, color: '#ff3d00' }
+};
+
+var G = null;                 /* the whole game state lives here */
+var selected = 'knight';
+var lastTs = 0;
+var raf = null;
+var W = 0, H = 0, dpr = 1;
+var laneH = 0;
+
+function fresh() {
+  return {
+    gold: START_GOLD, hp: START_HP, maxHp: START_HP,
+    wave: 0, waveAt: 900, dmgMul: 1, goldRate: 2,
+    units: [], foes: [], sparks: [],
+    spawnQueue: [], over: false, won: false,
+    castleX: 0, laneY: []
+  };
+}
+
+/* ---------------------------------------------------------------- layout */
+function size() {
+  if (!cv) return;
+  var r = cv.getBoundingClientRect();
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = Math.max(240, Math.round(r.width));
+  H = Math.max(200, Math.round(r.height));
+  cv.width = Math.round(W * dpr);
+  cv.height = Math.round(H * dpr);
+  if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  laneH = H / LANES;
+  G.castleX = W - 54;
+  G.laneY = [];
+  for (var i = 0; i < LANES; i++) G.laneY.push(laneH * (i + 0.5));
+}
+
+/* ---------------------------------------------------------------- helpers */
+function laneOf(y) {
+  var l = Math.floor(y / laneH);
+  return Math.max(0, Math.min(LANES - 1, l));
+}
+function toast(text) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = text;
+  t.classList.add('on');
+  clearTimeout(t._h);
+  t._h = setTimeout(function () { t.classList.remove('on'); }, 1600);
+}
+function alive(list) {
+  var n = 0;
+  for (var i = 0; i < list.length; i++) if (list[i].hp > 0) n++;
+  return n;
+}
+
+/* ---------------------------------------------------------------- waves */
+function nextWave() {
+  G.wave++;
+  if (G.wave > 12) { G.wave = 12; endGame(true); return; }   /* twelve waves and the castle holds */
+  var n = 2 + Math.round(G.wave * 1.4);
+  var gap = Math.max(420, 1100 - G.wave * 45);
+  G.spawnQueue = [];
+  for (var i = 0; i < n; i++) {
+    var kind = 'grunt';
+    var roll = Math.random();
+    if (G.wave >= 3 && roll > 0.72) kind = 'runner';
+    if (G.wave >= 5 && roll > 0.9) kind = 'brute';
+    G.spawnQueue.push({ at: i * gap, kind: kind, lane: Math.floor(Math.random() * LANES) });
+  }
+  G.waveClock = 0;
+  G.waveAt = performance.now() + (n * gap) + WAVE_GAP;
+  toast('Wave ' + G.wave);
+  paintHud();
+}
+
+function spawn(kind, lane) {
+  var f = FOE[kind];
+  var scale = 1 + (G.wave - 1) * 0.14;
+  G.foes.push({
+    kind: kind, lane: lane,
+    x: -18, hp: f.hp * scale, maxHp: f.hp * scale,
+    speed: f.speed, gold: f.gold, dmg: f.dmg, w: f.w, color: f.color
+  });
+}
+
+/* ---------------------------------------------------------------- placing */
+function place(lane, x) {
+  var u = UNIT[selected];
+  if (G.gold < u.cost) { toast('Need ' + u.cost + ' gold'); return; }
+  if (x > G.castleX - 20) { toast('Too close to the castle'); return; }
+  for (var i = 0; i < G.units.length; i++) {
+    var o = G.units[i];
+    if (o.lane === lane && Math.abs(o.x - x) < 34) { toast('That spot is taken'); return; }
+  }
+  G.gold -= u.cost;
+  G.units.push({
+    kind: selected, lane: lane, x: x, hp: u.hp, maxHp: u.hp,
+    dmg: u.dmg * G.dmgMul, rate: u.rate, range: u.range, glyph: u.glyph,
+    cd: 0, hitAt: 0
+  });
+  paintHud();
+}
+
+/* ---------------------------------------------------------------- combat */
+function nearestFoe(lane, fromX, range) {
+  var best = null, bestD = Infinity;
+  for (var i = 0; i < G.foes.length; i++) {
+    var f = G.foes[i];
+    if (f.hp <= 0 || f.lane !== lane) continue;
+    var d = Math.abs(f.x - fromX);
+    if (d <= range && d < bestD) { bestD = d; best = f; }
+  }
+  return best;
+}
+
+function step(now, dt) {
+  if (G.over) return;
+
+  G.gold += G.goldRate * dt / 1000;
+
+  /* enemies march, defenders swing */
+  for (var i = G.foes.length - 1; i >= 0; i--) {
+    var f = G.foes[i];
+    if (f.hp <= 0) { G.foes.splice(i, 1); continue; }
+    f.x += f.speed * dt / 1000;      /* invaders march right, toward the castle */
+    if (f.x >= G.castleX) {
+      G.hp -= f.dmg;
+      f.hp = 0;
+      G.foes.splice(i, 1);
+      spark(G.castleX, G.laneY[f.lane], '#ff3d00');
+      if (G.hp <= 0) { G.hp = 0; endGame(false); return; }
+    }
+  }
+
+  for (var j = 0; j < G.units.length; j++) {
+    var u = G.units[j];
+    if (u.hp <= 0) continue;
+    u.cd -= dt;
+    if (u.cd > 0) continue;
+    var target = nearestFoe(u.lane, u.x, u.range);
+    if (!target) continue;
+    target.hp -= u.dmg;
+    u.cd = u.rate;
+    u.hitAt = now;
+    spark(target.x, G.laneY[u.lane], '#38bdf8');
+    if (target.hp <= 0) {
+      G.gold += target.gold;
+      spark(target.x, G.laneY[u.lane], '#ffd166', 6);
+    }
+  }
+
+  /* the queue for this wave */
+  if (G.spawnQueue && G.spawnQueue.length) {
+    G.waveClock += dt;
+    while (G.spawnQueue.length && G.spawnQueue[0].at <= G.waveClock) {
+      var s = G.spawnQueue.shift();
+      spawn(s.kind, s.lane);
+    }
+  }
+
+  /* nothing left to fight and nothing queued → wait, then send the next one */
+  if (!G.spawnQueue.length && !alive(G.foes) && now >= G.waveAt) nextWave();
+
+  for (var k = G.sparks.length - 1; k >= 0; k--) {
+    var p = G.sparks[k];
+    p.life -= dt;
+    p.y += p.vy * dt / 1000;
+    if (p.life <= 0) G.sparks.splice(k, 1);
+  }
+  paintHud();
+}
+
+function spark(x, y, color, n) {
+  n = n || 3;
+  for (var i = 0; i < n; i++) {
+    G.sparks.push({ x: x, y: y, vy: -18 - Math.random() * 26, life: 260 + Math.random() * 180, max: 420, color: color });
+  }
+}
+
+/* ---------------------------------------------------------------- drawing */
+function draw(now) {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, W, H);
+
+  /* lanes */
+  for (var i = 0; i < LANES; i++) {
+    var y = laneH * i;
+    ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.012)' : 'rgba(255,255,255,.024)';
+    ctx.fillRect(0, y, W, laneH);
+    ctx.strokeStyle = 'rgba(31,36,45,.9)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, Math.round(y) + 0.5);
+    ctx.lineTo(W, Math.round(y) + 0.5);
+    ctx.stroke();
+  }
+
+  /* castle */
+  var cx = G.castleX, top = 12, bot = H - 12;
+  ctx.fillStyle = 'rgba(13,15,19,1)';
+  ctx.fillRect(cx, top, W - cx - 4, bot - top);
+  ctx.strokeStyle = '#2b3340';
+  ctx.strokeRect(cx + 0.5, top + 0.5, W - cx - 5, bot - top - 1);
+  /* battlements */
+  ctx.fillStyle = '#2b3340';
+  for (var b = 0; b < 4; b++) ctx.fillRect(cx + 6 + b * 12, top, 7, 7);
+  /* health stripe */
+  var frac = G.hp / G.maxHp;
+  ctx.fillStyle = frac > 0.5 ? '#00e676' : frac > 0.25 ? '#ffab00' : '#ff3d00';
+  ctx.fillRect(cx + 4, bot - 6, (W - cx - 12) * frac, 3);
+
+  drawUnits(now);
+  drawFoes();
+  drawSparks();
+}
+
+function drawUnits(now) {
+  for (var u = 0; u < G.units.length; u++) {
+    var un = G.units[u];
+    if (un.hp <= 0) continue;
+    var y = G.laneY[un.lane];
+    var pulse = Math.max(0, 1 - (now - un.hitAt) / 160);
+    ctx.save();
+    ctx.translate(un.x, y);
+    /* body */
+    ctx.fillStyle = un.kind === 'archer' ? 'rgba(56,189,248,.18)' : un.kind === 'mage' ? 'rgba(125,211,252,.26)' : 'rgba(56,189,248,.30)';
+    ctx.fillRect(-9, -11, 18, 22);
+    ctx.strokeStyle = pulse > 0 ? '#dff6ff' : '#38bdf8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-8.5, -10.5, 17, 21);
+    /* glyph */
+    ctx.fillStyle = '#dff6ff';
+    ctx.font = '11px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(un.glyph, 0, 1);
+    ctx.restore();
+  }
+}
+
+function drawFoes() {
+  for (var i = 0; i < G.foes.length; i++) {
+    var f = G.foes[i];
+    var y = G.laneY[f.lane];
+    var w = 16 * f.w, h = 22 * f.w;
+    ctx.save();
+    ctx.translate(f.x, y);
+    ctx.fillStyle = 'rgba(13,15,19,1)';
+    ctx.fillRect(-w / 2, -h / 2, w, h);
+    ctx.strokeStyle = f.color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1);
+    ctx.fillStyle = f.color;
+    ctx.fillRect(-w / 2 + 3, -h / 2 + 3, w - 6, 3);
+    /* little head */
+    ctx.beginPath();
+    ctx.arc(0, h / 2 - 4, 3 * f.w, 0, 6.2832);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawSparks() {
+  for (var i = 0; i < G.sparks.length; i++) {
+    var p = G.sparks[i];
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ---------------------------------------------------------------- hud */
+function paintHud() {
+  var g = document.getElementById('s-gold');
+  if (!g) return;
+  g.textContent = Math.floor(G.gold);
+  document.getElementById('s-hp').textContent = Math.max(0, Math.ceil(G.hp));
+  document.getElementById('s-wave').textContent = G.wave;
+  var f = Math.max(0, Math.min(1, G.hp / G.maxHp));
+  var fill = document.getElementById('hpfill');
+  fill.style.width = (f * 100) + '%';
+  fill.style.background = f > 0.5 ? '#00e676' : f > 0.25 ? '#ffab00' : '#ff3d00';
+  var cost = {
+    knight: UNIT.knight.cost, archer: UNIT.archer.cost, mage: UNIT.mage.cost
+  };
+  var buttons = document.querySelectorAll('.unit');
+  for (var i = 0; i < buttons.length; i++) {
+    var kind = buttons[i].getAttribute('data-unit');
+    buttons[i].classList.toggle('poor', G.gold < cost[kind]);
+    buttons[i].classList.toggle('sel', kind === selected);
+  }
+}
+
+function priceDmg() { return 90 + (G.dmgMul > 1 ? Math.round((G.dmgMul - 1) * 100) * 12 : 0); }
+function priceGold() { return 110 + (G.goldRate - 2) * 55; }
+function priceWall() { return 140 + Math.max(0, G.maxHp - 100) * 2; }
+
+function paintShop() {
+  document.getElementById('u-dmg-c').textContent = priceDmg();
+  document.getElementById('u-gold-c').textContent = priceGold();
+  document.getElementById('u-wall-c').textContent = priceWall();
+}
+
+/* ---------------------------------------------------------------- loop */
+function loop(ts) {
+  if (!lastTs) lastTs = ts;
+  var dt = Math.min(60, ts - lastTs);
+  lastTs = ts;
+  step(ts, dt);
+  draw(ts);
+  if (!G.over) raf = requestAnimationFrame(loop);
+}
+
+function endGame(won) {
+  G.over = true;
+  G.won = !!won;
+  var ov = document.getElementById('overlay');
+  var card = document.getElementById('over-card');
+  document.getElementById('over-title').textContent = won ? 'Castle holds' : 'Castle lost';
+  document.getElementById('over-text').textContent = won
+    ? 'You held every wave. Wave ' + G.wave + ' cleared.'
+    : 'You reached wave ' + G.wave + '. The wall gave way at ' + Math.max(0, Math.round(G.hp)) + ' hit points left.';
+  card.classList.toggle('win', !!won);
+  ov.classList.add('on');
+}
+
+function restart() {
+  G = fresh();
+  selected = 'knight';
+  document.getElementById('overlay').classList.remove('on');
+  size();
+  paintShop();
+  paintHud();
+  if (raf) cancelAnimationFrame(raf);
+  lastTs = 0;
+  raf = requestAnimationFrame(loop);
+  nextWave();
+}
+
+/* ---------------------------------------------------------------- input */
+function fieldPoint(ev) {
+  var r = cv.getBoundingClientRect();
+  var t = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+  return { x: (t.clientX - r.left), y: (t.clientY - r.top) };
+}
+
+if (cv) {
+  cv.addEventListener('pointerdown', function (ev) {
+    if (G.over) return;
+    var p = fieldPoint(ev);
+    place(laneOf(p.y), p.x);
+  });
+}
+
+var unitButtons = document.querySelectorAll('.unit');
+for (var i = 0; i < unitButtons.length; i++) {
+  (function (btn) {
+    btn.addEventListener('click', function () {
+      selected = btn.getAttribute('data-unit');
+      paintHud();
+      toast(selected + ' selected');
+    });
+  })(unitButtons[i]);
+}
+
+document.getElementById('u-dmg').addEventListener('click', function () {
+  var p = priceDmg();
+  if (G.gold < p) return toast('Need ' + p + ' gold');
+  G.gold -= p;
+  G.dmgMul += 0.25;
+  for (var i = 0; i < G.units.length; i++) G.units[i].dmg = UNIT[G.units[i].kind].dmg * G.dmgMul;
+  paintShop(); paintHud(); toast('Forge improved');
+});
+
+document.getElementById('u-gold').addEventListener('click', function () {
+  var p = priceGold();
+  if (G.gold < p) return toast('Need ' + p + ' gold');
+  G.gold -= p;
+  G.goldRate += 1;
+  paintShop(); paintHud(); toast('Mine dug');
+});
+
+document.getElementById('u-wall').addEventListener('click', function () {
+  var p = priceWall();
+  if (G.gold < p) return toast('Need ' + p + ' gold');
+  G.gold -= p;
+  G.hp += 50; G.maxHp += 50;
+  paintShop(); paintHud(); toast('Wall raised');
+});
+
+document.getElementById('again').addEventListener('click', restart);
+
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = null; }
+  else if (!raf && !G.over) { lastTs = 0; raf = requestAnimationFrame(loop); }
+});
+window.addEventListener('resize', function () { size(); });
+
+/* ---------------------------------------------------------------- boot */
+G = fresh();
+if (cv && ctx) {
+  size();
+  paintShop();
+  paintHud();
+  raf = requestAnimationFrame(loop);
+  nextWave();
+} else {
+  var h = document.getElementById('hint');
+  if (h) h.textContent = 'this browser has no canvas';
+}
+window.KDL_CASTLE = {
+  state: function () { return G; },
+  place: place,
+  step: step,
+  restart: restart,
+  nextWave: nextWave
+};
+</script>
+</body>
+</html>

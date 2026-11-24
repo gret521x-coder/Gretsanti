@@ -30,7 +30,7 @@ Pages on a free account, so `github.io` serves nothing.
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
-| `labs/` | 7 KB + | Experiments: Call Spider (one file), the transcript extension, the auto clicker APK |
+| `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
 
 ## Latest changes
 

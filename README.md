@@ -25,6 +25,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
 | `labs/index.html` | 9 KB | Experimental build area — a card per experiment, empty state, nothing linked from the launcher |
 | `labs/autoclicker/` | Android project | Auto clicker for Clash of Clans — Java, built into an APK by GitHub Actions |
+| `labs/call-spider.html` | 31 KB | Call Spider as one file — paste a transcript, get notes; live capture through a copyable snippet |
 | `labs/transcript-spider/` | Extension | Call Spider — harvests the live transcript on a page, floats a panel, summarizes the call |
 | `.github/workflows/build-apk.yml` | 1 KB | Builds that APK on every change, artifact download from the Actions tab |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
@@ -41,9 +42,18 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 ## labs
 
 `labs/` is where work in progress goes so the shipped pages stay untouched. It is reachable at
-`/labs/index.html` and nothing on the launcher points at it. Adding an experiment is one object in the
-`EXPERIMENTS` array plus a file next to it; `labs/README.md` has the details and the
-`git subtree split --prefix=labs` line for moving the folder into a repository of its own.
+`/labs/index.html` and nothing on the launcher points at it.
+
+- `labs/call-spider.html` — Call Spider as a single file: paste a transcript, press Summarise, get
+  Summary / Decisions / Action items. Offline by default, OpenRouter when a key is saved. Live capture
+  is a snippet the page copies for you, pasted into the transcript tab's console — no extension.
+- `labs/transcript-spider/` — the same spider as a Chrome extension, if Developer mode is not a bother.
+- `labs/autoclicker/` — the Android project built into an APK by GitHub Actions.
+
+
+Adding an experiment is one object in the `EXPERIMENTS` array in `labs/index.html`
+plus a file next to it; `labs/README.md` has the details and the `git subtree split --prefix=labs` line
+for moving the folder into a repository of its own.
 
 ---
 

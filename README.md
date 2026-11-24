@@ -358,6 +358,10 @@ host (Pages), and both became unreliable. v3 decides from the key instead:
 | `sk-…` | OpenAI | OpenAI-style SSE |
 | *custom base URL typed in Settings* | that host, unchanged | OpenAI-style SSE |
 
+- **Busy models heal themselves.** Google answers `503 high demand` and `429 quota` under load. Neither is
+  a bad request, so v3 retries the same model once after a moment, then moves to another Flash model the
+  key can run — announced in the thinking panel. It never restarts after text has started arriving, and a
+  genuine error (`400 API key not valid`) is shown at once instead of being retried.
 - **Both Google key shapes work** — the older `AIza…` and the newer `AQ.…`. The key is sent as the
   `key` query value and as an `x-goog-api-key` header, so neither shape can fail quietly.
 - **`list models`** asks the key what it can actually run and drops the answers into the model chips, so

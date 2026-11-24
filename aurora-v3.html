@@ -722,6 +722,60 @@ async function streamGemini(provider, model, messages, onDelta, signal){
   return text;
 }
 
+/* Google answers 503 "high demand" and 429 "quota" under load. Neither is a bug in the
+   request, so retry the same model once, then move to another Flash model the key can run —
+   but only while nothing has been written to the screen, otherwise two answers would mix. */
+function isBusyError(message){
+  return /503|429|500|high demand|overload|UNAVAILABLE|RESOURCE_EXHAUSTED|temporarily/i.test(String(message || ''));
+}
+
+async function streamGeminiResilient(provider, model, messages, onDelta, signal, notice){
+  let produced = 0;
+  const emit = (piece, reasoning) => {
+    if(piece) produced += piece.length;
+    onDelta(piece, reasoning);
+  };
+
+  /* the spare models are fetched only if the first one is actually busy — no extra
+     request on the happy path, which is every message that works */
+  let order = [model];
+  let alternatesLoaded = false;
+  const loadAlternates = async () => {
+    if(alternatesLoaded) return;
+    alternatesLoaded = true;
+    try {
+      const models = await listProviderModels(provider, cfg);
+      const spare = models.filter(m => /flash/i.test(m) && !/embedding|tts|image|audio|live|exp/i.test(m) && m !== model);
+      order = [model].concat(spare).slice(0, 4);
+    } catch(e){ /* if the list fails, the same-model retry still helps */ }
+  };
+
+  let lastError = null;
+
+  for(let i = 0; i < order.length; i++){
+    const current = order[i];
+    for(let tries = 0; tries < 2; tries++){
+      try {
+        return await streamGemini(provider, current, messages, emit, signal);
+      } catch(err){
+        if(err && err.name === 'AbortError') throw err;
+        if(!isBusyError(err && err.message)) throw err;
+        lastError = err;
+        if(produced > 0) throw err;                 /* never restart on a half-written answer */
+
+        if(tries === 0){
+          if(notice) notice(current + ' is busy — retrying');
+          await new Promise(r => setTimeout(r, 1200));
+          continue;
+        }
+        await loadAlternates();
+        if(order[i + 1] && notice) notice(current + ' is busy — switching to ' + order[i + 1]);
+      }
+    }
+  }
+  throw lastError || new Error('Google is busy — try again in a moment.');
+}
+
 /* Everything else speaks the OpenAI shape, including OpenRouter, Groq and the PHP proxy. */
 async function streamOpenAiLike(provider, model, messages, onDelta, signal){
   const viaProxy = provider.kind === 'proxy';
@@ -1596,8 +1650,13 @@ async function callAPI(userText){
       schedule();
     };
 
+    const busyNotice = txt => {
+      rcBuf = (rcBuf ? rcBuf + '\n' : '') + '· ' + txt;
+      updateThink(rcBuf);
+    };
+
     const answer = provider.kind === 'google'
-      ? await streamGemini(provider, model, msgs, onDelta, abortCtl.signal)
+      ? await streamGeminiResilient(provider, model, msgs, onDelta, abortCtl.signal, busyNotice)
       : await streamOpenAiLike(provider, model, msgs, onDelta, abortCtl.signal);
 
     if(answer) raw = answer;

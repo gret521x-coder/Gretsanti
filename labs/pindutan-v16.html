@@ -3034,11 +3034,16 @@
 
     document.getElementById("pauseBtn").addEventListener("click", togglePause);
     powerBtn.addEventListener("click", tryBurst);
+    /* solo and VS CPU freeze with you; a live room never pauses, the others keep playing */
+    function autoPauseApplies() {
+      return currentMode === "solo" || currentMode === "bot";
+    }
+
     window.addEventListener("blur", () => {
-      if (autoPauseEnabled && gameRunning && !isPaused && currentMode === "solo") togglePause();
+      if (autoPauseEnabled && gameRunning && !isPaused && autoPauseApplies()) togglePause();
     });
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden && autoPauseEnabled && gameRunning && !isPaused && currentMode === "solo") togglePause();
+      if (document.hidden && autoPauseEnabled && gameRunning && !isPaused && autoPauseApplies()) togglePause();
     });
 
     function mobileAction(action) {

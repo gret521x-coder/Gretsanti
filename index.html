@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KDL // MISSION CONTROL</title>
+    <style>
+        :root {
+            --bg-void: #000000;
+            --bg-panel: #08090b;
+            --bg-card: #0d0f13;
+            --bg-card-hover: #14181f;
+            --border-line: #1f242d;
+            --border-active: #ffffff;
+            --accent-thrust: #005288;
+            --accent-cyan: #38bdf8;
+            --text-primary: #ffffff;
+            --text-secondary: #8b949e;
+            --text-dim: #484f58;
+            --status-nominal: #00e676;
+            --status-warn: #ffab00;
+            --status-abort: #ff3d00;
+            --font-sans: "DIN Alternate", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .orbital-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+
+        .orbital-horizon {
+            position: fixed;
+            top: -35vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140vw;
+            height: 60vh;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at bottom, rgba(0, 82, 136, 0.22) 0%, transparent 70%);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Lock Screen */
+        #lockScreen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.94);
+            backdrop-filter: blur(12px);
+            transition: opacity 0.35s ease;
+        }
+
+        #lockScreen.unlocked {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .lock-terminal {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-line);
+            padding: 36px 28px;
+            position: relative;
+        }
+
+        .lock-terminal::before, .lock-terminal::after {
+            content: "";
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-color: var(--text-primary);
+            border-style: solid;
+        }
+        .lock-terminal::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+        .lock-terminal::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+        .sys-tag {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sys-tag span.blink {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-cyan);
+            display: inline-block;
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .lock-terminal h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .lock-terminal p {
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 24px;
+        }
+
+        input[type="password"], input[type="text"], select, textarea {
+            width: 100%;
+            background: #000000;
+            border: 1px solid var(--border-line);
+            color: var(--text-primary);
+            padding: 13px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--text-primary);
+        }
+
+        .btn-spacex {
+            width: 100%;
+            margin-top: 14px;
+            padding: 14px;
+            background: transparent;
+            border: 1px solid var(--text-primary);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-spacex:hover, .btn-spacex:active {
+            background: var(--text-primary);
+            color: #000000;
+        }
+
+        .hint-toggle {
+            margin-top: 18px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .hint-readout {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-left: 2px solid var(--status-warn);
+            background: rgba(255, 171, 0, 0.06);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--status-warn);
+        }
+
+        .error-readout {
+            font-family: var(--font-mono);
+            color: var(--status-abort);
+            font-size: 0.78rem;
+            margin-top: 10px;
+            min-height: 16px;
+        }
+
+        /* Main Mission Control */
+        #mainApp {
+            position: relative;
+            z-index: 1;
+            max-width: 1020px;
+            margin: 0 auto;
+            padding: 16px 16px 80px;
+            display: none;
+        }
+
+        .telemetry-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-line);
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mission-id {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .wordmark {
+            font-weight: 800;
+            font-size: 1.05rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .telemetry-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border: 1px solid var(--border-line);
+            background: #000;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .t-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--status-warn);
+        }
+
+        .t-dot.nominal {
+            background: var(--status-nominal);
+            box-shadow: 0 0 8px var(--status-nominal);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .met-clock {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+            padding: 4px 8px;
+            border: 1px solid rgba(56, 189, 248, 0.25);
+        }
+
+        .cmd-btn {
+            background: #000;
+            border: 1px solid var(--border-line);
+            color: var(--text-primary);
+            padding: 6px 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .cmd-btn:hover {
+            border-color: var(--text-primary);
+        }
+
+        .mission-banner {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-line);
+            border-left: 3px solid var(--text-primary);
+            padding: 20px 22px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .mission-banner h2 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .mission-banner p {
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .telemetry-metrics {
+            display: flex;
+            gap: 18px;
+            font-family: var(--font-mono);
+        }
+
+        .metric-box span {
+            display: block;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            letter-spacing: 1.5px;
+        }
+
+        .metric-box strong {
+            font-size: 0.92rem;
+            color: var(--text-primary);
+        }
+
+        .subsystem-tabs {
+            display: grid;
+            grid-template-columns: 1fr;
+            border: 1px solid var(--border-line);
+            background: var(--bg-panel);
+            margin-bottom: 18px;
+        }
+
+        .sub-tab {
+            padding: 13px 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .sub-tab.active {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 2px solid var(--text-primary);
+        }
+
+        /* Payload Grid */
+        .payload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+            gap: 12px;
+        }
+
+        .payload-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            padding: 18px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 136px;
+            position: relative;
+            transition: border-color 0.2s, background 0.2s;
+            cursor: pointer;
+        }
+
+        .payload-card:hover, .payload-card:active {
+            border-color: var(--text-primary);
+            background: var(--bg-card-hover);
+        }
+
+        .payload-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .payload-code {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+        }
+
+        .payload-icon {
+            font-size: 1.25rem;
+        }
+
+        .payload-title {
+            font-weight: 700;
+            font-size: 0.92rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .payload-sub {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        .del-payload {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            cursor: pointer;
+            padding: 2px 5px;
+        }
+        .del-payload:hover { color: var(--status-abort); }
+
+        .add-payload {
+            border-style: dashed;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .tactical-btn {
+            padding: 6px 10px;
+            border: 1px solid var(--text-primary);
+            background: transparent;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .tactical-btn:hover {
+            background: var(--text-primary);
+            color: #000;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.88);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-panel);
+            border: 1px solid var(--text-primary);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-box.large {
+            max-width: 860px;
+            height: 82vh;
+        }
+
+        .modal-title {
+            font-family: var(--font-mono);
+            font-size: 0.88rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<div class="orbital-grid"></div>
+<div class="orbital-horizon"></div>
+
+<!-- FLIGHT READINESS LOCK SCREEN -->
+<div id="lockScreen">
+    <div class="lock-terminal">
+        <div class="sys-tag"><span class="blink"></span> KDL // FLIGHT CONTROL</div>
+        <h1>AUTHORIZATION</h1>
+        <p>ENTER OVERRIDE CODE TO INITIALIZE TELEMETRY</p>
+        <form onsubmit="handleUnlock(event)">
+            <input type="password" id="passInput" placeholder="ACCESS CODE..." autocomplete="off" required>
+            <button type="submit" class="btn-spacex">INITIATE LAUNCH</button>
+        </form>
+        <div style="text-align: center;">
+            <button type="button" class="hint-toggle" onclick="toggleHint()">[ REQUEST HINT ]</button>
+        </div>
+        <div class="hint-readout" id="hintBox">HINT: Ano ang lagi kong sinasabi?</div>
+        <div class="error-readout" id="lockError"></div>
+    </div>
+</div>
+
+<!-- MAIN MISSION CONTROL -->
+<div id="mainApp">
+    <div class="telemetry-bar">
+        <div class="mission-id">
+            <div class="wordmark">K D L &nbsp; X</div>
+            <div class="telemetry-pill" onclick="openModal('keyModal')" title="Configure OpenRouter API">
+                <span class="t-dot" id="apiDot"></span>
+                <span id="apiStatusText">LINK: NOMINAL</span>
+            </div>
+        </div>
+        <div class="header-controls">
+            <div class="met-clock" id="metClock">T+ 00:00:00</div>
+            <button class="cmd-btn" onclick="resetPayloads()" title="Reset App Links">SYNC</button>
+            <button class="cmd-btn" onclick="openModal('keyModal')">API</button>
+            <button class="cmd-btn" onclick="lockLauncher()">LOCK</button>
+        </div>
+    </div>
+
+    <div class="mission-banner">
+        <div>
+            <h2>HELLO, KUPAL</h2>
+            <p>PLAYGROUND NG MGA QPAL // ORBITAL COMMAND DECK</p>
+        </div>
+        <div class="telemetry-metrics">
+            <div class="metric-box">
+                <span>STAGE</span>
+                <strong>ORBITAL</strong>
+            </div>
+            <div class="metric-box">
+                <span>PROPULSION</span>
+                <strong>OPENROUTER</strong>
+            </div>
+            <div class="metric-box">
+                <span>STATUS</span>
+                <strong style="color: var(--status-nominal);">GO</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="subsystem-tabs">
+        <button class="sub-tab active" id="tabLauncher">[01] PAYLOADS &amp; APPS</button>
+    </div>
+
+    <div id="launcherSection">
+        <div class="payload-grid" id="appsGrid"></div>
+    </div>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-backdrop" id="keyModal">
+    <div class="modal-box">
+        <div class="modal-title">OPENROUTER TELEMETRY KEY</div>
+        <p style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+            Primary key is hardcoded. Enter an override key below if rotating credentials.
+        </p>
+        <input type="password" id="openRouterKeyInput" placeholder="sk-or-v1-..." autocomplete="off">
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button class="btn-spacex" style="margin-top:0;" onclick="saveOpenRouterKey()">SAVE KEY</button>
+            <button class="btn-spacex" style="margin-top:0; border-color: var(--border-line); color: var(--text-secondary);" onclick="closeModal('keyModal')">ABORT</button>
+        </div>
+    </div>
+</div>
+
+<!-- DEPLOY NEW PAYLOAD MODAL -->
+<div class="modal-backdrop" id="addModal">
+    <div class="modal-box">
+        <div class="modal-title">DEPLOY NEW PAYLOAD</div>
+        <input type="text" id="newAppIcon" placeholder="ICON (e.g. 🛰️)" maxlength="4" value="🛰️">
+        <input type="text" id="newAppTitle" placeholder="PAYLOAD NAME">
+        <input type="text" id="newAppDesc" placeholder="MISSION BRIEF">
+        <input type="text" id="newAppUrl" placeholder="FILE OR URL (e.g. tns.html)">
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button class="btn-spacex" style="margin-top:0;" onclick="saveNewApp()">DEPLOY</button>
+            <button class="btn-spacex" style="margin-top:0; border-color: var(--border-line); color: var(--text-secondary);" onclick="closeModal('addModal')">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- BARDAGULAN ACCESS MODAL -->
+<div class="modal-backdrop" id="bardagulanModal">
+    <div class="modal-box">
+        <div class="modal-title">BARDAGULAN ACCESS</div>
+        <p style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+            ENTER OVERRIDE CODE TO OPEN BARDAGULAN CHANNEL
+        </p>
+        <form onsubmit="tryBardagulanAccess(event)">
+            <input type="password" id="bardagulanPassInput" placeholder="ACCESS CODE..." autocomplete="off" required>
+            <button type="submit" class="btn-spacex">INITIATE LAUNCH</button>
+        </form>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button class="btn-spacex" style="margin-top:0; border-color: var(--border-line); color: var(--text-secondary);" onclick="closeModal('bardagulanModal')">ABORT</button>
+        </div>
+        <div class="error-readout" id="bardagulanError"></div>
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // HARDCODED OPENROUTER API CONFIGURATION
+    // =========================================================================
+    const HARDCODED_OPENROUTER_KEY = "sk-or-v1-PASTE-YOUR-KEY-HERE";
+    const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+    const VALID_PASSWORDS = ["kupal", "qpal", "ano ba", "hello kupal", "kdl"];
+
+    // Channel integrity signature (obfuscated access token)
+    const BARDAGULAN_SIG = "313e36606029323f282336";
+
+    // Clean payload definitions without visible .html filenames, Luh removed
+    const DEFAULT_APPS = [
+        { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
+        { code: "PLD-02", icon: "🎮", title: "Pindutan v14", desc: "Pindutan game module", url: "pindutan.html", newTab: true },
+        { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "Screenshot.html", newTab: true },
+        { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "gc.html", newTab: true, lock: true },
+        { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
+        { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "Aurora.html", newTab: true }
+    ];
+
+    let missionStart = Date.now();
+    let pendingBardagulanUrl = null;
+
+    setInterval(() => {
+        const diff = Math.floor((Date.now() - missionStart) / 1000);
+        const hrs = String(Math.floor(diff / 3600)).padStart(2, "0");
+        const mins = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
+        const secs = String(diff % 60).padStart(2, "0");
+        const clock = document.getElementById("metClock");
+        if (clock) clock.innerText = `T+ ${hrs}:${mins}:${secs}`;
+    }, 1000);
+
+    // =========================================================================
+    // PERSISTENT UNLOCK
+    // =========================================================================
+    if (localStorage.getItem("kdl_unlocked_v11") === "true") {
+        showDashboard();
+    }
+
+    function toggleHint() {
+        const box = document.getElementById("hintBox");
+        box.style.display = box.style.display === "block" ? "none" : "block";
+    }
+
+    function handleUnlock(e) {
+        e.preventDefault();
+        const val = document.getElementById("passInput").value.trim().toLowerCase();
+        if (val.length > 0 && (VALID_PASSWORDS.includes(val) || val.includes("kupal") || val.includes("qpal"))) {
+            localStorage.setItem("kdl_unlocked_v11", "true");
+            showDashboard();
+        } else {
+            document.getElementById("lockError").innerText = "ACCESS DENIED // INVALID CODE";
+        }
+    }
+
+    function showDashboard() {
+        document.getElementById("lockScreen").classList.add("unlocked");
+        document.getElementById("mainApp").style.display = "block";
+        renderApps();
+        loadSavedSettings();
+    }
+
+    function lockLauncher() {
+        localStorage.removeItem("kdl_unlocked_v11");
+        localStorage.removeItem("kdl_bardagulan_unlocked");
+        location.reload();
+    }
+
+    // =========================================================================
+    // BARDAGULAN ACCESS GATE
+    // =========================================================================
+    function channelSignature(input) {
+        const salted = "kdl::" + input.trim().toLowerCase();
+        let sig = "";
+        for (let i = 0; i < salted.length; i++) {
+            sig += (salted.charCodeAt(i) ^ 0x5A).toString(16);
+        }
+        return sig;
+    }
+
+    function isBardagulanUnlocked() {
+        return localStorage.getItem("kdl_bardagulan_unlocked") === "true";
+    }
+
+    function requestBardagulanAccess(e, url) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isBardagulanUnlocked()) {
+            window.open(url, "_blank", "noopener");
+            return;
+        }
+        pendingBardagulanUrl = url;
+        document.getElementById("bardagulanPassInput").value = "";
+        document.getElementById("bardagulanError").innerText = "";
+        openModal("bardagulanModal");
+        document.getElementById("bardagulanPassInput").focus();
+    }
+
+    function tryBardagulanAccess(e) {
+        if (e) e.preventDefault();
+        const input = document.getElementById("bardagulanPassInput");
+        const errBox = document.getElementById("bardagulanError");
+        const val = input.value.trim();
+        if (val.length > 0 && channelSignature(val) === BARDAGULAN_SIG) {
+            localStorage.setItem("kdl_bardagulan_unlocked", "true");
+            closeModal("bardagulanModal");
+            const url = pendingBardagulanUrl || "gc.html";
+            pendingBardagulanUrl = null;
+            window.open(url, "_blank", "noopener");
+        } else {
+            errBox.innerText = "ACCESS DENIED // INVALID CODE";
+        }
+    }
+
+    // =========================================================================
+    // OPENROUTER KEY MANAGEMENT
+    // =========================================================================
+    function getApiKey() {
+        return localStorage.getItem("kdl_openrouter_key") || HARDCODED_OPENROUTER_KEY;
+    }
+
+    function loadSavedSettings() {
+        updateKeyStatusUI();
+    }
+
+    function saveOpenRouterKey() {
+        const key = document.getElementById("openRouterKeyInput").value.trim();
+        if (!key.startsWith("sk-or-")) {
+            alert("Invalid key format. Must start with sk-or-...");
+            return;
+        }
+        localStorage.setItem("kdl_openrouter_key", key);
+        closeModal("keyModal");
+        updateKeyStatusUI();
+    }
+
+    function updateKeyStatusUI() {
+        const key = getApiKey();
+        const dot = document.getElementById("apiDot");
+        const txt = document.getElementById("apiStatusText");
+        if (key && key.startsWith("sk-or-")) {
+            dot.classList.add("nominal");
+            txt.innerText = "LINK: NOMINAL";
+            document.getElementById("openRouterKeyInput").value = key;
+        } else {
+            dot.classList.remove("nominal");
+            txt.innerText = "LINK: NO KEY";
+        }
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = "flex"; }
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+
+    // =========================================================================
+    // PAYLOAD LAUNCHER GRID
+    // =========================================================================
+    function getApps() {
+        const saved = localStorage.getItem("kdl_spacex_apps_v11");
+        return saved ? JSON.parse(saved) : DEFAULT_APPS;
+    }
+
+    function resetPayloads() {
+        localStorage.removeItem("kdl_spacex_apps_v11");
+        renderApps();
+    }
+
+    function deleteApp(idx, e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const apps = getApps();
+        apps.splice(idx, 1);
+        localStorage.setItem("kdl_spacex_apps_v11", JSON.stringify(apps));
+        renderApps();
+    }
+
+    function renderApps() {
+        const grid = document.getElementById("appsGrid");
+        const apps = getApps();
+        grid.innerHTML = "";
+
+        apps.forEach((app, idx) => {
+            const code = app.code || `PLD-${String(idx + 1).padStart(2, "0")}`;
+            const card = document.createElement("a");
+            card.className = "payload-card";
+
+            if (app.lock) {
+                card.href = "#";
+                card.onclick = (e) => requestBardagulanAccess(e, app.url);
+            } else {
+                card.href = app.url;
+                card.target = "_blank";
+                card.rel = "noopener noreferrer";
+            }
+
+            const lockTag = app.lock ? " <span style=\"font-size:0.68rem;\">🔒</span>" : "";
+            card.innerHTML = `
+                <button class="del-payload" onclick="deleteApp(${idx}, event)" title="Remove">✕</button>
+                <div class="payload-top">
+                    <span class="payload-code">${escapeHTML(code)}</span>
+                    <span class="payload-icon">${app.icon}</span>
+                </div>
+                <div>
+                    <div class="payload-title">${escapeHTML(app.title)}${lockTag}</div>
+                    <div class="payload-sub">${escapeHTML(app.desc)}</div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        const addBtn = document.createElement("div");
+        addBtn.className = "payload-card add-payload";
+        addBtn.onclick = () => openModal("addModal");
+        addBtn.innerHTML = `<div style="font-size: 1.4rem; margin-bottom: 6px;">+</div><div>DEPLOY PAYLOAD</div>`;
+        grid.appendChild(addBtn);
+    }
+
+    function saveNewApp() {
+        const icon = document.getElementById("newAppIcon").value.trim() || "🛰️";
+        const title = document.getElementById("newAppTitle").value.trim();
+        const desc = document.getElementById("newAppDesc").value.trim() || "Custom payload";
+        const url = document.getElementById("newAppUrl").value.trim();
+        if (!title || !url) return alert("Enter payload name and target URL.");
+
+        const apps = getApps();
+        const code = `PLD-${String(apps.length + 1).padStart(2, "0")}`;
+        apps.push({ code, icon, title, desc, url, newTab: true });
+        localStorage.setItem("kdl_spacex_apps_v11", JSON.stringify(apps));
+        closeModal("addModal");
+        renderApps();
+    }
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[tag]));
+    }
+</script>
+
+</body>
+</html>

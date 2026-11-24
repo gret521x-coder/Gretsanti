@@ -11,7 +11,7 @@ press it. It does not tap anything yet. This step exists only to prove the build
 
 | Step | What it adds | State |
 |---|---|---|
-| 1 | App opens, button works | built here |
+| 1 | App opens, button works | built and published |
 | 2 | Accessibility permission + real taps | next |
 | 3 | Saved tap points you place on screen | after that |
 
@@ -19,16 +19,18 @@ Nothing taps silently: step 2 adds an explicit START/STOP, and the app never run
 
 ## Get the APK on your phone (no computer needed)
 
-1. Open https://github.com/gret521x-coder/Gretsanti/actions/workflows/build-apk.yml
-2. Tap the newest green run.
-3. Scroll to **Artifacts** → tap **autoclicker-debug-apk** (it downloads a `.zip`).
-4. Open the zip with your phone's file manager and extract `autoclicker-step1.apk`.
-5. Tap the APK. Android will say it is from an unknown source — allow it for your file manager or
-   browser, then install.
-6. Open **AUTO CLICKER**. The label under the title says *step 1 build*, and the device line shows your
-   phone model and Android version — that is how you know the right file is running.
+1. Open https://github.com/gret521x-coder/Gretsanti/releases/tag/apk-latest
+2. Under **Assets**, tap **autoclicker-debug.apk**.
+3. Android will say it is from an unknown source — allow it for your browser or file manager, then install.
+4. Open **AUTO CLICKER**. The line under the title says *step 1 build* and shows your phone model and
+   Android version — that is how you know the right file is running.
 
-Every time the code changes, the workflow runs again and a fresh APK appears. No version chasing.
+Every push rebuilds and replaces that same release, so the link never changes and the file is always
+the newest build. The release notes carry the size, the SHA-256 and the package the APK really
+contains (read by `aapt2`, not guessed).
+
+Prefer the Actions tab? Each run also has the APK as an artifact, but that downloads a `.zip` and
+needs a GitHub login.
 
 ## Build it yourself (optional, needs a computer)
 

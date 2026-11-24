@@ -368,6 +368,27 @@ Other changes: the old five-platform catalogue is dropped on load, `auto` is no 
 has no such model), the default is `deepseek-v4.1-flash`, keep-alive lines (`: ping`) no longer confuse the
 stream parser, and `429`/`503` retry once then move to another model in the same catalogue.
 
+### The `Failed to fetch` wall
+
+**FreeModel does not let a page on another website call it.** The browser stops the request before it
+leaves — the message is `Failed to fetch`, and it looks identical to a dead network or a bad key, which is
+exactly how it was misread the first time. Nothing in a page can get around this: it is CORS, a browser
+rule, and a page cannot step outside the browser. A relay is the only way, and the page now says so:
+
+| What went wrong | What the page now says |
+|---|---|
+| FreeModel's own address pasted into **Proxy URL** | the box turns red, says `Failed to fetch` is coming, and names what belongs there |
+| Key mode on `github.io` | "your browser was stopped before it reached FreeModel — this is CORS, your key is not the problem" |
+| Relay address dead or blocking | "your relay did not answer", the exact address it called, and the free-host warning |
+
+There is also a **🩺 Test connection** button in Settings: green means FreeModel answered through the relay
+and how many models came back; red gives the reason instead of a guess.
+
+**Two relays ship.** `api-free.php` for a PHP host, and `worker-free.js` for a free Cloudflare Worker
+(paste it in the dashboard, add the key as a `FREEMODEL_KEY` secret, deploy — no card, no domain). The
+Worker one exists because several free PHP hosts, unaux included, refuse calls that come from another
+website, which shows up as the same `Failed to fetch` even though the file is perfect.
+
 ---
 
 ## What changed in Aurora v3 (`aurora-v3.html`)
@@ -541,6 +562,7 @@ keep keys on the server side (`api-ai.php`) when you can.
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
 | `aurora-v3.html` | provider auto-detected from the key, model discovery, no dead hosts, stale base URLs retired |
 | `aurora-v4.html` | FreeModel only, key kept on the server via `api-free.php`, catalogue fetched from the platform |
+| `worker-free.js` | the same relay for a free Cloudflare Worker, when the PHP host blocks other sites |
 
 ## Checks
 

@@ -512,11 +512,16 @@ body{line-height:1.5}
   <div class="settings-head">⚙️ Settings <button class="icon-btn" id="settings-close" aria-label="Close">✕</button></div>
   <div class="settings-body">
    <div class="group">FreeModel — the only platform this page talks to</div>
-   <div class="field"><label>Proxy URL (recommended — the key stays on your server)</label><input type="text" id="in-baseurl" placeholder="https://your-host.example/api-free.php" autocomplete="off"></div>
+   <div class="field"><label>Proxy URL (recommended — the key stays on your server)</label><input type="text" id="in-baseurl" placeholder="https://your-host.example/api-free.php" autocomplete="off">
+     <div id="proxy-note" style="font-size:12px;line-height:1.55;color:var(--muted);margin-top:6px">Your helper's address, ending in <code>.php</code> (or a Worker address). It is <b>not</b> <code>https://freemodel.in/v1</code> — that is FreeModel itself, and a browser on another site is not allowed to call it.</div>
+   </div>
    <div class="field"><label>…or API key (stays in this browser only)</label><input type="password" id="in-apikey" placeholder="fm_live_…" autocomplete="off"></div>
    <div class="field" style="margin-top:2px"><label>Connected through</label>
      <div id="provider-hint" style="font-size:13px;color:var(--muted);line-height:1.5">—</div>
-     <button class="chip-btn" id="list-models" style="margin-top:8px;align-self:flex-start">⟳ List models from FreeModel</button>
+     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+       <button class="chip-btn" id="list-models">⟳ List models from FreeModel</button>
+       <button class="chip-btn" id="test-conn">🩺 Test connection</button>
+     </div>
    </div>
    <div class="group">Custom Models <button class="chip-btn" id="add-model" style="margin-left:auto">✚ Add</button></div>
    <div class="models-list" id="models-list"></div>
@@ -618,18 +623,36 @@ const DEFAULTS = {
    ============================================ */
 const FREEMODEL_BASE = 'https://freemodel.in/v1';
 
+/* A relay is any http(s) address that is NOT FreeModel itself. freemodel.in used to be
+   accepted here, which is how a browser was told to call FreeModel directly — and that
+   always ends in "Failed to fetch", because FreeModel will not answer another site. */
 function isProxyUrl(url){
-  return /\.php(\?|$)/i.test(String(url || '').trim());
+  const u = String(url || '').trim();
+  if(!u) return false;
+  if(/freemodel\.in/i.test(u)) return false;
+  return /^https?:\/\//i.test(u);
 }
 
 function detectProvider(config){
   const key = (config.apiKey || '').trim();
   const base = (config.baseUrl || '').trim();
 
-  if(base && isProxyUrl(base)) return { kind:'proxy', endpoint: base, label:'FreeModel via your proxy (key on the server, not in this page)' };
-  if(base) return { kind:'freemodel', endpoint: base.replace(/\/+$/, ''), label:'FreeModel · ' + base };
+  if(isProxyUrl(base)) return { kind:'proxy', endpoint: base.replace(/\/+$/, ''), label:'FreeModel via your relay (key on the server, not in this page)' };
   if(/^fm_/.test(key)) return { kind:'freemodel', endpoint: FREEMODEL_BASE, label:'FreeModel · ' + FREEMODEL_BASE };
   return { kind:'none', endpoint:'', label:'none yet' };
+}
+
+/* "Failed to fetch" is the browser saying it never got an answer. A blocked cross-site
+   call looks identical to a dead network, so the cause is named here instead. */
+function netError(viaProxy, endpoint, cause){
+  const e = new Error(viaProxy
+    ? 'No answer from ' + endpoint
+    : 'Your browser was stopped before it reached FreeModel');
+  e.kind = 'network';
+  e.endpoint = endpoint;
+  e.viaProxy = !!viaProxy;
+  e.cause = cause;
+  return e;
 }
 
 function providerHint(){
@@ -639,12 +662,76 @@ function providerHint(){
     : p.label;
 }
 
+
+/* Two different failures, two different stories. Saying "check your key" when the key is
+   fine wastes the user's evening — this page now says which wall it hit. */
+function networkHelp(provider, err){
+  const where = err && err.endpoint ? '`' + String(err.endpoint).slice(0, 120) + '`' : 'FreeModel';
+  if(provider.kind === 'proxy'){
+    return '⚠️ **Your relay did not answer**\n\n' +
+      'The page called ' + where + ' and got nothing back — no error message, no status, nothing. ' +
+      'That usually means the address is wrong, the host is asleep, or the host refuses calls from other websites.\n\n' +
+      '**Do this, in order**\n' +
+      '1. Open ' + where + ' in a new browser tab. A working relay shows a list of model names.\n' +
+      '2. If it says *key not set*, open `api-free.php` on your host and put your `fm_live_…` key inside `FREEMODEL_KEY`.\n' +
+      '3. If the tab works but this page still fails, that host blocks other sites. Many free hosts do, unaux included. ' +
+      'Use the Cloudflare Worker version (`worker-free.js`) — it is free, needs no card, and never blocks the browser.\n' +
+      '4. In Settings press **🩺 Test connection** — it reports the real reason instead of guessing.';
+  }
+  return '⚠️ **Your browser was stopped before it reached FreeModel**\n\n' +
+    'This is the wall called **CORS**. FreeModel answers its own website; it does not let a page living on another ' +
+    'site (like `github.io`) call it. The browser enforces that, so no page can step around it — not with a key, ' +
+    'not with a hash, not with a trick.\n\n' +
+    'Your key is not the problem. **Who is calling** is the problem. The fix is a small helper in the middle: your ' +
+    'server calls FreeModel, this page calls your server.\n\n' +
+    '**Do this, in order**\n' +
+    '1. Upload `api-free.php` to your PHP host and type your `fm_live_…` key inside it (or paste `worker-free.js` into a free Cloudflare Worker).\n' +
+    '2. Open **Settings ⚙️** and put that helper address in **Proxy URL** — it ends in `.php`, or is a `workers.dev` address.\n' +
+    '3. Press **🩺 Test connection**. Green means it works.\n' +
+    '4. Send this message again.';
+}
+function errorChecklist(err, provider){
+  return '⚠️ **Connection error**\n\n`' + esc(err.message || String(err)) + '`\n\n**Through:** ' + esc(provider.label) +
+    '\n\n**Checklist**\n' +
+    '- Key mode: does it start with `fm_live_` and is it still active in the FreeModel dashboard?\n' +
+    '- Relay mode: is the helper reachable, and is its key filled in?\n' +
+    '- Out of monthly tokens (1M free)? The dashboard shows the balance.\n' +
+    '- A busy model retries by itself; if every model is busy, wait a minute.';
+}
+
+
+const PROXY_NOTE_PLAIN = 'Your helper\'s address, ending in <code>.php</code> (or a Worker address). It is <b>not</b> ' +
+  '<code>https://freemodel.in/v1</code> — that is FreeModel itself, and a browser on another site is not allowed to call it.';
+
+/* The relay box is where the last mistake happened: FreeModel's own address was pasted into it,
+   so the page cheerfully told the browser to call FreeModel and it died on CORS. The box now
+   says what belongs in it before you leave it. */
+function paintProxyNote(){
+  const note = $('#proxy-note');
+  const box = $('#in-baseurl');
+  if(!note || !box) return;
+  const v = (box.value || '').trim();
+  if(/freemodel\.in/i.test(v)){
+    note.style.color = '#D96570';
+    note.innerHTML = 'That is FreeModel itself. Your browser is not allowed to call another site — it will only say ' +
+      '<b>Failed to fetch</b>. Put your helper here: <code>api-free.php</code> on your host, or a Worker address.';
+  } else if(v && !/^https?:\/\//i.test(v)){
+    note.style.color = '#D96570';
+    note.innerHTML = 'That does not look like an address. It must start with <code>https://</code>.';
+  } else {
+    note.style.color = 'var(--muted)';
+    note.innerHTML = PROXY_NOTE_PLAIN;
+  }
+}
+
 async function listProviderModels(provider, config){
   const url = provider.kind === 'proxy'
     ? provider.endpoint + (provider.endpoint.indexOf('?') > -1 ? '&' : '?') + 'models=1'
     : provider.endpoint + '/models';
   const headers = provider.kind === 'proxy' ? {} : { Authorization: 'Bearer ' + config.apiKey };
-  const res = await fetch(url, { headers });
+  let res;
+  try { res = await fetch(url, { headers }); }
+  catch(e){ throw netError(provider.kind === 'proxy', url, e); }
   const j = await res.json().catch(() => ({}));
   if(!res.ok) throw new Error((j.error && (j.error.message || j.error)) || ('FreeModel refused the request (' + res.status + ')'));
   const data = j.data || j.models || [];
@@ -675,12 +762,18 @@ async function streamCompletion(provider, model, messages, onDelta, signal){
   if(!viaProxy) headers.Authorization = 'Bearer ' + cfg.apiKey;
   headers['X-Title'] = 'Aurora';
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    signal,
-    headers,
-    body: JSON.stringify({ model, messages, temperature: cfg.temp, stream: true })
-  });
+  let res;
+  try {
+    res = await fetch(endpoint, {
+      method: 'POST',
+      signal,
+      headers,
+      body: JSON.stringify({ model, messages, temperature: cfg.temp, stream: true })
+    });
+  } catch(e){
+    if(e && e.name === 'AbortError') throw e;
+    throw netError(viaProxy, endpoint, e);
+  }
 
   if(!res.ok){
     const t = await res.text().catch(() => res.statusText);
@@ -783,7 +876,7 @@ function load(){
        here to escape. Drop them so the key decides again. */
     /* Anything in the base URL that is not this host and not a .php proxy belongs to an older
        build, so it is dropped rather than quietly sending FreeModel traffic to a dead address. */
-    if(saved.baseUrl && !isProxyUrl(saved.baseUrl) && !/freemodel\.in/i.test(saved.baseUrl)) saved.baseUrl = '';
+    if(saved.baseUrl && !isProxyUrl(saved.baseUrl)) saved.baseUrl = '';
     /* older builds carried a whole catalogue of other platforms — start from FreeModel only, so the
        saved list is cut down to real strings; "list models" refills it from FreeModel itself */
     if(Array.isArray(saved.models)) saved.models = saved.models.filter(m => typeof m === 'string' && m.trim() && !/[:\s]/.test(m)).slice(0, 60);
@@ -1611,12 +1704,7 @@ async function callAPI(userText){
       return;
     }
     const prov = detectProvider(cfg);
-    addMsg('ai', '⚠️ **Connection error**\n\n`' + esc(err.message || String(err)) +
-      '`\n\n**Through:** ' + esc(prov.label) + '\n\n**Checklist**\n' +
-      '- Proxy mode: is `api-free.php` uploaded and is its key filled in?\n' +
-      '- Key mode: does it start with `fm_live_` and is it still active in the FreeModel dashboard?\n' +
-      '- Out of monthly tokens (1M free)? The dashboard shows the balance.\n' +
-      '- A busy model retries by itself; if every model is busy, wait a minute.', null);
+    addMsg('ai', (err && err.kind === 'network') ? networkHelp(prov, err) : errorChecklist(err, prov), null);
     setBusy(false);
     abortCtl = null;
   }
@@ -1706,6 +1794,7 @@ function openSettings(){
   $('#in-apikey').value = cfg.apiKey || '';
   $('#in-baseurl').value = cfg.baseUrl || '';
   $('#provider-hint').textContent = providerHint();
+  paintProxyNote();
   $('#in-temp').value = cfg.temp;
   $('#in-stream').checked = !!cfg.stream;
   $('#in-save').checked = !!cfg.save;
@@ -1928,9 +2017,9 @@ function wire(){
     $('#in-model').value = '';
     renderModelChips();
   };
-  /* the hint follows the key as it is typed — no guessing which provider you are on */
   const hintNow = () => {
     $('#provider-hint').textContent = providerHint();
+    paintProxyNote();
   };
   $('#in-apikey').addEventListener('input', () => {
     const draft = Object.assign({}, cfg, { apiKey: $('#in-apikey').value.trim() });
@@ -1940,6 +2029,40 @@ function wire(){
       : p.label + (p.endpoint && p.kind !== 'proxy' && p.kind !== 'openai' ? ' · ' + p.endpoint : '');
   });
   $('#in-baseurl').addEventListener('input', hintNow);
+
+  $('#test-conn').onclick = async () => {
+    const note = $('#proxy-note');
+    const draft = Object.assign({}, cfg, {
+      apiKey: $('#in-apikey').value.trim() || cfg.apiKey,
+      baseUrl: $('#in-baseurl').value.trim()
+    });
+    const provider = detectProvider(draft);
+    if(provider.kind === 'none'){
+      if(note){ note.style.color = '#D96570'; note.innerHTML = 'Nothing to test yet — paste a helper address, or an <code>fm_live_…</code> key.'; }
+      toast('Nothing to test yet');
+      return;
+    }
+    if(note){ note.style.color = 'var(--muted)'; note.textContent = 'Testing ' + provider.endpoint + ' …'; }
+    try {
+      const models = await listProviderModels(provider, draft);
+      const looksRight = models.length > 0 || provider.kind === 'proxy';
+      if(note){
+        note.style.color = looksRight ? '#00E676' : '#D96570';
+        note.textContent = looksRight
+          ? 'Working. FreeModel answered with ' + models.length + ' model' + (models.length === 1 ? '' : 's') + '.'
+          : 'The address answered, but not with a model list. Check what your helper returns.';
+      }
+      toast(looksRight ? 'Connection works' : 'Answered, but oddly');
+    } catch(err){
+      const reason = (err && err.kind === 'network')
+        ? (provider.kind === 'proxy'
+            ? 'No answer from that address. Open it in a new tab to see what your host says — if it opens there but fails here, that host blocks other websites.'
+            : 'Your browser was stopped before it reached FreeModel (CORS) — a helper address is required.')
+        : (err && err.message ? String(err.message).slice(0, 200) : 'Unknown failure.');
+      if(note){ note.style.color = '#D96570'; note.textContent = reason; }
+      toast('Connection failed');
+    }
+  };
 
   $('#list-models').onclick = async () => {
     const draft = Object.assign({}, cfg, {

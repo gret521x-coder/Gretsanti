@@ -444,7 +444,7 @@ body{line-height:1.5}
    <button class="mini-btn" id="export-all" title="Export all chats (JSON)" aria-label="Export all chats">⤓</button>
   </div>
   <div id="chat-list"></div>
-  <div class="side-foot">Aurora AI Workspace · Gemini-style<br>Paste settings → connect your API</div>
+  <div class="side-foot">Aurora AI Workspace · FreeModel<br>Paste settings → connect your key</div>
  </aside>
 
  <!-- Main -->
@@ -520,7 +520,7 @@ body{line-height:1.5}
    </div>
    <div class="group">Custom Models <button class="chip-btn" id="add-model" style="margin-left:auto">✚ Add</button></div>
    <div class="models-list" id="models-list"></div>
-   <div class="field" style="margin-top:14px"><label>New model name</label><input type="text" id="in-model" placeholder="e.g. gpt-5.6-sol" autocomplete="off"></div>
+   <div class="field" style="margin-top:14px"><label>New model name</label><input type="text" id="in-model" placeholder="e.g. deepseek-v4.1-flash" autocomplete="off"></div>
    <div class="group" style="margin-top:18px">Preferences</div>
    <div class="field"><label>Custom instructions (all chats)</label><textarea id="in-sysextra" placeholder="e.g. Always answer in Tagalog, keep replies short."></textarea></div>
    <div class="switch-row">Temperature <input type="number" id="in-temp" min="0" max="2" step="0.1" style="width:70px;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:6px 10px;color:var(--text);font-size:13px;outline:none"></div>
@@ -784,8 +784,9 @@ function load(){
     /* Anything in the base URL that is not this host and not a .php proxy belongs to an older
        build, so it is dropped rather than quietly sending FreeModel traffic to a dead address. */
     if(saved.baseUrl && !isProxyUrl(saved.baseUrl) && !/freemodel\.in/i.test(saved.baseUrl)) saved.baseUrl = '';
-    /* older builds carried a whole catalogue of other platforms — start from FreeModel only */
-    if(Array.isArray(saved.models)) saved.models = saved.models.filter(m => /flash|lite|turbo|pro$|k3|glm|qwen|deepseek|gemini|gpt|claude|kimi|grok|seed|minimax/i.test(m) && !/:free$/.test(m));
+    /* older builds carried a whole catalogue of other platforms — start from FreeModel only, so the
+       saved list is cut down to real strings; "list models" refills it from FreeModel itself */
+    if(Array.isArray(saved.models)) saved.models = saved.models.filter(m => typeof m === 'string' && m.trim() && !/[:\s]/.test(m)).slice(0, 60);
     return saved;
   } catch(e){ return Object.assign({}, DEFAULTS); }
 }

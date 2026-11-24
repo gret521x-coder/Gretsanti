@@ -744,6 +744,27 @@
         { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v4.html", newTab: true }
     ];
 
+    const APP_URL_UPGRADES = {
+        "gc.html": "https://aidekupal.unaux.com/gc.html",
+        "gc-v5.html": "https://aidekupal.unaux.com/gc.html",
+        "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html",
+        "Aurora.html": "https://aidekupal.unaux.com/aurora-v4.html",
+        "aurora-v2.html": "https://aidekupal.unaux.com/aurora-v4.html",
+        "aurora-v3.html": "https://aidekupal.unaux.com/aurora-v4.html"
+    };
+
+    /* Where the payloads actually live. Relative card links ("tns.html") are resolved against
+       this host, so the launcher keeps working when it is opened from unaux, from a download
+       folder, or from anywhere else — it no longer depends on the file sitting beside it. */
+    const PAYLOAD_HOST = "https://aidekupal.unaux.com/";
+
+    function resolveUrl(url) {
+        if (!url) return url;
+        if (/^(https?:|mailto:|tel:|data:|blob:|#)/i.test(url)) return url;
+        try { return new URL(url, PAYLOAD_HOST).href; } catch (e) { return url; }
+    }
+
+
     let missionStart = Date.now();
     let pendingBardagulanUrl = null;
 
@@ -882,8 +903,6 @@
     // =========================================================================
     // Saved grids keep whatever filenames they were stored with — move the two
     // that were renamed so an existing localStorage still opens the live pages.
-    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html" };
-
     function upgradeAppLinks(apps) {
         let touched = false;
         apps.forEach(app => {
@@ -927,11 +946,13 @@
             const card = document.createElement("a");
             card.className = "payload-card";
 
+            const target = resolveUrl(app.url);
+
             if (app.lock) {
                 card.href = "#";
-                card.onclick = (e) => requestBardagulanAccess(e, app.url);
+                card.onclick = (e) => requestBardagulanAccess(e, target);
             } else {
-                card.href = app.url;
+                card.href = target;
                 card.target = "_blank";
                 card.rel = "noopener noreferrer";
             }

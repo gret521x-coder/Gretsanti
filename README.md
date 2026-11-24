@@ -369,6 +369,12 @@ the origins listed at the top of the file.
 mono-caps labels, one cyan accent (`#38bdf8`), green for ok (`#00e676`) and red for stop (`#ff3d00`).
 The light/dark toggle is gone — the launcher has one theme, so Aurora does too.
 
+**The launcher no longer depends on where it sits.** `index-v5.html` resolves every relative card
+(`tns.html`, `pindutan.html`, `aurora-v4.html`) against `https://aidekupal.unaux.com/`, so the cards open
+whether the file is opened from the PHP host, from a download folder, or from anywhere else — and a saved
+`aurora-v2`/`aurora-v3` bookmark is repointed at `aurora-v4` on sight. The hardcoded resolutions have to be
+declared *before* the first `renderApps()` call, or the first paint silently falls back to relative links.
+
 **If the repository is made private**, GitHub Pages stops serving it on a free account — the
 `github.io` link dies the moment the visibility flips. The relay and the page can live together on
 unaux instead: upload `aurora-v4.html` next to `api-free.php`, open

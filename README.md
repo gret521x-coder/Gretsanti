@@ -16,6 +16,8 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v2.php` | 22 KB | Backend used by `gc-v2.html` |
 | `gc-v3.html` | 82 KB | Chat v3 — replies, edit/delete, link previews, ticks, unread, paste & drop |
 | `api-v3.php` | 32 KB | Backend used by `gc-v3.html` (v2 plus edit, delete, link preview) |
+| `gc-v4.html` | 101 KB | Chat v4 — pinned banner, voice notes, end-to-end encrypted text |
+| `api-v4.php` | 35 KB | Backend used by `gc-v4.html` (v3 plus voice notes and the banner) |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot |
 | `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
 
@@ -142,7 +144,48 @@ Everything from v2 is still there; these are the additions.
 - `sysNotice()` was called from three places but never defined — joining the room threw a `ReferenceError` and skipped presence/host election afterwards
 - `safeUrl()` rejected the uploader's own `uploads/<name>` paths, so images and files were silently dropped from bubbles
 
----
+## What changed in the chat — `gc-v4.html`
+
+Everything from v3 is still there. v4 adds three things and changes no others.
+
+**Pinned banner**
+
+- A strip under the header for room-wide announcements — "Wi-Fi password is on the fridge" kind of thing
+- The elected host writes it: tap the dashed pin strip, type, Save
+- Everyone sees it; tapping the bar expands it from two lines to full text
+- It is encrypted like any other message, so the server only stores ciphertext
+- The host can edit or clear it; clearing removes it for everyone
+
+**Voice notes**
+
+- 🎤 in the footer starts recording; the strip shows a pulsing red dot and a running timer
+- ➤ sends, 🗑 discards, and it stops itself at 2 minutes
+- The note uploads as `weba` / `oga` / `m4a` and lands as a bubble with play/pause, a progress bar and a duration
+- Starting one note pauses any other note that is playing
+- Mic permission is asked each session; a blocked mic shows a toast instead of failing silently
+
+**End-to-end encryption**
+
+- Message text and the banner are sealed in the browser with **AES-GCM 256**, key derived with PBKDF2-SHA-256 (120k rounds) from a room secret inside the file
+- What leaves the tab — to the MQTT brokers and to `api-v4.php` — is `v1.<iv>.<ciphertext>`; the server never holds readable text
+- Incoming messages are decrypted before they render, in arrival order, so the log stays in sequence
+- A message that cannot be opened shows a locked bubble instead of breaking the room
+- Quotes store only the original's id, name and author — the text is looked up locally, so quotes never leak the message they quote
+- Edits are re-sealed before they go out; deletes clear both the text and the ciphertext
+- Without WebCrypto (plain `http://` on a LAN IP, old browser) the page falls back to plaintext and says so in a toast
+
+**What this does and does not protect against**
+
+| Protected | Not protected |
+|---|---|
+| Public MQTT brokers reading your messages | Someone who has this HTML file — the key is inside it |
+| The PHP store, `data/messages.json`, backups | Media (images, files, voice notes) — those are still plain files in `uploads/` |
+| The banner text sitting in `data/room.json` | Link previews — the URL is sent to `api-v4.php` to build the card |
+
+**Compatibility**
+
+- v4 reads v2/v3 messages normally; v2/v3 clients see v4 messages as empty bubbles, so everyone in the room should move to v4 together
+- Changing `ROOM_SECRET` in the file makes a new private room — and makes every existing message unreadable
 
 ### Known limitations (both chat versions)
 
@@ -197,6 +240,7 @@ Presence of the API key is unchanged: still hardcoded as requested.
 | `gc.html` | original group chat |
 | `gc-v2.html` | presence fix, lightning joins, new design |
 | `gc-v3.html` | replies, edit/delete, link previews, delivery ticks + outbox, unread jump, paste & drop |
+| `gc-v4.html` | pinned banner, voice notes, end-to-end encrypted text |
 | `Aurora.html` | original AI chatbot |
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
 
@@ -205,6 +249,12 @@ Presence of the API key is unchanged: still hardcoded as requested.
 - `node --check` on the extracted `<script>` block of every HTML file
 - All `getElementById` / `el()` targets verified to exist in the markup
 - Presence logic unit-tested in Node: away ≠ left, a single leave notice, host prefers online users
+- **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire
+  and in the request body with no plaintext, local echo still readable, decryption of incoming text, locked
+  bubble for a bad payload, encrypted edits both ways, banner write/decrypt/host-only buttons/clear/escaping,
+  MediaRecorder stub through upload to a playable bubble, cancel discarding a note
+- **Chat v4 re-run against the v3 suite: 41 checks** — the older features still behave when WebCrypto is
+  missing and everything falls back to plaintext
 - **Chat v3 exercised in a real DOM (jsdom): 41 checks** — boot, join, ticks through 🕓 → ✓ → ✓✓,
   reply quote and tap-to-jump, inline edit, tombstone delete, ignored edit from a non-author, unread
   counter and jump pill, failed send with outbox survival and retry, paste and drop uploads, HTML and

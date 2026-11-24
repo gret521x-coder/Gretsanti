@@ -51,6 +51,25 @@ body{position:fixed;inset:0;color:var(--text);font-family:var(--sans)}
   background:#2f6b1e;border:1px solid #78c94a;color:#fff;padding:9px 18px;border-radius:2px;display:none}
 #nextwave.on{display:block}
 #nextwave:active{background:#3d8a26}
+#panel{position:absolute;z-index:6;transform:translate(-50%,-112%);display:none;width:172px;
+  background:rgba(10,14,7,.97);border:1px solid #3f4f30;padding:8px;border-radius:3px;
+  box-shadow:0 10px 26px rgba(0,0,0,.55)}
+#panel.on{display:block}
+#panel .p-title{font-family:var(--mono);font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;
+  color:#cfe0b8;margin-bottom:6px;text-align:center;line-height:1.3}
+#panel .p-btn{display:block;width:100%;margin-top:4px;border:1px solid #2f3d24;background:#141b0e;
+  color:#e8f0dd;font-family:var(--mono);font-size:9px;letter-spacing:1.1px;text-transform:uppercase;
+  padding:8px 6px;border-radius:2px}
+#panel .p-btn:active{background:#24331a}
+#panel .p-btn.warn{color:var(--gold);border-color:#4a3d1c}
+#panel .p-btn:disabled{opacity:.45}
+#militia{position:absolute;right:8px;bottom:12px;z-index:5;width:56px;height:56px;border-radius:50%;
+  border:2px solid #6b8a46;background:radial-gradient(#2c3d1c,#141d0d);color:#dbe9c8;
+  font-family:var(--mono);font-size:7.2px;letter-spacing:.6px;text-transform:uppercase;
+  display:grid;place-items:center;line-height:1.15;padding:2px}
+#militia.armed{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,189,248,.28)}
+#militia.cooling{opacity:.5}
+#militia .cd{font-size:12px;font-weight:700}
 
 /* ---------------- bottom bar ---------------- */
 #bar{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
@@ -110,6 +129,13 @@ body{position:fixed;inset:0;color:var(--text);font-family:var(--sans)}
     <canvas id="field"></canvas>
     <div id="tip">pick a tower, then tap a pad</div>
     <button id="nextwave">Next wave</button>
+    <button id="militia"><span id="militia-cd">Militia</span></button>
+    <div id="panel">
+      <div class="p-title" id="p-title">Tower</div>
+      <button class="p-btn warn" id="p-up">Upgrade</button>
+      <button class="p-btn" id="p-target">Target: First</button>
+      <button class="p-btn" id="p-close">Close</button>
+    </div>
     <div id="overlay">
       <div class="box" id="over-box">
         <h2 id="over-title">The camp fell</h2>
@@ -252,13 +278,14 @@ var TINTS = {
 
 /* --------------------------------------------------------------- state */
 var G = null, IMG = {}, loaded = 0, total = 0;
-var selectTower = null, selectPad = -1;
+var selectTower = null, selectPad = -1, panelPad = -1, armMilitia = false;
+var MILITIA = { count: 3, hp: 140, dmg: 16, life: 20000, cd: 32000 };
 var cv, ctx, W = 0, H = 0, dpr = 1, SC = 1, OX = 0, OY = 0;
 var lastTs = 0, raf = null, paused = false, speed = 1;
 
 function fresh() {
   return {
-    gold: START_GOLD, hp: START_HP, maxHp: START_HP,
+    gold: START_GOLD, hp: START_HP, maxHp: START_HP, militiaCd: 0,
     wave: 0, waveTotal: WAVES.length,
     towers: [], pads: PADS.map(function () { return null; }),
     enemies: [], heroes: [], shots: [],
@@ -360,7 +387,7 @@ function buildTower(padIndex, kind) {
     kind: kind, padIndex: padIndex, x: pad.x, y: pad.y, level: 1,
     baseDmg: t.dmg, baseRange: t.range, baseCost: t.cost,
     range: t.range, dmg: t.dmg, rate: t.rate, cd: 0, sprite: t.sprite, h: t.h,
-    splash: t.splash || 0, magic: !!t.magic, spawner: !!t.spawner,
+    splash: t.splash || 0, magic: !!t.magic, spawner: !!t.spawner, target: 'first',
     guardEvery: t.guardEvery || 0, guardMax: t.guardMax || 0, guardCd: 1200,
     guardS: sNearest(pad.x, pad.y).s, shots: 0
   };
@@ -387,6 +414,66 @@ function upgradeTower(padIndex) {
   toast(TOWERS[tw.kind].name + ' raised to ' + tw.level);
   paintHud();
   return true;
+}
+
+/* ---------------- the little panel that opens when you poke a tower ---------- */
+function openPanel(padIndex) {
+  var tw = G.pads[padIndex];
+  if (!tw) return;
+  panelPad = padIndex;
+  var el = document.getElementById('panel');
+  if (!el) return;
+  var sx = OX + tw.x * SC, sy = OY + tw.y * SC;
+  el.style.left = Math.max(96, Math.min(W - 96, sx)) + 'px';
+  el.style.top = Math.max(150, sy - 20) + 'px';
+  el.classList.add('on');
+  refreshPanel();
+}
+
+function closePanel() {
+  panelPad = -1;
+  var el = document.getElementById('panel');
+  if (el) el.classList.remove('on');
+}
+
+function refreshPanel() {
+  var tw = panelPad >= 0 ? G.pads[panelPad] : null;
+  if (!tw) { closePanel(); return; }
+  var def = TOWERS[tw.kind];
+  document.getElementById('p-title').textContent =
+    def.name + ' · level ' + tw.level + (tw.spawner ? ' · ' + def.guardMax + ' guards' : '');
+  var up = document.getElementById('p-up');
+  var cost = upgradeCost(tw);
+  up.textContent = tw.level >= 3 ? 'Fully built' : 'Upgrade · ' + cost;
+  up.disabled = tw.level >= 3;
+  document.getElementById('p-target').textContent = 'Target: ' + TARGET_LABEL[tw.target || 'first'];
+}
+
+function cycleTarget() {
+  var tw = panelPad >= 0 ? G.pads[panelPad] : null;
+  if (!tw) return;
+  var at = TARGET_MODES.indexOf(tw.target || 'first');
+  tw.target = TARGET_MODES[(at + 1) % TARGET_MODES.length];
+  refreshPanel();
+  toast('Targeting ' + TARGET_LABEL[tw.target].toLowerCase());
+}
+
+function dropMilitia(s) {
+  var made = 0;
+  for (var i = 0; i < MILITIA.count; i++) {
+    var at = Math.max(40, Math.min(PATH_LEN - 60, s + (i - 1) * 46));
+    G.heroes.push({
+      key: 'militia', guard: true, militia: true, s: at,
+      hp: MILITIA.hp, maxHp: MILITIA.hp, dmg: MILITIA.dmg, rate: 700, range: 74,
+      speed: 70, sprite: 'warrior', h: 92, ranged: false, cd: 0, hitAt: -9999,
+      anim: 0, life: MILITIA.life
+    });
+    made++;
+  }
+  G.militiaCd = MILITIA.cd;
+  armMilitia = false;
+  toast(made + ' militia on the road');
+  paintHud();
 }
 
 function summonHero(key) {
@@ -436,16 +523,29 @@ function awardDeath(e) {
 }
 function worldOfS(s) { return pointAt(s); }
 
-function enemyAtPoint(x, y, range) {
-  var best = null, bestD = 1e9;
+var TARGET_MODES = ['first', 'last', 'strong', 'weak'];
+var TARGET_LABEL = { first: 'First', last: 'Last', strong: 'Strongest', weak: 'Weakest' };
+
+/* everything in range, then the tower's own rule decides who gets hit */
+function enemyAtPoint(x, y, range, mode) {
+  var inRange = [];
   for (var i = 0; i < G.enemies.length; i++) {
     var e = G.enemies[i];
     if (e.hp <= 0) continue;
     var p = pointAt(e.s);
-    var d = Math.hypot(p.x - x, p.y - y);
-    if (d <= range && d < bestD) { bestD = d; best = e; }
+    if (Math.hypot(p.x - x, p.y - y) <= range) inRange.push(e);
   }
-  return best;
+  if (!inRange.length) return null;
+  if (!mode) return inRange[0];
+  var pick = inRange[0];
+  for (var j = 1; j < inRange.length; j++) {
+    var e2 = inRange[j];
+    if (mode === 'first' && e2.s > pick.s) pick = e2;          /* closest to the keep */
+    else if (mode === 'last' && e2.s < pick.s) pick = e2;      /* the straggler */
+    else if (mode === 'strong' && e2.hp > pick.hp) pick = e2;
+    else if (mode === 'weak' && e2.hp < pick.hp) pick = e2;
+  }
+  return pick;
 }
 
 function shoot(fromX, fromY, target, dmg, splash, magic) {
@@ -493,7 +593,7 @@ function step(now, dt) {
 
     tw.cd -= d;
     if (tw.cd > 0) continue;
-    var targetE = enemyAtPoint(tw.x, tw.y - 40, tw.range);
+    var targetE = enemyAtPoint(tw.x, tw.y - 40, tw.range, tw.target || 'first');
     if (!targetE) continue;
     tw.cd = tw.rate;
     shoot(tw.x, tw.y - 70, targetE, tw.dmg, tw.splash, tw.magic);
@@ -579,6 +679,17 @@ function step(now, dt) {
       }
       u.s = Math.max(60, Math.min(PATH_LEN - 60, u.s));
     }
+  }
+
+  /* militia: the spell comes back on a timer, the soldiers eventually go home */
+  if (G.militiaCd > 0) {
+    G.militiaCd = Math.max(0, G.militiaCd - d);
+  }
+  for (var mm = G.heroes.length - 1; mm >= 0; mm--) {
+    var mu = G.heroes[mm];
+    if (!mu.militia) continue;
+    mu.life -= d;
+    if (mu.life <= 0) G.heroes.splice(mm, 1);
   }
 
   /* hero respawn clocks */
@@ -717,6 +828,19 @@ function drawPads() {
       ctx.beginPath();
       ctx.ellipse(p.x, p.y, 54, 28, 0, 0, 6.2832);
       ctx.fill();
+      /* with a tower picked, every free pad shows a ghost of what would stand there */
+      if (selectTower) {
+        var def = TOWERS[selectTower];
+        var pulse = 0.34 + 0.16 * Math.sin(Date.now() / 260);
+        ctx.globalAlpha = pulse;
+        drawSprite(def.sprite, p.x, p.y + 16, def.h);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(56,189,248,.85)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, 60, 32, 0, 0, 6.2832);
+        ctx.stroke();
+      }
       ctx.strokeStyle = 'rgba(240,246,225,.42)';
       ctx.lineWidth = 3;
       ctx.setLineDash([10, 8]);
@@ -871,6 +995,16 @@ function paintHud() {
     var mask = heroes[j].querySelector('.cool-mask');
     if (mask) mask.style.height = (!st.alive && st.cd > 0) ? (st.cd / HEROES[hk].respawn * 100) + '%' : '0%';
   }
+  var mil = document.getElementById('militia');
+  if (mil) {
+    var cdLeft = G.militiaCd || 0;
+    mil.classList.toggle('cooling', cdLeft > 0);
+    mil.classList.toggle('armed', armMilitia);
+    var cdEl = document.getElementById('militia-cd');
+    if (cdEl) cdEl.textContent = cdLeft > 0 ? Math.ceil(cdLeft / 1000) + 's' : 'Militia';
+  }
+  if (panelPad >= 0) refreshPanel();
+
   var nw = document.getElementById('nextwave');
   if (nw) {
     var waiting = !G.running && !G.over && G.wave < G.waveTotal;
@@ -880,8 +1014,16 @@ function paintHud() {
 }
 
 /* --------------------------------------------------------------- loop */
+var FRAME_MS = 1000 / 60;      /* locked to 60 — a 120 Hz phone draws the same game */
+var lastFrame = 0;
+
 function loop(ts) {
   if (!lastTs) lastTs = ts;
+  if (ts - lastFrame < FRAME_MS - 0.6) {          /* too soon: skip this frame */
+    if (!G.over) raf = requestAnimationFrame(loop);
+    return;
+  }
+  lastFrame = ts;
   var dt = Math.min(70, ts - lastTs);
   lastTs = ts;
   step(ts, dt);
@@ -906,6 +1048,9 @@ function restart() {
   G = fresh();
   selectTower = null;
   selectPad = -1;
+  panelPad = -1;
+  armMilitia = false;
+  closePanel();
   document.getElementById('overlay').classList.remove('on');
   size();
   paintHud();
@@ -918,26 +1063,35 @@ function restart() {
 /* --------------------------------------------------------------- input */
 function tap(px_, py_) {
   var wp = toWorld(px_, py_);
+  var near = sNearest(wp.x, wp.y);
 
-  /* a pad first — they are the big targets */
+  /* militia first: the button is armed and the next tap on the road drops them */
+  if (armMilitia) {
+    if (near.d < ROAD_W * 1.1) { dropMilitia(near.s); return; }
+    toast('Tap the road to drop the militia');
+    return;
+  }
+
+  /* a pad — they are the big targets */
   for (var i = 0; i < PADS.length; i++) {
     var p = PADS[i];
     if (Math.hypot(p.x - wp.x, (p.y - wp.y) * 1.6) < 96) {
-      if (G.pads[i]) { upgradeTower(i); return; }
+      closePanel();
+      if (G.pads[i]) { openPanel(i); return; }
       selectPad = i;
       if (selectTower) {
         if (buildTower(i, selectTower)) { selectPad = -1; }
       } else {
-        toast('Now pick a tower below');
+        toast('Pick a tower below, then tap a pad');
       }
       paintHud();
       return;
     }
   }
-  /* tapping the road sends the selected hero out at that spot */
-  var near = sNearest(wp.x, wp.y);
-  if (near.d < ROAD_W * 0.9 && selectTower === null) {
-    toast('Tap a hero portrait to send them out');
+
+  closePanel();
+  if (near.d < ROAD_W * 0.9) {
+    toast(selectTower ? 'Tap a glowing pad to raise ' + TOWERS[selectTower].name : 'Pick a tower, then tap a pad');
   }
 }
 
@@ -981,9 +1135,27 @@ document.getElementById('b-speed').addEventListener('click', function () {
 });
 document.getElementById('nextwave').addEventListener('click', function () {
   if (!G.running && !G.over && G.wave < G.waveTotal) {
+    if (G.betweenWaves > 2500) {          /* calling it early is worth gold */
+      G.gold += 40;
+      toast('+40 gold for calling the wave');
+    }
     G.betweenWaves = 0;
     startWave();
   }
+});
+
+document.getElementById('p-up').addEventListener('click', function () {
+  if (panelPad >= 0 && upgradeTower(panelPad)) refreshPanel();
+});
+document.getElementById('p-target').addEventListener('click', cycleTarget);
+document.getElementById('p-close').addEventListener('click', closePanel);
+
+document.getElementById('militia').addEventListener('click', function () {
+  if (G.militiaCd > 0) { toast('Militia back in ' + Math.ceil(G.militiaCd / 1000) + 's'); return; }
+  armMilitia = !armMilitia;
+  var tip = document.getElementById('tip');
+  if (tip) tip.textContent = armMilitia ? 'tap the road to drop three militia' : 'pick a tower, then tap a pad';
+  paintHud();
 });
 document.getElementById('again').addEventListener('click', restart);
 document.addEventListener('visibilitychange', function () {
@@ -1032,6 +1204,15 @@ window.KDL_FORTRESS = {
   build: buildTower,
   upgrade: upgradeTower,
   upgradeCost: upgradeCost,
+  openPanel: openPanel,
+  closePanel: closePanel,
+  cycleTarget: cycleTarget,
+  panelPad: function () { return panelPad; },
+  dropMilitia: dropMilitia,
+  arm: function (v) { armMilitia = !!v; },
+  targetModes: TARGET_MODES,
+  frameMs: FRAME_MS,
+  select: function (k) { selectTower = k; },
   summon: summonHero,
   startWave: startWave,
   restart: restart,

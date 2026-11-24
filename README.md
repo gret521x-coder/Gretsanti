@@ -23,6 +23,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v5.php` | 41 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot and CORS) |
 | `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
+| `labs/index.html` | 9 KB | Experimental build area — a card per experiment, empty state, nothing linked from the launcher |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
 | `diag.html` | 5 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `Screenshot.html` | 3 KB | **Collectibles** vault — password-gated image board |
@@ -31,6 +32,15 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `pindutan.html` | 42 KB | **Pindutan v14** arcade game, scores kept in `localStorage` |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
 | `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features; uses the proxy on Pages |
+
+---
+
+## labs
+
+`labs/` is where work in progress goes so the shipped pages stay untouched. It is reachable at
+`/labs/index.html` and nothing on the launcher points at it. Adding an experiment is one object in the
+`EXPERIMENTS` array plus a file next to it; `labs/README.md` has the details and the
+`git subtree split --prefix=labs` line for moving the folder into a repository of its own.
 
 ---
 

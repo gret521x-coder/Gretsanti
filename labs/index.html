@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>KDL // LABS</title>
+<style>
+    :root{
+        --bg-void:#000;
+        --bg-panel:#08090b;
+        --bg-card:#0d0f13;
+        --border-line:#1f242d;
+        --text-primary:#e6edf3;
+        --text-dim:#7d8794;
+        --accent-cyan:#38bdf8;
+        --status-nominal:#00e676;
+        --status-warn:#ffb020;
+        --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+        background:var(--bg-void);color:var(--text-primary);
+        font-family:var(--font-mono);min-height:100vh;
+        padding:clamp(20px,5vw,56px);
+        line-height:1.55;
+        background-image:radial-gradient(ellipse at 50% -20%, rgba(56,189,248,.10), transparent 60%);
+        background-repeat:no-repeat;
+    }
+    a{color:inherit;text-decoration:none}
+    header{border-bottom:1px solid var(--border-line);padding-bottom:18px;margin-bottom:26px}
+    .eyebrow{
+        display:inline-flex;align-items:center;gap:8px;font-size:.66rem;letter-spacing:.22em;
+        color:var(--accent-cyan);text-transform:uppercase;margin-bottom:10px;
+    }
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--status-nominal);box-shadow:0 0 8px var(--status-nominal)}
+    h1{font-size:clamp(1.5rem,4.5vw,2.1rem);letter-spacing:.14em;font-weight:600}
+    .sub{color:var(--text-dim);font-size:.78rem;margin-top:8px;max-width:60ch}
+
+    .grid{
+        display:grid;gap:14px;margin-top:8px;
+        grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    }
+    .card{
+        display:block;background:var(--bg-card);border:1px solid var(--border-line);border-radius:12px;
+        padding:16px 16px 14px;position:relative;overflow:hidden;
+        transition:border-color .16s ease, transform .16s ease, background .16s ease;
+    }
+    .card:hover,.card:focus-visible{border-color:rgba(56,189,248,.5);transform:translateY(-2px);outline:none}
+    .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .card h2{font-size:.95rem;font-weight:600;letter-spacing:.02em}
+    .tag{
+        font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:999px;
+        border:1px solid var(--border-line);color:var(--text-dim);white-space:nowrap;
+    }
+    .tag.live{color:var(--status-nominal);border-color:rgba(0,230,118,.35)}
+    .tag.wip{color:var(--status-warn);border-color:rgba(255,176,32,.35)}
+    .tag.idea{color:var(--accent-cyan);border-color:rgba(56,189,248,.35)}
+    .card p{color:var(--text-dim);font-size:.74rem;margin-top:8px}
+    .card .open{
+        display:inline-block;margin-top:12px;font-size:.66rem;letter-spacing:.16em;
+        color:var(--accent-cyan);text-transform:uppercase;
+    }
+
+    .empty{
+        border:1px dashed var(--border-line);border-radius:12px;padding:34px 22px;text-align:center;
+        color:var(--text-dim);font-size:.8rem;
+    }
+    .empty b{display:block;color:var(--text-primary);font-size:.9rem;margin-bottom:8px;letter-spacing:.06em}
+    .empty code{color:var(--accent-cyan);font-size:.74rem}
+
+    footer{
+        margin-top:34px;padding-top:16px;border-top:1px solid var(--border-line);
+        color:var(--text-dim);font-size:.68rem;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;
+    }
+    footer a{border-bottom:1px dotted var(--border-line)}
+    footer a:hover{color:var(--accent-cyan);border-color:var(--accent-cyan)}
+    @media (prefers-reduced-motion: reduce){ .card{transition:none} .card:hover{transform:none} }
+</style>
+</head>
+<body>
+<header>
+    <span class="eyebrow"><span class="dot"></span>experimental build area</span>
+    <h1>K D L &nbsp;//&nbsp; L A B S</h1>
+    <p class="sub">Work in progress lives here, away from the shipped pages. Nothing in this folder is
+       part of the live launcher until it graduates.</p>
+</header>
+
+<main id="grid" class="grid" aria-label="Experiments"></main>
+
+<footer>
+    <span id="count">0 experiments</span>
+    <a href="../index-v5.html">&larr; back to mission control</a>
+</footer>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Add an experiment by appending one object here. `file` is relative to this
+   folder; leave it out while the idea is still on paper.
+   status: 'live' | 'wip' | 'idea'
+   ------------------------------------------------------------------------- */
+var EXPERIMENTS = [
+    /* {
+        title: 'Example build',
+        file: 'example.html',
+        status: 'wip',
+        note: 'One line about what it tries to do.'
+    } */
+];
+
+(function () {
+    'use strict';
+
+    var grid = document.getElementById('grid');
+    var count = document.getElementById('count');
+
+    if (!EXPERIMENTS.length) {
+        var empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.innerHTML = '<b>No experiments yet</b>' +
+            'Add one to <code>labs/index.html</code> &mdash; one object in <code>EXPERIMENTS</code> ' +
+            'and a file next to it.';
+        grid.appendChild(empty);
+        count.textContent = '0 experiments';
+        return;
+    }
+
+    EXPERIMENTS.forEach(function (exp) {
+        var card = document.createElement(exp.file ? 'a' : 'div');
+        card.className = 'card';
+        if (exp.file) card.href = exp.file;
+
+        var top = document.createElement('div');
+        top.className = 'card-top';
+
+        var h2 = document.createElement('h2');
+        h2.textContent = exp.title || 'Untitled';
+
+        var tag = document.createElement('span');
+        var status = exp.status === 'live' || exp.status === 'wip' || exp.status === 'idea' ? exp.status : 'idea';
+        tag.className = 'tag ' + status;
+        tag.textContent = status;
+
+        top.appendChild(h2);
+        top.appendChild(tag);
+        card.appendChild(top);
+
+        if (exp.note) {
+            var note = document.createElement('p');
+            note.textContent = exp.note;
+            card.appendChild(note);
+        }
+
+        if (exp.file) {
+            var open = document.createElement('span');
+            open.className = 'open';
+            open.textContent = 'Open \u2192';
+            card.appendChild(open);
+        }
+
+        grid.appendChild(card);
+    });
+
+    count.textContent = EXPERIMENTS.length + (EXPERIMENTS.length === 1 ? ' experiment' : ' experiments');
+})();
+</script>
+</body>
+</html>

@@ -28,6 +28,7 @@ const DEFAULT_MODEL = 'deepseek-v4.1-flash';
 /* Sites allowed to call this relay. Add your own if you host Aurora elsewhere. */
 const ALLOWED_HOSTS = [
   'gret521x-coder.github.io',
+  'aidekupal.unaux.com',        /* if you host a copy of the page on unaux */
   'localhost',
   '127.0.0.1'
 ];

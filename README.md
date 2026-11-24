@@ -369,6 +369,13 @@ the origins listed at the top of the file.
 mono-caps labels, one cyan accent (`#38bdf8`), green for ok (`#00e676`) and red for stop (`#ff3d00`).
 The light/dark toggle is gone — the launcher has one theme, so Aurora does too.
 
+**If the repository is made private**, GitHub Pages stops serving it on a free account — the
+`github.io` link dies the moment the visibility flips. The relay and the page can live together on
+unaux instead: upload `aurora-v4.html` next to `api-free.php`, open
+`https://aidekupal.unaux.com/aurora-v4.html`, and set the relay address to
+`https://aidekupal.unaux.com/api-free.php`. Both files are then on one host, so there is no CORS
+conversation at all — `api-free.php` allows its own origin by default now.
+
 **Setup is one form now.** Upload the file, open its address in a browser once, paste the key, press
 Save — no code editing at all. The key is written to `.fmkey.php` beside it, a file that starts with
 `<?php exit; ?>` so the web server runs it instead of printing it. Prefer editing? Fine, `FREEMODEL_KEY`

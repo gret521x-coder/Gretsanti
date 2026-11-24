@@ -31,13 +31,24 @@ const PLACEHOLDER     = 'PASTE-YOUR-fm_live_KEY-HERE';
 /* Browsers only honour a CORS reply from an origin you list here. Add or remove as needed. */
 const ALLOWED_ORIGINS = [
     'https://gret521x-coder.github.io',
+    'https://aidekupal.unaux.com',      /* also the host of this file, so a copy of the page here just works */
     'http://localhost',
     'http://127.0.0.1',
 ];
 
+/* Same origin never needs asking: if the page is served from this very host, it is allowed. */
+function is_self_origin(string $origin): bool
+{
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if ($origin === '' || $host === '') {
+        return false;
+    }
+    return $origin === 'https://' . $host || $origin === 'http://' . $host;
+}
+
 /* ------------------------------------------------------------------- plumbing */
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if ($origin !== '' && (in_array($origin, ALLOWED_ORIGINS, true) || preg_match('#^https?://localhost(:\d+)?$#', $origin))) {
+if ($origin !== '' && (is_self_origin($origin) || in_array($origin, ALLOWED_ORIGINS, true) || preg_match('#^https?://localhost(:\d+)?$#', $origin))) {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Vary: Origin');
 }

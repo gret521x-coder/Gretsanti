@@ -653,6 +653,15 @@
 
     .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0; }
     .sheet-head h2 { margin: 0; font-size: 0.9rem; letter-spacing: 0.24em; color: var(--amber); font-weight: 900; }
+    .hero-sub { font-size: 0.55rem; letter-spacing: 0.16em; color: var(--mut); margin-top: 3px; text-transform: uppercase; }
+    .room-item { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border-radius: 11px; background: #0b111b; border: 1px solid var(--line); }
+    .room-item + .room-item { margin-top: 6px; }
+    .room-tag {
+      font-family: ui-monospace, Menlo, monospace; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em;
+      color: var(--cyan); background: rgba(61, 214, 245, 0.1); border: 1px solid rgba(61, 214, 245, 0.3);
+      padding: 5px 6px; border-radius: 7px; flex: none;
+    }
+    #roomsCard { display: none; }
 
     .card-box {
       background: linear-gradient(165deg, #111826, #0a0f18);
@@ -830,8 +839,19 @@
   <div id="lobbySheet">
     <div class="sheet">
       <div class="sheet-head">
-        <h2>LOBBY</h2>
-        <button id="lobbyClose">✕ Close</button>
+        <div>
+          <h2>PINDUTAN</h2>
+          <div class="hero-sub">neon block arena · v16 · lobby</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
+          <button id="lobbyClose">✕</button>
+        </div>
+      </div>
+
+      <div class="card-box" id="roomsCard">
+        <div class="card-title"><span>Open rooms</span><span>tap to join</span></div>
+        <div id="roomsList"></div>
       </div>
 
       <div class="card-box">
@@ -1915,6 +1935,7 @@
        ========================================================= */
     const MAX_PLAYERS = 7;
     const RELAY_TOPIC = "pindutan/v16/";
+    const DIR_TOPIC = "pindutan/v16/directory";
     const BROKERS = [
       { name: "EMQX", url: "wss://broker.emqx.io:8084/mqtt", client: null, state: "off" },
       { name: "HiveMQ", url: "wss://broker.hivemq.com:8884/mqtt", client: null, state: "off" },
@@ -1934,6 +1955,9 @@
 
     const seen = new Set();
     const seenOrder = [];
+
+    let dirChannel = null;
+    let rooms = {};              /* code -> { code, name, count, ts } */
 
     function remember(n) {
       if (!n || seen.has(n)) return;
@@ -2143,6 +2167,7 @@
         b.client.on("connect", () => {
           b.state = "ok";
           paintConn();
+          try { b.client.subscribe(DIR_TOPIC, { qos: 0 }); } catch (e) { /* fine */ }
           if (roomCode) subscribeBroker(b);
           if (roomCode) sendPacket(Object.assign({ t: "HI" }, myState()));
         });
@@ -2150,9 +2175,10 @@
         b.client.on("close", () => { b.state = b.state === "ok" ? "wait" : "bad"; paintConn(); });
         b.client.on("error", () => { b.state = "bad"; paintConn(); });
         b.client.on("message", (topic, payload) => {
-          if (topic !== RELAY_TOPIC + roomCode) return;
           let data = null;
           try { data = JSON.parse(payload.toString()); } catch (e) { return; }
+          if (topic === DIR_TOPIC) { onDirectory(data); return; }
+          if (topic !== RELAY_TOPIC + roomCode) return;
           onPacket(data);
         });
       } catch (e) {
@@ -2186,6 +2212,98 @@
       });
     }
 
+    /* ---------- open-rooms directory (so you land in a lobby, not a blank board) ---------- */
+    function publishDirectory(p) {
+      p.from = myId;
+      p.n = nextNonce();
+      p.ts = Date.now();
+      remember(p.n);
+      const raw = JSON.stringify(p);
+      if (dirChannel) { try { dirChannel.postMessage(p); } catch (e) {} }
+      BROKERS.forEach(b => {
+        if (b.state === "ok" && b.client) {
+          try { b.client.publish(DIR_TOPIC, raw); } catch (e) { /* broker hiccup */ }
+        }
+      });
+    }
+
+    function announceRoom() {
+      if (!roomCode) return;
+      publishDirectory({
+        t: "ROOM",
+        code: roomCode,
+        name: getMyName(),
+        count: Object.keys(peers).length + 1
+      });
+    }
+
+    function onDirectory(p) {
+      if (!p || !p.code || !/^[A-Z0-9]{6}$/.test(p.code)) return;
+      if (p.from === myId) return;
+      if (p.n) {
+        if (seen.has(p.n)) return;
+        remember(p.n);
+      }
+      if (p.t === "ROOM") {
+        rooms[p.code] = {
+          code: p.code,
+          name: (p.name || "Room").slice(0, 14),
+          count: Math.max(1, p.count | 0),
+          ts: Date.now()
+        };
+      } else if (p.t === "ROOM_OFF") {
+        delete rooms[p.code];
+      } else {
+        return;
+      }
+      renderRooms();
+    }
+
+    function renderRooms() {
+      const card = document.getElementById("roomsCard");
+      const list = document.getElementById("roomsList");
+      if (!card || !list) return;
+
+      const now = Date.now();
+      const codes = Object.keys(rooms)
+        .filter(c => now - rooms[c].ts < 26000 && c !== roomCode)
+        .sort((a, b) => rooms[b].count - rooms[a].count);
+
+      if (!codes.length) { card.style.display = "none"; list.innerHTML = ""; return; }
+      card.style.display = "block";
+      list.innerHTML = "";
+
+      codes.forEach(code => {
+        const r = rooms[code];
+        const row = document.createElement("div");
+        row.className = "room-item";
+
+        const tag = document.createElement("span");
+        tag.className = "room-tag";
+        tag.textContent = code;
+
+        const body = document.createElement("div");
+        body.className = "p-body";
+        body.innerHTML = '<div class="p-name">' + escapeHtml(r.name) + '</div>' +
+          '<div class="p-sub">' + r.count + ' player' + (r.count === 1 ? "" : "s") + '</div>';
+
+        const btn = document.createElement("button");
+        btn.className = "primary";
+        btn.textContent = "Join";
+        btn.addEventListener("click", () => {
+          if (enterRoom(code, false)) {
+            announceRoom();
+            roomStatusText("✅ In room " + roomCode + ". Wave at the others, then pick a game.");
+          }
+        });
+
+        row.appendChild(tag);
+        row.appendChild(body);
+        row.appendChild(btn);
+        list.appendChild(row);
+      });
+    }
+
     /* ---------- room lifecycle ---------- */
     function enterRoom(code, spectate) {
       const clean = String(code || "").trim().toUpperCase();
@@ -2207,6 +2325,8 @@
         localChannel.onmessage = e => onPacket(e.data);
       }
 
+      try { localStorage.setItem("pindutan_room", roomCode); } catch (e) {}
+
       document.getElementById("roomCodeText").textContent = roomCode;
       document.getElementById("joinCodeInput").value = roomCode;
       const pill = document.getElementById("roomPill");
@@ -2223,12 +2343,18 @@
         : "✅ In room " + roomCode + " · up to " + MAX_PLAYERS + " players. Share the code or invite everyone.");
       renderLobby();
       renderOpponentsGrid();
+      renderRooms();
       paintConn();
+      setTimeout(announceRoom, 1200);
       return true;
     }
 
     function leaveRoom(silent) {
-      if (roomCode) sendPacket({ t: "BYE" });
+      if (roomCode) {
+        sendPacket({ t: "BYE" });
+        publishDirectory({ t: "ROOM_OFF", code: roomCode });
+      }
+      try { localStorage.removeItem("pindutan_room"); } catch (e) {}
       unsubscribeRelays();
       if (localChannel) { try { localChannel.close(); } catch (e) {} }
       localChannel = null;
@@ -2247,8 +2373,10 @@
         isSpectator = false;
         toggleSpectatorLayout(false);
         roomStatusText("Left the room. You can still play solo or vs CPU.");
+        document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
         renderLobby();
         renderOpponentsGrid();
+        renderRooms();
         paintConn();
       }
     }
@@ -2375,14 +2503,29 @@
       st.t = "SYNC";
       sendPacket(st);
 
+      /* keep this room visible in everyone else's lobby */
+      announceRoom();
+      sweepPresence();
+      paintConn();
+    }, 4000);
+
+    /* drop players who went quiet, and rooms nobody is announcing any more */
+    function sweepPresence() {
       const now = Date.now();
       let dropped = false;
       Object.keys(peers).forEach(id => {
         if (now - peers[id].lastSeen > 13000) { delete peers[id]; dropped = true; }
       });
-      if (dropped) { renderLobby(); renderOpponentsGrid(); }
-      paintConn();
-    }, 4000);
+      if (dropped) {
+        renderLobby();
+        renderOpponentsGrid();
+        if (roomCode) announceRoom();
+      }
+      const stale = Object.keys(rooms).filter(c => now - rooms[c].ts > 26000);
+      stale.forEach(c => { delete rooms[c]; });
+      if (stale.length) renderRooms();
+      return dropped;
+    }
 
     window.addEventListener("beforeunload", () => { if (roomCode) sendPacket({ t: "BYE" }); });
 
@@ -2532,13 +2675,16 @@
 
     function openLobby() {
       document.getElementById("lobbySheet").style.display = "block";
+      document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
       renderLobby();
+      renderRooms();
       paintConn();
-      startRelays();   /* warm the relays up before you even join */
+      startRelays();   /* warm the relays up so the room list fills in */
     }
 
     function closeLobby() {
       document.getElementById("lobbySheet").style.display = "none";
+      document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
     }
 
     function syncPlayBar() {
@@ -3088,13 +3234,38 @@
       drawBoard();
     });
 
+    /* the on-device directory channel, so rooms show up even with no internet */
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        dirChannel = new BroadcastChannel("pindutan_v16_directory");
+        dirChannel.onmessage = e => onDirectory(e.data);
+      } catch (e) { dirChannel = null; }
+    }
+
+    document.getElementById("backToGameBtn").addEventListener("click", () => {
+      closeLobby();
+      if (!gameRunning) setPlay("solo");
+    });
+
     syncPlayBar();
     paintCpuLevels();
     paintConn();
     renderLobby();
+    renderRooms();
     drawQueue();
     drawBoard();
     botRender();
+
+    /* open straight into the lobby, and quietly rejoin the room you were in */
+    openLobby();
+    try {
+      const lastRoom = localStorage.getItem("pindutan_room");
+      if (lastRoom && /^[A-Z0-9]{6}$/.test(lastRoom)) {
+        if (enterRoom(lastRoom, false)) {
+          roomStatusText("✅ Back in room " + roomCode + ". Pick a game below.");
+        }
+      }
+    } catch (e) { /* private mode */ }
   </script>
 </body>
 </html>

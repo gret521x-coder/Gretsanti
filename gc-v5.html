@@ -509,6 +509,11 @@ body.lb-open{overflow:hidden}
 @keyframes zap{0%{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.25);opacity:1}100%{transform:none}}
 
 
+/* shown when this copy cannot reach the PHP host — point people at the original */
+.phphint{font-size:12px;line-height:1.5;color:#ffb4c0;background:rgba(255,61,90,.08);
+  border:1px solid rgba(255,61,90,.28);border-radius:12px;padding:10px 12px;margin:8px 0}
+.phphint a{color:#8ec5ff;text-decoration:underline;word-break:break-all}
+
 /* PHP status row doubles as a connection test */
 .srow.tappable{cursor:pointer}
 .srow.tappable:active{background:rgba(255,255,255,.06)}
@@ -882,6 +887,7 @@ body.lb-open{overflow:hidden}
     <p class="sub">One global room · triple MQTT relay · PHP backup sync · one secret admin</p>
     <input id="nameInp" placeholder="Your name" maxlength="32" autocomplete="nickname">
     <div id="lobbyMsg" class="lobbymsg" style="display:none"></div>
+    <div id="phpHint" class="phphint" hidden></div>
     <div id="adminRow" class="adminrow">
       <span id="adminRowText"></span>
       <button id="adminStepDown" style="display:none">Step down</button>
@@ -1100,6 +1106,18 @@ function phpOk(ok){
   phpState = ok ? 'ok' : 'bad';
   setSrv('php', phpState);
   if(!ok) serverOnline = null;
+  var hint = el('phpHint');
+  if(hint){
+    if(!ok && /^https?:/i.test(API_BASE)){
+      hint.hidden = false;
+      hint.innerHTML = 'This copy cannot reach the PHP host, so history, uploads and the banner will not work here. ' +
+        'Open the chat on the host itself: <a href="' + apiDir() + 'gc-v5.html" target="_blank" rel="noopener">' +
+        apiHostLabel().replace(/^https?:\/\//, '') + '/gc-v5.html</a>';
+    } else {
+      hint.hidden = true;
+      hint.innerHTML = '';
+    }
+  }
   if(!ok && !phpWarned && /^https?:/i.test(API_BASE)){
     phpWarned = true;
     toast('PHP on ' + apiHostLabel() + ' is not reachable from this page — history, uploads and the banner need it to allow ' + location.host + ' (CORS).', 9000);

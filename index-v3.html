@@ -787,8 +787,8 @@
     const DEFAULT_APPS = [
         { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
         { code: "PLD-02", icon: "🎮", title: "Pindutan v14", desc: "Pindutan game module", url: "pindutan.html", newTab: true },
-        { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "Screenshot.html", newTab: true },
-        { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "gc-v5.html", newTab: true, lock: true },
+        { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
+        { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc-v5.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
         { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v2.html", newTab: true }
     ];
@@ -891,7 +891,7 @@
         if (val.length > 0 && channelSignature(val) === BARDAGULAN_SIG) {
             localStorage.setItem("kdl_bardagulan_unlocked", "true");
             closeModal("bardagulanModal");
-            const url = pendingBardagulanUrl || "gc-v5.html";
+            const url = pendingBardagulanUrl || "https://aidekupal.unaux.com/gc-v5.html";
             pendingBardagulanUrl = null;
             window.open(url, "_blank", "noopener");
             showToast("Bardagulan channel opened");
@@ -960,7 +960,7 @@
     // =========================================================================
     // Saved grids keep whatever filenames they were stored with — move the two
     // that were renamed so an existing localStorage still opens the live pages.
-    const APP_URL_UPGRADES = { "gc.html": "gc-v5.html", "Aurora.html": "aurora-v2.html" };
+    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc-v5.html", "gc-v5.html": "https://aidekupal.unaux.com/gc-v5.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v2.html" };
 
     function upgradeAppLinks(apps) {
         let touched = false;

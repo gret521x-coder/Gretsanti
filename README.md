@@ -39,8 +39,16 @@ Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship tod
 
 | Card | Opens |
 |---|---|
-| Bardagulan (locked) | `gc-v5.html` — was `gc.html` |
+| Bardagulan (locked) | `https://aidekupal.unaux.com/gc-v5.html` — the copy next to the PHP |
+| Collectibles | `https://aidekupal.unaux.com/Screenshot.html` — it needs `save.php` |
 | Aurora | `aurora-v2.html` — was `Aurora.html` |
+| TNS, Pindutan | still local, they are pure static |
+
+The chat and the vault point at the PHP host because that host refuses cross-site
+requests outright (a plain `<script>` tag is refused too — `diag.html` proves it), so a
+copy on Pages can never reach it. Opened from unaux, the chat finds `api-v5.php` beside
+itself and everything works. **`gc-v5.html` has to exist on unaux** for that card to
+open.
 
 Grids are saved in `localStorage`, so an existing one would have kept the old
 filenames forever. `getApps()` now rewrites `gc.html` → `gc-v5.html` and
@@ -441,13 +449,13 @@ keep keys on the server side (`api-ai.php`) when you can.
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
 - **`diag.html`: 6 checks** — correct verdict for a working host, a headers-only block,
   an outright refusal and an HTTP error page
-- **Chat failure messages: 7 checks** — a refused cross-origin call names the PHP host,
+- **Chat failure messages: 14 checks** — a refused cross-origin call names the PHP host,
   says to upload `api-v5.php`, and warns once in the lobby; a real server error is shown
   verbatim; nothing is said when the host answers
 - **Payload pages: 20 checks** — Collectibles locked until the password, listing and
   uploads routed to the PHP host from Pages and to the sibling `save.php` on the host,
   TNS and Pindutan load clean, Pindutan unlock with and without SubtleCrypto
-- **Launcher grids: 40 checks** — all five launchers default to `gc-v5.html` and
+- **Launcher grids: 51 checks** — all five launchers default to `gc-v5.html` and
   `aurora-v2.html`, the grid renders, Bardagulan stays locked and its code still opens
   the right page, an old saved grid is upgraded and written back, corrupt storage
   falls back to defaults

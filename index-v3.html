@@ -788,9 +788,9 @@
         { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
         { code: "PLD-02", icon: "🎮", title: "Pindutan v14", desc: "Pindutan game module", url: "pindutan.html", newTab: true },
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "Screenshot.html", newTab: true },
-        { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "gc.html", newTab: true, lock: true },
+        { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "gc-v5.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
-        { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "Aurora.html", newTab: true }
+        { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v2.html", newTab: true }
     ];
 
     let missionStart = Date.now();
@@ -891,7 +891,7 @@
         if (val.length > 0 && channelSignature(val) === BARDAGULAN_SIG) {
             localStorage.setItem("kdl_bardagulan_unlocked", "true");
             closeModal("bardagulanModal");
-            const url = pendingBardagulanUrl || "gc.html";
+            const url = pendingBardagulanUrl || "gc-v5.html";
             pendingBardagulanUrl = null;
             window.open(url, "_blank", "noopener");
             showToast("Bardagulan channel opened");
@@ -958,9 +958,27 @@
     // =========================================================================
     // PAYLOAD FEED
     // =========================================================================
+    // Saved grids keep whatever filenames they were stored with — move the two
+    // that were renamed so an existing localStorage still opens the live pages.
+    const APP_URL_UPGRADES = { "gc.html": "gc-v5.html", "Aurora.html": "aurora-v2.html" };
+
+    function upgradeAppLinks(apps) {
+        let touched = false;
+        apps.forEach(app => {
+            if (app && APP_URL_UPGRADES[app.url]) {
+                app.url = APP_URL_UPGRADES[app.url];
+                touched = true;
+            }
+        });
+        if (touched) localStorage.setItem("kdl_spacex_apps_v11", JSON.stringify(apps));
+        return apps;
+    }
+
     function getApps() {
         const saved = localStorage.getItem("kdl_spacex_apps_v11");
-        return saved ? JSON.parse(saved) : DEFAULT_APPS;
+        if (!saved) return DEFAULT_APPS;
+        try { return upgradeAppLinks(JSON.parse(saved)); }
+        catch (e) { return DEFAULT_APPS; }
     }
 
     function resetPayloads() {

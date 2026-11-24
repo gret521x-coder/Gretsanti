@@ -28,6 +28,23 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 
 ---
 
+## Launcher payload grid
+
+Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship today:
+
+| Card | Opens |
+|---|---|
+| Bardagulan (locked) | `gc-v5.html` — was `gc.html` |
+| Aurora | `aurora-v2.html` — was `Aurora.html` |
+
+Grids are saved in `localStorage`, so an existing one would have kept the old
+filenames forever. `getApps()` now rewrites `gc.html` → `gc-v5.html` and
+`Aurora.html` → `aurora-v2.html` on load and stores the result, so nothing has to be
+reset. A corrupt saved grid falls back to the defaults instead of throwing.
+
+The TNS, Pindutan and Collectibles cards still point at `tns.html`, `pindutan.html`
+and `Screenshot.html` — those live only on the PHP host, not in this repo.
+
 ## What changed in the launcher
 
 ### `index-v2.html` — SpaceX / orbital
@@ -396,6 +413,10 @@ keep keys on the server side (`api-ai.php`) when you can.
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **Launcher grids: 40 checks** — all five launchers default to `gc-v5.html` and
+  `aurora-v2.html`, the grid renders, Bardagulan stays locked and its code still opens
+  the right page, an old saved grid is upgraded and written back, corrupt storage
+  falls back to defaults
 - **Aurora through the proxy: 15 checks** — proxy picked on `github.io`, direct provider on
   localhost, no key and no `Authorization` header sent through the proxy, no
   `/chat/completions` appended to a `.php` base, system prompt and transcript in the body,

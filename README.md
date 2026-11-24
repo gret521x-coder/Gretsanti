@@ -375,7 +375,13 @@ Opened from XAMPP or from unaux itself, it uses the `api-v5.php` next to the pag
 To move hosts, set the value by hand before the script runs. Relative `uploads/x.png`
 paths are rewritten onto that host, so images, voice notes and GIFs keep working.
 
-**Uploads failing on the Pages copy?** That is the CORS headers on the PHP host. Upload
+**Uploads failing on the Pages copy?** Tap the **🗄️ PHP API** row under the name field —
+it runs the check and prints the answer ("PHP OK · v3 / cors" or "…refused this page
+(TypeError: Failed to fetch)"). The same fact is visible in any browser:
+`https://aidekupal.unaux.com/api-v5.php?action=health` → `"version":3,"build":"cors"`
+means the new file is live; `"version":2` means the old one is.
+
+That is the CORS headers on the PHP host. Upload
 `api-v5.php` there and reload; the chat now says so out loud (it names the host and tells
 you to upload the file) instead of showing a bare "Upload failed".
 

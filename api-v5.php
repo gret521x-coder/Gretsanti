@@ -513,9 +513,13 @@ switch ($action) {
         out([
             'ok'       => true,
             'service'  => 'black-cat-chat',
-            'version'  => 2,
+            'version'  => 3,                 /* 3 = the copy with CORS */
+            'build'    => 'cors',
             'php'      => PHP_VERSION,
-            'writable' => is_writable($DATA_DIR) && is_writable($UPLOAD_DIR)
+            'writable' => is_writable($DATA_DIR) && is_writable($UPLOAD_DIR),
+            'cors'     => array_values($CORS_HOSTS),
+            'origin'   => $_SERVER['HTTP_ORIGIN'] ?? '',
+            'upload_max' => (int)(ini_get('upload_max_filesize') ?: 0)
         ]);
 
     /* ------------------------------------------------------------------ load */

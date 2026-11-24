@@ -507,6 +507,11 @@ body.lb-open{overflow:hidden}
 @keyframes zap{0%{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.25);opacity:1}100%{transform:none}}
 
 
+/* PHP status row doubles as a connection test */
+.srow.tappable{cursor:pointer}
+.srow.tappable:active{background:rgba(255,255,255,.06)}
+.srvtest{font-style:normal;font-size:10px;color:var(--text-3);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:1px 6px;margin-left:4px}
+
 /* ================= v5.1: touch-friendly message actions ================= */
 .msg .acts{
   display:none;gap:5px;margin:4px 2px 0;
@@ -881,7 +886,9 @@ body.lb-open{overflow:hidden}
     </div>
     <button id="joinNormalBtn" style="display:none">Join as a normal member →</button>
     <div class="srv">
-      <div class="srow"><span>🗄️ PHP API (api-v5.php)</span><span class="dot wait" data-srv="php"></span></div>
+      <div class="srow tappable" id="phpSrvRow" role="button" tabindex="0" title="Tap to test the PHP connection">
+        <span>🗄️ PHP API (api-v5.php) <em class="srvtest">test</em></span><span class="dot wait" data-srv="php"></span>
+      </div>
       <div class="srow"><span>⚡ EMQX relay</span><span class="dot wait" data-srv="b0"></span></div>
       <div class="srow"><span>⚡ HiveMQ relay</span><span class="dot wait" data-srv="b1"></span></div>
       <div class="srow"><span>⚡ Mosquitto relay</span><span class="dot wait" data-srv="b2"></span></div>
@@ -1040,6 +1047,34 @@ function updateRelayPills(){
   BROKERS.forEach(function(b, i){ setSrv('b' + i, b.state || 'bad'); });
 }
 var phpWarned = false;
+/* Tap the PHP row in the lobby: says exactly what came back, in words you can act on. */
+function probePhp(){
+  var t0 = Date.now();
+  var box = el('lobbyMsg');
+  if(box) box.textContent = 'Checking ' + apiHostLabel() + '…';
+  fetch(API_Q + 'health&t=' + nowMs(), { cache: 'no-store' })
+    .then(function(r){
+      return r.text().then(function(txt){
+        var ms = Date.now() - t0;
+        var j = null;
+        try { j = JSON.parse(txt); } catch(e){}
+        if(r.ok && j && j.ok){
+          phpOk(true);
+          if(box) box.textContent = 'PHP OK · v' + (j.version || '?') + (j.build ? ' / ' + j.build : '') +
+            ' · ' + ms + ' ms' + (j.writable === false ? ' · data folder NOT writable' : '');
+        } else {
+          phpOk(false);
+          if(box) box.textContent = 'PHP replied HTTP ' + r.status + ' — ' + String(txt || '(empty)').slice(0, 70);
+        }
+      });
+    })
+    .catch(function(err){
+      phpOk(false);
+      var m = (err && err.message) || String(err);
+      if(box) box.textContent = apiHostLabel() + ' refused this page (' + m + '). That is CORS or a host firewall — ' +
+        'the PHP file there is probably still the old one.';
+    });
+}
 function phpOk(ok){
   phpState = ok ? 'ok' : 'bad';
   setSrv('php', phpState);
@@ -1816,6 +1851,8 @@ function closeLightbox(){
   el('lbImg').src = '';
   document.body.classList.remove('lb-open');
 }
+el('phpSrvRow').addEventListener('click', probePhp);
+el('phpSrvRow').addEventListener('keydown', function(ev){ if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); probePhp(); } });
 el('lbClose').addEventListener('click', function(ev){ ev.stopPropagation(); closeLightbox(); });
 el('lightbox').addEventListener('click', function(ev){
   if(ev.target === el('lightbox') || ev.target === el('lbImg')) closeLightbox();

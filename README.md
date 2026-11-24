@@ -14,6 +14,8 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `gc.html` | 43 KB | Original **Black Cat Group Chat** upload, unchanged |
 | `gc-v2.html` | 61 KB | Chat v2 — presence fix, lightning joins, new design |
 | `api-v2.php` | 23 KB | Backend used by `gc-v2.html` |
+| `Aurora.html` | 53 KB | Original Aurora AI chatbot |
+| `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
 
 ---
 
@@ -93,6 +95,39 @@ Deep ink background with violet/cyan glows, frosted glass header, gradient wordm
 
 ---
 
+## What changed in Aurora (`aurora-v2.html`)
+
+The original file had two `</html>` tags, four stacked `<style>` blocks and five `<script>` blocks — with `callAPI`, `renderRich`, `renderModels` and `renderModelChips` each defined twice. v2 is one clean document: one stylesheet, one script, no duplicate definitions.
+
+**Stability**
+
+- Missing `scrollDown()` helper added (it was called but never defined)
+- **Stop button** with `AbortController` and a 120 s timeout; partial replies are kept
+- Context survives even with "Save history locally" off — the conversation lives in memory, storage is separate
+- `saveChats()` survives quota errors: it drops the oldest chats, strips attachment payloads, and warns instead of failing silently
+- Streaming render is throttled with `requestAnimationFrame` instead of re-parsing Markdown on every token
+- `marked`, `DOMPurify` and `highlight.js` are all optional — the page still works if a CDN fails
+- Links are hardened: `javascript:` / `data:` hrefs stripped, everything else gets `rel="noopener noreferrer nofollow"`
+- Interface escapes single and double quotes now, not just `& < >`
+
+**Features**
+
+- **Regenerate**, **edit & resend**, and **delete** on individual messages
+- **Chat search**, rename, pin, delete with confirmation
+- **Export** the current chat as Markdown or JSON, or all chats as JSON
+- **Prompt library** with six starting prompts, plus saving your own
+- **Per-chat system prompt** and global custom instructions in Settings
+- **Token counter** with automatic context trimming (9k-token budget)
+- **Syntax highlighting** with a built-in token theme
+- **Run** button for generated HTML — opens it in a sandboxed iframe
+- 🎤 **Voice input** (Web Speech) and 🔊 **read aloud** on replies
+- Token counter, prompt library and chat tools all work offline
+
+Presence of the API key is unchanged: still hardcoded as requested.
+
+
+---
+
 ## Version history
 
 | Version | Notes |
@@ -104,9 +139,14 @@ Deep ink background with violet/cyan glows, frosted glass header, gradient wordm
 | `index-v4.html` | v1 with the API, SYNC, OpenRouter and add-payload UI removed |
 | `gc.html` | original group chat |
 | `gc-v2.html` | presence fix, lightning joins, new design |
+| `Aurora.html` | original AI chatbot |
+| `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
 
 ## Checks
 
 - `node --check` on the extracted `<script>` block of every HTML file
 - All `getElementById` / `el()` targets verified to exist in the markup
 - Presence logic unit-tested in Node: away ≠ left, a single leave notice, host prefers online users
+- **Aurora v2 exercised in a real DOM (jsdom): 35 checks** — page boots without errors, one style/one script,
+  message rendering, escaping, persistence, quota-overflow recovery, streamed replies, Stop, regenerate,
+  prompt library, exports, theme and custom instructions

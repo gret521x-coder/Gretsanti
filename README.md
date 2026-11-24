@@ -331,22 +331,22 @@ branch that has the files → folder `/ (root)` → Save. The site appears at
 `https://<user>.github.io/<repo>/`. Pages needs a **public** repo on a free plan, or
 Pro for a private one.
 
-**2. Point the chat at your PHP.** Open `gc-v5.html`, find the config block just
-before the main script, and set one line:
+**2. Nothing to configure.** The config block just before the main script detects
+`*.github.io` and points itself at the PHP host:
 
 ```js
-window.KDL_API_BASE = 'https://yoursite.unaux.com/api-v5.php';
+window.KDL_API_BASE = 'https://aidekupal.unaux.com/api-v5.php';   // on Pages
+window.KDL_API_BASE = '';                                         // everywhere else
 ```
 
-Empty (the default) means "the api-v5.php next to this file", which is what XAMPP
-does. With that line set, uploads, GIFs, history, the banner and the admin slot
-keep working from Pages — relative `uploads/x.png` paths are rewritten to that host
-automatically.
+Opened from XAMPP or from unaux itself, it uses the `api-v5.php` next to the page.
+To move hosts, set the value by hand before the script runs. Relative `uploads/x.png`
+paths are rewritten onto that host, so images, voice notes and GIFs keep working.
 
-**3. Allow the new origin in the PHP.** `api-v5.php` already sends CORS headers for
-`*.github.io`, `*.unaux.com`, `localhost` and `127.0.0.1`, and answers the preflight
-`OPTIONS` request. If you host the site anywhere else, add that host to `$CORS_HOSTS`
-at the top of the file (only those hosts may call the API).
+**3. Upload the new `api-v5.php`.** It sends CORS headers for `*.github.io`,
+`*.unaux.com`, `localhost` and `127.0.0.1` and answers the preflight `OPTIONS`
+request — without it the browser blocks every call from Pages. Any other host goes
+in `$CORS_HOSTS` at the top of the file; hosts not listed are refused.
 
 `.nojekyll` is present so GitHub serves the files exactly as they are.
 

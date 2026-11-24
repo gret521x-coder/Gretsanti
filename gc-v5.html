@@ -893,15 +893,21 @@ body.lb-open{overflow:hidden}
 
 <script>
 /* ============================================================================
-   SITE CONFIG — the one line you edit when the page is not served next to
-   its PHP (e.g. the page is on GitHub Pages while api-v5.php stays on unaux).
+   SITE CONFIG — where the PHP lives.
 
-     window.KDL_API_BASE = 'https://yoursite.unaux.com/api-v5.php';
+   XAMPP / your own host :  nothing to do, it uses api-v5.php next to this file
+   GitHub Pages          :  detected below and pointed at the unaux host
 
-   Leave it empty when the PHP sits in the same folder — that is the default
-   and it is what XAMPP does.
+   Override either way by setting window.KDL_API_BASE before this script, e.g.
+     window.KDL_API_BASE = 'https://aidekupal.unaux.com/api-v5.php';
    ============================================================================ */
-window.KDL_API_BASE = window.KDL_API_BASE || '';
+window.KDL_API_BASE = window.KDL_API_BASE || (function () {
+  /* GitHub Pages serves only static files — the PHP stays on unaux */
+  if (/(^|\.)github\.io$/i.test(location.hostname)) {
+    return 'https://aidekupal.unaux.com/api-v5.php';
+  }
+  return '';                       /* same folder */
+}());
 </script>
 <script>
 'use strict';

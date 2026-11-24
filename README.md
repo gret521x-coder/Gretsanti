@@ -352,6 +352,13 @@ and cyan horizon, square corners, mono-caps labels, one cyan accent, green ok / 
 The cat wallpaper and the violet gradients are gone; your own bubbles are cyan on a dark panel and the
 quick-action chips read like terminal keys.
 
+**A sky runs behind the messages.** The launcher's motion pack, moved into the chat: stars drifting down,
+two or three satellites on slow elliptical orbits (solar panels, a green beacon blinking on the bus), and a
+rocket crossing the deck every three to six seconds with a flickering flame and a fading trail. It is a
+separate canvas at `z-index:0` under the app, dimmed to 62% so text stays readable, paused when the tab is
+hidden, and switched off entirely under `prefers-reduced-motion`. `window.KDL_SKY` exposes the counts for
+the tests.
+
 **The ⚡ storm stays** — it was already in the chat — but its light is colder: bolts and flash in
 `#dff6ff` with a cyan glow, still shaking the deck on arrival. It now also strikes when **you** send a
 message, not only when one arrives.

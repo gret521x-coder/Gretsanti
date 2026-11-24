@@ -769,7 +769,7 @@
        a tap opens the first one that actually answers. No renaming, no upload order. */
     const ALT_NAMES = {
         "aurora-v4.html": ["aurora-v4.html", "Aurora.html", "aurora-v3.html", "aurora-v2.html"],
-        "gc.html": ["gc.html", "gc-v5.html", "gc-v4.html"],
+        "gc.html": ["gc-v5.html", "gc.html", "gc-v4.html"],   /* the v5 build is the one that talks to api-v5.php */
         "screenshot.html": ["Screenshot.html", "screenshot.html"]
     };
 
@@ -794,7 +794,7 @@
        browser refuses (page opened from elsewhere), the first name is used without asking. */
     async function openPayload(url) {
         const list = candidatesFor(url);
-        let pick = list[0];
+        let pick = resolveUrl(url);          /* the card's own target, unless a probe says better */
         for (const cand of list) {
             try {
                 const r = await fetch(cand, { method: "HEAD", cache: "no-store" });

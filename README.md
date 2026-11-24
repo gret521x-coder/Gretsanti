@@ -20,6 +20,9 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v4.php` | 35 KB | Backend used by `gc-v4.html` (v3 plus voice notes and the banner) |
 | `gc-v5.html` | 109 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
 | `api-v5.php` | 39 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot) |
+| `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
+| `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
+| `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot |
 | `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
 
@@ -269,6 +272,42 @@ Presence of the API key is unchanged: still hardcoded as requested.
 
 ---
 
+## The agent widget (`agent-widget.js` + `api-ai.php`)
+
+A chat agent that sits bottom-right on any page and answers from your model provider.
+
+**Two lines on the page**
+
+```html
+<script>window.AGENT_CONFIG = { endpoint: 'api-ai.php' };</script>
+<script src="agent-widget.js" defer></script>
+```
+
+**What the widget does**
+
+- 56 px bubble, panel with header, transcript, composer; full-width on phones, left or right side
+- Streams the answer token by token (SSE), with a Stop button, a 120 s ceiling and a retry bubble on failure
+- Markdown-lite: `**bold**`, `` `code` ``, fenced blocks, clickable links — everything else escaped
+- Transcript kept in `sessionStorage` for the tab, `Agent.reset()` to wipe it
+- API: `Agent.open()`, `Agent.close()`, `Agent.toggle()`, `Agent.ask('…')`, `Agent.reset()`
+- `demo: true` answers from a scripted stream so the UI can be tested without a backend
+
+**Why the proxy**
+
+The key lives in `api-ai.php`, never in the page. The proxy also
+
+- rebuilds the system prompt server-side, so the browser cannot rewrite it
+- rejects client-side `system` roles, caps the transcript at 24 messages / 4 000 chars each
+- allows only models in `$ALLOWED_MODELS`
+- rate-limits to 30 requests per IP per 10 minutes, stored in `data/agent-rate.json`
+- streams straight through with curl, falls back to a single wrapped response without it
+- scrubs its own key out of anything the provider echoes back
+- answers `api-ai.php?health=1` with whether a key is configured
+
+`$BASE_URL` defaults to OpenRouter; point it at any OpenAI-compatible endpoint (the Aurora key host, for example) and change `$MODEL` to match.
+
+### Known limitations (both chat versions)
+
 ## Version history
 
 | Version | Notes |
@@ -291,6 +330,9 @@ Presence of the API key is unchanged: still hardcoded as requested.
 - `node --check` on the extracted `<script>` block of every HTML file
 - All `getElementById` / `el()` targets verified to exist in the markup
 - Presence logic unit-tested in Node: away ≠ left, a single leave notice, host prefers online users
+- **Agent widget exercised in jsdom: 28 checks** — mount/dedupe, open/close/Escape, streaming into one bubble,
+  request body and history, markdown rendering, inert HTML in replies, network and 401 errors with retry,
+  Stop mid-stream, demo mode, sessionStorage restore, left-position option
 - **Chat v5 exercised with four tabs on a shared fake broker and fake PHP: 44 checks** — admin claim,
   a second `++vip` join rejected with the normal-join escape hatch, member sees the admin, banner live then
   pulled by a late joiner then shown as unreadable-but-visible to a crypto-less reader, member has no delete,

@@ -123,18 +123,6 @@ Both folders get a `.htaccess` that blocks direct access, and `uploads/` has scr
 
 ---
 
-## Running it
-
-1. Install **XAMPP** and start **Apache**.
-2. Copy the HTML files and `api-v2.php` into `C:\xampp\htdocs\`.
-3. Open `http://localhost/index.html` (launcher) or `http://localhost/gc-v2.html` (chat).
-4. The chat creates its `data/` and `uploads/` folders on first load.
-5. To try presence and the join effect, open the chat in **two tabs** and join in the second one.
-
-Requirements: PHP 7.4+ with JSON and `fileinfo` (both ship with XAMPP). `curl` is optional — the GIF proxy falls back to stream wrappers.
-
----
-
 ## Version history
 
 | Version | Notes |

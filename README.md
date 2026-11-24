@@ -220,6 +220,14 @@ Deleting your own message is admin-only too, as asked. Flip `ADMIN_ONLY_DELETE =
 - A device without WebCrypto (plain `http://` on a LAN IP) could not decrypt the banner and rendered **nothing at all**. It now shows the bar with *"Encrypted announcement — this device cannot read it"*, so it is never invisible.
 - Both paths are covered by the new two-client tests: live MQTT delivery, a late joiner pulling it from `load`, and a crypto-less reader.
 
+**⚡ Join lightning — what was wrong**
+
+The strike was gated behind `prefers-reduced-motion`, and that media query didn't just skip the animation — it set `#fx{display:none}` and the script returned before doing anything. On any device with *reduce motion* turned on (Windows "Animation effects" off, a phone in battery saver, Chrome's reduce-motion flag) joining produced **no effect at all**, silently.
+
+- Reduced motion now shows a **soft violet glow with no movement** instead of nothing
+- The person joining gets the strike too, not just the people already in the room
+- Both paths are covered by tests: full strike for a peer join, calm glow when `prefers-reduced-motion` matches
+
 ### Known limitations (both chat versions)
 
 - The three MQTT brokers are public and the room topic is a fixed string — treat the room as semi-public
@@ -283,10 +291,11 @@ Presence of the API key is unchanged: still hardcoded as requested.
 - `node --check` on the extracted `<script>` block of every HTML file
 - All `getElementById` / `el()` targets verified to exist in the markup
 - Presence logic unit-tested in Node: away ≠ left, a single leave notice, host prefers online users
-- **Chat v5 exercised with four tabs on a shared fake broker and fake PHP: 38 checks** — admin claim,
+- **Chat v5 exercised with four tabs on a shared fake broker and fake PHP: 44 checks** — admin claim,
   a second `++vip` join rejected with the normal-join escape hatch, member sees the admin, banner live then
   pulled by a late joiner then shown as unreadable-but-visible to a crypto-less reader, member has no delete,
-  admin deletes someone else's message both ways, admin clears for both, handover on release, reload re-claim
+  admin deletes someone else's message both ways, admin clears for both, handover on release, reload re-claim,
+  join lightning on your own join, peer join strike + pill, calm glow under reduced motion
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
 - **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire
   and in the request body with no plaintext, local echo still readable, decryption of incoming text, locked

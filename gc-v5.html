@@ -432,6 +432,9 @@ footer{
 /* ================= ⚡ LIGHTNING FX ================= */
 #fx{position:fixed;inset:0;z-index:95;pointer-events:none;opacity:0;transition:opacity .25s}
 #fx.on{opacity:1}
+/* reduced-motion fallback: same signal, no movement */
+#fx.calm .bolt{display:none}
+#fx.calm .flash{opacity:.55;animation:none!important}
 #fx .flash{
   position:absolute;inset:0;
   background:
@@ -685,7 +688,9 @@ footer{
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
-  #fx{display:none}
+  /* no bolts, no shake — but a join still lights the room up with a soft glow */
+  #fx .bolt{display:none}
+  #fx .flash{opacity:.55;animation:none!important}
 }
 </style>
 </head>
@@ -929,22 +934,27 @@ function phpOk(ok){
 
 /* ================= ⚡ Lightning strike ================= */
 function lightningStrike(){
-  if(reduceMotion()) return;
   var now = nowMs();
   if(now - stormCooldown < 1200) return;   /* don't stack strikes */
   stormCooldown = now;
   var fx = el('fx'), app = el('app');
   if(!fx) return;
-  fx.classList.remove('on');
+  var calm = reduceMotion();                /* calm: glow only, no bolts, no shake */
+  fx.classList.remove('on', 'calm');
   void fx.offsetWidth;                      /* restart the animation */
   fx.classList.add('on');
-  app.classList.remove('struck');
-  void app.offsetWidth;
-  app.classList.add('struck');
+  if(calm) fx.classList.add('calm');
+  if(app){
+    app.classList.remove('struck');
+    if(!calm){
+      void app.offsetWidth;
+      app.classList.add('struck');
+    }
+  }
   clearTimeout(stormTimer);
   stormTimer = setTimeout(function(){
-    fx.classList.remove('on');
-    app.classList.remove('struck');
+    fx.classList.remove('on', 'calm');
+    if(app) app.classList.remove('struck');
   }, 1000);
 }
 
@@ -1861,6 +1871,7 @@ function enterRoom(){
   sysNotice('🐾 Welcome, ' + uname + '! You joined the Black Cat room.');
   sendPresence();
   scrollBottom();
+  lightningStrike();          /* you get the storm as you walk in */
   phpPoll();
   computeHost();
   updateAdminUI();

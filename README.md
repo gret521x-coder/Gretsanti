@@ -369,6 +369,11 @@ the origins listed at the top of the file.
 mono-caps labels, one cyan accent (`#38bdf8`), green for ok (`#00e676`) and red for stop (`#ff3d00`).
 The light/dark toggle is gone — the launcher has one theme, so Aurora does too.
 
+**The launcher asks the host instead of assuming.** Each payload lists the names it might have
+(`aurora-v4.html` or `Aurora.html`, `gc.html` or `gc-v5.html`); a tap sends one `HEAD` request and opens
+the first name that answers, so nothing has to be renamed on the server. If the browser refuses the
+probe (page opened from a download folder), the first name is used without asking.
+
 **The launcher no longer depends on where it sits.** `index-v5.html` resolves every relative card
 (`tns.html`, `pindutan.html`, `aurora-v4.html`) against `https://aidekupal.unaux.com/`, so the cards open
 whether the file is opened from the PHP host, from a download folder, or from anywhere else — and a saved

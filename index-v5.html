@@ -764,6 +764,46 @@
         try { return new URL(url, PAYLOAD_HOST).href; } catch (e) { return url; }
     }
 
+    /* The file manager keeps the names you typed: "Aurora.html", "gc.html". This launcher is
+       not going to argue with that. Each payload lists the names it might have on the host, and
+       a tap opens the first one that actually answers. No renaming, no upload order. */
+    const ALT_NAMES = {
+        "aurora-v4.html": ["aurora-v4.html", "Aurora.html", "aurora-v3.html", "aurora-v2.html"],
+        "gc.html": ["gc.html", "gc-v5.html", "gc-v4.html"],
+        "screenshot.html": ["Screenshot.html", "screenshot.html"]
+    };
+
+    function candidatesFor(url) {
+        const target = resolveUrl(url);
+        if (!/^https?:\/\//i.test(target)) return [target];
+        const cut = target.lastIndexOf("/") + 1;
+        const dir = target.slice(0, cut);
+        const file = target.slice(cut);
+        const alts = ALT_NAMES[file.toLowerCase()];
+        if (!alts) return [target];
+        return alts.map(n => dir + n);
+    }
+
+    function go(url) {
+        const w = window.open(url, "_blank");
+        if (w) { try { w.opener = null; } catch (e) {} }
+        else { location.href = url; }        /* popup blocked — same tab instead */
+    }
+
+    /* Ask before opening: a HEAD request says whether that name exists. Same-origin only; if the
+       browser refuses (page opened from elsewhere), the first name is used without asking. */
+    async function openPayload(url) {
+        const list = candidatesFor(url);
+        let pick = list[0];
+        for (const cand of list) {
+            try {
+                const r = await fetch(cand, { method: "HEAD", cache: "no-store" });
+                if (r && (r.ok || r.status === 405 || r.status === 501)) { pick = cand; break; }
+            } catch (e) { break; }
+        }
+        go(pick);
+    }
+
 
     let missionStart = Date.now();
     let pendingBardagulanUrl = null;
@@ -833,7 +873,7 @@
         e.preventDefault();
         e.stopPropagation();
         if (isBardagulanUnlocked()) {
-            window.open(url, "_blank", "noopener");
+            openPayload(url);
             return;
         }
         pendingBardagulanUrl = url;
@@ -853,7 +893,7 @@
             closeModal("bardagulanModal");
             const url = pendingBardagulanUrl || "https://aidekupal.unaux.com/gc.html";
             pendingBardagulanUrl = null;
-            window.open(url, "_blank", "noopener");
+            openPayload(url);
         } else {
             errBox.innerText = "ACCESS DENIED // INVALID CODE";
         }
@@ -955,6 +995,7 @@
                 card.href = target;
                 card.target = "_blank";
                 card.rel = "noopener noreferrer";
+                card.onclick = (e) => { e.preventDefault(); openPayload(app.url); };
             }
 
             const lockTag = app.lock ? " <span style=\"font-size:0.68rem;\">🔒</span>" : "";

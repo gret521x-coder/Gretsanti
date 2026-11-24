@@ -23,6 +23,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
+| `diag.html` | 5 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `Screenshot.html` | 3 KB | **Collectibles** vault — password-gated image board |
 | `save.php` | 1 KB | Backend for Collectibles: stores, lists and serves the images |
 | `tns.html` | 33 KB | **TNS — Safety Dispatch**, self-contained |
@@ -438,6 +439,8 @@ keep keys on the server side (`api-ai.php`) when you can.
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **`diag.html`: 6 checks** — correct verdict for a working host, a headers-only block,
+  an outright refusal and an HTTP error page
 - **Chat failure messages: 7 checks** — a refused cross-origin call names the PHP host,
   says to upload `api-v5.php`, and warns once in the lobby; a real server error is shown
   verbatim; nothing is said when the host answers

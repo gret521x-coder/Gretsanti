@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KDL // LINK DIAGNOSTIC</title>
+<style>
+  :root{
+    --bg:#05060a; --panel:#0b0d13; --card:#101320; --line:#1f2433;
+    --text:#e8ecf5; --dim:#8f96a8; --cyan:#38bdf8; --ok:#00e676; --bad:#ff3d5a; --warn:#ffb020;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+       padding:18px 14px 40px;line-height:1.5}
+  h1{font-size:15px;letter-spacing:.18em;color:var(--cyan);margin:0 0 4px;font-weight:600}
+  .sub{color:var(--dim);font-size:11px;letter-spacing:.08em;margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .row{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .row:last-child{border-bottom:0}
+  .k{color:var(--dim);flex:0 0 auto}
+  .v{text-align:right;word-break:break-word}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .big{font-size:15px;line-height:1.45;padding:16px;border-radius:14px;margin-bottom:12px;
+       border:1px solid var(--line);background:var(--card)}
+  pre{white-space:pre-wrap;word-break:break-word;font-size:11px;color:var(--dim);
+      margin:8px 0 0;max-height:190px;overflow:auto}
+  button{width:100%;padding:14px;border:0;border-radius:12px;font:inherit;font-size:13px;
+         letter-spacing:.1em;background:var(--cyan);color:#04121c;font-weight:700;margin-top:4px}
+  .spin{display:inline-block;width:10px;height:10px;border-radius:50%;
+        border:2px solid var(--dim);border-top-color:var(--cyan);animation:s .8s linear infinite;vertical-align:-1px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <h1>LINK DIAGNOSTIC</h1>
+  <div class="sub">Tests the PHP host the same way the chat does</div>
+
+  <div class="big" id="verdict"><span class="spin"></span> Running tests…</div>
+
+  <div class="card" id="facts"></div>
+  <button id="again">RUN AGAIN</button>
+
+<script>
+var API = 'https://aidekupal.unaux.com/api-v5.php';
+var $ = function (s) { return document.querySelector(s); };
+var esc = function (s) { return String(s).replace(/[&<>]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]); }); };
+
+function row(k, v, cls) {
+  return '<div class="row"><span class="k">' + k + '</span><span class="v ' + (cls || '') + '">' + v + '</span></div>';
+}
+
+/* Stage 1 — a normal fetch, which the browser only lets us read if the server
+   sends the right CORS headers. */
+function tryFetch() {
+  var t0 = Date.now();
+  return fetch(API + '?action=health&t=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) {
+      return r.text().then(function (txt) {
+        return { ok: r.ok, status: r.status, body: txt, ms: Date.now() - t0 };
+      });
+    })
+    .catch(function (e) {
+      return { ok: false, error: (e && (e.name + ': ' + e.message)) || String(e), ms: Date.now() - t0 };
+    });
+}
+
+/* Stage 2 — a plain <script> tag. It ignores CORS entirely, so if this loads
+   the host is answering and only its headers are the problem. */
+function tryTag() {
+  return new Promise(function (resolve) {
+    var settled = false;
+    var tag = document.createElement('script');
+    var done = function (v) { if (!settled) { settled = true; try { tag.remove(); } catch (e) {} resolve(v); } };
+    tag.onload = function () { done('loaded'); };
+    tag.onerror = function () { done('error'); };
+    tag.src = API + '?action=health&tag=' + Date.now();
+    setTimeout(function () { done('timeout'); }, 9000);
+    document.head.appendChild(tag);
+  });
+}
+
+function render(f, tag) {
+  var verdict, cls;
+  if (f.ok && f.status === 200 && /"ok"\s*:\s*true/.test(f.body || '')) {
+    verdict = 'WORKING — the chat can reach the PHP host from here.';
+    cls = 'ok';
+  } else if (f.error) {
+    if (tag === 'loaded') {
+      verdict = 'BLOCKED BY HEADERS — the host answers, but the browser is not allowed to read the reply. CORS is missing on the file there.';
+      cls = 'warn';
+    } else if (tag === 'timeout') {
+      verdict = 'NO ANSWER — the host did not respond in 9 s. Firewall, DNS or the file is not at that path.';
+      cls = 'bad';
+    } else {
+      verdict = 'BLOCKED — the host refuses requests from this site entirely (403 / firewall). No header fix will help.';
+      cls = 'bad';
+    }
+  } else {
+    verdict = 'The host answered HTTP ' + f.status + ' but it was not the expected JSON — probably an error page or a security challenge.';
+    cls = 'warn';
+  }
+
+  $('#verdict').innerHTML = '<b class="' + cls + '">' + esc(verdict) + '</b>';
+  var facts = '';
+  facts += row('this page', esc(location.origin));
+  facts += row('target', esc(API));
+  facts += row('fetch', f.error
+    ? '<span class="bad">' + esc(f.error) + '</span>'
+    : '<span class="' + (f.ok ? 'ok' : 'warn') + '">HTTP ' + f.status + ' · ' + f.ms + ' ms</span>');
+  facts += row('script tag (ignores CORS)', tag === 'loaded'
+    ? '<span class="ok">loaded — host answers</span>'
+    : tag === 'timeout' ? '<span class="bad">timeout</span>' : '<span class="bad">error — no answer</span>');
+  if (f.body) facts += row('body', '<code>' + esc(String(f.body).slice(0, 160)) + '</code>');
+  $('#facts').innerHTML = facts;
+}
+
+function run() {
+  $('#verdict').innerHTML = '<span class="spin"></span> Running tests…';
+  $('#facts').innerHTML = '';
+  tryFetch().then(function (f) {
+    if (f.ok) { render(f, 'n/a'); return; }
+    tryTag().then(function (tag) { render(f, tag); });
+  });
+}
+
+$('#again').addEventListener('click', run);
+run();
+</script>
+</body>
+</html>

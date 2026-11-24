@@ -790,17 +790,47 @@
         else { location.href = url; }        /* popup blocked — same tab instead */
     }
 
-    /* Ask before opening: a HEAD request says whether that name exists. Same-origin only; if the
-       browser refuses (page opened from elsewhere), the first name is used without asking. */
+    /* Ask before opening, with a GET and a one-byte range: HEAD is refused by some free hosts,
+       and a refused HEAD used to be read as "file missing", so the launcher quietly fell back to
+       the old copy — the one whose PHP dot is red. 404 and 410 mean missing; anything else the
+       host answers with means the file is there. No answer at all means stop asking. */
+    function pickKey(url) {
+        return "kdl_pick_" + String(url || "").split("/").pop().toLowerCase();
+    }
+    function knownPick(url) {
+        try { return localStorage.getItem(pickKey(url)) || ""; } catch (e) { return ""; }
+    }
+    function rememberPick(url, chosen) {
+        try { localStorage.setItem(pickKey(url), chosen); } catch (e) {}
+    }
+    async function probeExists(cand) {
+        try {
+            const r = await fetch(cand, { method: "GET", cache: "no-store", headers: { Range: "bytes=0-1" } });
+            if (r && (r.status === 404 || r.status === 410)) return false;
+            return true;
+        } catch (e) {
+            return null;                      /* cross-origin, offline, or refused */
+        }
+    }
     async function openPayload(url) {
         const list = candidatesFor(url);
-        let pick = resolveUrl(url);          /* the card's own target, unless a probe says better */
-        for (const cand of list) {
-            try {
-                const r = await fetch(cand, { method: "HEAD", cache: "no-store" });
-                if (r && (r.ok || r.status === 405 || r.status === 501)) { pick = cand; break; }
-            } catch (e) { break; }
+        const target = resolveUrl(url);
+        let pick = target;
+
+        const remembered = knownPick(url);
+        if (remembered) { go(remembered); return; }
+
+        let answered = false;
+        if (list.length > 1) {
+            for (const cand of list) {
+                const exists = await probeExists(cand);
+                if (exists === null) break;   /* cannot ask — keep the card's own target */
+                answered = true;
+                if (exists) { pick = cand; break; }
+            }
         }
+        /* only remember a name the host actually voted on; a failed probe must not stick */
+        if (answered) rememberPick(url, pick);
         go(pick);
     }
 

@@ -369,6 +369,13 @@ the origins listed at the top of the file.
 mono-caps labels, one cyan accent (`#38bdf8`), green for ok (`#00e676`) and red for stop (`#ff3d00`).
 The light/dark toggle is gone — the launcher has one theme, so Aurora does too.
 
+**Green when gc is opened directly, red when it comes from the launcher** meant the launcher was falling
+back to the *old* `gc.html` — the probe used `HEAD`, one free host refused the `HEAD`, and a refusal was read
+as "file missing". The probe is a `GET` with a one-byte `Range` now: `404`/`410` mean missing, any other
+answer means present, and no answer at all means stop asking. The chosen name is remembered in
+`localStorage` (`kdl_pick_*`) so later taps open straight away — but only when the host actually voted, so a
+failed probe can never stick.
+
 **The launcher asks the host instead of assuming.** Each payload lists the names it might have
 (`aurora-v4.html` or `Aurora.html`, `gc.html` or `gc-v5.html`); a tap sends one `HEAD` request and opens
 the first name that answers, so nothing has to be renamed on the server. If the browser refuses the

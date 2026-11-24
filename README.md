@@ -18,6 +18,8 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v3.php` | 32 KB | Backend used by `gc-v3.html` (v2 plus edit, delete, link preview) |
 | `gc-v4.html` | 101 KB | Chat v4 — pinned banner, voice notes, end-to-end encrypted text |
 | `api-v4.php` | 35 KB | Backend used by `gc-v4.html` (v3 plus voice notes and the banner) |
+| `gc-v5.html` | 109 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
+| `api-v5.php` | 39 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot) |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot |
 | `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
 
@@ -187,6 +189,37 @@ Everything from v3 is still there. v4 adds three things and changes no others.
 - v4 reads v2/v3 messages normally; v2/v3 clients see v4 messages as empty bubbles, so everyone in the room should move to v4 together
 - Changing `ROOM_SECRET` in the file makes a new private room — and makes every existing message unreadable
 
+## What changed in the chat — `gc-v5.html`
+
+v4 with one role added: a **single secret admin**. The host role no longer gates anything.
+
+**Becoming the admin**
+
+- In the lobby, type your name and append `++vip` — `Aria++vip` joins as `Aria`, holding the admin slot
+- The token is stripped everywhere it is displayed; nothing in the UI hints that an admin exists
+- There is exactly **one** slot: a second `++vip` join is **rejected** with *"Another secret admin is already in the room — connection rejected"* and a *Join as a normal member →* button
+- The slot is a 45 s lease: the admin beats every 12 s, and it frees itself on leave, tab close or a crash
+- A reload of the admin's own tab re-claims automatically (same tab, same id)
+- The claim is stored in `data/admin.json`; MQTT `adminProbe` / `adminHere` keeps the rule working when the PHP API is down
+
+**What the admin alone can do**
+
+| Action | Member | Admin |
+|---|---|---|
+| Post / edit / clear the pinned banner | — | ✓ |
+| Delete any message (tombstones) | — | ✓ |
+| Clear the whole chat log | — | ✓ |
+| Edit own message | ✓ | ✓ |
+| Delete own message | — | ✓ |
+
+Deleting your own message is admin-only too, as asked. Flip `ADMIN_ONLY_DELETE = false` at the top of the script if you ever want members to delete their own again. The server enforces the same rules: `clear`, `announce` and `del` are checked against the stored admin id, so a member cannot bypass the UI.
+
+**Banner visibility — what was wrong**
+
+- A member who opened the chat **after** the banner was posted depended on a clock comparison (`server ts > local ts`); on a device whose clock ran ahead the banner was silently skipped. It now compares the ciphertext itself.
+- A device without WebCrypto (plain `http://` on a LAN IP) could not decrypt the banner and rendered **nothing at all**. It now shows the bar with *"Encrypted announcement — this device cannot read it"*, so it is never invisible.
+- Both paths are covered by the new two-client tests: live MQTT delivery, a late joiner pulling it from `load`, and a crypto-less reader.
+
 ### Known limitations (both chat versions)
 
 - The three MQTT brokers are public and the room topic is a fixed string — treat the room as semi-public
@@ -241,6 +274,7 @@ Presence of the API key is unchanged: still hardcoded as requested.
 | `gc-v2.html` | presence fix, lightning joins, new design |
 | `gc-v3.html` | replies, edit/delete, link previews, delivery ticks + outbox, unread jump, paste & drop |
 | `gc-v4.html` | pinned banner, voice notes, end-to-end encrypted text |
+| `gc-v5.html` | one secret admin owns the banner, delete and clear-chat |
 | `Aurora.html` | original AI chatbot |
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
 
@@ -249,6 +283,11 @@ Presence of the API key is unchanged: still hardcoded as requested.
 - `node --check` on the extracted `<script>` block of every HTML file
 - All `getElementById` / `el()` targets verified to exist in the markup
 - Presence logic unit-tested in Node: away ≠ left, a single leave notice, host prefers online users
+- **Chat v5 exercised with four tabs on a shared fake broker and fake PHP: 38 checks** — admin claim,
+  a second `++vip` join rejected with the normal-join escape hatch, member sees the admin, banner live then
+  pulled by a late joiner then shown as unreadable-but-visible to a crypto-less reader, member has no delete,
+  admin deletes someone else's message both ways, admin clears for both, handover on release, reload re-claim
+- **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
 - **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire
   and in the request body with no plaintext, local echo still readable, decryption of incoming text, locked
   bubble for a bad payload, encrypted edits both ways, banner write/decrypt/host-only buttons/clear/escaping,

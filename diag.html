@@ -54,7 +54,9 @@ function row(k, v, cls) {
    sends the right CORS headers. */
 function tryFetch() {
   var t0 = Date.now();
-  return fetch(API + '?action=health&t=' + Date.now(), { cache: 'no-store' })
+  return fetch(API + '?action=health&t=' + Date.now(), {
+    cache: 'no-store', referrerPolicy: 'strict-origin-when-cross-origin'   /* what a normal page sends */
+  })
     .then(function (r) {
       return r.text().then(function (txt) {
         return { ok: r.ok, status: r.status, body: txt, ms: Date.now() - t0 };
@@ -72,6 +74,7 @@ function tryTag() {
     var settled = false;
     var tag = document.createElement('script');
     var done = function (v) { if (!settled) { settled = true; try { tag.remove(); } catch (e) {} resolve(v); } };
+    tag.referrerPolicy = 'strict-origin-when-cross-origin';
     tag.onload = function () { done('loaded'); };
     tag.onerror = function () { done('error'); };
     tag.src = API + '?action=health&tag=' + Date.now();
@@ -80,13 +83,48 @@ function tryTag() {
   });
 }
 
-function render(f, tag) {
+/* Stage 3 — same fetch, but the page sends no Referer. Free hosts often block
+   "hotlinks" by referrer, which looks exactly like a CORS failure from here. */
+function tryFetchNoRef() {
+  var t0 = Date.now();
+  return fetch(API + '?action=health&nr=' + Date.now(), {
+    cache: 'no-store', referrerPolicy: 'no-referrer'
+  }).then(function (r) {
+    return r.text().then(function (txt) {
+      return { ok: r.ok, status: r.status, body: txt, ms: Date.now() - t0 };
+    });
+  }).catch(function (e) {
+    return { ok: false, error: (e && (e.name + ': ' + e.message)) || String(e), ms: Date.now() - t0 };
+  });
+}
+
+function tryTagNoRef() {
+  return new Promise(function (resolve) {
+    var settled = false;
+    var tag = document.createElement('script');
+    tag.referrerPolicy = 'no-referrer';
+    var done = function (v) { if (!settled) { settled = true; try { tag.remove(); } catch (e) {} resolve(v); } };
+    tag.onload = function () { done('loaded'); };
+    tag.onerror = function () { done('error'); };
+    tag.src = API + '?action=health&nrtag=' + Date.now();
+    setTimeout(function () { done('timeout'); }, 9000);
+    document.head.appendChild(tag);
+  });
+}
+
+function render(f, tag, nr, nrtag) {
   var verdict, cls;
   if (f.ok && f.status === 200 && /"ok"\s*:\s*true/.test(f.body || '')) {
     verdict = 'WORKING — the chat can reach the PHP host from here.';
     cls = 'ok';
+  } else if (nr && nr.ok) {
+    verdict = 'BLOCKED BY THE REFERER — it works when the page sends no Referer. The chat can do that too (referrerPolicy).';
+    cls = 'warn';
   } else if (f.error) {
-    if (tag === 'loaded') {
+    if (nrtag === 'loaded' && tag !== 'loaded') {
+      verdict = 'BLOCKED BY THE REFERER — a plain tag is refused with one, allowed without it.';
+      cls = 'warn';
+    } else if (tag === 'loaded') {
       verdict = 'BLOCKED BY HEADERS — the host answers, but the browser is not allowed to read the reply. CORS is missing on the file there.';
       cls = 'warn';
     } else if (tag === 'timeout') {
@@ -111,6 +149,13 @@ function render(f, tag) {
   facts += row('script tag (ignores CORS)', tag === 'loaded'
     ? '<span class="ok">loaded — host answers</span>'
     : tag === 'timeout' ? '<span class="bad">timeout</span>' : '<span class="bad">error — no answer</span>');
+  facts += row('fetch, no Referer', nr
+    ? (nr.error ? '<span class="bad">' + esc(nr.error) + '</span>'
+                : '<span class="' + (nr.ok ? 'ok' : 'warn') + '">HTTP ' + nr.status + '</span>')
+    : '…');
+  facts += row('script tag, no Referer', nrtag === 'loaded'
+    ? '<span class="ok">loaded — the Referer was the problem</span>'
+    : nrtag === 'timeout' ? '<span class="bad">timeout</span>' : '<span class="bad">error</span>');
   if (f.body) facts += row('body', '<code>' + esc(String(f.body).slice(0, 160)) + '</code>');
   $('#facts').innerHTML = facts;
 }
@@ -119,8 +164,12 @@ function run() {
   $('#verdict').innerHTML = '<span class="spin"></span> Running tests…';
   $('#facts').innerHTML = '';
   tryFetch().then(function (f) {
-    if (f.ok) { render(f, 'n/a'); return; }
-    tryTag().then(function (tag) { render(f, tag); });
+    if (f.ok) { render(f, 'n/a', null, 'n/a'); return; }
+    tryTag().then(function (tag) {
+      tryFetchNoRef().then(function (nr) {
+        tryTagNoRef().then(function (nrtag) { render(f, tag, nr, nrtag); });
+      });
+    });
   });
 }
 

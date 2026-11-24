@@ -100,12 +100,12 @@
    status: 'live' | 'wip' | 'idea'
    ------------------------------------------------------------------------- */
 var EXPERIMENTS = [
-    /* {
-        title: 'Example build',
-        file: 'example.html',
+    {
+        title: 'Auto Clicker (Android)',
+        href: 'https://github.com/gret521x-coder/Gretsanti/actions/workflows/build-apk.yml',
         status: 'wip',
-        note: 'One line about what it tries to do.'
-    } */
+        note: 'Taps the screen for Clash of Clans. Step 1: the app opens. Download the APK from the Actions tab.'
+    }
 ];
 
 (function () {
@@ -126,9 +126,11 @@ var EXPERIMENTS = [
     }
 
     EXPERIMENTS.forEach(function (exp) {
-        var card = document.createElement(exp.file ? 'a' : 'div');
+        var href = exp.href || exp.file;
+        var card = document.createElement(href ? 'a' : 'div');
         card.className = 'card';
-        if (exp.file) card.href = exp.file;
+        if (href) card.href = href;
+        if (exp.href) { card.target = '_blank'; card.rel = 'noopener'; }
 
         var top = document.createElement('div');
         top.className = 'card-top';
@@ -151,7 +153,7 @@ var EXPERIMENTS = [
             card.appendChild(note);
         }
 
-        if (exp.file) {
+        if (href) {
             var open = document.createElement('span');
             open.className = 'open';
             open.textContent = 'Open \u2192';

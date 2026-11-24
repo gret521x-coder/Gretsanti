@@ -25,6 +25,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
 | `labs/index.html` | 9 KB | Experimental build area — a card per experiment, empty state, nothing linked from the launcher |
 | `labs/autoclicker/` | Android project | Auto clicker for Clash of Clans — Java, built into an APK by GitHub Actions |
+| `labs/transcript-spider/` | Extension | Call Spider — harvests the live transcript on a page, floats a panel, summarizes the call |
 | `.github/workflows/build-apk.yml` | 1 KB | Builds that APK on every change, artifact download from the Actions tab |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
 | `diag.html` | 5 KB | Link diagnostic — says whether the PHP host answers, and why not |

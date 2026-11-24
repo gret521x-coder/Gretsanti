@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Call Spider</title>
+<style>
+    :root{color-scheme:dark}
+    body{width:260px;margin:0;padding:14px;background:#08090b;color:#e6edf3;
+         font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    h1{font-size:11px;letter-spacing:.2em;color:#38bdf8;margin:0 0 10px;font-weight:600}
+    .row{display:flex;gap:6px;margin-top:8px}
+    button{flex:1;font:inherit;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#c7d2de;
+           background:#11151b;border:1px solid #1f242d;border-radius:6px;padding:7px 6px;cursor:pointer}
+    button:hover{border-color:#38bdf8;color:#fff}
+    button.primary{border-color:rgba(0,230,118,.45);color:#00e676}
+    p{color:#7d8794;margin:8px 0 0;font-size:11px}
+    a{color:#38bdf8}
+</style>
+</head>
+<body>
+<h1>CALL SPIDER</h1>
+<p id="status">Looking at this tab…</p>
+<div class="row">
+    <button id="open" class="primary">Open panel</button>
+    <button id="pick">Pick box</button>
+</div>
+<div class="row">
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+</div>
+<div class="row">
+    <button id="sum">Summarize</button>
+    <button id="opts">Key / model</button>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

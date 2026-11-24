@@ -217,6 +217,13 @@ v4 with one role added: a **single secret admin**. The host role no longer gates
 
 Deleting your own message is admin-only too, as asked. Flip `ADMIN_ONLY_DELETE = false` at the top of the script if you ever want members to delete their own again. The server enforces the same rules: `clear`, `announce` and `del` are checked against the stored admin id, so a member cannot bypass the UI.
 
+**Freeing a stuck admin slot**
+
+- The lobby now shows the slot state: **free** (green), **busy — Admin: Aria** (amber), or **you hold it** (violet)
+- If your tab still holds the lease, a **Step down** button releases it before you join
+- A crashed tab no longer locks the room: on a rejected claim the client probes the room over MQTT, and if no admin answers, it asks the server to clear the slot — `freeadmin` only clears a lease silent for 25 s, so a live admin can never be kicked
+- A live admin beats every 12 s, so 25 s can only mean gone
+
 **Banner visibility — what was wrong**
 
 - A member who opened the chat **after** the banner was posted depended on a clock comparison (`server ts > local ts`); on a device whose clock ran ahead the banner was silently skipped. It now compares the ciphertext itself.
@@ -333,11 +340,12 @@ The key lives in `api-ai.php`, never in the page. The proxy also
 - **Agent widget exercised in jsdom: 28 checks** — mount/dedupe, open/close/Escape, streaming into one bubble,
   request body and history, markdown rendering, inert HTML in replies, network and 401 errors with retry,
   Stop mid-stream, demo mode, sessionStorage restore, left-position option
-- **Chat v5 exercised with four tabs on a shared fake broker and fake PHP: 44 checks** — admin claim,
+- **Chat v5 exercised with six tabs on a shared fake broker and fake PHP: 53 checks** — admin claim,
   a second `++vip` join rejected with the normal-join escape hatch, member sees the admin, banner live then
   pulled by a late joiner then shown as unreadable-but-visible to a crypto-less reader, member has no delete,
   admin deletes someone else's message both ways, admin clears for both, handover on release, reload re-claim,
-  join lightning on your own join, peer join strike + pill, calm glow under reduced motion
+  join lightning on your own join, peer join strike + pill, calm glow under reduced motion,
+  lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
 - **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire
   and in the request body with no plaintext, local echo still readable, decryption of incoming text, locked

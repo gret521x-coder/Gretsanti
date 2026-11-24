@@ -60,6 +60,8 @@ const LINK_MAX_PER    = 20;        // preview lookups per IP per window
 const MAX_ENC         = 12000;     // base64 ciphertext per message
 const MAX_VOICE       = 120;       // seconds of audio we accept
 const ADMIN_TTL       = 45;        // seconds an admin slot survives without a beat
+const ADMIN_GHOST     = 25;        // an admin silent this long may be cleared by anyone
+                                   // (a live admin beats every 12 s, so this never hits them)
 
 const ALLOWED_EXT = [
     'jpg' => 'image', 'jpeg' => 'image', 'png' => 'image',
@@ -878,6 +880,36 @@ switch ($action) {
         });
         if (empty($res['ok'])) {
             fail('not admin', 403);
+        }
+        out($res);
+
+    /* clear a slot left behind by a crashed tab — only if it is genuinely silent */
+    case 'freeadmin':
+        if ($method !== 'POST') {
+            fail('POST required', 405);
+        }
+        rate_limit($RATE_FILE, 'freeadmin', 10, 60);
+
+        $in = json_body();
+        $fu = clean_id($in['uid'] ?? '');
+        if ($fu === '') {
+            fail('invalid request');
+        }
+
+        $res = with_lock($DATA_DIR . '/admin.lock', static function () use ($ADMIN_FILE, $fu) {
+            $cur  = read_json($ADMIN_FILE);
+            $curU = (string)($cur['uid'] ?? '');
+            $last = (int)($cur['last'] ?? 0);
+
+            if ($curU === '' || $last <= time() - ADMIN_GHOST) {
+                write_json($ADMIN_FILE, ['uid' => '', 'name' => '', 'since' => 0, 'last' => 0]);
+                return ['ok' => true, 'freed' => true];
+            }
+            return ['ok' => false, 'error' => 'the admin is still live', 'name' => (string)($cur['name'] ?? 'Admin')];
+        });
+
+        if (empty($res['ok'])) {
+            out($res, 409);
         }
         out($res);
 

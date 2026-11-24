@@ -217,6 +217,12 @@ v4 with one role added: a **single secret admin**. The host role no longer gates
 
 Deleting your own message is admin-only too, as asked. Flip `ADMIN_ONLY_DELETE = false` at the top of the script if you ever want members to delete their own again. The server enforces the same rules: `clear`, `announce` and `del` are checked against the stored admin id, so a member cannot bypass the UI.
 
+**Phone fixes**
+
+- **Image / GIF viewer**: it had no visible way out. It now has a ✕ button (44 px, safe-area aware), an **open original ↗** link, closes on tapping the image, the backdrop or `Esc`, and locks background scrolling while open. It was also a plain `<div>` click handler — iOS Safari does not reliably fire those, which is why it felt stuck on a phone.
+- **Actions under every bubble**: ☺ react · ↩ reply · ⋯ more, always visible on touch and on hover with a mouse. Long-press still works. Deleted messages get none.
+- **Reactions never stuck.** `toggleReact()` applied the reaction, then `sendPacket()` replayed the same packet through `handle()` → `remoteReact()`, which toggled the *same user* off again. Net result: nothing. Self-echo is now ignored.
+
 **Freeing a stuck admin slot**
 
 - The lobby now shows the slot state: **free** (green), **busy — Admin: Aria** (amber), or **you hold it** (violet)
@@ -340,12 +346,13 @@ The key lives in `api-ai.php`, never in the page. The proxy also
 - **Agent widget exercised in jsdom: 28 checks** — mount/dedupe, open/close/Escape, streaming into one bubble,
   request body and history, markdown rendering, inert HTML in replies, network and 401 errors with retry,
   Stop mid-stream, demo mode, sessionStorage restore, left-position option
-- **Chat v5 exercised with six tabs on a shared fake broker and fake PHP: 53 checks** — admin claim,
+- **Chat v5 exercised with six tabs on a shared fake broker and fake PHP: 71 checks** — admin claim,
   a second `++vip` join rejected with the normal-join escape hatch, member sees the admin, banner live then
   pulled by a late joiner then shown as unreadable-but-visible to a crypto-less reader, member has no delete,
   admin deletes someone else's message both ways, admin clears for both, handover on release, reload re-claim,
   join lightning on your own join, peer join strike + pill, calm glow under reduced motion,
-  lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down
+  lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
+  image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
 - **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire
   and in the request body with no plaintext, local echo still readable, decryption of incoming text, locked

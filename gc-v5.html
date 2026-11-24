@@ -361,9 +361,32 @@ footer{
 #rxpop button:active{transform:scale(1.25);background:rgba(160,107,255,.22)}
 
 /* ================= LIGHTBOX ================= */
-#lightbox{position:fixed;inset:0;z-index:80;background:rgba(4,4,8,.96);display:none;align-items:center;justify-content:center;padding:12px}
+#lightbox{
+  position:fixed;inset:0;z-index:80;background:rgba(4,4,8,.96);display:none;
+  align-items:center;justify-content:center;padding:12px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
 #lightbox.open{display:flex}
-#lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+body.lb-open{overflow:hidden}
+#lightbox img{
+  max-width:100%;max-height:calc(100% - 108px);object-fit:contain;border-radius:10px;
+  cursor:zoom-out;margin-bottom:44px;
+}
+#lbClose{
+  position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;
+  width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.22);
+  background:rgba(20,20,28,.9);color:#fff;font-size:17px;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;
+  -webkit-tap-highlight-color:transparent;
+}
+#lbClose:active{background:rgba(255,255,255,.18)}
+#lbOpen{
+  position:absolute;left:50%;transform:translateX(-50%);
+  bottom:calc(16px + env(safe-area-inset-bottom));
+  font-size:12px;color:var(--text-2);text-decoration:none;
+  border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 16px;
+  background:rgba(20,20,28,.85);z-index:2;
+}
 
 /* ================= TOAST ================= */
 #toast{
@@ -483,6 +506,21 @@ footer{
 .join-pill .sicon{animation:zap .6s ease-out}
 @keyframes zap{0%{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.25);opacity:1}100%{transform:none}}
 
+
+/* ================= v5.1: touch-friendly message actions ================= */
+.msg .acts{
+  display:none;gap:5px;margin:4px 2px 0;
+}
+.msg .acts button{
+  width:30px;height:28px;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  color:var(--text-2);border-radius:9px;font-size:13px;line-height:1;
+  -webkit-tap-highlight-color:transparent;
+}
+.msg .acts button:active{background:rgba(160,107,255,.22);color:#fff}
+@media (hover:hover) and (pointer:fine){ .msg:hover .acts{display:flex} }
+@media (hover:none), (pointer:coarse){ .msg .acts{display:flex} }
+#rxpop{max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:center}
 
 /* ================= v5: secret admin ================= */
 .lobbymsg{
@@ -796,7 +834,11 @@ footer{
   <div class="ggrid" id="gifGrid"></div>
 </div>
 
-<div id="lightbox"><img id="lbImg" alt=""></div>
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button id="lbClose" type="button" aria-label="Close image">✕</button>
+  <img id="lbImg" alt="shared image">
+  <a id="lbOpen" href="#" target="_blank" rel="noopener noreferrer nofollow">open original ↗</a>
+</div>
 <div id="msgMenu" role="menu">
   <button data-a="reply">↩ Reply</button>
   <button data-a="copy">📋 Copy</button>
@@ -1107,7 +1149,9 @@ function handle(p){
       }
       break;
     case 'react':
-      remoteReact(p);
+      /* our own packets come back through sendPacket(); the local toggle already
+         applied it, so only apply reactions that came from somebody else */
+      if(p.uid && p.uid !== uid) remoteReact(p);
       break;
     case 'edit':
       if(p.id && p.uid){
@@ -1702,11 +1746,22 @@ el('fileInp').addEventListener('change', function(){
 /* ================= Lightbox ================= */
 function openLightbox(src){
   el('lbImg').src = src;
+  el('lbOpen').href = src;
   el('lightbox').classList.add('open');
+  document.body.classList.add('lb-open');
 }
-el('lightbox').addEventListener('click', function(){
+function closeLightbox(){
   el('lightbox').classList.remove('open');
   el('lbImg').src = '';
+  document.body.classList.remove('lb-open');
+}
+el('lbClose').addEventListener('click', function(ev){ ev.stopPropagation(); closeLightbox(); });
+el('lightbox').addEventListener('click', function(ev){
+  if(ev.target === el('lightbox') || ev.target === el('lbImg')) closeLightbox();
+});
+el('lbOpen').addEventListener('click', function(ev){ ev.stopPropagation(); });
+document.addEventListener('keydown', function(ev){
+  if(ev.key === 'Escape' && el('lightbox').classList.contains('open')) closeLightbox();
 });
 
 /* ================= Emoji picker ================= */
@@ -2483,6 +2538,30 @@ function buildMsg(m){
   });
 
   col.appendChild(bub);
+  /* quick actions: always visible on touch, on hover with a mouse */
+  if(!m.deleted){
+    var acts = document.createElement('div');
+    acts.className = 'acts';
+    [['react', '☺', 'React'], ['reply', '↩', 'Reply'], ['more', '⋯', 'More options']].forEach(function(def){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.act = def[0];
+      b.textContent = def[1];
+      b.title = def[2];
+      b.setAttribute('aria-label', def[2]);
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if(def[0] === 'react') openPopover(m, bub);
+        else if(def[0] === 'reply') startReply(m);
+        else {
+          var r = b.getBoundingClientRect();
+          openMsgMenu(m, r.left, r.bottom + 6);
+        }
+      });
+      acts.appendChild(b);
+    });
+    col.appendChild(acts);
+  }
   row.appendChild(col);
   return row;
 }

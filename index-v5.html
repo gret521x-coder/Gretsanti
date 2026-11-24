@@ -524,8 +524,14 @@
    MOTION PACK — everything here is decoration; ?still=1 or a system
    "reduce motion" setting switches all of it off.
    ========================================================================== */
-#field{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.6}
-#lockScreen,#mainApp{position:relative;z-index:1}
+#field{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.75}
+/* stacking only — the original position rules stay exactly as they were */
+#mainApp{position:relative;z-index:1}
+#lockScreen{z-index:100}
+@media (prefers-reduced-motion: no-preference){
+  /* let the sky show around the terminal instead of hiding it behind black */
+  #lockScreen{background:rgba(0,0,0,.72)}
+}
 
 .mission-id{position:relative}
 .radar{
@@ -988,12 +994,13 @@
                  || params.get('still') === '1';
     var canHover = !window.matchMedia || window.matchMedia('(hover: hover)').matches;
 
-    /* ------------------------------------------------------------ starfield */
+    /* ------------------------------------ starfield · satellites · rockets */
     var cv = document.getElementById('field');
     var ctx = null;
     try { ctx = cv && cv.getContext ? cv.getContext('2d') : null; } catch (e) { ctx = null; }
 
-    var stars = [], W = 0, H = 0, raf = null, last = 0, paused = false;
+    var stars = [], sats = [], rockets = [];
+    var W = 0, H = 0, dpr = 1, raf = null, last = 0, paused = false, nextRocket = 0;
 
     function seed() {
         var n = Math.min(140, Math.round((innerWidth * innerHeight) / 15000));
@@ -1008,14 +1015,142 @@
         }
     }
 
+    /* two or three satellites on slow elliptical orbits around the middle */
+    function seedSats() {
+        var n = 2 + Math.floor(Math.random() * 2);
+        sats = [];
+        for (var i = 0; i < n; i++) {
+            sats.push({
+                rx: 0.26 + Math.random() * 0.20,                    /* orbit radii, × min(W,H) */
+                ry: 0.13 + Math.random() * 0.11,
+                a: Math.random() * 6.2832,                          /* angle on the orbit */
+                w: (0.00009 + Math.random() * 0.00007) * (i % 2 ? -1 : 1),   /* rad per ms */
+                s: 0.75 + Math.random() * 0.5,                      /* size */
+                phase: Math.random() * 6.2832,                      /* beacon phase */
+                spin: 0.6 + Math.random() * 0.8                     /* banking amount */
+            });
+        }
+    }
+
     function size() {
         if (!cv) return;
-        var dpr = Math.min(2, window.devicePixelRatio || 1);
+        dpr = Math.min(2, window.devicePixelRatio || 1);
         W = cv.width = Math.max(1, Math.floor(innerWidth * dpr));
         H = cv.height = Math.max(1, Math.floor(innerHeight * dpr));
         cv.style.width = innerWidth + 'px';
         cv.style.height = innerHeight + 'px';
         seed();
+        seedSats();
+    }
+
+    function drawSat(s, now) {
+        var orbit = Math.min(W, H);
+        var cx = W * 0.5, cy = H * 0.52;
+        var x = cx + Math.cos(s.a) * s.rx * orbit;
+        var y = cy + Math.sin(s.a) * s.ry * orbit;
+
+        /* far half of the orbit reads smaller and dimmer */
+        var depth = (Math.sin(s.a) + 1) / 2;                        /* 0 far → 1 near */
+        var u = s.s * dpr * (0.6 + 0.4 * depth);
+        var bodyW = 5 * u, bodyH = 7 * u, panelW = 9 * u, panelH = 4.5 * u;
+        var alpha = 0.35 + 0.45 * depth;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.cos(s.a) * 0.35 * s.spin);                  /* gentle banking */
+
+        /* solar panels */
+        ctx.fillStyle = 'rgba(56,189,248,' + (0.18 * alpha + 0.06).toFixed(2) + ')';
+        ctx.fillRect(-bodyW / 2 - panelW, -panelH / 2, panelW, panelH);
+        ctx.fillRect(bodyW / 2, -panelH / 2, panelW, panelH);
+        ctx.strokeStyle = 'rgba(56,189,248,' + (0.30 * alpha + 0.08).toFixed(2) + ')';
+        ctx.lineWidth = Math.max(0.4, 0.5 * dpr);
+        ctx.beginPath();
+        ctx.moveTo(-bodyW / 2 - panelW * 0.55, -panelH / 2);
+        ctx.lineTo(-bodyW / 2 - panelW * 0.55, panelH / 2);
+        ctx.moveTo(bodyW / 2 + panelW * 0.55, -panelH / 2);
+        ctx.lineTo(bodyW / 2 + panelW * 0.55, panelH / 2);
+        ctx.stroke();
+
+        /* bus */
+        ctx.fillStyle = 'rgba(226,240,255,' + alpha.toFixed(2) + ')';
+        ctx.fillRect(-bodyW / 2, -bodyH / 2, bodyW, bodyH);
+
+        /* dish + blinking beacon */
+        var blink = 0.5 + 0.5 * Math.sin(now * 0.0055 + s.phase);
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(0,230,118,' + (0.25 + 0.6 * blink).toFixed(2) + ')';
+        ctx.arc(0, -bodyH / 2 - 1.6 * u, Math.max(0.7, 1.1 * u), 0, 6.2832);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function spawnRocket() {
+        if (reduce || rockets.length >= 2) return;
+        var speed = (0.26 + Math.random() * 0.16) * dpr;             /* px per ms */
+        var lean = Math.random() * 0.8 - 0.4;
+        var n = Math.sqrt(1 + lean * lean);
+        rockets.push({
+            x: W * (0.12 + Math.random() * 0.76),
+            y: H + 40 * dpr,
+            vx: (lean / n) * speed,
+            vy: (-1 / n) * speed
+        });
+    }
+
+    function drawRocket(r) {
+        var u = 3.1 * dpr;
+        var ang = Math.atan2(r.vy, r.vx);
+        ctx.save();
+        ctx.translate(r.x, r.y);
+        ctx.rotate(ang + Math.PI / 2);                               /* nose points along travel */
+
+        /* exhaust trail, drawn behind the nozzle */
+        var tail = 30 * dpr;
+        var tg = ctx.createLinearGradient(0, u * 1.1, 0, u * 1.1 + tail);
+        tg.addColorStop(0, 'rgba(120,200,255,0.40)');
+        tg.addColorStop(1, 'rgba(120,200,255,0)');
+        ctx.strokeStyle = tg;
+        ctx.lineWidth = 1.5 * dpr;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(0, u * 1.1);
+        ctx.lineTo(0, u * 1.1 + tail);
+        ctx.stroke();
+
+        /* flame */
+        var flick = 0.75 + Math.random() * 0.55;
+        var fg = ctx.createLinearGradient(0, u * 0.9, 0, u * (0.9 + 3.4 * flick));
+        fg.addColorStop(0, 'rgba(190,235,255,0.85)');
+        fg.addColorStop(0.45, 'rgba(56,189,248,0.55)');
+        fg.addColorStop(1, 'rgba(56,189,248,0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.moveTo(-1.5 * u, u * 0.95);
+        ctx.lineTo(0, u * (0.95 + 3.4 * flick));
+        ctx.lineTo(1.5 * u, u * 0.95);
+        ctx.closePath();
+        ctx.fill();
+
+        /* body */
+        ctx.fillStyle = 'rgba(232,244,255,0.92)';
+        ctx.beginPath();
+        ctx.moveTo(0, -3.6 * u);
+        ctx.lineTo(1.7 * u, 1.1 * u);
+        ctx.lineTo(-1.7 * u, 1.1 * u);
+        ctx.closePath();
+        ctx.fill();
+
+        /* fins */
+        ctx.fillStyle = 'rgba(56,189,248,0.70)';
+        ctx.beginPath();
+        ctx.moveTo(1.5 * u, 0.2 * u); ctx.lineTo(2.6 * u, 1.4 * u); ctx.lineTo(1.5 * u, 1.1 * u);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-1.5 * u, 0.2 * u); ctx.lineTo(-2.6 * u, 1.4 * u); ctx.lineTo(-1.5 * u, 1.1 * u);
+        ctx.closePath(); ctx.fill();
+
+        ctx.restore();
     }
 
     function frame(now) {
@@ -1023,20 +1158,43 @@
         var dt = Math.min(48, (now - last) || 16);
         last = now;
         ctx.clearRect(0, 0, W, H);
+
+        /* stars */
         for (var i = 0; i < stars.length; i++) {
             var st = stars[i];
-            st.y += 0.013 * st.z * dt;                     /* slow downward drift */
+            st.y += 0.013 * st.z * dt;
             if (st.y > H + 4) { st.y = -4; st.x = Math.random() * W; }
             ctx.beginPath();
             ctx.fillStyle = 'rgba(150,205,255,' + (0.18 + 0.5 * st.z).toFixed(2) + ')';
             ctx.arc(st.x, st.y, st.r * st.z, 0, 6.2832);
             ctx.fill();
         }
+
+        /* satellites */
+        for (var k = 0; k < sats.length; k++) {
+            sats[k].a += sats[k].w * dt;
+            drawSat(sats[k], now);
+        }
+
+        /* rockets — a fresh one every 2 to 4 seconds */
+        if (nextRocket && now >= nextRocket) {
+            spawnRocket();
+            nextRocket = now + 2000 + Math.random() * 2000;
+        }
+        for (var j = rockets.length - 1; j >= 0; j--) {
+            var r = rockets[j];
+            r.x += r.vx * dt;
+            r.y += r.vy * dt;
+            drawRocket(r);
+            if (r.y < -90 * dpr || r.x < -90 * dpr || r.x > W + 90 * dpr) rockets.splice(j, 1);
+        }
+
         raf = paused ? null : requestAnimationFrame(frame);
     }
 
     if (cv && ctx && !reduce) {
         size();
+        nextRocket = performance.now() + 700 + Math.random() * 900;   /* first pass arrives early */
         addEventListener('resize', size);
         document.addEventListener('visibilitychange', function () {
             paused = document.hidden;
@@ -1044,6 +1202,13 @@
         });
         raf = requestAnimationFrame(function (t) { last = t; frame(t); });
     }
+
+    /* small read-only window into the sky, used by the test suite */
+    window.KDL_SKY = {
+        satellites: function () { return sats.length; },
+        rockets: function () { return rockets.length; },
+        launch: function () { spawnRocket(); }
+    };
 
     /* ------------------------------------------------------- live telemetry */
     function pad(n) { return String(n).padStart(2, '0'); }

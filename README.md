@@ -11,7 +11,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `index-v2.html` | 43 KB | SpaceX / orbital redesign |
 | `index-v3.html` | 45 KB | Facebook dark mode |
 | `index-v4.html` | 25 KB | v1 without the API / SYNC / OpenRouter / add-payload UI |
-| `index-v5.html` | 43 KB | Same launcher as `index.html` plus motion: starfield, live telemetry, pointer-lit cards, boot sequence |
+| `index-v5.html` | 49 KB | Same launcher as `index.html` plus motion: starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards, boot sequence |
 | `gc.html` | 43 KB | Original **Black Cat Group Chat** upload, unchanged |
 | `gc-v2.html` | 61 KB | Chat v2 — presence fix, lightning joins, new design |
 | `api-v2.php` | 22 KB | Backend used by `gc-v2.html` |
@@ -109,6 +109,10 @@ Identical markup, logic, passwords and `localStorage` keys to `index.html`; ever
 decoration layered on top, so the file can replace it one-for-one.
 
 - **Starfield canvas** (`#field`) drifting behind whichever screen is showing
+- **2–3 satellites** on slow elliptical orbits — solar panels, a body and a blinking green beacon;
+  the far half of the orbit draws smaller and dimmer so they read as depth
+- **Rockets** — one lifts off every 2 to 4 seconds from the bottom edge, a flickering cyan flame and a
+  fading trail behind it; the screen never carries more than two at once
 - **Radar sweep** rotating behind the `KDL // X` wordmark
 - **Live telemetry strip** — SIGNAL, LATENCY, UPTIME and UPLINK tick on their own; uptime counts from
   the first unlock and is remembered in `kdl_mission_start`
@@ -119,7 +123,7 @@ decoration layered on top, so the file can replace it one-for-one.
 - A light sweep travels down the telemetry bar
 
 Switch all of it off with `?still=1` in the URL, or let the OS do it: `prefers-reduced-motion: reduce`
-removes the canvas, radar, sweep, tilt, entrance animation and boot overlay. The dashboard is never
+removes the canvas (stars, satellites, rockets), radar, sweep, tilt, entrance animation and boot overlay. The dashboard is never
 waiting on an animation.
 
 All launchers keep the same behaviour: access-code unlock, MET clock, payload cards, per-card delete and `localStorage` persistence. Codes live in the `VALID_PASSWORDS` / `BARDAGULAN_SIG` constants inside each file.
@@ -443,7 +447,7 @@ keep keys on the server side (`api-ai.php`) when you can.
 | `index-v2.html` | SpaceX / orbital redesign |
 | `index-v3.html` | Facebook dark mode |
 | `index-v4.html` | v1 with the API, SYNC, OpenRouter and add-payload UI removed |
-| `index-v5.html` | same launcher plus starfield, live telemetry, pointer-lit cards and a boot sequence (off with `?still=1`) |
+| `index-v5.html` | same launcher plus starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards and a boot sequence (off with `?still=1`) |
 | `gc.html` | original group chat |
 | `gc-v2.html` | presence fix, lightning joins, new design |
 | `gc-v3.html` | replies, edit/delete, link previews, delivery ticks + outbox, unread jump, paste & drop |
@@ -480,9 +484,11 @@ keep keys on the server side (`api-ai.php`) when you can.
   `aurora-v2.html`, the grid renders, Bardagulan stays locked and its code still opens
   the right page, an old saved grid is upgraded and written back, corrupt storage
   falls back to defaults
-- **Launcher motion (`index-v5.html`): 19 checks** — boots with no errors, telemetry ticks,
-  the boot overlay plays on unlock and clears itself, cards arrive staggered and take the
-  pointer position, and `prefers-reduced-motion` / `?still=1` leave a plain working launcher
+- **Launcher motion (`index-v5.html`): 29 checks** — boots with no errors, telemetry ticks,
+  the boot overlay plays on unlock and clears itself, two or three satellites orbit, rockets launch on
+  their own and never exceed two on screen, cards arrive staggered and take the pointer position, the
+  lock screen still covers the viewport, and `prefers-reduced-motion` / `?still=1` leave a plain
+  working launcher
 - **Aurora through the proxy: 15 checks** — proxy picked on `github.io`, direct provider on
   localhost, no key and no `Authorization` header sent through the proxy, no
   `/chat/completions` appended to a `.php` base, system prompt and transcript in the body,

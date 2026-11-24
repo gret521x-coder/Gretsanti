@@ -375,6 +375,10 @@ Opened from XAMPP or from unaux itself, it uses the `api-v5.php` next to the pag
 To move hosts, set the value by hand before the script runs. Relative `uploads/x.png`
 paths are rewritten onto that host, so images, voice notes and GIFs keep working.
 
+**Uploads failing on the Pages copy?** That is the CORS headers on the PHP host. Upload
+`api-v5.php` there and reload; the chat now says so out loud (it names the host and tells
+you to upload the file) instead of showing a bare "Upload failed".
+
 **Aurora needs a key too, and it has none.** On `*.github.io` it now posts to
 `api-ai.php` instead of a provider, so the key lives on the server and the page stays
 public-safe. `api-ai.php` accepts Aurora's own system prompt (capped at 3000 chars) and
@@ -428,6 +432,9 @@ keep keys on the server side (`api-ai.php`) when you can.
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **Chat failure messages: 7 checks** — a refused cross-origin call names the PHP host,
+  says to upload `api-v5.php`, and warns once in the lobby; a real server error is shown
+  verbatim; nothing is said when the host answers
 - **Payload pages: 20 checks** — Collectibles locked until the password, listing and
   uploads routed to the PHP host from Pages and to the sibling `save.php` on the host,
   TNS and Pindutan load clean, Pindutan unlock with and without SubtleCrypto

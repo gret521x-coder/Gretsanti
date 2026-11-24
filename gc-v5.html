@@ -999,13 +999,30 @@ function myName(){ return uname || ('Guest-' + uid.slice(-4)); }
 
 /* ================= Toast ================= */
 var toastTimer = null;
-function toast(t){
+function toast(t, ms){
   var d = el('toast');
   if(!t){ d.classList.remove('show'); return; }
   d.textContent = t;
   d.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ d.classList.remove('show'); }, 2600);
+  toastTimer = setTimeout(function(){ d.classList.remove('show'); }, ms || 2600);
+}
+
+/* Turns a failed API call into something you can act on. */
+function apiHostLabel(){
+  if(!/^https?:/i.test(API_BASE)) return 'the PHP server';
+  return API_BASE.replace(/^(https?:\/\/[^/]+).*$/i, '$1');
+}
+function apiFail(what){
+  return function(err){
+    var msg = String((err && err.message) || err || '');
+    if(/failed to fetch|networkerror|load failed|network request failed/i.test(msg)){
+      toast(what + ' failed — ' + apiHostLabel() + ' refused it. Upload api-v5.php there so it allows this page (CORS headers).', 8000);
+    } else {
+      toast(what + ' failed' + (msg ? ' — ' + msg.slice(0, 70) : ''), 5000);
+    }
+    phpOk(false);
+  };
 }
 
 /* ================= Server status dots ================= */
@@ -1022,10 +1039,15 @@ function updateRelayPills(){
   p.className = 'pill' + (on === 0 ? ' warn' : '');
   BROKERS.forEach(function(b, i){ setSrv('b' + i, b.state || 'bad'); });
 }
+var phpWarned = false;
 function phpOk(ok){
   phpState = ok ? 'ok' : 'bad';
   setSrv('php', phpState);
   if(!ok) serverOnline = null;
+  if(!ok && !phpWarned && /^https?:/i.test(API_BASE)){
+    phpWarned = true;
+    toast('PHP on ' + apiHostLabel() + ' is not reachable from this page — history, uploads and the banner need it to allow ' + location.host + ' (CORS).', 9000);
+  }
 }
 
 /* ================= ⚡ Lightning strike ================= */
@@ -2395,7 +2417,7 @@ function uploadAndSend(f){
       var m = mkMsg(d.type, d.type === 'file' ? ('📎 ' + d.name) : '', { url: d.url, fname: d.name, size: d.size });
       deliverMessage(m);
     })
-    .catch(function(){ toast('Upload failed'); });
+    .catch(apiFail('Upload'));
 }
 
 document.addEventListener('paste', function(ev){
@@ -2932,7 +2954,7 @@ function onRecStop(){
       if(!d || !d.ok){ toast((d && d.error) || 'Voice upload failed'); return; }
       toast('');
       deliverMessage(mkMsg('voice', '', { url: d.url, dur: dur, size: d.size }));
-    })
+    }, apiFail('Voice upload'))
     .catch(function(){ toast('Voice upload failed'); });
 }
 el('micBtn').addEventListener('click', function(){ rec.mr ? stopRec(false) : startRec(); });

@@ -46,7 +46,9 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 
 - `labs/call-spider.html` — Call Spider as a single file: paste a transcript, press Summarise, get
   Summary / Decisions / Action items. Offline by default, OpenRouter when a key is saved. Live capture
-  is a snippet the page copies for you, pasted into the transcript tab's console — no extension.
+  is a snippet the page copies for you, pasted into the transcript tab's console — no extension. The
+  snippet's panel docks itself under the transcript box, captures everything that arrives, and can pop
+  out into its own always-available window.
 - `labs/transcript-spider/` — the same spider as a Chrome extension, if Developer mode is not a bother.
 - `labs/autoclicker/` — the Android project built into an APK by GitHub Actions.
 

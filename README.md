@@ -2,6 +2,19 @@
 
 Launcher + group chat for XAMPP. Plain HTML files, no build step.
 
+**Right now the live copies sit on the PHP host**, not on GitHub — the repository is private, and a private
+repository stops publishing Pages on a free account.
+
+| Page | Address |
+|---|---|
+| Launcher | `https://aidekupal.unaux.com/index.html` (`index-v5.html`) |
+| Aurora | `https://aidekupal.unaux.com/Aurora.html` |
+| Group chat | `https://aidekupal.unaux.com/gc-v5.html` (or `gc.html`) |
+| FreeModel relay | `https://aidekupal.unaux.com/api-free.php` |
+
+The launcher resolves relative cards against the PHP host and asks which name actually exists before it
+opens one, so `Aurora.html` and `aurora-v4.html` both work without renaming anything on the server.
+
 ## Files
 
 | File | Size | Description |
@@ -11,7 +24,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `index-v2.html` | 43 KB | SpaceX / orbital redesign |
 | `index-v3.html` | 45 KB | Facebook dark mode |
 | `index-v4.html` | 25 KB | v1 without the API / SYNC / OpenRouter / add-payload UI |
-| `index-v5.html` | 49 KB | Same launcher as `index.html` plus motion: starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards, boot sequence |
+| `index-v5.html` | 54 KB | The launcher in use — motion (starfield, satellites, rockets, telemetry), pointer-lit cards, and cards that resolve `Aurora.html`/`gc-v5.html` names by asking the host |
 | `gc.html` | 43 KB | Original **Black Cat Group Chat** upload, unchanged |
 | `gc-v2.html` | 61 KB | Chat v2 — presence fix, lightning joins, new design |
 | `api-v2.php` | 22 KB | Backend used by `gc-v2.html` |
@@ -19,7 +32,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v3.php` | 32 KB | Backend used by `gc-v3.html` (v2 plus edit, delete, link preview) |
 | `gc-v4.html` | 101 KB | Chat v4 — pinned banner, voice notes, end-to-end encrypted text |
 | `api-v4.php` | 35 KB | Backend used by `gc-v4.html` (v3 plus voice notes and the banner) |
-| `gc-v5.html` | 118 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
+| `gc-v5.html` | 140 KB | Chat v5 in the KDL skin — secret admin, encrypted text, plus a sky of stars, satellites and rockets and a cyan lightning storm |
 | `api-v5.php` | 41 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot and CORS) |
 | `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
@@ -37,6 +50,9 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
 | `aurora-v2.html` | 82 KB | Aurora v2 — kept as the fallback; defaults to the free-token host / proxy |
 | `aurora-v3.html` | 90 KB | Aurora v3 — the provider follows the key (Google, OpenRouter, Groq, OpenAI, custom), models discovered from the key |
+| `aurora-v4.html` | 118 KB | **Aurora v4** — FreeModel only, KDL skin, key kept on the server, CORS explained instead of guessed |
+| `api-free.php` | 10 KB | The FreeModel relay — key typed once in a browser form, streamed answers, model list |
+| `worker-free.js` | 6 KB | The same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 
 ---
 
@@ -345,7 +361,7 @@ The strike was gated behind `prefers-reduced-motion`, and that media query didn'
 
 ---
 
-## What changed in the group chat (`gc-v5.html`)
+### The KDL skin and the sky (chat, latest)
 
 The chat wears the same KDL // MISSION CONTROL skin as the launcher now: pure black deck, hairline grid
 and cyan horizon, square corners, mono-caps labels, one cyan accent, green ok / amber wait / red stop.
@@ -614,12 +630,12 @@ keep keys on the server side (`api-ai.php`) when you can.
 | `index-v2.html` | SpaceX / orbital redesign |
 | `index-v3.html` | Facebook dark mode |
 | `index-v4.html` | v1 with the API, SYNC, OpenRouter and add-payload UI removed |
-| `index-v5.html` | same launcher plus starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards and a boot sequence (off with `?still=1`) |
+| `index-v5.html` | same launcher plus starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards, a boot sequence (off with `?still=1`), and cards that resolve the real file name on the host before opening |
 | `gc.html` | original group chat |
 | `gc-v2.html` | presence fix, lightning joins, new design |
 | `gc-v3.html` | replies, edit/delete, link previews, delivery ticks + outbox, unread jump, paste & drop |
 | `gc-v4.html` | pinned banner, voice notes, end-to-end encrypted text |
-| `gc-v5.html` | one secret admin owns the banner, delete and clear-chat |
+| `gc-v5.html` | one secret admin owns the banner, delete and clear-chat; KDL skin, a sky of stars/satellites/rockets and a cyan lightning storm |
 | `Aurora.html` | original AI chatbot |
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
 | `aurora-v3.html` | provider auto-detected from the key, model discovery, no dead hosts, stale base URLs retired |
@@ -642,6 +658,14 @@ keep keys on the server side (`api-ai.php`) when you can.
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **Chat skin and sky: 31 checks** — palette and square corners applied, mono caps, the cat wallpaper gone,
+  the storm retuned but still firing on send and on arrival, plus a canvas that seeds stars and satellites,
+  runs its loop, survives a missing canvas and disappears under reduced motion
+- **Launcher: 70 checks** — every card resolves to the PHP host, `Aurora.html` is found when
+  `aurora-v4.html` is missing, a refused probe is never mistaken for a missing file, and a chosen name is
+  remembered for the next tap
+- **Aurora v4 relay: 54 checks** — the CORS wall is named instead of guessed, a dead relay gets a different
+  message, Test connection proves a real chat request, and a green test saves the address it proved
 - **`diag.html`: 6 checks** — correct verdict for a working host, a headers-only block,
   an outright refusal and an HTTP error page
 - **Chat failure messages: 14 checks** — a refused cross-origin call names the PHP host,

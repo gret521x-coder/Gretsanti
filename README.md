@@ -23,7 +23,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
-| `Aurora.html` | 53 KB | Original Aurora AI chatbot |
+| `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
 | `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
 
 ---
@@ -351,10 +351,11 @@ in `$CORS_HOSTS` at the top of the file; hosts not listed are refused.
 `.nojekyll` is present so GitHub serves the files exactly as they are.
 
 **What still will not work from Pages:** nothing in PHP, obviously — but also any
-page that needs a key must carry it publicly. `index-v*.html` ship a
-`PASTE-YOUR-KEY-HERE` placeholder, so they ask for the key at runtime; pasting a real
-key into a page on a public repo publishes it to everyone. `aurora-v2.html` already
-carries one — rotate it if the repo goes public.
+page that needs a key must carry it publicly. No key is stored in this repo:
+`index-v*.html` and `api-ai.php` ship a `PASTE-YOUR-KEY-HERE` placeholder, and
+`Aurora.html` / `aurora-v2.html` have `HARD_KEY` emptied, so both ask for the key at
+runtime. Anything you paste into a page on a public repo is published to everyone —
+keep keys on the server side (`api-ai.php`) when you can.
 
 ## Version history
 

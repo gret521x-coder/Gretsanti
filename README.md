@@ -70,7 +70,7 @@ Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship tod
 |---|---|
 | Bardagulan (locked) | `https://aidekupal.unaux.com/gc.html` — the copy next to the PHP |
 | Collectibles | `https://aidekupal.unaux.com/Screenshot.html` — it needs `save.php` |
-| Aurora | `aurora-v3.html` — was `Aurora.html`, then `aurora-v2.html` |
+| Aurora | `aurora-v4.html` — was `Aurora.html`, then v2, then v3 |
 | TNS, Pindutan | still local, they are pure static |
 
 The chat and the vault point at the PHP host because that host refuses cross-site
@@ -345,6 +345,31 @@ The strike was gated behind `prefers-reduced-motion`, and that media query didn'
 
 ---
 
+## What changed in Aurora v4 (`aurora-v4.html`)
+
+One platform: **FreeModel**, `https://freemodel.in/v1`, OpenAI-compatible, keys starting `fm_`.
+Every other provider, host and model name is gone from the page.
+
+**The key problem, stated plainly.** A key inside an HTML file is readable by anyone who opens the
+source, and hashing is one-way — the browser could not un-hash it to send. Obfuscation is a curtain, not a
+lock. So v4 ships both halves:
+
+| Mode | Where the key is | Who can read it |
+|---|---|---|
+| **Proxy** (recommended) | `FREEMODEL_KEY` inside `api-free.php` on your PHP host | only you, on the server |
+| **Key** | this browser's `localStorage` | this device only |
+
+In proxy mode the page sends **no** `Authorization` header at all — there is nothing to steal from the
+browser. `api-free.php` streams the answer through (SSE, no buffering), answers `?models=1` so "list
+models" still works, refuses to run until the key is filled in, and only replies with CORS headers for
+the origins listed at the top of the file.
+
+Other changes: the old five-platform catalogue is dropped on load, `auto` is no longer offered (FreeModel
+has no such model), the default is `deepseek-v4.1-flash`, keep-alive lines (`: ping`) no longer confuse the
+stream parser, and `429`/`503` retry once then move to another model in the same catalogue.
+
+---
+
 ## What changed in Aurora v3 (`aurora-v3.html`)
 
 The old file sent every request either to `freetoken.website` (direct) or to the PHP proxy on the PHP
@@ -515,6 +540,7 @@ keep keys on the server side (`api-ai.php`) when you can.
 | `Aurora.html` | original AI chatbot |
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
 | `aurora-v3.html` | provider auto-detected from the key, model discovery, no dead hosts, stale base URLs retired |
+| `aurora-v4.html` | FreeModel only, key kept on the server via `api-free.php`, catalogue fetched from the platform |
 
 ## Checks
 
@@ -549,6 +575,12 @@ keep keys on the server side (`api-ai.php`) when you can.
   their own and never exceed two on screen, cards arrive staggered and take the pointer position, the
   lock screen still covers the viewport, and `prefers-reduced-motion` / `?still=1` leave a plain
   working launcher
+- **Aurora v4 / FreeModel: 36 checks** — no other platform string survives in the page, an `fm_live_` key
+  posts to `freemodel.in/v1/chat/completions` with a bearer token and `stream:true`, a `.php` URL alone is
+  enough to connect and sends **no** authorization header, `reasoning_content` reaches the thinking panel,
+  `: keep-alive` lines do not break the parser, the catalogue is fetched from `/models` (or `?models=1`
+  through the proxy), `429` retries then falls back, `401` is shown on the first hit, the old five-platform
+  catalogue is dropped, and `api-free.php` streams, answers the model list, holds the key and never echoes it
 - **Aurora v3 providers: 29 checks** — an `AIza` key reaches Google with `systemInstruction` and
   `contents` and no bearer header, `sk-or` reaches OpenRouter as `openrouter/auto`, a typed base URL
   wins over everything, `auto` resolves to a Flash model while embedding models are never chosen, a

@@ -352,12 +352,14 @@ host (Pages), and both became unreliable. v3 decides from the key instead:
 
 | Key starts with | Goes to | Streaming |
 |---|---|---|
-| `AIza…` | Google AI Studio (`generativelanguage.googleapis.com`) | `streamGenerateContent?alt=sse` |
+| `AIza…` or `AQ.…` | Google AI Studio (`generativelanguage.googleapis.com`) | `streamGenerateContent?alt=sse` |
 | `sk-or-…` | OpenRouter | OpenAI-style SSE |
 | `gsk_…` | Groq | OpenAI-style SSE |
 | `sk-…` | OpenAI | OpenAI-style SSE |
 | *custom base URL typed in Settings* | that host, unchanged | OpenAI-style SSE |
 
+- **Both Google key shapes work** — the older `AIza…` and the newer `AQ.…`. The key is sent as the
+  `key` query value and as an `x-goog-api-key` header, so neither shape can fail quietly.
 - **`list models`** asks the key what it can actually run and drops the answers into the model chips, so
   a retired model name can't strand you. Google's `auto` is resolved by asking for a Flash model.
 - **A stale base URL is retired on load.** Anyone who saved `freetoken.website` or the PHP proxy keeps
@@ -547,7 +549,8 @@ keep keys on the server side (`api-ai.php`) when you can.
   `contents` and no bearer header, `sk-or` reaches OpenRouter as `openrouter/auto`, a typed base URL
   wins over everything, `auto` resolves to a Flash model while embedding models are never chosen, a
   refused key quotes Google verbatim, no key means demo mode with zero network calls, the settings hint
-  follows the key as it is typed, and a saved `freetoken.website` base URL is retired on load
+  follows the key as it is typed, a saved `freetoken.website` base URL is retired on load, and an
+  `AQ.…` key reaches Google with the header plus the query without breaking the `AIza…` path
 - **Aurora through the proxy: 15 checks** — proxy picked on `github.io`, direct provider on
   localhost, no key and no `Authorization` header sent through the proxy, no
   `/chat/completions` appended to a `.php` base, system prompt and transcript in the body,

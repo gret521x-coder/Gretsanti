@@ -169,7 +169,7 @@
     <div class="drawer-inner">
         <div class="field">
             <label for="key">OpenRouter key (optional)</label>
-            <input id="key" type="password" placeholder="sk-or-v1-… or AIza…" autocomplete="off" spellcheck="false">
+            <input id="key" type="password" placeholder="sk-or-v1-… or AIza… / AQ.…" autocomplete="off" spellcheck="false">
         </div>
         <div class="field">
             <label for="model">model</label>
@@ -181,7 +181,7 @@
         <button class="ghost" id="forgetKey">Forget</button>
         <p class="note">
             <b>Nothing leaves this computer unless you set a key.</b> With no key the summary is built here
-            from word frequency and action words. The key is recognised by its prefix — <b>AIza…</b> goes to
+            from word frequency and action words. The key is recognised by its prefix — <b>AIza…</b> or <b>AQ.…</b> goes to
             Google AI Studio (Gemini), <b>sk-or-…</b> goes to OpenRouter. Only the transcript you press
             Summarise on is sent, with the model above, and the key stays in this browser's localStorage.
             <br><br>
@@ -613,7 +613,8 @@ Ctrl+V works, so does dragging a .txt file onto this box."></textarea>
 
     /* The key says which provider it belongs to — no dropdown to get wrong. */
     function providerOf(key) {
-        if (/^AIza/.test(key)) return 'google';
+        /* Google issues two key shapes: AIza… and AQ.… */
+        if (/^(AIza|AQ\.)/.test(key)) return 'google';
         return 'openrouter';
     }
 
@@ -637,7 +638,7 @@ Ctrl+V works, so does dragging a .txt file onto this box."></textarea>
         var url = provider === 'google'
             ? 'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key)
             : 'https://openrouter.ai/api/v1/models';
-        return fetch(url).then(function (res) {
+        return fetch(url, provider === 'google' ? { headers: { 'x-goog-api-key': key } } : undefined).then(function (res) {
             return res.text().then(function (body) {
                 var json = null;
                 try { json = JSON.parse(body); } catch (e) {}
@@ -705,7 +706,7 @@ Ctrl+V works, so does dragging a .txt file onto this box."></textarea>
             encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
         return fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
             body: JSON.stringify({
                 system_instruction: { parts: [{ text: prompt.system }] },
                 contents: [{ role: 'user', parts: [{ text: prompt.user }] }],

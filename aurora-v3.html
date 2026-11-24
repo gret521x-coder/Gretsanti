@@ -512,7 +512,7 @@ body{line-height:1.5}
   <div class="settings-head">⚙️ Settings <button class="icon-btn" id="settings-close" aria-label="Close">✕</button></div>
   <div class="settings-body">
    <div class="group">Provider</div>
-   <div class="field"><label>API Key</label><input type="password" id="in-apikey" placeholder="AIza… (Google) · sk-or-… (OpenRouter) · gsk_… (Groq) · sk-… (OpenAI)" autocomplete="off"></div>
+   <div class="field"><label>API Key</label><input type="password" id="in-apikey" placeholder="AIza… or AQ.… (Google) · sk-or-… (OpenRouter) · gsk_… (Groq) · sk-… (OpenAI)" autocomplete="off"></div>
    <div class="field" style="margin-top:2px"><label>Detected provider</label>
      <div id="provider-hint" style="font-size:13px;color:var(--muted);line-height:1.5">—</div>
      <button class="chip-btn" id="list-models" style="margin-top:8px;align-self:flex-start">⟳ List models from this key</button>
@@ -590,7 +590,7 @@ const HARD_KEY = '';  /* key removed before the repo went public */
    key-holding proxy on the PHP host instead — no key in the page. Everywhere
    else the direct provider URL is used, exactly as before. */
 /* Where a request goes is decided by the key itself, not by a hardcoded host.
-   AIza… Google · sk-or-… OpenRouter · gsk_… Groq · sk-… OpenAI · or any custom base URL.
+   AIza… or AQ.… Google · sk-or-… OpenRouter · gsk_… Groq · sk-… OpenAI · or any custom base URL.
    The PHP proxy still works if you type its URL in Settings — it is just no longer the default. */
 const DEFAULTS = {
   apiKey: HARD_KEY,
@@ -612,7 +612,7 @@ function detectProvider(config){
 
   if(base && /\.php(\?|$)/i.test(base))  return { kind:'proxy',      endpoint: base,                                     label:'your PHP proxy' };
   if(base)                                return { kind:'openai',     endpoint: base.replace(/\/+$/, ''),                label:'custom base URL' };
-  if(/^AIza[0-9A-Za-z_\-]{6,}$/.test(key)) return { kind:'google',     endpoint:'https://generativelanguage.googleapis.com/v1beta', label:'Google AI Studio' };
+  if(/^(AIza|AQ\.)[0-9A-Za-z_.\-]{6,}$/.test(key)) return { kind:'google', endpoint:'https://generativelanguage.googleapis.com/v1beta', label:'Google AI Studio' };
   if(/^sk-or-/.test(key))                 return { kind:'openrouter',  endpoint:'https://openrouter.ai/api/v1',            label:'OpenRouter' };
   if(/^gsk_/.test(key))                   return { kind:'groq',        endpoint:'https://api.groq.com/openai/v1',          label:'Groq' };
   if(/^sk-[A-Za-z0-9]/.test(key))         return { kind:'openai',      endpoint:'https://api.openai.com/v1',               label:'OpenAI' };
@@ -628,7 +628,10 @@ function providerHint(){
 
 async function listProviderModels(provider, config){
   if(provider.kind === 'google'){
-    const res = await fetch(provider.endpoint + '/models?key=' + encodeURIComponent(config.apiKey));
+    /* Google hands out two key shapes — AIza… and AQ.… — and accepts either as a query value
+       or the x-goog-api-key header. Send both so neither shape can fail quietly. */
+    const res = await fetch(provider.endpoint + '/models?key=' + encodeURIComponent(config.apiKey),
+                            { headers: { 'x-goog-api-key': config.apiKey } });
     const j = await res.json().catch(() => ({}));
     if(!res.ok) throw new Error((j.error && j.error.message) || ('Google refused the key (' + res.status + ')'));
     return (j.models || [])
@@ -675,7 +678,8 @@ async function streamGemini(provider, model, messages, onDelta, signal){
   const res = await fetch(url, {
     method: 'POST',
     signal,
-    headers: { 'Content-Type': 'application/json' },
+    /* Google accepts either key shape; the header covers the AQ. ones. */
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.apiKey },
     body: JSON.stringify(Object.assign(
       { contents, generationConfig: { temperature: cfg.temp } },
       sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}
@@ -1613,7 +1617,7 @@ async function callAPI(userText){
     const prov = detectProvider(cfg);
     addMsg('ai', '⚠️ **Connection error**\n\n`' + esc(err.message || String(err)) +
       '`\n\n**Provider:** ' + esc(prov.label) + '\n\n**Checklist**\n- Is the key pasted in **Settings** ⚙️?\n' +
-      '- Does the key match the provider (AIza… Google, sk-or-… OpenRouter, gsk_… Groq)?\n' +
+      '- Does the key match the provider (AIza…/AQ.… Google, sk-or-… OpenRouter, gsk_… Groq)?\n' +
       '- If it is a free key, is today\'s quota used up?\n' +
       '- Pointing at a custom base URL? Leave it empty to auto-detect.', null);
     setBusy(false);

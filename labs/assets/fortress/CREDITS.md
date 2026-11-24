@@ -10,9 +10,7 @@ Cut down from the pack for this game:
 
 | File | Source piece |
 |---|---|
-| `towers/archery.png` | Knights / Buildings / Archery |
-| `towers/barracks.png` | Knights / Buildings / Barracks |
-| `towers/mage.png` | Knights / Buildings / Tower (purple) |
+| `towers/archery-1..3.png`, `barracks-1..3.png`, `mage-1..3.png`, `catapult-1..3.png` | cut from `towers/_sheet.jpg` — see the note below |
 | `heroes/warrior.png`, `archer.png`, `spear.png` | Knights / Troops, idle frames |
 | `monsters/skeleton.png` | Enemy / Skeleton skull guard |
 | `monsters/orc.png` | Goblins / Troops / Torch |
@@ -24,11 +22,16 @@ Cut down from the pack for this game:
 Each piece was cropped from its sheet, trimmed of empty space and scaled with nearest
 neighbour so the pixels stay square.
 
-## `towers/catapult.png` — drawn here
+## Tower art — cut from the owner's reference sheet
 
-The pack has no siege engine, so this one was drawn pixel by pixel for this project
-(frame, wheels, arm, bucket, rock, rope) in the pack's own palette. Do what you like
-with it.
+`towers/_sheet.jpg` is a tower-progression sheet supplied by the project owner from
+Kingdom Rush. It is used here **as a placeholder while the game is only a private lab
+build**; the final art will be the owner's own models. The twelve tower pictures are
+machine-cut copies of that sheet by `slice-towers.js`, not original work, and this
+folder must not be published as-is.
+
+Nothing else in the game comes from that sheet — heroes, monsters, decorations and the
+keep are still Tiny Swords, and the old hand-drawn catapult was retired with it.
 
 ## Reference only — not shipped
 

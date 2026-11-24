@@ -364,6 +364,11 @@ browser. `api-free.php` streams the answer through (SSE, no buffering), answers 
 models" still works, refuses to run until the key is filled in, and only replies with CORS headers for
 the origins listed at the top of the file.
 
+**Setup is one form now.** Upload the file, open its address in a browser once, paste the key, press
+Save — no code editing at all. The key is written to `.fmkey.php` beside it, a file that starts with
+`<?php exit; ?>` so the web server runs it instead of printing it. Prefer editing? Fine, `FREEMODEL_KEY`
+in the file still works and wins over the form.
+
 Other changes: the old five-platform catalogue is dropped on load, `auto` is no longer offered (FreeModel
 has no such model), the default is `deepseek-v4.1-flash`, keep-alive lines (`: ping`) no longer confuse the
 stream parser, and `429`/`503` retry once then move to another model in the same catalogue.

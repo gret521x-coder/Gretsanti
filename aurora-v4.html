@@ -673,7 +673,7 @@ function networkHelp(provider, err){
       'That usually means the address is wrong, the host is asleep, or the host refuses calls from other websites.\n\n' +
       '**Do this, in order**\n' +
       '1. Open ' + where + ' in a new browser tab. A working relay shows a list of model names.\n' +
-      '2. If it says *key not set*, open `api-free.php` on your host and put your `fm_live_…` key inside `FREEMODEL_KEY`.\n' +
+      '2. If it asks for a key, open the relay address in a browser and paste your `fm_live_…` key there — that form is the whole setup.\n' +
       '3. If the tab works but this page still fails, that host blocks other sites. Many free hosts do, unaux included. ' +
       'Use the Cloudflare Worker version (`worker-free.js`) — it is free, needs no card, and never blocks the browser.\n' +
       '4. In Settings press **🩺 Test connection** — it reports the real reason instead of guessing.';
@@ -685,7 +685,7 @@ function networkHelp(provider, err){
     'Your key is not the problem. **Who is calling** is the problem. The fix is a small helper in the middle: your ' +
     'server calls FreeModel, this page calls your server.\n\n' +
     '**Do this, in order**\n' +
-    '1. Upload `api-free.php` to your PHP host and type your `fm_live_…` key inside it (or paste `worker-free.js` into a free Cloudflare Worker).\n' +
+    '1. Upload `api-free.php` to your PHP host, then open its address in a browser once and paste your `fm_live_…` key there. (Or paste `worker-free.js` into a free Cloudflare Worker.)\n' +
     '2. Open **Settings ⚙️** and put that helper address in **Proxy URL** — it ends in `.php`, or is a `workers.dev` address.\n' +
     '3. Press **🩺 Test connection**. Green means it works.\n' +
     '4. Send this message again.';

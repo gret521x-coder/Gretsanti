@@ -738,6 +738,26 @@ async function listProviderModels(provider, config){
   return data.map(m => (typeof m === 'string' ? m : m.id || m.name)).filter(Boolean);
 }
 
+/* The list and the chat are two different doors. A GET can be allowed while a POST with a
+   JSON body is refused, and that difference is invisible until you send a message. This
+   tiny probe (one word, one token) proves the door chat actually uses. */
+async function probeChat(provider, config){
+  const viaProxy = provider.kind === 'proxy';
+  const endpoint = viaProxy ? provider.endpoint : provider.endpoint + '/chat/completions';
+  const headers = { 'Content-Type': 'application/json' };
+  if(!viaProxy) headers.Authorization = 'Bearer ' + config.apiKey;
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ model: config.model || DEFAULT_MODEL, messages: [{ role: 'user', content: 'ping' }], stream: false })
+    });
+    return { ok: true, status: res.status, detail: res.ok ? '' : ('HTTP ' + res.status) };
+  } catch(e){
+    return { ok: false, network: true, error: e };
+  }
+}
+
 /* FreeModel hosts the whole catalogue behind one key, so a busy model is solved by
    switching names, not by changing platform. */
 async function resolveModel(provider){
@@ -759,8 +779,10 @@ async function streamCompletion(provider, model, messages, onDelta, signal){
   const viaProxy = provider.kind === 'proxy';
   const endpoint = viaProxy ? provider.endpoint : provider.endpoint + '/chat/completions';
   const headers = { 'Content-Type': 'application/json' };
+  /* Only these two headers on a direct call. Anything extra (X-Title and friends) makes the
+     browser ask FreeModel for permission first, and a refused permission looks exactly like
+     a dead network: "Failed to fetch", with the key never even sent. */
   if(!viaProxy) headers.Authorization = 'Bearer ' + cfg.apiKey;
-  headers['X-Title'] = 'Aurora';
 
   let res;
   try {
@@ -2032,36 +2054,55 @@ function wire(){
 
   $('#test-conn').onclick = async () => {
     const note = $('#proxy-note');
+    const say = (colour, html) => { if(note){ note.style.color = colour; note.innerHTML = html; } };
     const draft = Object.assign({}, cfg, {
       apiKey: $('#in-apikey').value.trim() || cfg.apiKey,
       baseUrl: $('#in-baseurl').value.trim()
     });
     const provider = detectProvider(draft);
     if(provider.kind === 'none'){
-      if(note){ note.style.color = '#D96570'; note.innerHTML = 'Nothing to test yet — paste a helper address, or an <code>fm_live_…</code> key.'; }
+      say('#D96570', 'Nothing to test yet — paste a helper address, or an <code>fm_live_…</code> key.');
       toast('Nothing to test yet');
       return;
     }
-    if(note){ note.style.color = 'var(--muted)'; note.textContent = 'Testing ' + provider.endpoint + ' …'; }
-    try {
-      const models = await listProviderModels(provider, draft);
-      const looksRight = models.length > 0 || provider.kind === 'proxy';
-      if(note){
-        note.style.color = looksRight ? '#00E676' : '#D96570';
-        note.textContent = looksRight
-          ? 'Working. FreeModel answered with ' + models.length + ' model' + (models.length === 1 ? '' : 's') + '.'
-          : 'The address answered, but not with a model list. Check what your helper returns.';
-      }
-      toast(looksRight ? 'Connection works' : 'Answered, but oddly');
-    } catch(err){
+    say('var(--muted)', 'Testing ' + esc(provider.endpoint) + ' …');
+
+    /* Door one: the catalogue. */
+    let models = [];
+    try { models = await listProviderModels(provider, draft); }
+    catch(err){
       const reason = (err && err.kind === 'network')
         ? (provider.kind === 'proxy'
             ? 'No answer from that address. Open it in a new tab to see what your host says — if it opens there but fails here, that host blocks other websites.'
             : 'Your browser was stopped before it reached FreeModel (CORS) — a helper address is required.')
         : (err && err.message ? String(err.message).slice(0, 200) : 'Unknown failure.');
-      if(note){ note.style.color = '#D96570'; note.textContent = reason; }
+      say('#D96570', reason);
       toast('Connection failed');
+      return;
     }
+
+    /* Door two: a real chat request. Keep what was typed — a green test that is not saved
+       is how the last round ended with an empty box and a working relay. */
+    applySettings();
+    say('var(--muted)', 'The list answered with ' + models.length + ' models. Now one tiny chat message …');
+    const chat = await probeChat(provider, draft);
+    if(chat.ok && (!chat.detail || /^HTTP 4\d\d$/.test(chat.detail))){
+      const extra = chat.detail ? ' FreeModel answered ' + chat.detail + ' for the test message (that is about the key, not the connection).' : '';
+      say('#00E676', 'Working. ' + models.length + ' models, and a test message went through. Saved.' + extra);
+      toast('Connection works · saved');
+      renderModels();
+      updateTok();
+      return;
+    }
+    if(chat.network){
+      say('#D96570', provider.kind === 'proxy'
+        ? 'The model list works, but chat requests to that address are blocked. Check that the relay accepts POST.'
+        : 'The model list answers, but chat requests are blocked. That is the browser wall — put a helper address in Proxy URL and test again.');
+      toast('List works, chat does not');
+      return;
+    }
+    say('#D96570', 'FreeModel answered ' + esc(chat.detail || 'with an error') + ' for the test message.');
+    toast('Chat request refused');
   };
 
   $('#list-models').onclick = async () => {

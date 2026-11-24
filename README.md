@@ -386,8 +386,15 @@ rule, and a page cannot step outside the browser. A relay is the only way, and t
 | Key mode on `github.io` | "your browser was stopped before it reached FreeModel — this is CORS, your key is not the problem" |
 | Relay address dead or blocking | "your relay did not answer", the exact address it called, and the free-host warning |
 
-There is also a **🩺 Test connection** button in Settings: green means FreeModel answered through the relay
-and how many models came back; red gives the reason instead of a guess.
+There is also a **🩺 Test connection** button in Settings. It checks both doors: the model list (a `GET`)
+and then one real chat request (a `POST`, one word). Green means both answered and the address is saved;
+red says which door failed. That second probe exists because the first round of this ended with a green
+list, an empty box and a page still in direct mode.
+
+Two smaller things came out of the same screenshot: a direct key-mode request now sends **only**
+`Content-Type` and `Authorization` — a stray `X-Title` header makes the browser ask FreeModel's
+permission for a header it never granted, and the refusal arrives as `Failed to fetch` with the key
+never sent — and a green test now saves the address it proved instead of leaving it unsaved.
 
 **Two relays ship.** `api-free.php` for a PHP host, and `worker-free.js` for a free Cloudflare Worker
 (paste it in the dashboard, add the key as a `FREEMODEL_KEY` secret, deploy — no card, no domain). The

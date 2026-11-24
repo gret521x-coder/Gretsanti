@@ -11,6 +11,7 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `index-v2.html` | 43 KB | SpaceX / orbital redesign |
 | `index-v3.html` | 45 KB | Facebook dark mode |
 | `index-v4.html` | 25 KB | v1 without the API / SYNC / OpenRouter / add-payload UI |
+| `index-v5.html` | 49 KB | Same launcher as `index.html` plus motion: starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards, boot sequence |
 | `gc.html` | 43 KB | Original **Black Cat Group Chat** upload, unchanged |
 | `gc-v2.html` | 61 KB | Chat v2 — presence fix, lightning joins, new design |
 | `api-v2.php` | 22 KB | Backend used by `gc-v2.html` |
@@ -18,12 +19,56 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `api-v3.php` | 32 KB | Backend used by `gc-v3.html` (v2 plus edit, delete, link preview) |
 | `gc-v4.html` | 101 KB | Chat v4 — pinned banner, voice notes, end-to-end encrypted text |
 | `api-v4.php` | 35 KB | Backend used by `gc-v4.html` (v3 plus voice notes and the banner) |
-| `gc-v5.html` | 109 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
-| `api-v5.php` | 39 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot) |
-| `Aurora.html` | 53 KB | Original Aurora AI chatbot |
-| `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
+| `gc-v5.html` | 118 KB | Chat v5 — one secret admin owns the banner, message delete and chat clear |
+| `api-v5.php` | 41 KB | Backend used by `gc-v5.html` (v4 plus the single admin slot and CORS) |
+| `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
+| `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
+| `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
+| `diag.html` | 5 KB | Link diagnostic — says whether the PHP host answers, and why not |
+| `Screenshot.html` | 3 KB | **Collectibles** vault — password-gated image board |
+| `save.php` | 1 KB | Backend for Collectibles: stores, lists and serves the images |
+| `tns.html` | 33 KB | **TNS — Safety Dispatch**, self-contained |
+| `pindutan.html` | 42 KB | **Pindutan v14** arcade game, scores kept in `localStorage` |
+| `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
+| `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features; uses the proxy on Pages |
 
 ---
+
+## Launcher payload grid
+
+Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship today:
+
+| Card | Opens |
+|---|---|
+| Bardagulan (locked) | `https://aidekupal.unaux.com/gc.html` — the copy next to the PHP |
+| Collectibles | `https://aidekupal.unaux.com/Screenshot.html` — it needs `save.php` |
+| Aurora | `aurora-v2.html` — was `Aurora.html` |
+| TNS, Pindutan | still local, they are pure static |
+
+The chat and the vault point at the PHP host because that host refuses cross-site
+requests outright (a plain `<script>` tag is refused too — `diag.html` proves it), so a
+copy on Pages can never reach it. Opened from unaux, the chat finds `api-v5.php` beside
+itself and everything works. The file on unaux is called `gc.html` (the same name your old chat had, so old
+bookmarks now open the new one) — keep it in step with `gc-v5.html` in this repo.
+
+Grids are saved in `localStorage`, so an existing one would have kept the old
+filenames forever. `getApps()` now rewrites `gc.html` → `gc-v5.html` and
+`Aurora.html` → `aurora-v2.html` on load and stores the result, so nothing has to be
+reset. A corrupt saved grid falls back to the defaults instead of throwing.
+
+All six cards now resolve: `tns.html`, `pindutan.html` and `Screenshot.html` are part
+of the repo, so the launcher works from Pages as well as from the PHP host.
+
+Two things about the payload pages:
+
+- **Collectibles** reads and writes through `save.php`. On `*.github.io` it calls the
+  copy on the PHP host instead, so upload the included `save.php` (it carries the CORS
+  headers). The unlock password sits in the page source, and `save.php` itself has no
+  auth check — on a public repo that password is readable by anyone. Good enough for a
+  private board, not for anything you would mind losing.
+- **Pindutan** hashes its code with `crypto.subtle`, which browsers only expose on
+  `https://` or `localhost`. Over a plain-http LAN address the game now falls back to a
+  local hash instead of failing to open.
 
 ## What changed in the launcher
 
@@ -57,6 +102,29 @@ Same layout as `index.html`, with these removed:
 - The `LINK: NOMINAL` pill is now a static status light
 
 Remaining payloads: TNS, Pindutan, Collectibles, Bardagulan 🔒, Aurora.
+
+### `index-v5.html` — motion edition
+
+Identical markup, logic, passwords and `localStorage` keys to `index.html`; everything below is
+decoration layered on top, so the file can replace it one-for-one.
+
+- **Starfield canvas** (`#field`) drifting behind whichever screen is showing
+- **2–3 satellites** on slow elliptical orbits — solar panels, a body and a blinking green beacon;
+  the far half of the orbit draws smaller and dimmer so they read as depth
+- **Rockets** — one lifts off every 2 to 4 seconds from the bottom edge, a flickering cyan flame and a
+  fading trail behind it; the screen never carries more than two at once
+- **Radar sweep** rotating behind the `KDL // X` wordmark
+- **Live telemetry strip** — SIGNAL, LATENCY, UPTIME and UPLINK tick on their own; uptime counts from
+  the first unlock and is remembered in `kdl_mission_start`
+- **Interactive cards** — the glow follows the pointer, cards tilt a few degrees and lift on hover,
+  press scales them back, and they arrive in a short stagger
+- **Boot sequence** — on unlock a black overlay types the mission-control boot lines and clears itself;
+  tap anywhere to skip. It plays once per session
+- A light sweep travels down the telemetry bar
+
+Switch all of it off with `?still=1` in the URL, or let the OS do it: `prefers-reduced-motion: reduce`
+removes the canvas (stars, satellites, rockets), radar, sweep, tilt, entrance animation and boot overlay. The dashboard is never
+waiting on an animation.
 
 All launchers keep the same behaviour: access-code unlock, MET clock, payload cards, per-card delete and `localStorage` persistence. Codes live in the `VALID_PASSWORDS` / `BARDAGULAN_SIG` constants inside each file.
 
@@ -214,6 +282,19 @@ v4 with one role added: a **single secret admin**. The host role no longer gates
 
 Deleting your own message is admin-only too, as asked. Flip `ADMIN_ONLY_DELETE = false` at the top of the script if you ever want members to delete their own again. The server enforces the same rules: `clear`, `announce` and `del` are checked against the stored admin id, so a member cannot bypass the UI.
 
+**Phone fixes**
+
+- **Image / GIF viewer**: it had no visible way out. It now has a ✕ button (44 px, safe-area aware), an **open original ↗** link, closes on tapping the image, the backdrop or `Esc`, and locks background scrolling while open. It was also a plain `<div>` click handler — iOS Safari does not reliably fire those, which is why it felt stuck on a phone.
+- **Actions under every bubble**: ☺ react · ↩ reply · ⋯ more, always visible on touch and on hover with a mouse. Long-press still works. Deleted messages get none.
+- **Reactions never stuck.** `toggleReact()` applied the reaction, then `sendPacket()` replayed the same packet through `handle()` → `remoteReact()`, which toggled the *same user* off again. Net result: nothing. Self-echo is now ignored.
+
+**Freeing a stuck admin slot**
+
+- The lobby now shows the slot state: **free** (green), **busy — Admin: Aria** (amber), or **you hold it** (violet)
+- If your tab still holds the lease, a **Step down** button releases it before you join
+- A crashed tab no longer locks the room: on a rejected claim the client probes the room over MQTT, and if no admin answers, it asks the server to clear the slot — `freeadmin` only clears a lease silent for 25 s, so a live admin can never be kicked
+- A live admin beats every 12 s, so 25 s can only mean gone
+
 **Banner visibility — what was wrong**
 
 - A member who opened the chat **after** the banner was posted depended on a clock comparison (`server ts > local ts`); on a device whose clock ran ahead the banner was silently skipped. It now compares the ciphertext itself.
@@ -269,6 +350,94 @@ Presence of the API key is unchanged: still hardcoded as requested.
 
 ---
 
+## The agent widget (`agent-widget.js` + `api-ai.php`)
+
+A chat agent that sits bottom-right on any page and answers from your model provider.
+
+**Two lines on the page**
+
+```html
+<script>window.AGENT_CONFIG = { endpoint: 'api-ai.php' };</script>
+<script src="agent-widget.js" defer></script>
+```
+
+**What the widget does**
+
+- 56 px bubble, panel with header, transcript, composer; full-width on phones, left or right side
+- Streams the answer token by token (SSE), with a Stop button, a 120 s ceiling and a retry bubble on failure
+- Markdown-lite: `**bold**`, `` `code` ``, fenced blocks, clickable links — everything else escaped
+- Transcript kept in `sessionStorage` for the tab, `Agent.reset()` to wipe it
+- API: `Agent.open()`, `Agent.close()`, `Agent.toggle()`, `Agent.ask('…')`, `Agent.reset()`
+- `demo: true` answers from a scripted stream so the UI can be tested without a backend
+
+**Why the proxy**
+
+The key lives in `api-ai.php`, never in the page. The proxy also
+
+- rebuilds the system prompt server-side, so the browser cannot rewrite it
+- rejects client-side `system` roles, caps the transcript at 24 messages / 4 000 chars each
+- allows only models in `$ALLOWED_MODELS`
+- rate-limits to 30 requests per IP per 10 minutes, stored in `data/agent-rate.json`
+- streams straight through with curl, falls back to a single wrapped response without it
+- scrubs its own key out of anything the provider echoes back
+- answers `api-ai.php?health=1` with whether a key is configured
+
+`$BASE_URL` defaults to OpenRouter; point it at any OpenAI-compatible endpoint (the Aurora key host, for example) and change `$MODEL` to match.
+
+### Known limitations (both chat versions)
+
+## Hosting the pages on GitHub Pages
+
+The HTML is static, so GitHub can serve it. The PHP cannot run there — keep
+`api-v5.php` on your normal host and let the page call it.
+
+**1. Turn Pages on.** Settings → Pages → Source: *Deploy from a branch* → pick the
+branch that has the files → folder `/ (root)` → Save. The site appears at
+`https://<user>.github.io/<repo>/`. Pages needs a **public** repo on a free plan, or
+Pro for a private one.
+
+**2. Nothing to configure.** The config block just before the main script detects
+`*.github.io` and points itself at the PHP host:
+
+```js
+window.KDL_API_BASE = 'https://aidekupal.unaux.com/api-v5.php';   // on Pages
+window.KDL_API_BASE = '';                                         // everywhere else
+```
+
+Opened from XAMPP or from unaux itself, it uses the `api-v5.php` next to the page.
+To move hosts, set the value by hand before the script runs. Relative `uploads/x.png`
+paths are rewritten onto that host, so images, voice notes and GIFs keep working.
+
+**Uploads failing on the Pages copy?** Tap the **🗄️ PHP API** row under the name field —
+it runs the check and prints the answer ("PHP OK · v3 / cors" or "…refused this page
+(TypeError: Failed to fetch)"). The same fact is visible in any browser:
+`https://aidekupal.unaux.com/api-v5.php?action=health` → `"version":3,"build":"cors"`
+means the new file is live; `"version":2` means the old one is.
+
+That is the CORS headers on the PHP host. Upload
+`api-v5.php` there and reload; the chat now says so out loud (it names the host and tells
+you to upload the file) instead of showing a bare "Upload failed".
+
+**Aurora needs a key too, and it has none.** On `*.github.io` it now posts to
+`api-ai.php` instead of a provider, so the key lives on the server and the page stays
+public-safe. `api-ai.php` accepts Aurora's own system prompt (capped at 3000 chars) and
+always answers as a stream. Anywhere else Aurora still talks to its provider directly,
+with the key from Settings.
+
+**3. Upload the new `api-v5.php`.** It sends CORS headers for `*.github.io`,
+`*.unaux.com`, `localhost` and `127.0.0.1` and answers the preflight `OPTIONS`
+request — without it the browser blocks every call from Pages. Any other host goes
+in `$CORS_HOSTS` at the top of the file; hosts not listed are refused.
+
+`.nojekyll` is present so GitHub serves the files exactly as they are.
+
+**What still will not work from Pages:** nothing in PHP, obviously — but also any
+page that needs a key must carry it publicly. No key is stored in this repo:
+`index-v*.html` and `api-ai.php` ship a `PASTE-YOUR-KEY-HERE` placeholder, and
+`Aurora.html` / `aurora-v2.html` have `HARD_KEY` emptied, so both ask for the key at
+runtime. Anything you paste into a page on a public repo is published to everyone —
+keep keys on the server side (`api-ai.php`) when you can.
+
 ## Version history
 
 | Version | Notes |
@@ -278,6 +447,7 @@ Presence of the API key is unchanged: still hardcoded as requested.
 | `index-v2.html` | SpaceX / orbital redesign |
 | `index-v3.html` | Facebook dark mode |
 | `index-v4.html` | v1 with the API, SYNC, OpenRouter and add-payload UI removed |
+| `index-v5.html` | same launcher plus starfield, orbiting satellites, rockets, live telemetry, pointer-lit cards and a boot sequence (off with `?still=1`) |
 | `gc.html` | original group chat |
 | `gc-v2.html` | presence fix, lightning joins, new design |
 | `gc-v3.html` | replies, edit/delete, link previews, delivery ticks + outbox, unread jump, paste & drop |
@@ -291,12 +461,40 @@ Presence of the API key is unchanged: still hardcoded as requested.
 - `node --check` on the extracted `<script>` block of every HTML file
 - All `getElementById` / `el()` targets verified to exist in the markup
 - Presence logic unit-tested in Node: away ≠ left, a single leave notice, host prefers online users
-- **Chat v5 exercised with four tabs on a shared fake broker and fake PHP: 44 checks** — admin claim,
+- **Agent widget exercised in jsdom: 28 checks** — mount/dedupe, open/close/Escape, streaming into one bubble,
+  request body and history, markdown rendering, inert HTML in replies, network and 401 errors with retry,
+  Stop mid-stream, demo mode, sessionStorage restore, left-position option
+- **Chat v5 exercised with six tabs on a shared fake broker and fake PHP: 71 checks** — admin claim,
   a second `++vip` join rejected with the normal-join escape hatch, member sees the admin, banner live then
   pulled by a late joiner then shown as unreadable-but-visible to a crypto-less reader, member has no delete,
   admin deletes someone else's message both ways, admin clears for both, handover on release, reload re-claim,
-  join lightning on your own join, peer join strike + pill, calm glow under reduced motion
+  join lightning on your own join, peer join strike + pill, calm glow under reduced motion,
+  lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
+  image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **`diag.html`: 6 checks** — correct verdict for a working host, a headers-only block,
+  an outright refusal and an HTTP error page
+- **Chat failure messages: 14 checks** — a refused cross-origin call names the PHP host,
+  says to upload `api-v5.php`, and warns once in the lobby; a real server error is shown
+  verbatim; nothing is said when the host answers
+- **Payload pages: 20 checks** — Collectibles locked until the password, listing and
+  uploads routed to the PHP host from Pages and to the sibling `save.php` on the host,
+  TNS and Pindutan load clean, Pindutan unlock with and without SubtleCrypto
+- **Launcher grids: 60 checks** — all six launchers default to `gc.html` on the PHP host and
+  `aurora-v2.html`, the grid renders, Bardagulan stays locked and its code still opens
+  the right page, an old saved grid is upgraded and written back, corrupt storage
+  falls back to defaults
+- **Launcher motion (`index-v5.html`): 29 checks** — boots with no errors, telemetry ticks,
+  the boot overlay plays on unlock and clears itself, two or three satellites orbit, rockets launch on
+  their own and never exceed two on screen, cards arrive staggered and take the pointer position, the
+  lock screen still covers the viewport, and `prefers-reduced-motion` / `?still=1` leave a plain
+  working launcher
+- **Aurora through the proxy: 15 checks** — proxy picked on `github.io`, direct provider on
+  localhost, no key and no `Authorization` header sent through the proxy, no
+  `/chat/completions` appended to a `.php` base, system prompt and transcript in the body,
+  SSE frames rendered even with streaming switched off, plain-text answer rendered
+- **GitHub Pages mode: 9 checks** — sibling `api-v5.php` by default, absolute `KDL_API_BASE` used for
+  every endpoint when set, relative uploads rewritten onto the PHP host, absolute image URLs untouched
 - **Chat v4 exercised in a real DOM (jsdom): 37 checks** — WebCrypto key derivation, ciphertext on the wire
   and in the request body with no plaintext, local echo still readable, decryption of incoming text, locked
   bubble for a bad payload, encrypted edits both ways, banner write/decrypt/host-only buttons/clear/escaping,

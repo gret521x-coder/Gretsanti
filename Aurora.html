@@ -246,7 +246,7 @@ button{font-family:inherit;cursor:pointer}
 <script>
 /* ================= Aurora — AI Workspace Assistant ================= */
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
-const DEFAULTS={apiKey:'sk-tf-xli9rjpco0cj4ltdo99jp1a1exin517s',baseUrl:'https://freetoken.website/v1',models:['claude-5-opus','claude-5-fable','gpt-5.6-sol','gpt-5.6-terra','DeepSeek-V4-Pro','glm-5.2'],temp:0.7,stream:true,save:true,theme:'dark'};
+const DEFAULTS={apiKey:'',baseUrl:'https://freetoken.website/v1',models:['claude-5-opus','claude-5-fable','gpt-5.6-sol','gpt-5.6-terra','DeepSeek-V4-Pro','glm-5.2'],temp:0.7,stream:true,save:true,theme:'dark'};
 let cfg=load(),chats=loadChats(),curId=null,files=[],busy=false;
 function load(){try{return Object.assign({},DEFAULTS,JSON.parse(localStorage.getItem('aurora_cfg')||'{}'))}catch(e){return{...DEFAULTS}}}
 function save(){localStorage.setItem('aurora_cfg',JSON.stringify(cfg))}
@@ -677,4 +677,4 @@ async function callAPI(userText){
 </script>
 
 
-/* sk-tf-xli9rjpco0cj4ltdo99jp1a1exin517s */
+/*  */

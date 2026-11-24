@@ -580,10 +580,18 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
 /* ---------- config ---------- */
-const HARD_KEY = 'sk-tf-xli9rjpco0cj4ltdo99jp1a1exin517s';
+const HARD_KEY = '';  /* key removed before the repo went public */
+
+/* GitHub Pages serves static files only, so on Pages the request goes to the
+   key-holding proxy on the PHP host instead — no key in the page. Everywhere
+   else the direct provider URL is used, exactly as before. */
+const PROXY_URL = 'https://aidekupal.unaux.com/api-ai.php';
+const IS_PROXY_HOST = /(^|\.)github\.io$/i.test(location.hostname);
+const DIRECT_URL = 'https://freetoken.website/v1';
+
 const DEFAULTS = {
   apiKey: HARD_KEY,
-  baseUrl: 'https://freetoken.website/v1',
+  baseUrl: IS_PROXY_HOST ? PROXY_URL : DIRECT_URL,
   models: ['auto'],
   temp: 0.7,
   stream: true,
@@ -1371,8 +1379,8 @@ async function callAPI(userText){
     scrollDown();
   };
 
-  /* demo mode only if someone clears the key in Settings */
-  if(!cfg.apiKey){
+  /* demo mode only if someone clears the key in Settings — the proxy brings its own */
+  if(!cfg.apiKey && !/\.php(\?|$)/i.test(cfg.baseUrl)){
     setTimeout(() => {
       finish('<think seconds="2">Checking API configuration\nNo key found — demo mode\nPreparing sample file</think>' +
         "I'm running in **Demo Mode** — no API key configured.\n\nOpen **Settings ⚙️** and paste a key to go live.\n\n" +
@@ -1382,15 +1390,21 @@ async function callAPI(userText){
   }
 
   try {
-    const res = await fetch(cfg.baseUrl.replace(/\/$/, '') + '/chat/completions', {
+    const viaProxy = /\.php(\?|$)/i.test(cfg.baseUrl);
+    const endpoint = viaProxy
+      ? cfg.baseUrl
+      : cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
+    const res = await fetch(endpoint, {
       method: 'POST',
       signal: abortCtl.signal,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey },
+      headers: viaProxy
+        ? { 'Content-Type': 'application/json' }
+        : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey },
       body: JSON.stringify({
         model: $('#model-select').value || cfg.model || cfg.models[0],
         messages: [{ role: 'system', content: systemPrompt() }].concat(contextMessages()),
         temperature: cfg.temp,
-        stream: cfg.stream
+        stream: viaProxy ? true : cfg.stream   /* api-ai.php always streams */
       })
     });
 
@@ -1399,7 +1413,7 @@ async function callAPI(userText){
       throw new Error('API ' + res.status + ': ' + String(errText).slice(0, 200));
     }
 
-    if(cfg.stream && res.body){
+    if((viaProxy || cfg.stream) && res.body){
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = '';
@@ -1763,7 +1777,7 @@ function wire(){
     renderModelChips();
   };
   $('#settings-save').onclick = () => {
-    cfg.apiKey = $('#in-apikey').value.trim() || HARD_KEY;
+    cfg.apiKey = $('#in-apikey').value.trim() || HARD_KEY;   /* '' unless you paste one */
     cfg.baseUrl = $('#in-baseurl').value.trim() || DEFAULTS.baseUrl;
     cfg.temp = Math.min(2, Math.max(0, parseFloat($('#in-temp').value) || 0.7));
     cfg.stream = $('#in-stream').checked;

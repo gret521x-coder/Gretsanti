@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pindutan v14 - Arcade Block Stacker, 7-Player Group Battle & Live Stream</title>
+  <style>
+    :root {
+      --bg-dark: #090d14;
+      --bg-panel: #111824;
+      --bg-card: #1a2333;
+      --border: #2a374f;
+      --text-main: #f0f6fc;
+      --text-muted: #8b9bb4;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --accent-gold: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #131c2e 0%, var(--bg-dark) 75%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px;
+      user-select: none;
+    }
+
+    /* LOCK SCREEN */
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 13, 20, 0.97);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lock-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 24px var(--accent-glow);
+    }
+
+    .lock-box h2 {
+      font-size: 1.65rem;
+      margin-bottom: 10px;
+    }
+
+    .lock-box p {
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+    }
+
+    .lock-box input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-size: 1rem;
+      text-align: center;
+      margin-bottom: 14px;
+      outline: none;
+    }
+
+    .lock-box input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .hint-text {
+      font-size: 0.9rem;
+      color: var(--accent-gold);
+      margin-top: 12px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .error-text {
+      color: var(--accent-red);
+      font-size: 0.85rem;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+
+    /* BUTTONS & INPUTS */
+    button {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: #233047;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: var(--accent-green);
+      border-color: var(--accent-green);
+      color: #fff;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: #16a34a;
+    }
+
+    button.stream-btn {
+      background: var(--accent-purple);
+      border-color: var(--accent-purple);
+      color: #fff;
+    }
+
+    button.stream-btn:hover:not(:disabled) {
+      background: #9333ea;
+    }
+
+    button.active-tab {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #090d14;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* HEADER */
+    header {
+      text-align: center;
+      width: 100%;
+      max-width: 1250px;
+      margin-bottom: 14px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .title-row h1 {
+      font-size: 2.1rem;
+      letter-spacing: 3px;
+      text-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .version-badge {
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .mode-bar, .settings-bar, .room-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .room-bar {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 10px;
+      align-items: center;
+    }
+
+    .room-code-display {
+      background: var(--bg-dark);
+      border: 1px dashed var(--accent);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .room-bar input {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .room-bar input:focus {
+      border-color: var(--accent);
+    }
+
+    #nicknameInput {
+      width: 140px;
+    }
+
+    #joinCodeInput {
+      width: 115px;
+      text-transform: uppercase;
+      font-family: monospace;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .room-status {
+      width: 100%;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* MAIN ARENA */
+    .arena {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 1320px;
+      align-items: flex-start;
+    }
+
+    .side-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 116px;
+    }
+
+    .stat-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat-card h3 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-card .val {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    /* BOARD */
+    .board-wrapper {
+      position: relative;
+      background: var(--bg-panel);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    #mainCanvas {
+      background: #06090f;
+      border-radius: 4px;
+      display: block;
+    }
+
+    .board-overlay {
+      position: absolute;
+      inset: 8px;
+      background: rgba(9, 13, 20, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      border-radius: 4px;
+    }
+
+    .board-overlay h2 {
+      font-size: 1.55rem;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+
+    .board-overlay p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    /* OPPONENTS & LIVE STREAM PANEL */
+    .opponents-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      min-width: 260px;
+      max-width: 600px;
+      flex: 1;
+    }
+
+    .opponents-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .opponents-header h3 {
+      font-size: 0.88rem;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+
+    .badges-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .viewer-badge {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .live-badge {
+      background: var(--accent-red);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: none;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+
+    #opponentsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 10px;
+    }
+
+    .opp-card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .opp-card.dead {
+      opacity: 0.45;
+      border-color: var(--accent-red);
+    }
+
+    .opp-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 125px;
+    }
+
+    .opp-stats {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    /* TOUCH CONTROLS FOR MOBILE/TABLET */
+    .touch-controls {
+      display: none;
+      margin-top: 14px;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 420px;
+    }
+
+    .touch-controls button {
+      padding: 12px 16px;
+      font-size: 1rem;
+      min-width: 64px;
+    }
+
+    @media (max-width: 768px) {
+      .touch-controls { display: flex; }
+      .side-col { width: 92px; }
+    }
+
+    /* FOOTER */
+    .controls-footer {
+      margin-top: 18px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .controls-footer span b {
+      color: var(--text-main);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ENCRYPTED LOCK SCREEN -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <h2>🔒 Pindutan Locked</h2>
+      <p>Enter the secret password to access the game.</p>
+      <input type="password" id="passwordInput" placeholder="Enter password..." autocomplete="off" />
+      <div style="display:flex; gap:8px; justify-content:center;">
+        <button class="primary" id="unlockBtn">Unlock</button>
+        <button id="hintBtn">Unlock Hint!!</button>
+      </div>
+      <div class="hint-text" id="hintText">Hint: Ikaw ay isang?" 😉</div>
+      <div class="error-text" id="lockError"></div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="title-row">
+      <h1>PINDUTAN</h1>
+      <span class="version-badge">v14</span>
+    </div>
+
+    <div class="mode-bar">
+      <button class="active-tab" data-mode="solo">Classic Solo</button>
+      <button data-mode="1v1">Online 1v1</button>
+      <button data-mode="group">Group Battle (Max 7)</button>
+    </div>
+
+    <div class="settings-bar">
+      <button id="toggleGhost">Ghost: ON</button>
+      <button id="toggleAutoPause">Auto-Pause: ON</button>
+      <button id="toggleSfx">SFX: ON</button>
+      <button id="pauseBtn">Pause (P)</button>
+      <button id="lockBtn">🔒 Lock</button>
+    </div>
+
+    <!-- ROOM & LIVE STREAM BAR -->
+    <div class="room-bar" id="roomBar" style="display:none;">
+      <input type="text" id="nicknameInput" maxlength="14" placeholder="Your Nickname" />
+      <button class="primary" id="createRoomBtn">Create Room</button>
+      <span class="room-code-display" id="roomCodeText">------</span>
+      <button id="copyCodeBtn">Copy</button>
+      <span style="color:var(--border);">|</span>
+      <input type="text" id="joinCodeInput" maxlength="6" placeholder="CODE" />
+      <button class="primary" id="joinRoomBtn">Join Battle</button>
+      <button class="stream-btn" id="watchStreamBtn">📺 Watch Live</button>
+      <div class="room-status" id="roomStatus">
+        Create a room or enter a friend's 6-character code to battle or watch live!
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN ARENA -->
+  <main class="arena">
+    <!-- LEFT STATS -->
+    <div class="side-col" id="playerLeftStats">
+      <div class="stat-card">
+        <h3>Hold (C)</h3>
+        <canvas id="holdCanvas" width="80" height="80"></canvas>
+      </div>
+      <div class="stat-card">
+        <h3>Score</h3>
+        <div class="val" id="scoreVal">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Best</h3>
+        <div class="val" id="bestVal">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Lines</h3>
+        <div class="val" id="linesVal">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Level</h3>
+        <div class="val" id="levelVal">1</div>
+      </div>
+    </div>
+
+    <!-- MAIN PLAYER BOARD -->
+    <div class="board-wrapper" id="playerBoardWrapper">
+      <canvas id="mainCanvas" width="260" height="520"></canvas>
+      <div class="board-overlay" id="boardOverlay">
+        <h2 id="overlayTitle">PINDUTAN</h2>
+        <p id="overlayDesc">Stack blocks, clear lines, and send garbage attacks in 1v1 &amp; 7-player group battles!</p>
+        <button class="primary" id="startBtn">Start Game</button>
+      </div>
+    </div>
+
+    <!-- RIGHT STATS -->
+    <div class="side-col" id="playerRightStats">
+      <div class="stat-card">
+        <h3>Next</h3>
+        <canvas id="nextCanvas" width="80" height="80"></canvas>
+      </div>
+      <div class="stat-card">
+        <h3>Sent</h3>
+        <div class="val" id="sentVal">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Combo</h3>
+        <div class="val" id="comboVal">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Incoming</h3>
+        <div class="val" id="garbageVal" style="color:var(--accent-red);">0</div>
+      </div>
+    </div>
+
+    <!-- OPPONENTS & LIVE STREAM VIEW -->
+    <div class="opponents-panel" id="opponentsPanel" style="display:none;">
+      <div class="opponents-header">
+        <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
+        <div class="badges-group">
+          <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
+          <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
+        </div>
+      </div>
+      <div id="opponentsGrid">
+        <div style="color:var(--text-muted); font-size:0.85rem; padding:12px; text-align:center;">
+          Waiting for players to join room...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MOBILE TOUCH CONTROLS -->
+  <div class="touch-controls">
+    <button onclick="mobileAction('left')">◀</button>
+    <button onclick="mobileAction('down')">▼</button>
+    <button onclick="mobileAction('right')">▶</button>
+    <button onclick="mobileAction('rotCW')">↻</button>
+    <button onclick="mobileAction('drop')">⬇ Drop</button>
+    <button onclick="mobileAction('hold')">Hold</button>
+  </div>
+
+  <!-- CONTROLS FOOTER -->
+  <footer class="controls-footer">
+    <span><b>← →</b> Move</span>
+    <span><b>↑ / X</b> Rotate</span>
+    <span><b>Z</b> Rotate CCW</span>
+    <span><b>↓</b> Soft Drop</span>
+    <span><b>Space</b> Hard Drop</span>
+    <span><b>C / Shift</b> Hold</span>
+    <span><b>P</b> Pause</span>
+  </footer>
+
+  <script>
+    /* =========================================================
+       1. ENCRYPTED PASSWORD VERIFICATION ("kupal" via SHA-256)
+       ========================================================= */
+    /* crypto.subtle only exists on https:// and localhost — over a plain-http LAN
+       address (XAMPP on 192.168.x.x) it is undefined and the lock could never open.
+       Both sides use this same function, so the fallback still matches. */
+    function fallbackHash(str) {
+      let h1 = 0x811c9dc5, h2 = 0xc2b2ae35;
+      for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+        h2 = Math.imul(h2 ^ c, 2654435761) >>> 0;
+      }
+      return (h1.toString(16) + h2.toString(16)).padStart(16, "0");
+    }
+
+    async function sha256(str) {
+      if (!(window.crypto && crypto.subtle && crypto.subtle.digest)) return fallbackHash(str);
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    let targetHash = "";
+    (async () => {
+      targetHash = await sha256(atob("a3VwYWw="));
+    })();
+
+    const lockScreen = document.getElementById("lockScreen");
+    const passwordInput = document.getElementById("passwordInput");
+    const lockError = document.getElementById("lockError");
+
+    async function attemptUnlock() {
+      const val = passwordInput.value.trim().toLowerCase();
+      if (!val) return;
+      const hashed = await sha256(val);
+      if (hashed === targetHash) {
+        lockScreen.style.display = "none";
+        passwordInput.value = "";
+        lockError.textContent = "";
+        sessionStorage.setItem("pindutan_unlocked", "1");
+      } else {
+        lockError.textContent = "Wrong password! Try again.";
+      }
+    }
+
+    if (sessionStorage.getItem("pindutan_unlocked") === "1") {
+      lockScreen.style.display = "none";
+    }
+
+    document.getElementById("unlockBtn").addEventListener("click", attemptUnlock);
+    passwordInput.addEventListener("keydown", e => { if (e.key === "Enter") attemptUnlock(); });
+    document.getElementById("hintBtn").addEventListener("click", () => {
+      document.getElementById("hintText").style.display = "block";
+    });
+    document.getElementById("lockBtn").addEventListener("click", () => {
+      sessionStorage.removeItem("pindutan_unlocked");
+      lockScreen.style.display = "flex";
+    });
+
+    /* =========================================================
+       2. WEB AUDIO SOUND EFFECTS
+       ========================================================= */
+    let sfxEnabled = true;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(freq, type = "sine", duration = 0.08, vol = 0.07) {
+      if (!sfxEnabled) return;
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    /* =========================================================
+       3. BLOCK STACKER ENGINE
+       ========================================================= */
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK = 26;
+
+    const COLORS = {
+      I: "#00f0f0",
+      J: "#3b82f6",
+      L: "#f97316",
+      O: "#eab308",
+      S: "#22c55e",
+      T: "#a855f7",
+      Z: "#ef4444",
+      G: "#64748b"
+    };
+
+    const SHAPES = {
+      I: [
+        [0, 0, 0, 0],
+        [1, 1, 1, 1],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+      ],
+      J: [
+        [1, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      L: [
+        [0, 0, 1],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      O: [
+        [1, 1],
+        [1, 1]
+      ],
+      S: [
+        [0, 1, 1],
+        [1, 1, 0],
+        [0, 0, 0]
+      ],
+      T: [
+        [0, 1, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      Z: [
+        [1, 1, 0],
+        [0, 1, 1],
+        [0, 0, 0]
+      ]
+    };
+
+    let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    let bag = [];
+    let current = null;
+    let nextPiece = null;
+    let holdPiece = null;
+    let canHold = true;
+
+    let score = 0;
+    let bestScore = parseInt(localStorage.getItem("pindutan_best") || "0", 10);
+    let lines = 0;
+    let level = 1;
+    let sentLines = 0;
+    let combo = -1;
+    let pendingGarbage = 0;
+
+    let gameRunning = false;
+    let isPaused = false;
+    let ghostEnabled = true;
+    let autoPauseEnabled = true;
+    let currentMode = "solo"; // "solo" | "1v1" | "group"
+    let isSpectator = false;
+
+    let dropCounter = 0;
+    let lastTime = 0;
+
+    const mainCanvas = document.getElementById("mainCanvas");
+    const ctx = mainCanvas.getContext("2d");
+    const holdCtx = document.getElementById("holdCanvas").getContext("2d");
+    const nextCtx = document.getElementById("nextCanvas").getContext("2d");
+
+    document.getElementById("bestVal").textContent = bestScore;
+
+    function refillBag() {
+      const types = ["I", "J", "L", "O", "S", "T", "Z"];
+      for (let i = types.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [types[i], types[j]] = [types[j], types[i]];
+      }
+      bag.push(...types);
+    }
+
+    function takeFromBag() {
+      if (bag.length < 3) refillBag();
+      const type = bag.shift();
+      return {
+        type,
+        matrix: SHAPES[type].map(r => [...r]),
+        x: Math.floor(COLS / 2) - Math.ceil(SHAPES[type].length / 2),
+        y: 0
+      };
+    }
+
+    function collide(b, piece, offX = 0, offY = 0, mat = piece.matrix) {
+      for (let r = 0; r < mat.length; r++) {
+        for (let c = 0; c < mat[r].length; c++) {
+          if (!mat[r][c]) continue;
+          const nx = piece.x + c + offX;
+          const ny = piece.y + r + offY;
+          if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+          if (ny >= 0 && b[ny][nx]) return true;
+        }
+      }
+      return false;
+    }
+
+    function rotateMatrix(mat, dir) {
+      const N = mat.length;
+      const res = Array.from({ length: N }, () => Array(N).fill(0));
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (dir > 0) res[c][N - 1 - r] = mat[r][c];
+          else res[N - 1 - c][r] = mat[r][c];
+        }
+      }
+      return res;
+    }
+
+    function tryRotate(dir) {
+      if (!current) return;
+      const rotated = rotateMatrix(current.matrix, dir);
+      const kicks = [0, -1, 1, -2, 2];
+      for (const kick of kicks) {
+        if (!collide(board, current, kick, 0, rotated)) {
+          current.matrix = rotated;
+          current.x += kick;
+          playTone(440, "triangle", 0.05);
+          return;
+        }
+      }
+    }
+
+    function applyPendingGarbage() {
+      if (pendingGarbage <= 0) return;
+      const hole = Math.floor(Math.random() * COLS);
+      for (let i = 0; i < pendingGarbage; i++) {
+        board.shift();
+        const row = Array(COLS).fill("G");
+        row[hole] = null;
+        board.push(row);
+      }
+      pendingGarbage = 0;
+      document.getElementById("garbageVal").textContent = 0;
+      playTone(140, "sawtooth", 0.15);
+    }
+
+    function lockPiece() {
+      for (let r = 0; r < current.matrix.length; r++) {
+        for (let c = 0; c < current.matrix[r].length; c++) {
+          if (current.matrix[r][c]) {
+            const by = current.y + r;
+            const bx = current.x + c;
+            if (by < 0) {
+              endGame();
+              return;
+            }
+            board[by][bx] = current.type;
+          }
+        }
+      }
+
+      let cleared = 0;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (board[r].every(cell => cell !== null)) {
+          board.splice(r, 1);
+          board.unshift(Array(COLS).fill(null));
+          cleared++;
+          r++;
+        }
+      }
+
+      if (cleared > 0) {
+        combo++;
+        lines += cleared;
+        const pointTable = [0, 100, 300, 500, 800];
+        const pts = (pointTable[cleared] || 800) * level + Math.max(0, combo * 50);
+        score += pts;
+        level = Math.floor(lines / 10) + 1;
+
+        const attackTable = [0, 0, 1, 2, 4];
+        let attack = (attackTable[cleared] || 4) + (combo > 0 ? Math.floor(combo / 2) : 0);
+        if (attack > 0) {
+          if (pendingGarbage > 0) {
+            const cancel = Math.min(pendingGarbage, attack);
+            pendingGarbage -= cancel;
+            attack -= cancel;
+            document.getElementById("garbageVal").textContent = pendingGarbage;
+          }
+          if (attack > 0 && currentMode !== "solo") {
+            sentLines += attack;
+            sendGarbageAttack(attack);
+          }
+        }
+        playTone(620 + cleared * 100, "square", 0.14);
+      } else {
+        combo = -1;
+        applyPendingGarbage();
+        playTone(220, "sine", 0.05);
+      }
+
+      updateHUD();
+      broadcastState(true);
+
+      canHold = true;
+      current = nextPiece;
+      nextPiece = takeFromBag();
+      drawMiniPiece(nextCtx, nextPiece.type);
+
+      if (collide(board, current)) {
+        endGame();
+      }
+    }
+
+    function holdCurrent() {
+      if (!canHold || !current) return;
+      canHold = false;
+      const prevType = current.type;
+      if (!holdPiece) {
+        holdPiece = prevType;
+        current = nextPiece;
+        nextPiece = takeFromBag();
+        drawMiniPiece(nextCtx, nextPiece.type);
+      } else {
+        current = {
+          type: holdPiece,
+          matrix: SHAPES[holdPiece].map(r => [...r]),
+          x: Math.floor(COLS / 2) - Math.ceil(SHAPES[holdPiece].length / 2),
+          y: 0
+        };
+        holdPiece = prevType;
+      }
+      drawMiniPiece(holdCtx, holdPiece);
+      playTone(350, "triangle", 0.06);
+    }
+
+    function hardDrop() {
+      if (!current) return;
+      let dropped = 0;
+      while (!collide(board, current, 0, 1)) {
+        current.y++;
+        dropped++;
+      }
+      score += dropped * 2;
+      lockPiece();
+    }
+
+    function updateHUD() {
+      document.getElementById("scoreVal").textContent = score;
+      document.getElementById("linesVal").textContent = lines;
+      document.getElementById("levelVal").textContent = level;
+      document.getElementById("sentVal").textContent = sentLines;
+      document.getElementById("comboVal").textContent = Math.max(0, combo);
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem("pindutan_best", bestScore);
+        document.getElementById("bestVal").textContent = bestScore;
+      }
+    }
+
+    function drawMiniPiece(context, type) {
+      context.clearRect(0, 0, 80, 80);
+      if (!type) return;
+      const mat = SHAPES[type];
+      const size = 18;
+      const offX = (80 - mat.length * size) / 2;
+      const offY = (80 - mat.length * size) / 2;
+      context.fillStyle = COLORS[type];
+      for (let r = 0; r < mat.length; r++) {
+        for (let c = 0; c < mat[r].length; c++) {
+          if (mat[r][c]) {
+            context.fillRect(offX + c * size + 1, offY + r * size + 1, size - 2, size - 2);
+          }
+        }
+      }
+    }
+
+    function drawBoard() {
+      ctx.fillStyle = "#06090f";
+      ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+      ctx.strokeStyle = "#131b29";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          ctx.strokeRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
+          if (board[r][c]) {
+            ctx.fillStyle = COLORS[board[r][c]];
+            ctx.fillRect(c * BLOCK + 1, r * BLOCK + 1, BLOCK - 2, BLOCK - 2);
+          }
+        }
+      }
+
+      if (current && gameRunning) {
+        if (ghostEnabled) {
+          let ghostY = current.y;
+          while (!collide(board, current, 0, ghostY - current.y + 1)) ghostY++;
+          ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+          for (let r = 0; r < current.matrix.length; r++) {
+            for (let c = 0; c < current.matrix[r].length; c++) {
+              if (current.matrix[r][c]) {
+                ctx.fillRect((current.x + c) * BLOCK + 1, (ghostY + r) * BLOCK + 1, BLOCK - 2, BLOCK - 2);
+              }
+            }
+          }
+        }
+
+        ctx.fillStyle = COLORS[current.type];
+        for (let r = 0; r < current.matrix.length; r++) {
+          for (let c = 0; c < current.matrix[r].length; c++) {
+            if (current.matrix[r][c]) {
+              ctx.fillRect((current.x + c) * BLOCK + 1, (current.y + r) * BLOCK + 1, BLOCK - 2, BLOCK - 2);
+            }
+          }
+        }
+      }
+    }
+
+    function gameLoop(time = 0) {
+      if (!gameRunning) return;
+      const delta = time - lastTime;
+      lastTime = time;
+
+      if (!isPaused) {
+        dropCounter += delta;
+        const speed = Math.max(90, 800 - (level - 1) * 65);
+        if (dropCounter > speed) {
+          if (!collide(board, current, 0, 1)) {
+            current.y++;
+          } else {
+            lockPiece();
+          }
+          dropCounter = 0;
+        }
+        drawBoard();
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    function startNewGame() {
+      if (isSpectator) return;
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+      bag = [];
+      holdPiece = null;
+      canHold = true;
+      score = 0;
+      lines = 0;
+      level = 1;
+      sentLines = 0;
+      combo = -1;
+      pendingGarbage = 0;
+      isPaused = false;
+      gameRunning = true;
+
+      drawMiniPiece(holdCtx, null);
+      current = takeFromBag();
+      nextPiece = takeFromBag();
+      drawMiniPiece(nextCtx, nextPiece.type);
+      updateHUD();
+
+      document.getElementById("boardOverlay").style.display = "none";
+      broadcastState(true);
+      lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      gameRunning = false;
+      playTone(110, "sawtooth", 0.4);
+      document.getElementById("overlayTitle").textContent = "GAME OVER";
+      document.getElementById("overlayDesc").textContent = `Final Score: ${score} | Lines: ${lines}`;
+      document.getElementById("startBtn").textContent = "Play Again";
+      document.getElementById("boardOverlay").style.display = "flex";
+      broadcastState(false);
+    }
+
+    /* =========================================================
+       4. MULTIPLAYER (1v1, MAX 7 GROUP BATTLE & LIVE STREAM)
+       Uses BroadcastChannel for zero-dependency multi-tab rooms.
+       ========================================================= */
+    const MAX_PLAYERS = 7;
+    const myId = "P-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+    let isHost = false;
+    let roomCode = "";
+    let roomChannel = null;
+    let roomPlayers = {};
+    let spectatorIds = new Set();
+
+    const roomStatus = document.getElementById("roomStatus");
+    const nicknameInput = document.getElementById("nicknameInput");
+    nicknameInput.value = localStorage.getItem("pindutan_nick") || ("Player_" + Math.floor(100 + Math.random() * 900));
+
+    function getMyName() {
+      const nick = nicknameInput.value.trim() || "Player";
+      localStorage.setItem("pindutan_nick", nick);
+      return nick;
+    }
+
+    function generateRoomCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let res = "";
+      for (let i = 0; i < 6; i++) res += chars[Math.floor(Math.random() * chars.length)];
+      return res;
+    }
+
+    function getCompactBoard() {
+      const copy = board.map(r => [...r]);
+      if (current && gameRunning) {
+        for (let r = 0; r < current.matrix.length; r++) {
+          for (let c = 0; c < current.matrix[r].length; c++) {
+            if (current.matrix[r][c]) {
+              const by = current.y + r;
+              const bx = current.x + c;
+              if (by >= 0 && by < ROWS && bx >= 0 && bx < COLS) {
+                copy[by][bx] = current.type;
+              }
+            }
+          }
+        }
+      }
+      return copy;
+    }
+
+    function broadcastState(alive = gameRunning) {
+      if (currentMode === "solo" || !roomChannel || !roomCode) return;
+      if (!isSpectator) {
+        roomPlayers[myId] = {
+          id: myId,
+          name: getMyName() + (isHost ? " (Host)" : ""),
+          score,
+          lines,
+          sent: sentLines,
+          alive,
+          board: getCompactBoard()
+        };
+      } else {
+        spectatorIds.add(myId);
+      }
+
+      roomChannel.postMessage({
+        type: "SYNC",
+        senderId: myId,
+        isSpectator,
+        player: isSpectator ? null : roomPlayers[myId]
+      });
+
+      renderOpponentsGrid();
+    }
+
+    function sendGarbageAttack(amount) {
+      if (!roomChannel || !roomCode || isSpectator) return;
+      const activeTargets = Object.values(roomPlayers).filter(p => p.id !== myId && p.alive);
+      if (activeTargets.length === 0) return;
+      const target = activeTargets[Math.floor(Math.random() * activeTargets.length)];
+
+      roomChannel.postMessage({
+        type: "GARBAGE",
+        senderId: myId,
+        targetId: target.id,
+        amount
+      });
+    }
+
+    function renderOpponentsGrid() {
+      const grid = document.getElementById("opponentsGrid");
+      const allPlayers = Object.values(roomPlayers);
+      const visiblePlayers = isSpectator ? allPlayers : allPlayers.filter(p => p.id !== myId);
+      const limit = currentMode === "1v1" ? 2 : MAX_PLAYERS;
+
+      document.getElementById("opponentsTitle").textContent =
+        isSpectator ? `LIVE STREAM (${allPlayers.length}/${limit} PLAYERS)` : `OPPONENTS (${allPlayers.length}/${limit})`;
+      document.getElementById("spectatorCount").textContent = `👁 ${spectatorIds.size} Watching`;
+
+      if (visiblePlayers.length === 0) {
+        grid.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; padding:12px; text-align:center;">
+          Waiting for players in Room <b>${roomCode || "------"}</b>...<br/>
+          <small>Open this HTML file in another browser tab and enter the same code to battle or watch live!</small>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = "";
+      visiblePlayers.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "opp-card" + (p.alive ? "" : " dead");
+
+        const title = document.createElement("div");
+        title.className = "opp-name";
+        title.textContent = p.name + (p.alive ? "" : " (KO)");
+
+        const miniCanvas = document.createElement("canvas");
+        miniCanvas.width = 100;
+        miniCanvas.height = 200;
+        const mCtx = miniCanvas.getContext("2d");
+        mCtx.fillStyle = "#06090f";
+        mCtx.fillRect(0, 0, 100, 200);
+
+        if (p.board) {
+          for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+              if (p.board[r][c]) {
+                mCtx.fillStyle = COLORS[p.board[r][c]] || "#fff";
+                mCtx.fillRect(c * 10, r * 10, 9, 9);
+              }
+            }
+          }
+        }
+
+        const stats = document.createElement("div");
+        stats.className = "opp-stats";
+        stats.innerHTML = `Score: <b>${p.score}</b><br>Lines: <b>${p.lines}</b> | Sent: <b>${p.sent}</b>`;
+
+        card.appendChild(title);
+        card.appendChild(miniCanvas);
+        card.appendChild(stats);
+        grid.appendChild(card);
+      });
+    }
+
+    function openRoomChannel(code, hostFlag, spectateFlag) {
+      if (roomChannel) roomChannel.close();
+      isHost = hostFlag;
+      isSpectator = spectateFlag;
+      roomCode = code;
+      roomPlayers = {};
+      spectatorIds.clear();
+
+      document.getElementById("roomCodeText").textContent = roomCode;
+      document.getElementById("joinCodeInput").value = roomCode;
+      toggleSpectatorLayout(isSpectator);
+
+      roomChannel = new BroadcastChannel("pindutan_room_" + roomCode);
+
+      roomChannel.onmessage = (e) => {
+        const msg = e.data;
+        if (msg.senderId === myId) return;
+
+        if (msg.type === "HELLO") {
+          if (msg.isSpectator) {
+            spectatorIds.add(msg.senderId);
+          } else {
+            const limit = currentMode === "1v1" ? 2 : MAX_PLAYERS;
+            if (Object.keys(roomPlayers).length < limit || roomPlayers[msg.senderId]) {
+              roomPlayers[msg.senderId] = msg.player;
+            }
+          }
+          broadcastState();
+        } else if (msg.type === "SYNC") {
+          if (msg.isSpectator) {
+            spectatorIds.add(msg.senderId);
+          } else if (msg.player) {
+            const limit = currentMode === "1v1" ? 2 : MAX_PLAYERS;
+            if (Object.keys(roomPlayers).length < limit || roomPlayers[msg.senderId]) {
+              roomPlayers[msg.senderId] = msg.player;
+            }
+          }
+          renderOpponentsGrid();
+        } else if (msg.type === "GARBAGE" && msg.targetId === myId && gameRunning && !isSpectator) {
+          pendingGarbage += msg.amount;
+          document.getElementById("garbageVal").textContent = pendingGarbage;
+          playTone(140, "sawtooth", 0.2, 0.12);
+        } else if (msg.type === "START_MATCH" && !isSpectator) {
+          startNewGame();
+        }
+      };
+
+      if (!isSpectator) {
+        roomPlayers[myId] = {
+          id: myId,
+          name: getMyName() + (isHost ? " (Host)" : ""),
+          score: 0,
+          lines: 0,
+          sent: 0,
+          alive: false,
+          board: null
+        };
+      } else {
+        spectatorIds.add(myId);
+      }
+
+      roomChannel.postMessage({
+        type: "HELLO",
+        senderId: myId,
+        isSpectator,
+        player: isSpectator ? null : roomPlayers[myId]
+      });
+
+      const limit = currentMode === "1v1" ? 2 : MAX_PLAYERS;
+      roomStatus.textContent = isSpectator
+        ? `📺 Watching Live Stream for Room ${roomCode}`
+        : `✅ Connected to Room ${roomCode} (Max ${limit} Players). Share code to battle or watch live!`;
+
+      renderOpponentsGrid();
+    }
+
+    function setupHost() {
+      const code = generateRoomCode();
+      openRoomChannel(code, true, false);
+    }
+
+    function joinExistingRoom(spectate = false) {
+      const code = document.getElementById("joinCodeInput").value.trim().toUpperCase();
+      if (code.length !== 6) {
+        roomStatus.textContent = "Please enter a valid 6-character room code.";
+        return;
+      }
+      openRoomChannel(code, false, spectate);
+    }
+
+    function toggleSpectatorLayout(spectating) {
+      document.getElementById("playerLeftStats").style.display = spectating ? "none" : "flex";
+      document.getElementById("playerBoardWrapper").style.display = spectating ? "none" : "flex";
+      document.getElementById("playerRightStats").style.display = spectating ? "none" : "flex";
+      document.getElementById("liveBadge").style.display = spectating ? "inline-block" : "none";
+      document.getElementById("opponentsPanel").style.maxWidth = spectating ? "1040px" : "600px";
+    }
+
+    /* =========================================================
+       5. UI & INPUT CONTROLS
+       ========================================================= */
+    document.querySelectorAll(".mode-bar button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".mode-bar button").forEach(b => b.classList.remove("active-tab"));
+        btn.classList.add("active-tab");
+        currentMode = btn.dataset.mode;
+
+        const isOnline = currentMode !== "solo";
+        document.getElementById("roomBar").style.display = isOnline ? "flex" : "none";
+        document.getElementById("opponentsPanel").style.display = isOnline ? "block" : "none";
+        if (!isOnline) {
+          isSpectator = false;
+          toggleSpectatorLayout(false);
+        } else {
+          renderOpponentsGrid();
+        }
+      });
+    });
+
+    document.getElementById("createRoomBtn").addEventListener("click", setupHost);
+    document.getElementById("joinRoomBtn").addEventListener("click", () => joinExistingRoom(false));
+    document.getElementById("watchStreamBtn").addEventListener("click", () => joinExistingRoom(true));
+
+    document.getElementById("copyCodeBtn").addEventListener("click", () => {
+      if (roomCode) {
+        navigator.clipboard.writeText(roomCode);
+        roomStatus.textContent = `Copied room code ${roomCode} to clipboard!`;
+      }
+    });
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      startNewGame();
+      if (isHost && currentMode !== "solo" && roomChannel) {
+        roomChannel.postMessage({ type: "START_MATCH", senderId: myId });
+      }
+    });
+
+    document.getElementById("toggleGhost").addEventListener("click", e => {
+      ghostEnabled = !ghostEnabled;
+      e.target.textContent = `Ghost: ${ghostEnabled ? "ON" : "OFF"}`;
+    });
+
+    document.getElementById("toggleAutoPause").addEventListener("click", e => {
+      autoPauseEnabled = !autoPauseEnabled;
+      e.target.textContent = `Auto-Pause: ${autoPauseEnabled ? "ON" : "OFF"}`;
+    });
+
+    document.getElementById("toggleSfx").addEventListener("click", e => {
+      sfxEnabled = !sfxEnabled;
+      e.target.textContent = `SFX: ${sfxEnabled ? "ON" : "OFF"}`;
+    });
+
+    function togglePause() {
+      if (!gameRunning) return;
+      isPaused = !isPaused;
+      document.getElementById("pauseBtn").textContent = isPaused ? "Resume (P)" : "Pause (P)";
+      if (isPaused) {
+        document.getElementById("overlayTitle").textContent = "PAUSED";
+        document.getElementById("overlayDesc").textContent = "Press P to resume playing.";
+        document.getElementById("startBtn").style.display = "none";
+        document.getElementById("boardOverlay").style.display = "flex";
+      } else {
+        document.getElementById("startBtn").style.display = "inline-block";
+        document.getElementById("boardOverlay").style.display = "none";
+        lastTime = performance.now();
+      }
+    }
+
+    document.getElementById("pauseBtn").addEventListener("click", togglePause);
+    window.addEventListener("blur", () => {
+      if (autoPauseEnabled && gameRunning && !isPaused && currentMode === "solo") togglePause();
+    });
+
+    function mobileAction(action) {
+      if (!gameRunning || isPaused || isSpectator) return;
+      if (action === "left" && !collide(board, current, -1, 0)) current.x--;
+      if (action === "right" && !collide(board, current, 1, 0)) current.x++;
+      if (action === "down" && !collide(board, current, 0, 1)) { current.y++; score += 1; updateHUD(); }
+      if (action === "rotCW") tryRotate(1);
+      if (action === "drop") hardDrop();
+      if (action === "hold") holdCurrent();
+      drawBoard();
+    }
+
+    document.addEventListener("keydown", e => {
+      if (lockScreen.style.display !== "none") return;
+      if (document.activeElement.tagName === "INPUT") return;
+
+      if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", "Space"].includes(e.code)) {
+        e.preventDefault();
+      }
+      if (e.code === "KeyP") { togglePause(); return; }
+      if (!gameRunning || isPaused || isSpectator) return;
+
+      switch (e.code) {
+        case "ArrowLeft":
+          if (!collide(board, current, -1, 0)) current.x--;
+          break;
+        case "ArrowRight":
+          if (!collide(board, current, 1, 0)) current.x++;
+          break;
+        case "ArrowDown":
+          if (!collide(board, current, 0, 1)) {
+            current.y++;
+            score += 1;
+            updateHUD();
+          }
+          break;
+        case "ArrowUp":
+        case "KeyX":
+          tryRotate(1);
+          break;
+        case "KeyZ":
+          tryRotate(-1);
+          break;
+        case "Space":
+          hardDrop();
+          break;
+        case "KeyC":
+        case "ShiftLeft":
+        case "ShiftRight":
+          holdCurrent();
+          break;
+      }
+      drawBoard();
+    });
+
+    drawBoard();
+  </script>
+</body>
+</html>

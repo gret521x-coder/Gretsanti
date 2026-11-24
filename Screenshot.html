@@ -1,0 +1,66 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Collectibles</title>
+<style>
+[hidden]{display:none!important}
+body{margin:0;font-family:system-ui;background:#131314;color:#e3e3e3;padding:20px}
+h1{background:linear-gradient(90deg,#4285f4,#9b72cb,#d96570);-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content}
+label{display:block;background:#8ab4f8;color:#041e49;font-weight:600;text-align:center;padding:16px;border-radius:30px}
+#f{display:none}
+#g{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:20px}
+.i{position:relative}
+.i img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px}
+.i b{position:absolute;top:6px;right:6px;background:#000a;border-radius:50%;width:28px;height:28px;text-align:center;line-height:28px}
+#l{position:fixed;top:0;left:0;right:0;bottom:0;background:#131314;display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
+#l form{width:100%;max-width:360px;text-align:center}
+#l h1{margin:0 auto 6px}
+#p{width:100%;box-sizing:border-box;padding:16px;border-radius:30px;border:1px solid #333537;background:#1e1f20;color:#e3e3e3;font-size:1rem;text-align:center;outline:none;margin-top:16px}
+#l button{width:100%;margin-top:12px;padding:15px;border:0;border-radius:30px;background:#8ab4f8;color:#041e49;font-size:1rem;font-weight:600}
+#e{color:#f28b82;height:20px;margin-top:10px}
+</style></head><body>
+
+<div id="l"><form onsubmit="return U()">
+<h1>Collectibles 🔒</h1>
+<div style="color:#9aa0a6">Enter password to continue</div>
+<input type="password" id="p" placeholder="Password" autocomplete="off">
+<button type="submit">Unlock</button>
+<div id="e"></div>
+</form></div>
+
+<div id="a" hidden>
+<h1>Collectibles</h1>
+<label>📷 Choose screenshot to save<input type="file" accept="image/*" id="f"></label>
+<p id="m"></p>
+<div id="g"></div>
+</div>
+
+<script>
+var K="aXRuYXM="; // encrypted password (santi)
+
+/* GitHub Pages is static — the vault's save.php stays on the PHP host. */
+var SAVE_BASE = /(^|\.)github\.io$/i.test(location.hostname)
+  ? "https://aidekupal.unaux.com/save.php"
+  : "save.php";
+
+sessionStorage.removeItem("kdl2"); // forget any old unlock
+
+function U(){
+  var v=p.value.trim().toLowerCase(),ok=false;
+  try{ok=btoa(v.split("").reverse().join(""))===K}catch(x){}
+  if(ok){O()}
+  else{e.textContent="Wrong password";p.value=""}
+  return false;
+}
+function O(){l.hidden=true;a.hidden=false;L()}
+
+function P(o){var d=new FormData();for(var x in o)d.append(x,o[x]);return fetch(SAVE_BASE,{method:"POST",body:d}).then(r=>r.text())}
+function L(){fetch(SAVE_BASE+"?l=1").then(r=>r.json()).then(list=>{
+  g.innerHTML=list.map(n=>'<div class="i"><a href="'+SAVE_BASE+'?v='+n+'"><img src="'+SAVE_BASE+'?v='+n+'"></a><b onclick="D(\''+n+'\')">✕</b></div>').join("")||"Nothing saved yet."
+}).catch(()=>g.textContent="Can't reach save.php")}
+function D(n){if(confirm("Delete?"))P({del:n}).then(L)}
+
+f.onchange=function(){
+createImageBitmap(f.files[0]).then(b=>{
+var s=Math.min(1,1600/Math.max(b.width,b.height)),c=document.createElement("canvas");
+c.width=b.width*s;c.height=b.height*s;c.getContext("2d").drawImage(b,0,0,c.width,c.height);
+return P({i:c.toDataURL("image/jpeg",.9)})}).then(r=>{
+m.textContent=r=="ok"?"Saved ✓":"Failed";f.value="";L()})}
+    </script></body></html>

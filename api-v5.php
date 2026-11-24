@@ -60,6 +60,8 @@ const LINK_MAX_PER    = 20;        // preview lookups per IP per window
 const MAX_ENC         = 12000;     // base64 ciphertext per message
 const MAX_VOICE       = 120;       // seconds of audio we accept
 const ADMIN_TTL       = 45;        // seconds an admin slot survives without a beat
+const ADMIN_GHOST     = 25;        // an admin silent this long may be cleared by anyone
+                                   // (a live admin beats every 12 s, so this never hits them)
 
 const ALLOWED_EXT = [
     'jpg' => 'image', 'jpeg' => 'image', 'png' => 'image',
@@ -95,6 +97,46 @@ header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store, max-age=0');
 header('Referrer-Policy: no-referrer');
+
+/* ------------------------------------------------------------ CORS
+ *  Lets the page be served from somewhere else (GitHub Pages, a CDN)
+ *  while this file keeps running here. Only hosts listed below may talk to
+ *  it; anything else is refused by the browser. No cookies are used, so a
+ *  careful allow-list costs nothing.
+ *  Add your own host to $CORS_HOSTS if you move the site again.
+ */
+$CORS_HOSTS = [
+    'gret521x-coder.github.io',   // the GitHub Pages copy
+    'unaux.com',                  // the current site
+    'localhost', '127.0.0.1'      // XAMPP while testing
+];
+
+$__origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if ($__origin !== '') {
+    $__host = parse_url($__origin, PHP_URL_HOST);
+    if (is_string($__host) && $__host !== '') {
+        $__allowed = false;
+        foreach ($CORS_HOSTS as $__h) {
+            if ($__host === $__h || substr($__host, -strlen('.' . $__h)) === '.' . $__h) {
+                $__allowed = true;
+                break;
+            }
+        }
+        if ($__allowed) {
+            header('Access-Control-Allow-Origin: ' . $__origin);
+            header('Vary: Origin');
+            header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type');
+            header('Access-Control-Max-Age: 86400');
+        }
+    }
+}
+
+/* preflight: every JSON POST from another origin sends one of these first */
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 set_exception_handler(static function (Throwable $e): void {
     http_response_code(500);
@@ -471,9 +513,13 @@ switch ($action) {
         out([
             'ok'       => true,
             'service'  => 'black-cat-chat',
-            'version'  => 2,
+            'version'  => 3,                 /* 3 = the copy with CORS */
+            'build'    => 'cors',
             'php'      => PHP_VERSION,
-            'writable' => is_writable($DATA_DIR) && is_writable($UPLOAD_DIR)
+            'writable' => is_writable($DATA_DIR) && is_writable($UPLOAD_DIR),
+            'cors'     => array_values($CORS_HOSTS),
+            'origin'   => $_SERVER['HTTP_ORIGIN'] ?? '',
+            'upload_max' => (int)(ini_get('upload_max_filesize') ?: 0)
         ]);
 
     /* ------------------------------------------------------------------ load */
@@ -878,6 +924,36 @@ switch ($action) {
         });
         if (empty($res['ok'])) {
             fail('not admin', 403);
+        }
+        out($res);
+
+    /* clear a slot left behind by a crashed tab — only if it is genuinely silent */
+    case 'freeadmin':
+        if ($method !== 'POST') {
+            fail('POST required', 405);
+        }
+        rate_limit($RATE_FILE, 'freeadmin', 10, 60);
+
+        $in = json_body();
+        $fu = clean_id($in['uid'] ?? '');
+        if ($fu === '') {
+            fail('invalid request');
+        }
+
+        $res = with_lock($DATA_DIR . '/admin.lock', static function () use ($ADMIN_FILE, $fu) {
+            $cur  = read_json($ADMIN_FILE);
+            $curU = (string)($cur['uid'] ?? '');
+            $last = (int)($cur['last'] ?? 0);
+
+            if ($curU === '' || $last <= time() - ADMIN_GHOST) {
+                write_json($ADMIN_FILE, ['uid' => '', 'name' => '', 'since' => 0, 'last' => 0]);
+                return ['ok' => true, 'freed' => true];
+            }
+            return ['ok' => false, 'error' => 'the admin is still live', 'name' => (string)($cur['name'] ?? 'Admin')];
+        });
+
+        if (empty($res['ok'])) {
+            out($res, 409);
         }
         out($res);
 

@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#07070c">
+<!-- the PHP host may refuse requests that carry a foreign Referer, so send none -->
+<meta name="referrer" content="no-referrer">
 <title>🐾 Black Cat Group Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -361,9 +363,32 @@ footer{
 #rxpop button:active{transform:scale(1.25);background:rgba(160,107,255,.22)}
 
 /* ================= LIGHTBOX ================= */
-#lightbox{position:fixed;inset:0;z-index:80;background:rgba(4,4,8,.96);display:none;align-items:center;justify-content:center;padding:12px}
+#lightbox{
+  position:fixed;inset:0;z-index:80;background:rgba(4,4,8,.96);display:none;
+  align-items:center;justify-content:center;padding:12px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
 #lightbox.open{display:flex}
-#lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+body.lb-open{overflow:hidden}
+#lightbox img{
+  max-width:100%;max-height:calc(100% - 108px);object-fit:contain;border-radius:10px;
+  cursor:zoom-out;margin-bottom:44px;
+}
+#lbClose{
+  position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;
+  width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.22);
+  background:rgba(20,20,28,.9);color:#fff;font-size:17px;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;
+  -webkit-tap-highlight-color:transparent;
+}
+#lbClose:active{background:rgba(255,255,255,.18)}
+#lbOpen{
+  position:absolute;left:50%;transform:translateX(-50%);
+  bottom:calc(16px + env(safe-area-inset-bottom));
+  font-size:12px;color:var(--text-2);text-decoration:none;
+  border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 16px;
+  background:rgba(20,20,28,.85);z-index:2;
+}
 
 /* ================= TOAST ================= */
 #toast{
@@ -484,6 +509,31 @@ footer{
 @keyframes zap{0%{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.25);opacity:1}100%{transform:none}}
 
 
+/* shown when this copy cannot reach the PHP host — point people at the original */
+.phphint{font-size:12px;line-height:1.5;color:#ffb4c0;background:rgba(255,61,90,.08);
+  border:1px solid rgba(255,61,90,.28);border-radius:12px;padding:10px 12px;margin:8px 0}
+.phphint a{color:#8ec5ff;text-decoration:underline;word-break:break-all}
+
+/* PHP status row doubles as a connection test */
+.srow.tappable{cursor:pointer}
+.srow.tappable:active{background:rgba(255,255,255,.06)}
+.srvtest{font-style:normal;font-size:10px;color:var(--text-3);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:1px 6px;margin-left:4px}
+
+/* ================= v5.1: touch-friendly message actions ================= */
+.msg .acts{
+  display:none;gap:5px;margin:4px 2px 0;
+}
+.msg .acts button{
+  width:30px;height:28px;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  color:var(--text-2);border-radius:9px;font-size:13px;line-height:1;
+  -webkit-tap-highlight-color:transparent;
+}
+.msg .acts button:active{background:rgba(160,107,255,.22);color:#fff}
+@media (hover:hover) and (pointer:fine){ .msg:hover .acts{display:flex} }
+@media (hover:none), (pointer:coarse){ .msg .acts{display:flex} }
+#rxpop{max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:center}
+
 /* ================= v5: secret admin ================= */
 .lobbymsg{
   margin-top:10px;padding:9px 12px;border-radius:10px;font-size:12.5px;line-height:1.4;
@@ -494,6 +544,18 @@ footer{
 #annBar.locked{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.04)}
 #annBar.locked #annText{color:var(--text-3);font-style:italic}
 #clearBtn{color:#ff8a9b}
+.adminrow{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  margin-top:10px;padding:7px 11px;border-radius:10px;font-size:11.5px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--text-2);
+}
+.adminrow.free{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.28);color:#9ae6b4}
+.adminrow.busy{background:rgba(255,179,0,.08);border-color:rgba(255,179,0,.3);color:#ffd08a}
+.adminrow.mine{background:rgba(160,107,255,.12);border-color:rgba(160,107,255,.35);color:#d6c2ff}
+.adminrow button{
+  border:1px solid rgba(255,255,255,.18);background:transparent;color:inherit;
+  border-radius:8px;padding:4px 10px;font-size:11px;font-family:var(--font);
+}
 #joinNormalBtn{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text-2);
   border-radius:12px;padding:9px 14px;font-size:13px;font-family:var(--font);margin-top:8px;width:100%}
 /* ================= v4: banner, voice notes, end-to-end encryption ================= */
@@ -784,7 +846,11 @@ footer{
   <div class="ggrid" id="gifGrid"></div>
 </div>
 
-<div id="lightbox"><img id="lbImg" alt=""></div>
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button id="lbClose" type="button" aria-label="Close image">✕</button>
+  <img id="lbImg" alt="shared image">
+  <a id="lbOpen" href="#" target="_blank" rel="noopener noreferrer nofollow">open original ↗</a>
+</div>
 <div id="msgMenu" role="menu">
   <button data-a="reply">↩ Reply</button>
   <button data-a="copy">📋 Copy</button>
@@ -821,9 +887,16 @@ footer{
     <p class="sub">One global room · triple MQTT relay · PHP backup sync · one secret admin</p>
     <input id="nameInp" placeholder="Your name" maxlength="32" autocomplete="nickname">
     <div id="lobbyMsg" class="lobbymsg" style="display:none"></div>
+    <div id="phpHint" class="phphint" hidden></div>
+    <div id="adminRow" class="adminrow">
+      <span id="adminRowText"></span>
+      <button id="adminStepDown" style="display:none">Step down</button>
+    </div>
     <button id="joinNormalBtn" style="display:none">Join as a normal member →</button>
     <div class="srv">
-      <div class="srow"><span>🗄️ PHP API (api-v5.php)</span><span class="dot wait" data-srv="php"></span></div>
+      <div class="srow tappable" id="phpSrvRow" role="button" tabindex="0" title="Tap to test the PHP connection">
+        <span>🗄️ PHP API (api-v5.php) <em class="srvtest">test</em></span><span class="dot wait" data-srv="php"></span>
+      </div>
       <div class="srow"><span>⚡ EMQX relay</span><span class="dot wait" data-srv="b0"></span></div>
       <div class="srow"><span>⚡ HiveMQ relay</span><span class="dot wait" data-srv="b1"></span></div>
       <div class="srow"><span>⚡ Mosquitto relay</span><span class="dot wait" data-srv="b2"></span></div>
@@ -833,6 +906,24 @@ footer{
   </div>
 </div>
 
+<script>
+/* ============================================================================
+   SITE CONFIG — where the PHP lives.
+
+   XAMPP / your own host :  nothing to do, it uses api-v5.php next to this file
+   GitHub Pages          :  detected below and pointed at the unaux host
+
+   Override either way by setting window.KDL_API_BASE before this script, e.g.
+     window.KDL_API_BASE = 'https://aidekupal.unaux.com/api-v5.php';
+   ============================================================================ */
+window.KDL_API_BASE = window.KDL_API_BASE || (function () {
+  /* GitHub Pages serves only static files — the PHP stays on unaux */
+  if (/(^|\.)github\.io$/i.test(location.hostname)) {
+    return 'https://aidekupal.unaux.com/api-v5.php';
+  }
+  return '';                       /* same folder */
+}());
+</script>
 <script>
 'use strict';
 /* ================================================================
@@ -892,6 +983,26 @@ var lastTypingSent = 0;
 var lastReactAt = 0;
 var phpState = 'wait';
 var lastServerTs = 0;   /* server-side monotonic timestamp for incremental loads */
+/* ------------------------------------------------------------------
+   Where does the PHP live?
+   Empty  → api-v5.php sitting next to this file (XAMPP, your own host)
+   Set    → absolute URL of your PHP host, e.g. on GitHub Pages:
+            window.KDL_API_BASE = 'https://yoursite.unaux.com/api-v5.php';
+   ------------------------------------------------------------------ */
+var API_BASE = (window.KDL_API_BASE || 'api-v5.php');
+var API_Q = API_BASE + '?action=';
+
+/* relative upload paths (uploads/x.png) must point at the PHP host */
+function apiDir(){
+  var i = API_BASE.lastIndexOf('/');
+  return i < 0 ? '' : API_BASE.slice(0, i + 1);
+}
+function mediaUrl(u){
+  if(!u) return u;
+  if(/^(https?:|data:|blob:)/i.test(u)) return u;
+  return apiDir() + u;
+}
+
 var serverOnline = null; /* Set(uid) from api-v5.php?action=online, or null = unsupported */
 var leaveSent = false;
 var popEl = null;
@@ -903,13 +1014,30 @@ function myName(){ return uname || ('Guest-' + uid.slice(-4)); }
 
 /* ================= Toast ================= */
 var toastTimer = null;
-function toast(t){
+function toast(t, ms){
   var d = el('toast');
   if(!t){ d.classList.remove('show'); return; }
   d.textContent = t;
   d.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ d.classList.remove('show'); }, 2600);
+  toastTimer = setTimeout(function(){ d.classList.remove('show'); }, ms || 2600);
+}
+
+/* Turns a failed API call into something you can act on. */
+function apiHostLabel(){
+  if(!/^https?:/i.test(API_BASE)) return 'the PHP server';
+  return API_BASE.replace(/^(https?:\/\/[^/]+).*$/i, '$1');
+}
+function apiFail(what){
+  return function(err){
+    var msg = String((err && err.message) || err || '');
+    if(/failed to fetch|networkerror|load failed|network request failed/i.test(msg)){
+      toast(what + ' failed — ' + apiHostLabel() + ' refused it. Upload api-v5.php there so it allows this page (CORS headers).', 8000);
+    } else {
+      toast(what + ' failed' + (msg ? ' — ' + msg.slice(0, 70) : ''), 5000);
+    }
+    phpOk(false);
+  };
 }
 
 /* ================= Server status dots ================= */
@@ -926,10 +1054,74 @@ function updateRelayPills(){
   p.className = 'pill' + (on === 0 ? ' warn' : '');
   BROKERS.forEach(function(b, i){ setSrv('b' + i, b.state || 'bad'); });
 }
+var phpWarned = false;
+/* Tap the PHP row in the lobby: says exactly what came back, in words you can act on. */
+var PROBE_TAG_TIMEOUT = 8000;
+function probePhp(){
+  var box = el('lobbyMsg');
+  var say = function(t){ if(box) box.textContent = t; };
+  var t0 = Date.now();
+  var url = API_Q + 'health&t=' + nowMs();
+  say('Testing ' + apiHostLabel() + '…');
+
+  fetch(url, { cache: 'no-store' })
+    .then(function(r){
+      return r.text().then(function(txt){
+        var ms = Date.now() - t0, j = null;
+        try { j = JSON.parse(txt); } catch(e){}
+        if(r.ok && j && j.ok){
+          phpOk(true);
+          say('PHP OK · v' + (j.version || '?') + (j.build ? ' / ' + j.build : '') +
+              ' · ' + ms + ' ms' + (j.writable === false ? ' · data folder NOT writable' : ''));
+        } else {
+          phpOk(false);
+          say('PHP answered HTTP ' + r.status + ' — ' + String(txt || '(empty)').slice(0, 60));
+        }
+      });
+    })
+    .catch(function(err){
+      /* fetch respects CORS; a plain <script> tag does not. So if the tag loads,
+         the server is fine and only its headers are wrong. */
+      var settled = false;
+      var tag = document.createElement('script');
+      var verdict = function(reachable){
+        if(settled) return;
+        settled = true;
+        try { tag.remove(); } catch(e){}
+        phpOk(false);
+        if(reachable){
+          say('Host answers, browser blocks the reply → CORS headers missing on the file there (old api-v5.php still in place?).');
+        } else {
+          say('Host did not answer at all (' + ((err && err.message) || err) + ') → firewall, wrong path, or the file is not there.');
+        }
+      };
+      tag.onload = function(){ verdict(true); };
+      tag.onerror = function(){ verdict(false); };
+      tag.src = url;
+      setTimeout(function(){ verdict(false); }, PROBE_TAG_TIMEOUT);
+      document.head.appendChild(tag);
+    });
+}
 function phpOk(ok){
   phpState = ok ? 'ok' : 'bad';
   setSrv('php', phpState);
   if(!ok) serverOnline = null;
+  var hint = el('phpHint');
+  if(hint){
+    if(!ok && /^https?:/i.test(API_BASE)){
+      hint.hidden = false;
+      hint.innerHTML = 'This copy cannot reach the PHP host, so history, uploads and the banner will not work here. ' +
+        'Open the chat on the host itself: <a href="' + apiDir() + 'gc-v5.html" target="_blank" rel="noopener">' +
+        apiHostLabel().replace(/^https?:\/\//, '') + '/gc-v5.html</a>';
+    } else {
+      hint.hidden = true;
+      hint.innerHTML = '';
+    }
+  }
+  if(!ok && !phpWarned && /^https?:/i.test(API_BASE)){
+    phpWarned = true;
+    toast('PHP on ' + apiHostLabel() + ' is not reachable from this page — history, uploads and the banner need it to allow ' + location.host + ' (CORS).', 9000);
+  }
 }
 
 /* ================= ⚡ Lightning strike ================= */
@@ -1091,7 +1283,9 @@ function handle(p){
       }
       break;
     case 'react':
-      remoteReact(p);
+      /* our own packets come back through sendPacket(); the local toggle already
+         applied it, so only apply reactions that came from somebody else */
+      if(p.uid && p.uid !== uid) remoteReact(p);
       break;
     case 'edit':
       if(p.id && p.uid){
@@ -1303,7 +1497,7 @@ function mkMsg(type, text, extra){
 }
 function persist(m){
   try{
-    return fetch('api-v5.php?action=send', {
+    return fetch(API_Q + 'send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(m)
@@ -1328,7 +1522,7 @@ function toggleReact(id, emoji){
   lastReactAt = Date.now();
   sendPacket({ t:'react', id: id, emoji: emoji, uid: uid, name: myName() });
   try{
-    fetch('api-v5.php?action=react', {
+    fetch(API_Q + 'react', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: id, emoji: emoji, uid: uid, name: myName() })
@@ -1398,7 +1592,7 @@ function sendAway(){
 function sendBeatToPhp(){
   if(phpState !== 'ok') return;
   try{
-    fetch('api-v5.php?action=beat', {
+    fetch(API_Q + 'beat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid: uid, name: myName(), joinTs: myJoinTs })
@@ -1407,7 +1601,7 @@ function sendBeatToPhp(){
 }
 function phpPresence(){
   if(phpState !== 'ok'){ serverOnline = null; return; }
-  fetch('api-v5.php?action=online&t=' + nowMs(), { cache:'no-store' })
+  fetch(API_Q + 'online&t=' + nowMs(), { cache:'no-store' })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || d.ok !== true || !Array.isArray(d.online)){ serverOnline = null; return; }
@@ -1456,7 +1650,7 @@ function announceLeave(){
     });
   }catch(e){}
   try{
-    if(navigator.sendBeacon) navigator.sendBeacon('api-v5.php?action=leave', new Blob([JSON.stringify({uid:uid, name:myName()})], {type:'application/json'}));
+    if(navigator.sendBeacon) navigator.sendBeacon(API_Q + 'leave', new Blob([JSON.stringify({uid:uid, name:myName()})], {type:'application/json'}));
   }catch(e){}
 }
 
@@ -1603,7 +1797,7 @@ el('clearBtn').addEventListener('click', function(){
   doClearLocal();
   publishAll({ t:'clear', uid: uid });
   try{
-    fetch('api-v5.php?action=clear', {
+    fetch(API_Q + 'clear', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ uid: uid })
     }).catch(function(){});
@@ -1624,7 +1818,8 @@ function doClearLocal(){
 
 /* ================= PHP fallback sync (3.5s) ================= */
 function phpPoll(){
-  fetch('api-v5.php?action=load&t=' + nowMs() + '&since=' + lastServerTs, { cache: 'no-store' })
+  fetch(API_Q + 'load&t=' + nowMs() + '&since=' + lastServerTs, { cache: 'no-store' })
+    .catch(function(){ phpOk(false); return { json: function(){ return Promise.resolve(null); } }; })
     .then(function(r){ return r.json(); })
     .then(function(d){
       phpOk(!!(d && d.ok === true));
@@ -1685,12 +1880,26 @@ el('fileInp').addEventListener('change', function(){
 
 /* ================= Lightbox ================= */
 function openLightbox(src){
+  src = mediaUrl(src);
   el('lbImg').src = src;
+  el('lbOpen').href = src;
   el('lightbox').classList.add('open');
+  document.body.classList.add('lb-open');
 }
-el('lightbox').addEventListener('click', function(){
+function closeLightbox(){
   el('lightbox').classList.remove('open');
   el('lbImg').src = '';
+  document.body.classList.remove('lb-open');
+}
+el('phpSrvRow').addEventListener('click', probePhp);
+el('phpSrvRow').addEventListener('keydown', function(ev){ if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); probePhp(); } });
+el('lbClose').addEventListener('click', function(ev){ ev.stopPropagation(); closeLightbox(); });
+el('lightbox').addEventListener('click', function(ev){
+  if(ev.target === el('lightbox') || ev.target === el('lbImg')) closeLightbox();
+});
+el('lbOpen').addEventListener('click', function(ev){ ev.stopPropagation(); });
+document.addEventListener('keydown', function(ev){
+  if(ev.key === 'Escape' && el('lightbox').classList.contains('open')) closeLightbox();
 });
 
 /* ================= Emoji picker ================= */
@@ -1778,7 +1987,7 @@ function fetchDirect(q){
     });
 }
 function fetchProxy(q){
-  return fetch('api-v5.php?action=gif&q=' + encodeURIComponent(q), { cache: 'no-store' })
+  return fetch(API_Q + 'gif&q=' + encodeURIComponent(q), { cache: 'no-store' })
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(d){
       if(!d || !d.ok || !Array.isArray(d.gifs)) throw 0;
@@ -1793,7 +2002,7 @@ function renderGifItems(items){
     if(!g || !g.url) return;
     var prev = (g.animated_preview && g.animated_preview.url) || g.preview_url || g.url;
     var img = document.createElement('img');
-    img.src = prev;
+    img.src = mediaUrl(prev);
     img.alt = 'gif';
     img.loading = 'lazy';
     img.addEventListener('click', function(){ sendGif(g.url); });
@@ -1819,7 +2028,7 @@ function loadGifs(q){
 function checkServers(){
   var ctl = new AbortController();
   setTimeout(function(){ ctl.abort(); }, 5000);
-  fetch('api-v5.php?action=load&t=' + nowMs(), { signal: ctl.signal, cache: 'no-store' })
+  fetch(API_Q + 'load&t=' + nowMs(), { signal: ctl.signal, cache: 'no-store' })
     .then(function(r){ return r.json(); })
     .then(function(d){ phpOk(!!(d && d.ok === true)); })
     .catch(function(){ phpOk(false); });
@@ -1834,19 +2043,15 @@ function joinRoom(){
   var clean = stripAdminToken(raw);
   uname = clean || ('Guest-' + uid.slice(-4));
 
-  if(wantsAdmin && adminUid && adminUid !== uid){
-    rejectAdmin();
-    return;
-  }
   if(!wantsAdmin){ lobbyMsg(''); el('joinNormalBtn').style.display = 'none'; enterRoom(); return; }
 
   joining = true;
   el('joinBtn').disabled = true;
   lobbyMsg('Checking the admin slot…', false);
-  requestAdmin().then(function(res){
+  claimOrClear().then(function(res){
     joining = false;
     el('joinBtn').disabled = false;
-    if(!res.ok){
+    if(!res || !res.ok){
       rejectAdmin();
       return;
     }
@@ -1858,6 +2063,38 @@ function joinRoom(){
     joining = false;
     el('joinBtn').disabled = false;
     lobbyMsg('Could not verify the admin slot. Try again.', true);
+  });
+}
+
+/* a slot left behind by a crashed tab should not lock the room forever:
+   ask the room first, and only clear it on the server if nobody answers */
+function tryFreeGhost(){
+  return probeAdmin().then(function(p){
+    if(!p.ok) return false;                       /* an admin answered — leave it */
+    return fetch(API_Q + 'freeadmin', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ uid: uid })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.ok === true){
+        adminUid = null;
+        adminName = '';
+        adminSeenAt = 0;
+        updateAdminUI();
+        return true;
+      }
+      return false;
+    })
+    .catch(function(){ return false; });
+  });
+}
+function claimOrClear(){
+  return requestAdmin().then(function(res){
+    if(res && res.ok) return res;
+    return tryFreeGhost().then(function(freed){
+      return freed ? requestAdmin() : res;
+    });
   });
 }
 function enterRoom(){
@@ -1979,7 +2216,7 @@ function previewCard(data, url){
   a.addEventListener('click', function(ev){ ev.stopPropagation(); });
   if(data.image){
     var img = document.createElement('img');
-    img.src = data.image;
+    img.src = mediaUrl(data.image);
     img.alt = '';
     img.loading = 'lazy';
     img.onerror = function(){ img.remove(); };
@@ -2009,7 +2246,7 @@ function linkPreview(bub, text){
   if(cached){ bub.appendChild(previewCard(cached, u)); return; }
   linkCache[u] = 'pending';
   var domain = u.replace(/^https?:\/\//i, '').split('/')[0];
-  fetch('api-v5.php?action=link&u=' + encodeURIComponent(u), { cache: 'no-store' })
+  fetch(API_Q + 'link&u=' + encodeURIComponent(u), { cache: 'no-store' })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || d.ok !== true || !d.title){ linkCache[u] = 'no'; return; }
@@ -2148,7 +2385,7 @@ function startEditMsg(m){
       var body = enc ? { id: m.id, uid: uid, enc: enc } : { id: m.id, uid: uid, text: v };
       publishAll({ t:'edit', id: m.id, uid: uid, enc: enc || '', text: enc ? '' : v });
       try{
-        fetch('api-v5.php?action=edit', {
+        fetch(API_Q + 'edit', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         }).catch(function(){});
@@ -2163,7 +2400,7 @@ function deleteOwnMessage(m){
   applyDelete(m);
   sendPacket({ t: 'del', id: m.id, uid: uid });
   try{
-    fetch('api-v5.php?action=del', {
+    fetch(API_Q + 'del', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: m.id, uid: uid })
     }).catch(function(){});
@@ -2249,7 +2486,7 @@ function uploadAndSend(f){
   toast('Uploading ' + f.name + '…');
   var fd = new FormData();
   fd.append('file', f);
-  fetch('api-v5.php?action=upload', { method: 'POST', body: fd })
+  fetch(API_Q + 'upload', { method: 'POST', body: fd })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || !d.ok){ toast((d && d.error) || 'Upload failed'); return; }
@@ -2257,7 +2494,7 @@ function uploadAndSend(f){
       var m = mkMsg(d.type, d.type === 'file' ? ('📎 ' + d.name) : '', { url: d.url, fname: d.name, size: d.size });
       deliverMessage(m);
     })
-    .catch(function(){ toast('Upload failed'); });
+    .catch(apiFail('Upload'));
 }
 
 document.addEventListener('paste', function(ev){
@@ -2380,7 +2617,7 @@ function buildMsg(m){
     if(m.url){
       var img = document.createElement('img');
       img.className = 'mimg';
-      img.src = m.url;
+      img.src = mediaUrl(m.url);
       img.alt = m.type;
       img.loading = 'lazy';
       img.addEventListener('click', function(ev){ ev.stopPropagation(); openLightbox(m.url); });
@@ -2389,7 +2626,7 @@ function buildMsg(m){
   } else if(m.type === 'file'){
     var a = document.createElement('a');
     a.className = 'fcard';
-    a.href = m.url || '#';
+    a.href = mediaUrl(m.url) || '#';
     a.download = m.fname || 'file';
     a.addEventListener('click', function(ev){ ev.stopPropagation(); });
     var fi = document.createElement('span'); fi.className = 'fi'; fi.textContent = '📄';
@@ -2439,6 +2676,30 @@ function buildMsg(m){
   });
 
   col.appendChild(bub);
+  /* quick actions: always visible on touch, on hover with a mouse */
+  if(!m.deleted){
+    var acts = document.createElement('div');
+    acts.className = 'acts';
+    [['react', '☺', 'React'], ['reply', '↩', 'Reply'], ['more', '⋯', 'More options']].forEach(function(def){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.act = def[0];
+      b.textContent = def[1];
+      b.title = def[2];
+      b.setAttribute('aria-label', def[2]);
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if(def[0] === 'react') openPopover(m, bub);
+        else if(def[0] === 'reply') startReply(m);
+        else {
+          var r = b.getBoundingClientRect();
+          openMsgMenu(m, r.left, r.bottom + 6);
+        }
+      });
+      acts.appendChild(b);
+    });
+    col.appendChild(acts);
+  }
   row.appendChild(col);
   return row;
 }
@@ -2599,7 +2860,7 @@ function saveAnnounce(text){
     renderAnn();
     publishAll({ t:'announce', enc: enc, text: enc ? '' : t, uid: uid, name: myName(), ts: announce.ts });
     try{
-      fetch('api-v5.php?action=announce', {
+      fetch(API_Q + 'announce', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ enc: enc, text: enc ? '' : t, uid: uid, name: myName() })
       }).catch(function(){});
@@ -2611,7 +2872,7 @@ function clearAnnounce(){
   renderAnn();
   publishAll({ t:'announce', clear: true, uid: uid, name: myName() });
   try{
-    fetch('api-v5.php?action=announce', {
+    fetch(API_Q + 'announce', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ uid: uid, name: myName(), text: '' })
     }).catch(function(){});
@@ -2669,7 +2930,7 @@ function voiceBubble(m){
   tm.textContent = fmtDur(m.dur);
   var au = document.createElement('audio');
   au.preload = 'metadata';
-  au.src = m.url;
+  au.src = mediaUrl(m.url);
   au.style.display = 'none';
 
   btn.addEventListener('click', function(ev){
@@ -2764,13 +3025,13 @@ function onRecStop(){
   var fd = new FormData();
   fd.append('file', blob, 'voice.' + ext);
   fd.append('kind', 'voice');
-  fetch('api-v5.php?action=upload', { method:'POST', body: fd })
+  fetch(API_Q + 'upload', { method:'POST', body: fd })
     .then(function(res){ return res.json(); })
     .then(function(d){
       if(!d || !d.ok){ toast((d && d.error) || 'Voice upload failed'); return; }
       toast('');
       deliverMessage(mkMsg('voice', '', { url: d.url, dur: dur, size: d.size }));
-    })
+    }, apiFail('Voice upload'))
     .catch(function(){ toast('Voice upload failed'); });
 }
 el('micBtn').addEventListener('click', function(){ rec.mr ? stopRec(false) : startRec(); });
@@ -2807,6 +3068,7 @@ function canDelete(m){
   return !ADMIN_ONLY_DELETE && m.uid === uid;
 }
 function updateAdminUI(){
+  renderLobbyAdmin();
   var cb = el('clearBtn');
   if(cb) cb.style.display = isAdmin() ? '' : 'none';
   var lbl = el('hostLbl');
@@ -2828,6 +3090,31 @@ function setAdmin(u, name){
   adminSeenAt = nowMs();
   updateAdminUI();
 }
+
+/* ------------------------------------------------------- lobby slot row */
+function renderLobbyAdmin(){
+  var row = el('adminRow');
+  if(!row) return;
+  var txt = el('adminRowText'), btn = el('adminStepDown');
+  if(isAdmin()){
+    txt.textContent = '👑 You hold the admin slot in this tab';
+    btn.style.display = '';
+    row.className = 'adminrow mine';
+  } else if(adminUid){
+    txt.textContent = '👑 Admin: ' + (adminName || 'someone') + ' — slot busy';
+    btn.style.display = 'none';
+    row.className = 'adminrow busy';
+  } else {
+    txt.textContent = 'Admin slot is free';
+    btn.style.display = 'none';
+    row.className = 'adminrow free';
+  }
+}
+el('adminStepDown').addEventListener('click', function(){
+  releaseAdmin();
+  lobbyMsg('You stepped down. Add the token to your name to take the slot again.', false);
+  renderLobbyAdmin();
+});
 
 /* ---------------------------------------------------- claiming the slot */
 function rejectAdmin(){
@@ -2860,7 +3147,7 @@ function probeAdmin(){
   });
 }
 function requestAdmin(){
-  return fetch('api-v5.php?action=claimadmin', {
+  return fetch(API_Q + 'claimadmin', {
     method:'POST', headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({ uid: uid, name: myName() })
   })
@@ -2880,7 +3167,7 @@ function becomeAdmin(){
   updateAdminUI();
   publishAll({ t:'adminClaim', uid: uid, name: adminName, ts: nowMs() });
   try{
-    fetch('api-v5.php?action=claimadmin', {
+    fetch(API_Q + 'claimadmin', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ uid: uid, name: adminName })
     }).catch(function(){});
@@ -2892,9 +3179,9 @@ function releaseAdmin(){
   try{
     var body = JSON.stringify({ uid: uid });
     if(navigator.sendBeacon){
-      navigator.sendBeacon('api-v5.php?action=releaseadmin', new Blob([body], { type:'application/json' }));
+      navigator.sendBeacon(API_Q + 'releaseadmin', new Blob([body], { type:'application/json' }));
     } else {
-      fetch('api-v5.php?action=releaseadmin', {
+      fetch(API_Q + 'releaseadmin', {
         method:'POST', headers:{ 'Content-Type':'application/json' }, body: body
       }).catch(function(){});
     }
@@ -2910,7 +3197,7 @@ setInterval(function(){
   if(isAdmin()){
     publishAll({ t:'adminBeat', uid: uid, name: myName() });
     try{
-      fetch('api-v5.php?action=adminbeat', {
+      fetch(API_Q + 'adminbeat', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ uid: uid })
       }).catch(function(){});
@@ -2927,6 +3214,7 @@ setInterval(function(){
 
 /* v5 boot */
 updateAdminUI();
+setInterval(function(){ if(!joined) renderLobbyAdmin(); }, 5000);
 
 </script>
 </body>

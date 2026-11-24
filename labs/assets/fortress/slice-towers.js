@@ -4,10 +4,12 @@
 
      node labs/assets/fortress/slice-towers.js
 
-   Read towers/_sheet.jpg (4 columns x 5 rows of Kingdom Rush towers), take the
-   first three rows — those are levels 1, 2 and 3 — and write 12 PNGs with the
-   grass, dirt and stray scenery knocked out, trimmed and scaled to 150 px tall.
-   Row order left to right: archery, mage, catapult, barracks.
+   Read towers/_sheet.jpg (4 columns x 5 rows of Kingdom Rush towers). Rows 1-3
+   are levels 1, 2 and 3 — twelve PNGs named <type>-<level>. Rows 4-5 are the
+   tier-4 specialisations — eight more PNGs named after what they do. Everything
+   comes out with grass, dirt, snow and stray scenery knocked out, trimmed and
+   scaled to 150 px tall. Row order left to right: archery, mage, catapult,
+   barracks.
    Then run build-sprites.js to bake them into the game.
    ========================================================================== */
 'use strict';
@@ -16,6 +18,10 @@ const SRC=require('path').join(__dirname,'towers','_sheet.jpg');
 const COLS=[[3,118],[121,236],[239,354],[357,472]];
 const ROWS=[[3,114],[119,228],[234,344],[349,459],[465,573]];
 const NAMES=['archery','mage','catapult','barracks'];   // left to right on the sheet
+const SPEC=[
+  ['rangers','sorcerer','tesla','holy'],                // row 4: tree fort, purple shrine, lightning rig, blue keep
+  ['frost','pyro','bertha','barbarian']                 // row 5: ice tower, fire shrine, great cannon, wooden hall
+];
 const TARGET_H=150, DEBUG=process.env.DBG==='1';
 
 // ground classes we want gone
@@ -29,8 +35,9 @@ const ground=(r,g,b)=>
   const {data,info}=await sharp(SRC).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   const W=info.width,ch=info.channels;
   const tiles=[];
-  for(let row=0;row<3;row++) for(let col=0;col<4;col++){
+  for(let row=0;row<5;row++) for(let col=0;col<4;col++){
     const [x0,x1]=COLS[col], [y0,y1]=ROWS[row];
+    const STONE=(row===3 && col===2);        // the tesla rig sits on bare cave rock
     const w=x1-x0+1, h=y1-y0+1;
     const clear=new Uint8Array(w*h), q=[];
     const seed=(x,y)=>{ const k=y*w+x; if(clear[k]) return; clear[k]=1; q.push(k); };
@@ -42,7 +49,7 @@ const ground=(r,g,b)=>
         if(nx<0||ny<0||nx>=w||ny>=h) continue;
         const nk=ny*w+nx; if(clear[nk]) continue;
         const i=((y0+ny)*W+(x0+nx))*ch;
-        if(ground(data[i],data[i+1],data[i+2])){ clear[nk]=1; q.push(nk); }
+        if(ground(data[i],data[i+1],data[i+2],STONE)){ clear[nk]=1; q.push(nk); }
       }
     }
     const comp=new Int32Array(w*h).fill(-1), comps=[];
@@ -80,27 +87,35 @@ const ground=(r,g,b)=>
       cut[o]=data[i];cut[o+1]=data[i+1];cut[o+2]=data[i+2];cut[o+3]=on?255:0;
       if(on){kept++;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}
     }
-    let cw=maxX-minX+1; const chh=maxY-minY+1;
+    const name = row<3 ? NAMES[col]+'-'+(row+1) : SPEC[row-3][col];
+    let cw=maxX-minX+1, chh=maxY-minY+1;
     if(cw > chh*1.25){                       // trim far-out scenery so towers stay tower-shaped
       const half=Math.round(chh*1.25/2);
       let c=Math.round(main.cx);
       c=Math.max(minX+half, Math.min(maxX-half, c));
       minX=Math.max(minX, c-half); maxX=minX+half*2; cw=maxX-minX+1;
     }
-    const cropped=Buffer.alloc(cw*chh*4);
+    let cropped=Buffer.alloc(cw*chh*4);
     for(let y=0;y<chh;y++)for(let x=0;x<cw;x++){
       const si=((y+minY)*w+(x+minX))*4, di=(y*cw+x)*4;
       cut.copy(cropped,di,si,si+4);
     }
+    /* hand-tuned crop for the tesla rig: it is the only cell with rock slab and
+       roots left behind it, and both are bigger than the machine */
+    if(name==='tesla'){
+      const cw2=cw-20, chh2=chh-52;
+      const tight=Buffer.alloc(cw2*chh2*4);
+      for(let y=0;y<chh2;y++) cropped.copy(tight, y*cw2*4, (y+52)*cw*4+16, (y+52)*cw*4+16+cw2*4);
+      cropped = tight; cw = cw2; chh = chh2;
+    }
     const scale=TARGET_H/chh;
-    const name=NAMES[col]+'-'+(row+1);
     const png=await sharp(cropped,{raw:{width:cw,height:chh,channels:4}})
       .resize(Math.round(cw*scale),TARGET_H,{kernel:'nearest'}).png({compressionLevel:9,palette:true,colours:96}).toBuffer();
     fs.writeFileSync(require('path').join(__dirname,'towers',name+'.png'),png);
     tiles.push({name,png});
     console.log(name, cw+'x'+chh, 'kept', Math.round(100*kept/(w*h))+'%');
   }
-  const CW=190,CH=190,PAD=6, gridW=4*(CW+PAD)+PAD, gridH=3*(CH+PAD)+PAD, layers=[];
+  const CW=190,CH=190,PAD=6, gridW=4*(CW+PAD)+PAD, gridH=5*(CH+PAD)+PAD, layers=[];
   for(let i=0;i<tiles.length;i++){
     const col=i%4,row=Math.floor(i/4);
     const meta=await sharp(tiles[i].png).metadata();

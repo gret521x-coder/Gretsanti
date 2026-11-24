@@ -5,7 +5,8 @@ carries copies of them as data URIs so it stays a single file you can drop anywh
 
 ```
 towers/    archery-1..3.png  barracks-1..3.png  mage-1..3.png  catapult-1..3.png
-           _sheet.jpg  (the reference sheet they are cut from)
+           rangers.png frost.png holy.png barbarian.png pyro.png sorcerer.png bertha.png tesla.png
+           _sheet.jpg  (the reference sheet they are all cut from)
 heroes/    warrior.png  archer.png    spear.png      (the little pixel hero on the road)
            gerald.png alleria.png malik.png bolin.png magnus.png ignus.png denas.png
            _sheet.jpg   (hero cards, cut by slice-heroes.js)
@@ -17,7 +18,9 @@ ui/        gold.png     icon_warrior.png  icon_archer.png  icon_spear.png
 ## Changing a picture
 
 1. Drop the new PNG in the right folder (same file name — the name *is* the key).
-   Towers carry one picture per level: `archery-1.png`, `archery-2.png`, `archery-3.png`.
+   Towers carry one picture per level: `archery-1.png`, `archery-2.png`, `archery-3.png`,
+   and one for each level-4 path: `rangers.png`, `frost.png`, `holy.png`, `barbarian.png`,
+   `pyro.png`, `sorcerer.png`, `bertha.png`, `tesla.png`.
 2. Run the build:
 
 ```
@@ -40,8 +43,9 @@ node labs/assets/fortress/build-sprites.js
 
 ## Re-cutting the tower sheet
 
-The twelve tower pictures are produced from `towers/_sheet.jpg` (4 columns × 5 rows,
-the first three rows are levels 1–3 in the order archery, mage, catapult, barracks):
+The twenty tower pictures are produced from `towers/_sheet.jpg` (4 columns × 5 rows: the
+first three rows are levels 1–3, the last two are the level-4 paths — column order is
+archery, mage, catapult, barracks):
 
 ```
 npm i sharp                       # only needed for this step

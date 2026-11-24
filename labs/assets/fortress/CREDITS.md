@@ -11,6 +11,7 @@ Cut down from the pack for this game:
 | File | Source piece |
 |---|---|
 | `towers/archery-1..3.png`, `barracks-1..3.png`, `mage-1..3.png`, `catapult-1..3.png` | cut from `towers/_sheet.jpg` — see the note below |
+| `towers/rangers.png`, `frost.png`, `holy.png`, `barbarian.png`, `pyro.png`, `sorcerer.png`, `bertha.png`, `tesla.png` | the level-4 paths, cut from the bottom two rows of the same sheet |
 | `heroes/warrior.png`, `archer.png`, `spear.png` | Knights / Troops, idle frames — the little hero on the road |
 | `heroes/gerald.png` … `denas.png` | cut from `heroes/_sheet.jpg` — see below |
 | `monsters/skeleton.png` | Enemy / Skeleton skull guard |

@@ -1048,31 +1048,50 @@ function updateRelayPills(){
 }
 var phpWarned = false;
 /* Tap the PHP row in the lobby: says exactly what came back, in words you can act on. */
+var PROBE_TAG_TIMEOUT = 8000;
 function probePhp(){
-  var t0 = Date.now();
   var box = el('lobbyMsg');
-  if(box) box.textContent = 'Checking ' + apiHostLabel() + '…';
-  fetch(API_Q + 'health&t=' + nowMs(), { cache: 'no-store' })
+  var say = function(t){ if(box) box.textContent = t; };
+  var t0 = Date.now();
+  var url = API_Q + 'health&t=' + nowMs();
+  say('Testing ' + apiHostLabel() + '…');
+
+  fetch(url, { cache: 'no-store' })
     .then(function(r){
       return r.text().then(function(txt){
-        var ms = Date.now() - t0;
-        var j = null;
+        var ms = Date.now() - t0, j = null;
         try { j = JSON.parse(txt); } catch(e){}
         if(r.ok && j && j.ok){
           phpOk(true);
-          if(box) box.textContent = 'PHP OK · v' + (j.version || '?') + (j.build ? ' / ' + j.build : '') +
-            ' · ' + ms + ' ms' + (j.writable === false ? ' · data folder NOT writable' : '');
+          say('PHP OK · v' + (j.version || '?') + (j.build ? ' / ' + j.build : '') +
+              ' · ' + ms + ' ms' + (j.writable === false ? ' · data folder NOT writable' : ''));
         } else {
           phpOk(false);
-          if(box) box.textContent = 'PHP replied HTTP ' + r.status + ' — ' + String(txt || '(empty)').slice(0, 70);
+          say('PHP answered HTTP ' + r.status + ' — ' + String(txt || '(empty)').slice(0, 60));
         }
       });
     })
     .catch(function(err){
-      phpOk(false);
-      var m = (err && err.message) || String(err);
-      if(box) box.textContent = apiHostLabel() + ' refused this page (' + m + '). That is CORS or a host firewall — ' +
-        'the PHP file there is probably still the old one.';
+      /* fetch respects CORS; a plain <script> tag does not. So if the tag loads,
+         the server is fine and only its headers are wrong. */
+      var settled = false;
+      var tag = document.createElement('script');
+      var verdict = function(reachable){
+        if(settled) return;
+        settled = true;
+        try { tag.remove(); } catch(e){}
+        phpOk(false);
+        if(reachable){
+          say('Host answers, browser blocks the reply → CORS headers missing on the file there (old api-v5.php still in place?).');
+        } else {
+          say('Host did not answer at all (' + ((err && err.message) || err) + ') → firewall, wrong path, or the file is not there.');
+        }
+      };
+      tag.onload = function(){ verdict(true); };
+      tag.onerror = function(){ verdict(false); };
+      tag.src = url;
+      setTimeout(function(){ verdict(false); }, PROBE_TAG_TIMEOUT);
+      document.head.appendChild(tag);
     });
 }
 function phpOk(ok){
@@ -1780,6 +1799,7 @@ function doClearLocal(){
 /* ================= PHP fallback sync (3.5s) ================= */
 function phpPoll(){
   fetch(API_Q + 'load&t=' + nowMs() + '&since=' + lastServerTs, { cache: 'no-store' })
+    .catch(function(){ phpOk(false); return { json: function(){ return Promise.resolve(null); } }; })
     .then(function(r){ return r.json(); })
     .then(function(d){
       phpOk(!!(d && d.ok === true));

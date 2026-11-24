@@ -19,6 +19,7 @@ http://localhost/gc-v2.html          → group chat (v2)
 | File | Size | Description |
 |---|---|---|
 | `index.html` | 30 KB | Original **KDL // MISSION CONTROL** — dark orbital theme, access-code lock screen, payload grid, OpenRouter key modal, Bardagulan gate |
+| `index-v1.html` | 30 KB | Same file as `index.html`, named **v1** so the set reads v1 → v4 |
 | `index-v2.html` | 43 KB | **SpaceX / orbital redesign** — animated starfield, glass panels, live payload search, toast notifications, accessible modals |
 | `index-v3.html` | 45 KB | **Facebook dark mode** — `#18191a` palette, top bar with search pill, sidebar menu, cover/profile card, feed-style payload cards |
 | `index-v4.html` | 25 KB | **Simplified v1** — same layout as `index.html` without the API / SYNC / OpenRouter / add-payload UI |

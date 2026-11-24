@@ -13,7 +13,9 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `index-v4.html` | 25 KB | v1 without the API / SYNC / OpenRouter / add-payload UI |
 | `gc.html` | 43 KB | Original **Black Cat Group Chat** upload, unchanged |
 | `gc-v2.html` | 61 KB | Chat v2 — presence fix, lightning joins, new design |
-| `api-v2.php` | 23 KB | Backend used by `gc-v2.html` |
+| `api-v2.php` | 22 KB | Backend used by `gc-v2.html` |
+| `gc-v3.html` | 82 KB | Chat v3 — replies, edit/delete, link previews, ticks, unread, paste & drop |
+| `api-v3.php` | 32 KB | Backend used by `gc-v3.html` (v2 plus edit, delete, link preview) |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot |
 | `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features |
 
@@ -56,7 +58,7 @@ All launchers keep the same behaviour: access-code unlock, MET clock, payload ca
 
 ---
 
-## What changed in the chat
+## What changed in the chat — `gc-v2.html`
 
 ### Leaving on tab switch — fixed
 
@@ -87,7 +89,62 @@ Deep ink background with violet/cyan glows, frosted glass header, gradient wordm
 - PHP status dot no longer turns green on a failed response
 - Dead always-true presence condition removed
 
-### Known limitations
+## What changed in the chat — `gc-v3.html`
+
+Everything from v2 is still there; these are the additions.
+
+**Reply / quote**
+
+- Long-press a bubble (or right-click it) → **Reply**; a bar above the composer shows who you are answering
+- Your message carries a quoted stub with the original author and text
+- Tap the quote to jump back to the original — it scrolls into view and flashes violet
+- Cancel the reply with ✕; the quote is limited to a single line so bubbles stay small
+
+**Edit and delete your own messages**
+
+- The same menu offers **Copy**, **React**, **Edit** and **Delete** — edit/delete only appear on your own messages
+- Editing opens an inline textarea inside the bubble; Save updates in place and adds a small `edited` badge
+- Deleting replaces the bubble with a dashed "This message was deleted" tombstone — text, media and reactions are removed everywhere
+- Both are broadcast over MQTT and written to the server, so other tabs update without a reload; only the author's own id can change a message, and an edit from anyone else is ignored
+
+**Links**
+
+- URLs in a message become real links (`target="_blank"`, `rel="noopener noreferrer nofollow"`)
+- The first link in a message gets an OpenGraph preview card — title, domain and thumbnail, with a plain 🔗 fallback
+- Previews are fetched server-side and cached for a week; private, loopback and LAN hosts are refused
+
+**Delivery ticks**
+
+| Tick | Meaning |
+|---|---|
+| 🕓 | sending |
+| ✓ | published to at least one relay |
+| ✓✓ | saved on the server too |
+| ⚠ | nothing took it — tap to retry |
+
+- Failed sends go into a local outbox in `localStorage`, so they survive a reload
+- The outbox retries itself every 12 s and immediately when a relay reconnects
+
+**Unread + jump to latest**
+
+- Scroll up and new messages are counted instead of yanking you down
+- A violet **↓ Latest** pill shows the count; tapping it jumps to the newest message and clears the counter
+- The tab title gets a `(3)` prefix while you are away from the bottom, and clears when you return
+
+**Paste and drag-drop**
+
+- Paste an image from the clipboard and it uploads and sends straight away
+- Drag a file anywhere onto the page: a dashed drop overlay appears and the file is sent on release
+- File picker, paste and drop all use the same upload path, 8 MB limit kept
+
+**Fixes found while building this**
+
+- `sysNotice()` was called from three places but never defined — joining the room threw a `ReferenceError` and skipped presence/host election afterwards
+- `safeUrl()` rejected the uploader's own `uploads/<name>` paths, so images and files were silently dropped from bubbles
+
+---
+
+### Known limitations (both chat versions)
 
 - The three MQTT brokers are public and the room topic is a fixed string — treat the room as semi-public
 - GIF search uses an unofficial keyless endpoint and may stop working
@@ -139,6 +196,7 @@ Presence of the API key is unchanged: still hardcoded as requested.
 | `index-v4.html` | v1 with the API, SYNC, OpenRouter and add-payload UI removed |
 | `gc.html` | original group chat |
 | `gc-v2.html` | presence fix, lightning joins, new design |
+| `gc-v3.html` | replies, edit/delete, link previews, delivery ticks + outbox, unread jump, paste & drop |
 | `Aurora.html` | original AI chatbot |
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
 
@@ -147,6 +205,10 @@ Presence of the API key is unchanged: still hardcoded as requested.
 - `node --check` on the extracted `<script>` block of every HTML file
 - All `getElementById` / `el()` targets verified to exist in the markup
 - Presence logic unit-tested in Node: away ≠ left, a single leave notice, host prefers online users
+- **Chat v3 exercised in a real DOM (jsdom): 41 checks** — boot, join, ticks through 🕓 → ✓ → ✓✓,
+  reply quote and tap-to-jump, inline edit, tombstone delete, ignored edit from a non-author, unread
+  counter and jump pill, failed send with outbox survival and retry, paste and drop uploads, HTML and
+  `javascript:` payloads staying inert
 - **Aurora v2 exercised in a real DOM (jsdom): 35 checks** — page boots without errors, one style/one script,
   message rendering, escaping, persistence, quota-overflow recovery, streamed replies, Stop, regenerate,
   prompt library, exports, theme and custom instructions

@@ -345,6 +345,19 @@ The strike was gated behind `prefers-reduced-motion`, and that media query didn'
 
 ---
 
+## What changed in the group chat (`gc-v5.html`)
+
+The chat wears the same KDL // MISSION CONTROL skin as the launcher now: pure black deck, hairline grid
+and cyan horizon, square corners, mono-caps labels, one cyan accent, green ok / amber wait / red stop.
+The cat wallpaper and the violet gradients are gone; your own bubbles are cyan on a dark panel and the
+quick-action chips read like terminal keys.
+
+**The ⚡ storm stays** — it was already in the chat — but its light is colder: bolts and flash in
+`#dff6ff` with a cyan glow, still shaking the deck on arrival. It now also strikes when **you** send a
+message, not only when one arrives.
+
+---
+
 ## What changed in Aurora v4 (`aurora-v4.html`)
 
 One platform: **FreeModel**, `https://freemodel.in/v1`, OpenAI-compatible, keys starting `fm_`.

@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js';document.head.appendChild(s);"></script>
 <style>
 :root{
@@ -754,6 +755,118 @@ body.lb-open{overflow:hidden}
   #fx .bolt{display:none}
   #fx .flash{opacity:.55;animation:none!important}
 }
+
+/* ================= KDL // MISSION CONTROL skin =================
+   Same grammar as index-v5: pure black deck, hairline grid, square corners,
+   mono caps labels, one cyan accent, green ok / amber wait / red stop.
+   The ⚡ storm stays — only its light is colder now. */
+:root{
+  --bg:#000;--bg-2:#05070a;--panel:#08090b;--panel-2:#0d0f13;--panel-3:#14181f;
+  --line:#1f242d;--line-2:#2b3340;
+  --violet:#38bdf8;--violet-deep:#0b3f5c;--cyan:#7dd3fc;--gold:#ffab00;
+  --text:#fff;--text-2:#8b949e;--text-3:#484f58;
+  --ok:#00e676;--warn:#ffab00;--bad:#ff3d00;
+  --r:0;--r-lg:0;
+  --display:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;
+}
+html,body{background:#000}
+body{background:#000}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(to right,rgba(255,255,255,.025) 1px,transparent 1px),
+                   linear-gradient(to bottom,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+body::after{
+  content:'';position:fixed;top:-35vh;left:50%;transform:translateX(-50%);
+  width:140vw;height:60vh;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at bottom,rgba(0,82,136,.25) 0%,transparent 70%);
+  border-bottom:1px solid rgba(56,189,248,.18);
+}
+#app{z-index:1}
+/* the cat wallpaper is not part of the deck */
+#msgs{background-image:none}
+/* ---------- header ---------- */
+header{background:rgba(0,0,0,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.emblem-wrap{border-radius:0;border-color:var(--line);background:#0d0f13;box-shadow:none}
+.emblem-wrap::after{display:none}
+.hname{font-family:var(--display);font-size:12.5px;font-weight:500;letter-spacing:2.6px;text-transform:uppercase}
+.hname span{background:linear-gradient(90deg,#fff 0%,#38bdf8 70%)}
+.hsub{font-family:var(--display);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3)}
+.pill{border-radius:0;background:#0d0f13;border:1px solid var(--line);font-family:var(--display);
+  font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-2);padding:4px 8px}
+.pill.warn{color:var(--warn);border-color:rgba(255,171,0,.35);background:rgba(255,171,0,.07)}
+.dot{border-radius:50%}
+.dot.ok{box-shadow:0 0 6px rgba(0,230,118,.8)}
+.dot.bad{background:var(--bad);box-shadow:0 0 6px rgba(255,61,0,.55)}
+.clearbtn{border-radius:0;border-color:rgba(255,61,0,.35);color:#ff8a65;background:rgba(255,61,0,.08)}
+/* ---------- messages ---------- */
+#msgs{padding:14px 12px 10px}
+.daysep{border-radius:0;background:#08090b;border:1px solid var(--line);
+  font-family:var(--display);font-size:8.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-3)}
+.av{border-radius:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4);color:#000;font-family:var(--display)}
+.av::after{border-radius:50%;border-color:#000}
+.mname{font-family:var(--display);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:#c9d3de;font-weight:500}
+.mtime{font-family:var(--display);font-size:9px;letter-spacing:.5px}
+.away-tag{border-radius:0;font-family:var(--display);font-size:8px;letter-spacing:1px}
+.bubble{background:#0d0f13;border:1px solid var(--line);border-radius:0;box-shadow:none;color:#e6edf3}
+.msg.me .bubble{background:rgba(56,189,248,.10);border-color:rgba(56,189,248,.42);border-radius:0;box-shadow:none;color:#fff}
+.msg .acts button{border-radius:0;border-color:var(--line);background:#0d0f13;color:var(--text-2)}
+.msg .acts button:active{background:rgba(56,189,248,.16);color:#fff}
+.rxtag{border-radius:0}
+.rxtag.mine{border-color:var(--violet);background:rgba(56,189,248,.18)}
+/* ---------- composer ---------- */
+#inp{border-radius:0;background:#0d0f13;border:1px solid var(--line);caret-color:var(--violet)}
+#inp:focus{border-color:var(--violet);background:#0d0f13;box-shadow:0 0 0 1px rgba(56,189,248,.35)}
+#inp::placeholder{font-family:var(--display);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-3)}
+#sendBtn{border-radius:0;background:var(--violet);color:#000;box-shadow:none}
+#sendBtn:active{transform:none;filter:brightness(1.15)}
+.iconbtn{border-radius:0}
+/* ---------- drawers ---------- */
+.drawer{background:#08090b;border-top:1px solid var(--line);border-radius:0;box-shadow:0 -18px 50px rgba(0,0,0,.9)}
+.dhead::before{width:28px;height:2px;border-radius:0;background:var(--line-2)}
+.dhead span{font-family:var(--display);font-size:9.5px;letter-spacing:2.2px;text-transform:uppercase;color:var(--violet)}
+.chip{border-radius:0;background:#0d0f13;border:1px solid var(--line);font-family:var(--display);
+  font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-2)}
+.chip:active,.chip:hover{border-color:var(--violet);background:rgba(56,189,248,.12);color:#fff}
+.gifrow input{border-radius:0;background:#0d0f13;border:1px solid var(--line);font-family:var(--mono)}
+.gifrow input:focus{border-color:var(--violet)}
+.gifrow button{border-radius:0;background:var(--violet);color:#000}
+.ggrid img{border-radius:0;border:1px solid var(--line)}
+/* ---------- lobby ---------- */
+.lobbyCard{border-radius:0;border:1px solid var(--line);background:#08090b;box-shadow:0 30px 80px rgba(0,0,0,.92)}
+.lobbyCard h1{font-family:var(--display);font-size:15px;font-weight:500;letter-spacing:3.5px;text-transform:uppercase}
+.lobbyCard h1 span{background:linear-gradient(90deg,#fff,#38bdf8)}
+.lobbyCard .sub{font-family:var(--display);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--text-3)}
+#nameInp{border-radius:0;background:#0d0f13;border:1px solid var(--line)}
+#nameInp:focus{border-color:var(--violet);box-shadow:none}
+.srv{border-radius:0;background:#0d0f13;border:1px solid var(--line)}
+.srow{font-family:var(--display);font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-2)}
+.srvtest{border-radius:0;font-family:var(--display);font-size:8px;letter-spacing:1px;
+  border:1px solid var(--line-2);color:var(--text-3)}
+#joinBtn{border-radius:0;background:var(--violet);color:#000;font-family:var(--display);
+  font-size:10.5px;letter-spacing:2.4px;text-transform:uppercase;font-weight:700;box-shadow:none}
+#joinBtn:active{transform:none;filter:brightness(1.12)}
+.note{font-family:var(--display);font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)}
+.lemblem{filter:drop-shadow(0 8px 22px rgba(56,189,248,.35))}
+#nameInp,#inp{font-size:16px}
+/* ---------- ⚡ the storm, in cold light ---------- */
+#fx .flash{background:#dff6ff}
+#fx .bolt{fill:#dff6ff;stroke:rgba(255,255,255,.9);
+  filter:drop-shadow(0 0 14px rgba(56,189,248,.95)) drop-shadow(0 0 42px rgba(94,231,255,.6))}
+#fx .bolt.a{width:82px}
+.join-pill{color:#dff6ff;border-color:rgba(56,189,248,.45)!important;background:rgba(56,189,248,.14)!important}
+/* ---------- bits and pieces ---------- */
+.phphint{border-radius:0;color:#ffb4b4;background:rgba(255,61,0,.07);border:1px solid rgba(255,61,0,.3);
+  font-family:var(--display);font-size:9.5px;letter-spacing:.4px;line-height:1.6}
+#toast{border-radius:0;background:#08090b;border:1px solid var(--violet);color:#fff;
+  font-family:var(--display);font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;
+  box-shadow:0 12px 40px rgba(0,0,0,.9)}
+#rxpop,#lbx,.pop{border-radius:0}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#1f242d;border-radius:0}
+::selection{background:rgba(56,189,248,.28);color:#fff}
+
 </style>
 </head>
 <body>
@@ -1779,6 +1892,7 @@ function sendCurrent(){
   sendTypingStop();
   var m = mkMsg('text', t, replyTo ? { reply: replyTo } : null);
   cancelReply();
+  lightningStrike();          /* your message lands with thunder too */
   deliverMessage(m);
   closeDrawers();
   inp.focus();

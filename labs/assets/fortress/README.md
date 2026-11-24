@@ -6,7 +6,9 @@ carries copies of them as data URIs so it stays a single file you can drop anywh
 ```
 towers/    archery-1..3.png  barracks-1..3.png  mage-1..3.png  catapult-1..3.png
            _sheet.jpg  (the reference sheet they are cut from)
-heroes/    warrior.png  archer.png    spear.png
+heroes/    warrior.png  archer.png    spear.png      (the little pixel hero on the road)
+           gerald.png alleria.png malik.png bolin.png magnus.png ignus.png denas.png
+           _sheet.jpg   (hero cards, cut by slice-heroes.js)
 monsters/  skeleton.png orc.png
 decor/     castle.png   house.png     tree1.png  tree2.png  tree3.png
 ui/        gold.png     icon_warrior.png  icon_archer.png  icon_spear.png
@@ -24,6 +26,17 @@ node labs/assets/fortress/build-sprites.js
 
 It rewrites the `var SPR = {…}` block in `labs/fortress.html`. Nothing else to install:
 it only needs Node.
+
+## Re-cutting the hero cards
+
+`towers/_sheet.jpg` and `heroes/_sheet.jpg` are reference sheets: the first gives the
+twelve tower pictures, the second the seven hero portraits. Cut them again with:
+
+```
+npm i sharp
+node labs/assets/fortress/slice-heroes.js
+node labs/assets/fortress/build-sprites.js
+```
 
 ## Re-cutting the tower sheet
 

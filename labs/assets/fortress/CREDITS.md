@@ -11,7 +11,8 @@ Cut down from the pack for this game:
 | File | Source piece |
 |---|---|
 | `towers/archery-1..3.png`, `barracks-1..3.png`, `mage-1..3.png`, `catapult-1..3.png` | cut from `towers/_sheet.jpg` — see the note below |
-| `heroes/warrior.png`, `archer.png`, `spear.png` | Knights / Troops, idle frames |
+| `heroes/warrior.png`, `archer.png`, `spear.png` | Knights / Troops, idle frames — the little hero on the road |
+| `heroes/gerald.png` … `denas.png` | cut from `heroes/_sheet.jpg` — see below |
 | `monsters/skeleton.png` | Enemy / Skeleton skull guard |
 | `monsters/orc.png` | Goblins / Troops / Torch |
 | `monsters/bomber.png` | Goblins / Troops / TNT |
@@ -30,7 +31,12 @@ build**; the final art will be the owner's own models. The twelve tower pictures
 machine-cut copies of that sheet by `slice-towers.js`, not original work, and this
 folder must not be published as-is.
 
-Nothing else in the game comes from that sheet — heroes, monsters, decorations and the
+`heroes/_sheet.jpg` is a hero-card sheet, also from Kingdom Rush and also supplied by
+the owner as a placeholder. The seven portraits are machine-cut copies of it, used for
+the picker and the hero bar only; the heroes on the road are still the Tiny Swords
+pixels above. Same rule: private lab build only, not for publication.
+
+Nothing else in the game comes from those sheets — heroes, monsters, decorations and the
 keep are still Tiny Swords, and the old hand-drawn catapult was retired with it.
 
 ## Reference only — not shipped

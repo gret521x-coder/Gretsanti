@@ -35,7 +35,8 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `tns.html` | 33 KB | **TNS — Safety Dispatch**, self-contained |
 | `pindutan.html` | 42 KB | **Pindutan v14** arcade game, scores kept in `localStorage` |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
-| `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features; uses the proxy on Pages |
+| `aurora-v2.html` | 82 KB | Aurora v2 — kept as the fallback; defaults to the free-token host / proxy |
+| `aurora-v3.html` | 90 KB | Aurora v3 — the provider follows the key (Google, OpenRouter, Groq, OpenAI, custom), models discovered from the key |
 
 ---
 
@@ -69,7 +70,7 @@ Every launcher (`index.html`, `index-v1..v4.html`) opens the pages that ship tod
 |---|---|
 | Bardagulan (locked) | `https://aidekupal.unaux.com/gc.html` — the copy next to the PHP |
 | Collectibles | `https://aidekupal.unaux.com/Screenshot.html` — it needs `save.php` |
-| Aurora | `aurora-v2.html` — was `Aurora.html` |
+| Aurora | `aurora-v3.html` — was `Aurora.html`, then `aurora-v2.html` |
 | TNS, Pindutan | still local, they are pure static |
 
 The chat and the vault point at the PHP host because that host refuses cross-site
@@ -344,7 +345,32 @@ The strike was gated behind `prefers-reduced-motion`, and that media query didn'
 
 ---
 
-## What changed in Aurora (`aurora-v2.html`)
+## What changed in Aurora v3 (`aurora-v3.html`)
+
+The old file sent every request either to `freetoken.website` (direct) or to the PHP proxy on the PHP
+host (Pages), and both became unreliable. v3 decides from the key instead:
+
+| Key starts with | Goes to | Streaming |
+|---|---|---|
+| `AIza…` | Google AI Studio (`generativelanguage.googleapis.com`) | `streamGenerateContent?alt=sse` |
+| `sk-or-…` | OpenRouter | OpenAI-style SSE |
+| `gsk_…` | Groq | OpenAI-style SSE |
+| `sk-…` | OpenAI | OpenAI-style SSE |
+| *custom base URL typed in Settings* | that host, unchanged | OpenAI-style SSE |
+
+- **`list models`** asks the key what it can actually run and drops the answers into the model chips, so
+  a retired model name can't strand you. Google's `auto` is resolved by asking for a Flash model.
+- **A stale base URL is retired on load.** Anyone who saved `freetoken.website` or the PHP proxy keeps
+  working — the saved value is dropped so the key decides again.
+- Gemini's dialect is translated both ways: `system` becomes `systemInstruction`, the transcript becomes
+  `contents`, and thinking-style deltas still stream into the panel.
+- Errors name the provider and quote what it said, with a checklist that no longer mentions a base URL
+  that isn't being used.
+- The PHP proxy still works if you paste its URL — it is just no longer the default.
+
+---
+
+## What changed in Aurora v2 (`aurora-v2.html`)
 
 The original file had two `</html>` tags, four stacked `<style>` blocks and five `<script>` blocks — with `callAPI`, `renderRich`, `renderModels` and `renderModelChips` each defined twice. v2 is one clean document: one stylesheet, one script, no duplicate definitions.
 
@@ -482,6 +508,7 @@ keep keys on the server side (`api-ai.php`) when you can.
 | `gc-v5.html` | one secret admin owns the banner, delete and clear-chat |
 | `Aurora.html` | original AI chatbot |
 | `aurora-v2.html` | consolidated file, stop/regenerate/edit, search, exports, prompt library, voice, highlighting |
+| `aurora-v3.html` | provider auto-detected from the key, model discovery, no dead hosts, stale base URLs retired |
 
 ## Checks
 
@@ -508,7 +535,7 @@ keep keys on the server side (`api-ai.php`) when you can.
   uploads routed to the PHP host from Pages and to the sibling `save.php` on the host,
   TNS and Pindutan load clean, Pindutan unlock with and without SubtleCrypto
 - **Launcher grids: 60 checks** — all six launchers default to `gc.html` on the PHP host and
-  `aurora-v2.html`, the grid renders, Bardagulan stays locked and its code still opens
+  `aurora-v3.html`, the grid renders, Bardagulan stays locked and its code still opens
   the right page, an old saved grid is upgraded and written back, corrupt storage
   falls back to defaults
 - **Launcher motion (`index-v5.html`): 29 checks** — boots with no errors, telemetry ticks,
@@ -516,6 +543,11 @@ keep keys on the server side (`api-ai.php`) when you can.
   their own and never exceed two on screen, cards arrive staggered and take the pointer position, the
   lock screen still covers the viewport, and `prefers-reduced-motion` / `?still=1` leave a plain
   working launcher
+- **Aurora v3 providers: 29 checks** — an `AIza` key reaches Google with `systemInstruction` and
+  `contents` and no bearer header, `sk-or` reaches OpenRouter as `openrouter/auto`, a typed base URL
+  wins over everything, `auto` resolves to a Flash model while embedding models are never chosen, a
+  refused key quotes Google verbatim, no key means demo mode with zero network calls, the settings hint
+  follows the key as it is typed, and a saved `freetoken.website` base URL is retired on load
 - **Aurora through the proxy: 15 checks** — proxy picked on `github.io`, direct provider on
   localhost, no key and no `Authorization` header sent through the proxy, no
   `/chat/completions` appended to a `.php` base, system prompt and transcript in the body,

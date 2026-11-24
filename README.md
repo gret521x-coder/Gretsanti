@@ -23,6 +23,10 @@ Launcher + group chat for XAMPP. Plain HTML files, no build step.
 | `agent-widget.js` | 21 KB | Floating agent bubble any page can load with one `<script>` tag |
 | `api-ai.php` | 11 KB | Key-holding proxy that streams the model's answer to the widget |
 | `agent-demo.html` | 4 KB | Demo page for the widget (scripted replies, no PHP needed) |
+| `Screenshot.html` | 3 KB | **Collectibles** vault — password-gated image board |
+| `save.php` | 1 KB | Backend for Collectibles: stores, lists and serves the images |
+| `tns.html` | 33 KB | **TNS — Safety Dispatch**, self-contained |
+| `pindutan.html` | 42 KB | **Pindutan v14** arcade game, scores kept in `localStorage` |
 | `Aurora.html` | 53 KB | Original Aurora AI chatbot (key left blank, asks at runtime) |
 | `aurora-v2.html` | 82 KB | Aurora v2 — stability fixes plus Phase 2 features; uses the proxy on Pages |
 
@@ -42,8 +46,19 @@ filenames forever. `getApps()` now rewrites `gc.html` → `gc-v5.html` and
 `Aurora.html` → `aurora-v2.html` on load and stores the result, so nothing has to be
 reset. A corrupt saved grid falls back to the defaults instead of throwing.
 
-The TNS, Pindutan and Collectibles cards still point at `tns.html`, `pindutan.html`
-and `Screenshot.html` — those live only on the PHP host, not in this repo.
+All six cards now resolve: `tns.html`, `pindutan.html` and `Screenshot.html` are part
+of the repo, so the launcher works from Pages as well as from the PHP host.
+
+Two things about the payload pages:
+
+- **Collectibles** reads and writes through `save.php`. On `*.github.io` it calls the
+  copy on the PHP host instead, so upload the included `save.php` (it carries the CORS
+  headers). The unlock password sits in the page source, and `save.php` itself has no
+  auth check — on a public repo that password is readable by anyone. Good enough for a
+  private board, not for anything you would mind losing.
+- **Pindutan** hashes its code with `crypto.subtle`, which browsers only expose on
+  `https://` or `localhost`. Over a plain-http LAN address the game now falls back to a
+  local hash instead of failing to open.
 
 ## What changed in the launcher
 
@@ -413,6 +428,9 @@ keep keys on the server side (`api-ai.php`) when you can.
   lobby slot row (free / busy / yours), ghost slot reclaimed, live admin never kicked, step down,
   image viewer open/close/backdrop/Esc, per-bubble action row, reaction applied and removed
 - **Chat v5 re-run against the v4 suite: 37 checks · against the v3 suite: 41 checks**
+- **Payload pages: 20 checks** — Collectibles locked until the password, listing and
+  uploads routed to the PHP host from Pages and to the sibling `save.php` on the host,
+  TNS and Pindutan load clean, Pindutan unlock with and without SubtleCrypto
 - **Launcher grids: 40 checks** — all five launchers default to `gc-v5.html` and
   `aurora-v2.html`, the grid renders, Bardagulan stays locked and its code still opens
   the right page, an old saved grid is upgraded and written back, corrupt storage

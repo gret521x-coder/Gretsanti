@@ -16,6 +16,8 @@ Cut down from the pack for this game:
 | `heroes/warrior.png`, `archer.png`, `spear.png` | Knights / Troops, idle frames |
 | `monsters/skeleton.png` | Enemy / Skeleton skull guard |
 | `monsters/orc.png` | Goblins / Troops / Torch |
+| `monsters/bomber.png` | Goblins / Troops / TNT |
+| `monsters/knight.png` | Knights / Troops / Warrior (red) |
 | `decor/castle.png`, `house.png`, `tree*.png` | Knights buildings, terrain trees |
 | `ui/*.png` | UI icons, resources |
 

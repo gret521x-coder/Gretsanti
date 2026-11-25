@@ -1025,7 +1025,7 @@
     <div class="top-pills">
       <span class="pill room live" id="roomPill">LOBBY</span>
       <span class="pill relay" id="relayPill">RELAY 0/3</span>
-      <button class="pill kupal-pill" id="kupalJoinBtn" style="display:none;" title="Kupal joins the next human battle"><span class="kd"></span>KUPAL</button>
+      <button class="pill kupal-pill" id="kupalJoinBtn" style="display:none;" title="Let Kupal play your board in a human battle"><span class="kd"></span>KUPAL</button>
       <button class="primary" id="lobbyBtn" style="padding:6px 11px;font-size:0.62rem;border-radius:9px;">🌐 Lobby</button>
     </div>
 
@@ -2156,8 +2156,11 @@
           }
         }
 
-        if (currentMode === "bot" || kupalInBattle) botTick(delta);
-        if (kupalInBattle) pushKupalFrame(false);
+        if (currentMode === "bot") botTick(delta);
+        if (autopilotOn()) {
+          autoStepT += delta;
+          if (autoStepT >= 45) { autoStepT = 0; autoPlayStep(); }
+        }
         boardWrapper.classList.toggle("danger", topRowOfStack() <= 3);
         drawBoard();
         pushBoardFrame(false);
@@ -2210,8 +2213,7 @@
 
       document.getElementById("boardOverlay").style.display = "none";
       document.getElementById("overStats").innerHTML = "";
-      if (currentMode === "bot") botStart();
-      else if (!kupalInBattle) botStop();   /* Kupal keeps playing while it fights humans */
+      if (currentMode === "bot") botStart(); else botStop();
       broadcastState(true);
       lastTime = performance.now();
       requestAnimationFrame(gameLoop);
@@ -2242,7 +2244,6 @@
         document.getElementById("overlayTitle").textContent = currentMode === "1v1" ? "YOU LOSE" : "KNOCKED OUT";
         document.getElementById("startBtn").textContent = "Rematch";
         reportBattle(false);
-        if (kupalInBattle) setTimeout(() => kupalEndBattle(), 400);
       }
       document.getElementById("startBtn").style.display = "inline-block";
       document.getElementById("boardOverlay").style.display = "flex";
@@ -2390,12 +2391,6 @@
     function onPacket(p) {
       if (!p || typeof p !== "object" || !p.t) return;
       if (p.from === myId) return;
-      /* the page that speaks for Kupal must not listen to its own echoes */
-      if (p.from === KUPAL_ID && kupalJoinWanted()) return;
-      if (p.to === KUPAL_ID && p.t === "GARBAGE") {
-        if (kupalInBattle && bot.alive) botIncoming(Math.min(8, p.amount | 0));
-        return;
-      }
       if (p.n) {
         if (seen.has(p.n)) return;
         remember(p.n);
@@ -2910,7 +2905,6 @@
     function hostStartBattle() {
       if (!battle || battle.host !== myId) return;
       const ids = [myId].concat(Object.keys(battle.joiners).slice(0, MAX_PLAYERS - 1));
-      if (kupalJoinWanted() && !ids.includes(KUPAL_ID)) ids.push(KUPAL_ID);
       if (ids.length < 2) {
         roomStatusText("Nobody joined this time. Invite again when more players are in.");
         battle = null;
@@ -2928,8 +2922,6 @@
       battleReported = false;
       battlePlayers = {};
       ids.forEach(id => { battlePlayers[id] = true; });
-      if (ids.includes(KUPAL_ID) && kupalJoinWanted()) kupalStartBattle();
-      else if (kupalInBattle) kupalEndBattle();
       battleId = data.battleId || ("B" + Date.now().toString(36));
       battleSeenAlive = {};
       battleOver = false;
@@ -2990,7 +2982,6 @@
       document.getElementById("startBtn").style.display = "inline-block";
       document.getElementById("boardOverlay").style.display = "flex";
       broadcastState(false);
-      if (kupalInBattle) { /* let the last frame land, then pull Kupal out */ setTimeout(() => kupalEndBattle(), 400); }
       renderOpponentsGrid();
     }
 
@@ -3030,7 +3021,6 @@
 
     function challenge(id) {
       if (!roomCode) { roomStatusText("Still connecting — try again in a second."); return; }
-      if (id === KUPAL_ID) { roomStatusText("Kupal does not take challenges — flip the green button and it joins you."); return; }
       if (!peers[id]) return;
       const duelId = "D" + Date.now().toString(36).toUpperCase();
       battle = { id: duelId, mode: "1v1", host: myId, joiners: {}, started: false };
@@ -3114,18 +3104,19 @@
     }
 
     /* =========================================================
-       8. KUPAL IN A HUMAN BATTLE (the maker's green button)
-          The bot has no phone of its own, so this page speaks for it:
-          it announces Kupal in the lobby, pushes its board as if Kupal
-          sent it, throws Kupal's garbage at the humans and takes theirs.
-          Everyone else in the room sees an ordinary player.
+       8. KUPAL PLAYS FOR YOU (the maker's green button)
+          With the light on, Kupal's own brain drives your board
+          during a human battle: it picks the column, rotates the
+          piece, drops it. Your name, your score, your ladder row —
+          just not your hands. Solo and VS CPU are left alone, and
+          nobody in the room is told anything.
        ========================================================= */
-    const KUPAL_ID = "P-KUPAL";
     const KUPAL_KEY = "pindutan_kupal_join";
 
-    let kupalInBattle = false;
-    let kupalFrameAt = 0;
-    let kupalDeathSent = false;
+    let autoPlan = null;
+    let autoStepT = 0;
+    let autoRotFails = 0;
+    let autoMoveFails = 0;
 
     function kupalJoinWanted() {
       try { return isCreator() && localStorage.getItem(KUPAL_KEY) === "1"; } catch (e) { return false; }
@@ -3135,95 +3126,92 @@
       if (!isCreator()) return;
       const on = !kupalJoinWanted();
       try { localStorage.setItem(KUPAL_KEY, on ? "1" : "0"); } catch (e) {}
+      autoPlan = null;
       applyCreatorLock();
-      if (on) kupalAnnounce("idle");
-      else kupalLeave();
       renderLobby();
     }
 
-    /* keep a local card for Kupal so the lobby and the opponent grid can use it */
-    function kupalPeer(mode, alive, board) {
-      const prev = peers[KUPAL_ID] || {};
-      peers[KUPAL_ID] = Object.assign({
-        name: "Kupal", id: KUPAL_ID, lastSeen: Date.now(), crown: false, bot: true
-      }, prev, {
-        name: "Kupal",
-        id: KUPAL_ID,
-        mode: mode || prev.mode || "idle",
-        alive: !!alive,
-        board: board === undefined ? (prev.board || null) : board,
-        score: bot.score || 0,
-        lines: bot.lines || 0,
-        sent: 0,
-        won: false,
-        lastSeen: Date.now(),
-        bot: true
-      });
+    function autopilotOn() {
+      return kupalJoinWanted() && gameRunning && !isPaused && !isSpectator &&
+             (currentMode === "1v1" || currentMode === "group");
     }
 
-    function kupalAnnounce(mode) {
-      if (!kupalJoinWanted() || !roomCode) return;
-      kupalPeer(mode || "idle", kupalInBattle && bot.alive, bot.board ? encodeBoard(bot.board) : null);
-      sendPacket({
-        t: "SYNC", name: "Kupal", mode: mode || "idle",
-        alive: kupalInBattle && bot.alive, score: bot.score || 0,
-        lines: bot.lines || 0, sent: 0, won: false, board: null
-      }, KUPAL_ID);
-      renderLobby();
+    /* a rotation index for a shape, so the plan and the live piece can meet */
+    function matrixFor(type, rot) {
+      let m = SHAPES[type].map(r => [...r]);
+      for (let i = 0; i < (rot % 4); i++) m = rotateMatrix(m, 1);
+      return m;
     }
 
-    function kupalLeave() {
-      if (!roomCode) return;
-      sendPacket({ t: "BYE" }, KUPAL_ID);
-      delete peers[KUPAL_ID];
-      kupalInBattle = false;
-      botStop();
-      renderLobby();
-      renderOpponentsGrid();
-    }
-
-    function kupalStartBattle() {
-      if (kupalInBattle) return;
-      kupalInBattle = true;
-      kupalDeathSent = false;
-      botStart();                      /* the real engine, at Kupal's settings */
-      renderOpponentsGrid();
-    }
-
-    function kupalEndBattle() {
-      kupalInBattle = false;
-      botStop();
-      delete peers[KUPAL_ID];
-      renderLobby();
-      renderOpponentsGrid();
-    }
-
-    /* one board frame, 220 ms apart, exactly what a human would send */
-    function pushKupalFrame(force) {
-      if (!kupalInBattle || !kupalJoinWanted() || !roomCode) return;
-      const now = Date.now();
-      if (!force && now - kupalFrameAt < 220) return;
-      kupalFrameAt = now;
-      const alive = !!bot.alive;
-      kupalPeer(currentMode, alive, bot.board ? encodeBoard(bot.board) : null);
-      sendPacket({
-        t: "B", b: bot.board ? encodeBoard(bot.board) : null,
-        alive: alive, mode: currentMode,
-        score: bot.score || 0, lines: bot.lines || 0, sent: 0
-      }, KUPAL_ID);
-      if (!alive && !kupalDeathSent) {
-        kupalDeathSent = true;
-        setTimeout(() => { if (!bot.alive && kupalInBattle) renderOpponentsGrid(); }, 30);
+    /* the planner hands back a matrix, not a rotation number — find which one it is */
+    function rotOfMatrix(type, matrix) {
+      if (!matrix) return 0;
+      const target = JSON.stringify(matrix);
+      for (let r = 0; r < 4; r++) {
+        if (JSON.stringify(matrixFor(type, r)) === target) return r;
       }
+      return 0;
     }
 
-    /* Kupal's attack lands on a real human, once per clear */
-    function kupalAttack(atk) {
-      if (!kupalInBattle || !atk) return;
-      const humans = battleOpponents().filter(id => id !== KUPAL_ID && peers[id] && peers[id].alive);
-      if (!humans.length) return;
-      const target = humans[Math.floor(Math.random() * humans.length)];
-      sendPacket({ t: "GARBAGE", to: target, amount: atk }, KUPAL_ID);
+    function currentRot() {
+      if (!current) return 0;
+      const live = JSON.stringify(current.matrix);
+      for (let r = 0; r < 4; r++) {
+        if (JSON.stringify(matrixFor(current.type, r)) === live) return r;
+      }
+      return 0;
+    }
+
+    function autoThink() {
+      if (!current) return;
+      /* one plan per piece: two of the same shape in a row must not reuse the
+         old aim, or the second one lands in a spot that no longer exists */
+      if (autoPlan && autoPlan.type === current.type && autoPlan.piece === pieces) return;
+      const cfg = CPU_LEVELS.kupal;
+      const nextType = (typeof queue !== "undefined" && queue[0]) || null;
+      let plan = null;
+      try { plan = botPlan(board, current.type, cfg, nextType); } catch (e) { plan = null; }
+      autoPlan = plan
+        ? { type: current.type, piece: pieces, rot: rotOfMatrix(current.type, plan.matrix), x: plan.x }
+        : { type: current.type, piece: pieces, rot: 0, x: current.x };
+      autoRotFails = 0;
+      autoMoveFails = 0;
+    }
+
+    /* one small action per call: rotate, shuffle sideways, or drop */
+    function autoPlayStep() {
+      if (!autopilotOn()) { autoPlan = null; return; }
+      if (!current) { autoPlan = null; return; }
+      autoThink();
+      const plan = autoPlan;
+      if (!plan) return;
+
+      const loud = sfxEnabled;
+      sfxEnabled = false;                 /* the AI works quietly */
+      try {
+        /* rotate to the planned shape — give up after three refusals and take
+           the shape it has, rather than hammering a wall kick that never comes */
+        if (currentRot() !== plan.rot) {
+          if (tryRotate(1)) {
+            autoRotFails = 0;
+          } else if (++autoRotFails >= 3) {
+            plan.rot = currentRot();
+            autoRotFails = 0;
+          }
+          return;
+        }
+
+        const dx = plan.x - current.x;
+        if (dx !== 0) {
+          if (move(dx > 0 ? 1 : -1)) autoMoveFails = 0;
+          else if (++autoMoveFails >= 2) hardDrop();   /* blocked: settle here */
+          return;
+        }
+        hardDrop();
+        autoPlan = null;
+      } finally {
+        sfxEnabled = loud;
+      }
     }
 
     /* ---------- presence ---------- */
@@ -3232,8 +3220,6 @@
       const st = myState();
       st.t = "SYNC";
       sendPacket(st);
-
-      if (kupalJoinWanted()) kupalAnnounce(kupalInBattle ? currentMode : "idle");
 
       sweepPresence();
       paintConn();
@@ -3449,12 +3435,6 @@
         tag.className = "pg-you";
         tag.textContent = "YOU";
         card.appendChild(tag);
-      } else if (p.id === KUPAL_ID) {
-        const tag = document.createElement("span");
-        tag.className = "pg-you";
-        tag.style.cssText = "background:rgba(74,222,128,.14);color:#4ade80;border-color:rgba(74,222,128,.4);";
-        tag.textContent = "AI";
-        card.appendChild(tag);
       } else {
         const btn = document.createElement("button");
         btn.className = "pg-btn";
@@ -3572,10 +3552,7 @@
       if (saved && CPU_LEVELS[saved]) cpuLevel = saved;
     } catch (e) { /* private mode */ }
 
-    function cpuCfg() {
-      if (typeof kupalInBattle !== "undefined" && kupalInBattle) return CPU_LEVELS.kupal;
-      return CPU_LEVELS[cpuLevel] || CPU_LEVELS.intermediate;
-    }
+    function cpuCfg() { return CPU_LEVELS[cpuLevel] || CPU_LEVELS.intermediate; }
 
     function setCpuLevel(key) {
       if (!CPU_LEVELS[key]) return;
@@ -3821,9 +3798,7 @@
 
         let atk = ([0, 0, 1, 2, 4][cleared] || 0);
         if (atk > 0) atk += cpuCfg().attackBonus;
-        if (atk > 0 && kupalInBattle) {
-          kupalAttack(atk);
-        } else if (atk > 0 && currentMode === "bot" && gameRunning && !isPaused) {
+        if (atk > 0 && currentMode === "bot" && gameRunning && !isPaused) {
           pendingGarbage += atk;
           updateHUD();
           addFloater("+" + atk + " INCOMING", "#ff4d6d");

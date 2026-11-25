@@ -12,4 +12,4 @@ Archived builds, kept for reference. Nothing here is linked from the current lau
 | Labs games | `fortress.html`, `castle-defense.html`, `assets/fortress/` |
 | Tools | `diag.html` (older PHP-host check) |
 
-Current work stays in the repository root: `index.html`, `index-v6.html`, `arena-diag.html`, `gc-v5.html`, `api-v5.php`, `Aurora.html`, `api-free.php`, `labs/`.
+Current work stays in the repository root: `index.html`, `index-v6.html`, `arena-diag.html`, `pindutan-v17.html`, `gc-v5.html`, `api-v5.php`, `Aurora.html`, `api-free.php`, `labs/`.

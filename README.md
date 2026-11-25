@@ -25,7 +25,7 @@ Client-side checks — obstacles, not security.
 - `arena-diag.html` — reachability check + saved VPN-portal link.
 - `gc-v5.html` / `api-v5.php` — chat + backend, KDL skin, storm and sky.
 - `aurora-v4.html`, `Aurora.html`, `api-free.php`, `worker-free.js` — Aurora + FreeModel relay.
-- `labs/pindutan-v17.html` — the only current Pindutan build.
+- `pindutan-v17.html` — the only current Pindutan build, graduated out of `labs/`.
 - `labs/` — v17 design refs, Call Spider, transcript extension, auto-clicker APK.
 - `agent-widget.js`, `api-ai.php`, `agent-demo.html` — floating agent.
 - `tns.html`, `Screenshot.html`, `save.php` — dispatch and collectibles vault.
@@ -34,7 +34,7 @@ Client-side checks — obstacles, not security.
 ## Changes
 
 - **Repo public, no Pages site.** `has_pages: false` — nothing published on `github.io`.
-- **Old builds moved to `previous/`.** Current work stays in the root; v17 is the only live game, v15/v16/Fortress/Castle Defense archived.
+- **Old builds moved to `previous/`.** Current work stays in the root; v17 was promoted to `pindutan-v17.html`, v15/v16/Fortress/Castle Defense archived.
 - **Live-site fixes.** Bardagulan → `gc-v5.html`, Aurora → `Aurora.html`; saved grids upgraded off dead `gc.html` / `aurora-v4.html`. Launcher must sit in the host **root** — `/labs/index.html` breaks its relative cards.
 - **PLD-07 Connection check.** Probes `arena.ai`, the PHP host and the public web, says whether the block is the network or Arena, and stores an `http(s)` VPN-portal link. Own `arena1x` lock screen with LOCK AGAIN.
 - **Three gates.** Launcher `kupal`, Bardagulan `sheryl`, diag `arena1x`; v6 keeps its own unlock/grid keys.

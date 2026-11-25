@@ -144,9 +144,29 @@ The game never blocks on the network:
 - the board keeps working, the battle still ends normally,
 - your own results are kept in `localStorage` (`pindutan_lb_mine`),
 - the card shows the last copy it saw and says so ("Can't reach the host — showing the last copy"),
-- your own row still appears, marked *(you, offline)*.
+- your own row still appears, marked *(you, offline)*,
+- every result that did not go up is put in a queue on the phone (`pindutan_lb_pending`,
+  the last 40) and sent the next time the host answers — opening the lobby or tapping
+  ↻ both try it, with a fresh timestamp each time,
+- the card says why in plain words ("1 result is waiting to go up — no internet right now").
 
-So the ladder degrades to a personal scoreboard instead of breaking.
+So the ladder degrades to a personal scoreboard instead of breaking, and nothing is lost.
+
+## Results the host never heard about
+
+The phone is the only place a battle is written down, so it is the only place that can tell
+something is missing up there. On every lobby visit (and on ↻) it reads what the host has for
+your name and sends only the difference: phone says 3 wins, host says 1, two go up.
+
+Nothing is invented: if the host does not answer, or the board is too long to see in full,
+it sends nothing and tries again later. Each result also carries an id, so a retry after a
+lost reply never counts the same battle twice.
+
+## Changing the game later
+
+Files live in the same folder on the host. When the game itself changes, upload
+`pindutan.html` only. When the endpoint changes too (`api-leaderboard.php`), upload both —
+a new page talking to an old PHP just falls back to the phone, it does not break.
 
 ## What it costs
 
@@ -173,3 +193,4 @@ Or just delete `data/pindutan-leaderboard.json` over FTP.
 | `stale report` | the phone's clock is more than 15 minutes out |
 | Ladder loads but never changes | you are playing solo or VS CPU — only human battles report |
 | Empty after playing a friend on the same phone | you are both reporting the same nickname; use two names |
+| Two rows for one person | the nickname changed at some point; the old name keeps its wins, play on under one name and it climbs on its own |

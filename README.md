@@ -42,6 +42,11 @@ second with the falling piece. The last one standing gets **YOU WIN** or **LAST 
 its full window, and someone who joins late is added without restarting anyone. Boards travel as 200
 characters on a new `pindutan/v17/` topic, so old v16 tabs stay in their own room.
 
+**Pindutan v17 — side by side.** In a human battle your board is on the left and your rivals are on the
+right at 70% of its size: one big board in a 1v1, a 2-column grid for 2–4 rivals, 3 columns for 5–6. The
+board sizes itself to the window, so at 500×800 (or a 500×690 Chrome window) everything is visible without
+scrolling. On touch screens the touch pad is counted too. Solo and VS CPU keep the old stacked layout.
+
 **Aurora v4 — FreeModel only.** One platform, `https://freemodel.in/v1`, default `deepseek-v4.1-flash`.
 Every other provider name is gone from the page and a test greps for 13 of them. A key inside an HTML file
 cannot be hidden — hashing is one-way — so the key lives in `api-free.php` on the server and the page sends

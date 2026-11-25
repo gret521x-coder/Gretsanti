@@ -25,6 +25,7 @@ Pages on a free account, so `github.io` serves nothing.
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
 | `tns.html` | 33 KB | TNS — Safety Dispatch |
+| `labs/pindutan-v18.html` | 124 KB | Pindutan v18 — side-by-side human battles, the launcher's game card |
 | `pindutan.html` | 43 KB | Pindutan v14 arcade game |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
@@ -42,7 +43,7 @@ second with the falling piece. The last one standing gets **YOU WIN** or **LAST 
 its full window, and someone who joins late is added without restarting anyone. Boards travel as 200
 characters on a new `pindutan/v17/` topic, so old v16 tabs stay in their own room.
 
-**Pindutan v17 — side by side.** In a human battle your board is on the left and your rivals are on the
+**Pindutan v18 — side by side** (`labs/pindutan-v18.html`, the launcher card opens it; v17 stays as the fallback and shares the same lobby). In a human battle your board is on the left and your rivals are on the
 right at 70% of its size: one big board in a 1v1, a 2-column grid for 2–4 rivals, 3 columns for 5–6. The
 board sizes itself to the window, so at 500×800 (or a 500×690 Chrome window) everything is visible without
 scrolling. On touch screens the touch pad is counted too. Solo and VS CPU keep the old stacked layout.

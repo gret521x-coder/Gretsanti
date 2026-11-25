@@ -617,56 +617,6 @@
     }
     .opp-card.dead { filter: grayscale(0.55); }
 
-    /* ---------- v17.2 battle layout: you on the left, rivals on the right, a size smaller ---------- */
-    .stage { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 7px; }
-
-    body.battle .play-bar,
-    body.battle footer { display: none; }
-
-    body.battle .stage { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; }
-    body.battle .board-wrapper { flex: none; }
-
-    body.battle .opponents-panel.on {
-      flex: none;
-      display: flex;
-      flex-direction: column;
-      max-width: none;
-      padding: 6px;
-      border-radius: 12px;
-      min-height: 0;
-    }
-    body.battle .opponents-header { flex-wrap: nowrap; }
-    body.battle .opponents-header h3 { font-size: 0.54rem; letter-spacing: 0.12em; white-space: nowrap; }
-    body.battle .viewer-badge { display: none; }
-
-    body.battle .opponents-panel.on #opponentsGrid {
-      flex: 1;
-      min-height: 0;
-      margin-top: 5px;
-      display: grid;
-      grid-template-columns: 1fr;
-      align-content: start;
-      gap: 5px;
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
-    body.battle .opponents-panel.multi #opponentsGrid { grid-template-columns: 1fr 1fr; }
-    body.battle .opponents-panel.many #opponentsGrid { grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-    body.battle .opponents-panel.many .opp-card { padding: 3px; }
-    body.battle .opponents-panel.many .opp-name { font-size: 0.54rem; }
-    body.battle .opponents-panel.many .opp-stats { font-size: 0.48rem; }
-    body.battle .opponents-panel.on #opponentsGrid > * { margin: 0; }
-
-    body.battle .opp-card { flex-direction: column; align-items: stretch; gap: 3px; padding: 4px; width: auto; min-width: 0; }
-    body.battle .opponents-panel .opp-card canvas { width: 100%; height: auto; }
-    body.battle .opp-card .opp-info { min-width: 0; max-width: none; }
-    body.battle .opponents-panel .opp-name { font-size: 0.62rem; margin: 0; }
-    body.battle .opponents-panel.duel .opp-name { font-size: 0.74rem; }
-    body.battle .opponents-panel .opp-stats { font-size: 0.52rem; margin: 0; }
-    body.battle .opponents-panel.duel .opp-stats { font-size: 0.62rem; }
-    body.battle .opponents-panel.multi .opp-stats br { display: none; }
-    body.battle .opponents-panel.multi .opp-stats { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
     @media (min-width: 700px) {
       h1 { font-size: 1.5rem; }
       .board-wrapper { width: min(100%, 34vh, 300px); }
@@ -1117,7 +1067,6 @@
       </div>
     </div>
 
-    <div class="stage" id="stage">
     <div class="board-wrapper" id="playerBoardWrapper">
       <canvas id="mainCanvas" width="260" height="520"></canvas>
       <div class="board-overlay" id="boardOverlay">
@@ -1126,23 +1075,6 @@
         <div class="over-stats" id="overStats"></div>
         <button class="primary" id="startBtn">Start Game</button>
       </div>
-    </div>
-
-    <!-- OPPONENTS & LIVE STREAM VIEW -->
-    <div class="opponents-panel" id="opponentsPanel">
-      <div class="opponents-header">
-        <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
-        <div class="badges-group">
-          <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
-          <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
-        </div>
-      </div>
-      <div id="opponentsGrid">
-        <div class="opp-empty" style="color:var(--mut); font-size:0.68rem; padding:10px; text-align:center;">
-          Waiting for players to join the room...
-        </div>
-      </div>
-    </div>
     </div>
 
     <div class="power-wrap">
@@ -1163,6 +1095,21 @@
       <button id="botRestart">Restart</button>
     </div>
 
+    <!-- OPPONENTS & LIVE STREAM VIEW -->
+    <div class="opponents-panel" id="opponentsPanel">
+      <div class="opponents-header">
+        <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
+        <div class="badges-group">
+          <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
+          <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
+        </div>
+      </div>
+      <div id="opponentsGrid">
+        <div style="color:var(--mut); font-size:0.68rem; padding:10px; text-align:center;">
+          Waiting for players to join the room...
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- MOBILE TOUCH CONTROLS -->
@@ -1953,36 +1900,7 @@
     }
 
     /* ---------- responsive canvas ---------- */
-    /* In a human battle the board sits beside the rivals' column, so its size comes from
-       what the window has left: the height under the header, and the width of two boards
-       (yours, and theirs at 70%). The touch pad is only counted on touch screens. */
-    const RIVAL_SCALE = 0.7;
-
-    function fitBattleBoard() {
-      const panel = document.getElementById("opponentsPanel");
-      if (!document.body.classList.contains("battle")) {
-        boardWrapper.style.width = "";
-        if (panel) panel.style.width = "";
-        return;
-      }
-      const stage = document.getElementById("stage");
-      const arena = document.querySelector(".arena");
-      const power = document.querySelector(".power-wrap");
-      const pad = document.querySelector(".touch-controls");
-      const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-      const padH = coarse && pad && getComputedStyle(pad).display !== "none" ? pad.offsetHeight + 4 : 0;
-      const top = stage.getBoundingClientRect().top + window.scrollY;
-      const below = (power ? power.offsetHeight : 26) + 7 + padH + 10;
-      const byHeight = (window.innerHeight - top - below) / 2;
-      const inner = arena.clientWidth - 24;                       /* arena padding */
-      const byWidth = (inner - 8 - 14) / (1 + RIVAL_SCALE);       /* gap + panel padding */
-      const w = Math.floor(Math.max(130, Math.min(byHeight, byWidth, 320)));
-      boardWrapper.style.width = w + "px";
-      if (panel) panel.style.width = Math.floor(w * RIVAL_SCALE + 14) + "px";
-    }
-
     function resizeBoard() {
-      fitBattleBoard();
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const w = Math.max(120, boardWrapper.clientWidth);
       const h = w * 2;
@@ -2793,12 +2711,6 @@
       if (!grid || !panel) return;
 
       const on = opponentsWanted();
-      const sideBySide = inBattle() && !isSpectator;
-      if (document.body.classList.contains("battle") !== sideBySide) {
-        document.body.classList.toggle("battle", sideBySide);
-        resizeBoard();
-        drawQueue();
-      }
       panel.classList.toggle("on", on);
       panel.classList.toggle("duel", currentMode === "1v1" && !isSpectator);
       panel.classList.toggle("watch", isSpectator);
@@ -2808,9 +2720,6 @@
       const ids = isSpectator
         ? Object.keys(peers)
         : battleOpponents().filter(id => peers[id]);
-      panel.classList.toggle("multi", ids.length > 1);
-      panel.classList.toggle("many", ids.length > 4);
-      const compact = document.body.classList.contains("battle") && ids.length > 1;
       const limit = currentMode === "1v1" && !isSpectator ? 2 : MAX_PLAYERS;
       const total = isSpectator ? ids.length + 1 : Object.keys(battlePlayers).length;
       document.getElementById("opponentsTitle").textContent =
@@ -2836,7 +2745,6 @@
         return;
       }
       if (empty) empty.remove();
-      Array.from(grid.children).forEach(el => { if (!el.classList.contains("opp-card")) el.remove(); });
 
       ids.slice(0, MAX_PLAYERS).forEach(id => {
         const p = peers[id];
@@ -2846,8 +2754,8 @@
           const title = document.createElement("div");
           title.className = "opp-name";
           const mini = document.createElement("canvas");
-          mini.width = 160;
-          mini.height = 320;
+          mini.width = 80;
+          mini.height = 160;
           const ko = document.createElement("div");
           ko.className = "ko";
           ko.textContent = "KO";
@@ -2868,25 +2776,21 @@
         }
 
         const inGame = !isSpectator ? !!battleSeenAlive[id] : true;
-        const dead = !p.alive && !p.won && (isSpectator ? !!p.board : inGame);
+        const dead = !p.alive && (isSpectator ? !!p.board : inGame);
         ref.card.className = "opp-card" + (p.alive ? " live" : "") + (dead ? " dead" : "");
         ref.title.textContent = p.name + (p.alive ? "" : inGame ? "" : " (joining)");
         ref.ko.textContent = p.won ? "WIN" : "KO";
         ref.ko.style.color = p.won ? "var(--lime)" : "";
         ref.ko.style.display = (dead || p.won) && !isSpectator ? "block" : "none";
-        ref.stats.innerHTML = compact
-          ? "<b>" + (p.score | 0) + "</b> · " + (p.lines | 0) + "L" + (ids.length > 4 ? "" : " · " + (p.sent | 0) + "S")
-          : "Score <b>" + (p.score | 0) + "</b><br>Lines <b>" + (p.lines | 0) + "</b> · Sent <b>" + (p.sent | 0) + "</b>";
-        ref.stats.title = "Score " + (p.score | 0) + " · Lines " + (p.lines | 0) + " · Sent " + (p.sent | 0);
+        ref.stats.innerHTML = "Score <b>" + (p.score | 0) + "</b><br>Lines <b>" + (p.lines | 0) + "</b> · Sent <b>" + (p.sent | 0) + "</b>";
 
         const mCtx = ref.ctx;
-        const cell = 16;
         mCtx.fillStyle = "#070a11";
-        mCtx.fillRect(0, 0, COLS * cell, ROWS * cell);
-        mCtx.strokeStyle = "rgba(255,255,255,0.04)";
+        mCtx.fillRect(0, 0, 80, 160);
+        mCtx.strokeStyle = "rgba(255,255,255,0.035)";
         mCtx.lineWidth = 1;
-        for (let c = 1; c < COLS; c++) { mCtx.beginPath(); mCtx.moveTo(c * cell + 0.5, 0); mCtx.lineTo(c * cell + 0.5, ROWS * cell); mCtx.stroke(); }
-        for (let r = 1; r < ROWS; r++) { mCtx.beginPath(); mCtx.moveTo(0, r * cell + 0.5); mCtx.lineTo(COLS * cell, r * cell + 0.5); mCtx.stroke(); }
+        for (let c = 1; c < COLS; c++) { mCtx.beginPath(); mCtx.moveTo(c * 8 + 0.5, 0); mCtx.lineTo(c * 8 + 0.5, 160); mCtx.stroke(); }
+        const cell = 8;
         if (p.board) {
           for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {

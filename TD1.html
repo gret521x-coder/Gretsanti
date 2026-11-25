@@ -42,10 +42,18 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 table{border-collapse:collapse;width:100%;font-size:12px}
 th,td{border:1px solid #2c3a22;padding:4px 7px;text-align:left}
 th{background:var(--panel2);color:var(--dim);font-weight:600;font-size:10px;letter-spacing:.1em}
-td.t{cursor:pointer;color:var(--ink)}
-td.t:hover{background:var(--panel2)}
-td.t.sel{background:#4f8a2c;color:#081106;font-weight:700}
-td.cost{color:var(--gold);white-space:nowrap}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:5px}
+.tower-card{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 3px;
+            background:var(--panel2);border:1px solid var(--line);border-radius:4px;
+            color:var(--ink);text-align:center;border-bottom-width:2px}
+.tower-card:hover{background:#24331a}
+.tower-card.sel{background:#4f8a2c;color:#081106;border-color:#b6f07e;font-weight:700}
+.tower-icon{width:38px;height:38px;image-rendering:pixelated}
+.tc-name{font-size:10px;letter-spacing:.04em}
+.tc-cost{font-size:11px;color:var(--gold)}
+.tower-card.sel .tc-cost{color:#081106}
+.tc-info{font-size:9px;color:var(--dim);line-height:1.25}
+.tower-card.sel .tc-info{color:#263b12}
 #msg,#tip{width:100%;max-width:780px;font-size:12px;min-height:18px;margin-top:8px;
           padding:6px 10px;border-left:3px solid var(--gold);background:rgba(0,0,0,.35);
           border-radius:0 4px 4px 0}
@@ -69,7 +77,7 @@ p.legend{max-width:780px;font-size:11px;color:var(--dim);text-align:center;margi
 <canvas id="cv" width="720" height="480"></canvas>
 <p class="legend">Pick a tower, click a dark tile to build. Click a tower to upgrade, SHIFT+click to sell (60% refund), RIGHT-CLICK or press T over it to cycle target: CLOSE / FIRST / LAST / STRONG. SPACE pauses, 1-9 pick towers, Esc clears. FLYING monsters ignore the path — Cannon &amp; Mortar can't hit them! After wave 20 the stage loops.</p>
 <div class="panels">
- <div class="panel"><h2>BUILD / SHOP</h2><table id="shop"></table></div>
+ <div class="panel"><h2>BUILD / SHOP</h2><div class="shop-grid" id="shop"></div></div>
  <div class="panel"><h2>BESTIARY</h2><table id="intel"></table></div>
 </div>
 <script>
@@ -80,41 +88,42 @@ cx.imageSmoothingEnabled=false;
 var ORC=["..KKKK....",".KGGGGK...",".KGEGEGK..",".KGGGGGK..","..KWKWK...",".KKLLLKK..",".KGGGGGK..",".KGLGLGK..","..KGGGK..."];
 var SPR={
 grunt:{s:3,rows:ORC,legs1:["..KLK.KLK.",".KKK...KKK"],legs2:["..KLK.KLK.",".KK.....KK"],
- pal:{G:'#4a9c2a',K:'#0e0e0e',E:'#ff2020',W:'#f0f0d0',L:'#7a4a1a'}},
+ pal:{G:'#5fbf35',K:'#0e0e0e',E:'#ff4040',W:'#f0f0d0',L:'#7a4a1a'}},
 berserker:{s:3,rows:ORC,legs1:["..KLK.KLK.",".KKK...KKK"],legs2:["..KLK.KLK.",".KK.....KK"],
- pal:{G:'#2a7ac9',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#1a3a5a'}},
+ pal:{G:'#3a9ae8',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#1a3a5a'}},
 brute:{s:4,rows:["H.KKKK..H.",".KGGGGK...",".KGEGEGK..",".KGGGGGK..","..KWKWK...",".KKLLLKK..",".KGGGGGK..",".KGGGGGK..",".KGLGLGK..","..KGGGK..."],
  legs1:["..KLKK.KLK",".KKK...KKK"],legs2:["..KLKK.KLK",".KK.....KK"],
- pal:{G:'#c93a2a',H:'#f0e0b0',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#5a2a1a'}},
+ pal:{G:'#e04a2a',H:'#f0e0b0',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#5a2a1a'}},
 shaman:{s:3,rows:ORC,legs1:["..KLK.KLK.",".KKK...KKK"],legs2:["..KLK.KLK.",".KK.....KK"],
- pal:{G:'#8a3ac9',K:'#0e0e0e',E:'#60ffa0',W:'#f0f0d0',L:'#3a1a5a'}},
+ pal:{G:'#a24ae0',K:'#0e0e0e',E:'#60ffa0',W:'#f0f0d0',L:'#3a1a5a'}},
 necro:{s:3,rows:ORC,legs1:["..KLK.KLK.",".KKK...KKK"],legs2:["..KLK.KLK.",".KK.....KK"],
- pal:{G:'#2a2a3a',K:'#0e0e0e',E:'#a040ff',W:'#f0f0d0',L:'#5a2a8a'}},
+ pal:{G:'#3a2a4a',K:'#0e0e0e',E:'#c060ff',W:'#f0f0d0',L:'#5a2a8a'}},
 goblin:{s:2,rows:[".KKKK.","KGEGEK","KGGGGK","KWKWGK",".KGGK.",".K..K."],
  legs1:["K.KK.K"],legs2:["KK..KK"],
- pal:{G:'#7ac92a',K:'#0e0e0e',E:'#ff2020',W:'#f0f0d0'}},
+ pal:{G:'#9ade3a',K:'#0e0e0e',E:'#ff4040',W:'#f0f0d0'}},
 ogre:{s:4,rows:["..MMMMM....",".MKGGGGKM..",".MKGEGEKM..",".MKGGGGKM..","..MKWKWKM..",".MMLLLLMM..","MMKGGGGKMM.","MMKGLGLKMM.",".MMKGGGKMM."],
  legs1:["..MKK.KKM..",".MMK...KMM."],legs2:["..MK...KM..",".MK.....KM."],
- pal:{M:'#8a8a92',G:'#7a8a3a',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#4a3a1a'}},
+ pal:{M:'#9aa0a8',G:'#7a8a3a',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#4a3a1a'}},
 skeleton:{s:3,rows:["..KKKK..",".KWKKWK.",".KKKKKK.","..KAAK..","KAKKKAK.",".KKKKK.."],
  legs1:["K.K..K.K"],legs2:["KK....KK"],
- pal:{K:'#e8e8e0',W:'#ff2020',A:'#c8c8c0'}},
+ pal:{K:'#f2f0e4',W:'#ff4040',A:'#c8c8c0'}},
 boss:{s:5,rows:["H..KKKK..H..",".KKGGGGKK...",".KGGEGEGK...",".KGGGGGGK...","..KWKWKWK...",".KKLLLLLKK..",".KGGGGGGGK..",".KGAAGAAGK..",".KGGGGGGGK..","..KGGGGGK...","..KGGGGGK..."],
  legs1:["..KLKK.KLKK.",".KKK.....KKK"],legs2:["..KLKK.KLKK.",".KK.......KK"],
- pal:{G:'#2e7a1a',H:'#f0e0b0',A:'#9aa0b0',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#4a2a0a'}},
+ pal:{G:'#3f941f',H:'#f0e0b0',A:'#9aa0b0',K:'#0e0e0e',E:'#ffd000',W:'#f0f0d0',L:'#4a2a0a'}},
 bat:{s:3,frames:[
  ["W........W","WW..KK..WW",".WWKGGKWW.","..WKGGKW..","...KGGK...","...KEEK...","....KK...."],
  [".W......W.",".WW.KK.WW.","..WWKGGKWW","...WKGGKW.","....KGGK..","....KEEK..",".....KK..."]],
- pal:{W:'#6a4a8a',K:'#0e0e0e',G:'#5a3a1a',E:'#ff4040'}},
+ pal:{W:'#8a5ab0',K:'#0e0e0e',G:'#5a3a1a',E:'#ff4040'}},
 gargoyle:{s:3,frames:[
  ["G..........G","GG..KKKK..GG",".GGKGGGGKGG.","..GKEGGEKG..","...KGGGGK...","...KGWWGK...","....KGGK....","....K..K...."],
  ["............",".GG.KKKK.GG.","..GKGGGGKG..","..GKEGGEKG..","...KGGGGK...","...KGWWGK...","....KGGK....","....K..K...."]],
- pal:{G:'#8a8a9a',K:'#1a1a22',E:'#ffd000',W:'#c0c0d0'}},
+ pal:{G:'#a0a4b4',K:'#1a1a22',E:'#ffd000',W:'#c0c0d0'}},
 wyvern:{s:4,frames:[
  ["G............G","GG..KKKKKK..GG",".GGKKGGGGKKGG.","..GKGGEEGGKG..","..GKGGGGGGKG..","...KGGGGGGK...","...KGAAGAAK...","....KGGGGK....","....KGLLGK....",".....KGGK.....","......KK......"],
  ["..............",".GG........GG.",".GGKKKKKKKKGG.","..GKGGGGGGKG..","..GKGGEEGGKG..","...KGGGGGGK...","...KGAAGAAK...","....KGGGGK....","....KGLLGK....",".....KGGK.....","......KK......"]],
- pal:{G:'#3a7a4a',K:'#0e2a0e',E:'#ffd000',A:'#9aa0b0',L:'#e0c060'}}
+ pal:{G:'#4a9a5a',K:'#0e2a0e',E:'#ffd000',A:'#9aa0b0',L:'#e0c060'}}
 };
+SPR.skyboss={s:4,frames:SPR.wyvern.frames,pal:{G:'#c0442e',K:'#3a0e0e',E:'#ffe08a',A:'#ffb0a0',L:'#ffd45e'}};
 function drawSprite(spr,x,y,frame,flash){
  var rows;
  if(spr.frames){rows=spr.frames[frame%2];}
@@ -130,11 +139,13 @@ function drawSprite(spr,x,y,frame,flash){
 
 // ---------- maps ----------
 var MAPS=[
- {name:'Forest Trail',wpts:[[0,1],[3,1],[3,4],[1,4],[1,8],[6,8],[6,3],[10,3],[10,6],[13,6],[13,9],[14,9]],theme:{g1:'#24331a',g2:'#1d2a14',p:'#8a7a4a',p2:'#7a6a3c'}},
- {name:'Serpent Pass',wpts:[[0,5],[4,5],[4,2],[7,2],[7,8],[11,8],[11,4],[13,4],[13,9],[14,9]],theme:{g1:'#2a2a18',g2:'#20200e',p:'#8a8a5a',p2:'#7a7a4c'}},
- {name:'Swamp Loop',wpts:[[0,0],[5,0],[5,3],[2,3],[2,7],[8,7],[8,2],[12,2],[12,8],[14,8]],theme:{g1:'#1a2a2a',g2:'#12211f',p:'#7a8a6a',p2:'#6a7a5c'}},
- {name:'Frozen Canyon',wpts:[[0,8],[2,8],[2,2],[6,2],[6,8],[10,8],[10,3],[14,3],[14,9]],theme:{g1:'#1a2433',g2:'#141c28',p:'#9ab0c0',p2:'#8aa0b0'}},
- {name:'Ashen Fortress',wpts:[[0,4],[2,4],[2,1],[5,1],[5,8],[9,8],[9,1],[12,1],[12,6],[14,6]],theme:{g1:'#2a2020',g2:'#1f1717',p:'#8a6a5a',p2:'#7a5c4c'}}
+ {name:'Forest Trail',wpts:[[0,1],[3,1],[3,4],[1,4],[1,8],[6,8],[6,3],[10,3],[10,6],[13,6],[13,9],[14,9]],theme:{g1:'#24331a',g2:'#1d2a14',p:'#8a7a4a',p2:'#7a6a3c',edge:'#101a08',deco:'tree',acc:'#4e8a2a'}},
+ {name:'Serpent Pass',wpts:[[0,5],[4,5],[4,2],[7,2],[7,8],[11,8],[11,4],[13,4],[13,9],[14,9]],theme:{g1:'#2a2a18',g2:'#20200e',p:'#8a8a5a',p2:'#7a7a4c',edge:'#14140a',deco:'rock',acc:'#b8a94a'}},
+ {name:'Swamp Loop',wpts:[[0,0],[5,0],[5,3],[2,3],[2,7],[8,7],[8,2],[12,2],[12,8],[14,8]],theme:{g1:'#1a2a2a',g2:'#12211f',p:'#7a8a6a',p2:'#6a7a5c',edge:'#0b1a18',deco:'reed',acc:'#4ac98a'}},
+ {name:'Frozen Canyon',wpts:[[0,8],[2,8],[2,2],[6,2],[6,8],[10,8],[10,3],[14,3],[14,9]],theme:{g1:'#1a2433',g2:'#141c28',p:'#9ab0c0',p2:'#8aa0b0',edge:'#0c1420',deco:'ice',acc:'#8bd8ff'}},
+ {name:'Ashen Fortress',wpts:[[0,4],[2,4],[2,1],[5,1],[5,8],[9,8],[9,1],[12,1],[12,6],[14,6]],theme:{g1:'#2a2020',g2:'#1f1717',p:'#8a6a5a',p2:'#7a5c4c',edge:'#140e0e',deco:'ember',acc:'#ff8a3a'}},
+ {name:'Crystal Cave',wpts:[[0,2],[3,2],[3,7],[7,7],[7,1],[11,1],[11,6],[14,6]],theme:{g1:'#1e1830',g2:'#171228',p:'#7a6a9a',p2:'#64568a',edge:'#100b1e',deco:'crystal',acc:'#c08bff'}},
+ {name:'Ember Road',wpts:[[0,7],[3,7],[3,3],[6,3],[6,8],[10,8],[10,2],[13,2],[13,7],[14,7]],theme:{g1:'#2e1a12',g2:'#24130e',p:'#9a6a42',p2:'#805632',edge:'#160b07',deco:'lava',acc:'#ff5a2a'}}
 ];
 var pathSet={},WAYP=[],curMapIdx=0;
 function loadMap(idx){
@@ -163,7 +174,7 @@ var ENEMY={
  bat:{name:'Cave Bat',spr:SPR.bat,hp:18,spd:2.2,gold:15,dmg:1,fly:true},
  gargoyle:{name:'Gargoyle',spr:SPR.gargoyle,hp:90,spd:1.4,gold:25,dmg:2,fly:true},
  wyvern:{name:'Wyvern',spr:SPR.wyvern,hp:220,spd:1.0,gold:50,dmg:3,fly:true},
- skyboss:{name:'Sky WARLORD',spr:SPR.wyvern,hp:1000,spd:0.8,gold:100,dmg:5,fly:true,boss:true}
+ skyboss:{name:'Sky WARLORD',spr:SPR.skyboss,hp:1000,spd:0.8,gold:100,dmg:5,fly:true,boss:true}
 };
 // ---------- tower defs (noAir = cannot hit flying) ----------
 var TW={
@@ -208,48 +219,73 @@ document.getElementById('modebar').addEventListener('click',function(e){
 });
 
 // ---------- themed tower sprites ----------
-function drawTowerSprite(type,x,y,angle,lvl){
- cx.save();cx.translate(x,y);cx.rotate(angle||0);
- var p=function(px,py,w,h,c){cx.fillStyle=c;cx.fillRect(px,py,w,h);};
+function drawTowerSprite(type,x,y,angle,lvl,g,flash){
+ g=g||cx;
+ var ACC={Archer:'#8fd05a',Cannon:'#c0c8c8',Frost:'#8bd8ff',Sniper:'#e0c060',Poison:'#7ade4a',
+          Tesla:'#40b0e0',Laser:'#ff6060',Mortar:'#a898e0',Bank:'#ffd45e'}[type]||'#ffd45e';
+ var BASE={Archer:'#5a4a32',Cannon:'#3a4440',Frost:'#2a4a60',Sniper:'#3a3a2a',Poison:'#2a4a22',
+           Tesla:'#28283a',Laser:'#4a2424',Mortar:'#343048',Bank:'#5a4418'}[type]||'#333';
+ var p=function(px,py,w,h,c){g.fillStyle=c;g.fillRect(px,py,w,h);};
+ g.save();g.translate(x,y);
+ /* unrotated plinth: every tower reads as a built structure */
+ p(-19,14,38,6,'rgba(0,0,0,0.38)');
+ p(-18,6,36,10,BASE);p(-18,6,36,3,'#6a7058');p(-18,13,36,3,'#10140c');
+ p(-16,9,4,5,ACC);p(12,9,4,5,ACC);
+ g.save();g.rotate(angle||0);
  if(type==='Archer'){
-  p(-14,-4,28,20,'#8a8276');p(-14,-4,28,3,'#a89f90');p(-14,13,28,3,'#6a6256');
-  p(-4,-14,8,12,'#5a7a3a');p(-6,-18,12,6,'#8a5a2a');p(-2,-22,4,6,'#d8c0a0');p(-1,-24,2,3,'#8a6a3a');
-  p(4,-16,14,3,'#8a6a3a');p(16,-19,3,9,'#e8e4d8');p(19,-22,1,4,'#f0f0f0');
-  p(2,-13,2,2,'#f0f0d0');
+  p(-12,-6,24,13,'#7a6a4a');p(-12,-6,24,3,'#a29270');
+  p(-6,-17,12,12,'#3f7a2a');p(-8,-14,4,8,'#2c5a1c');p(4,-14,4,8,'#2c5a1c');
+  p(-3,-20,6,5,'#e8c8a0');p(-2,-18,2,2,'#301a10');
+  p(7,-18,3,18,'#8a5a2a');p(10,-20,3,4,'#c9a23a');p(13,-16,2,12,'#8a5a2a');
+  p(6,-11,12,2,'#e8e4d8');p(17,-12,4,2,'#f0f0f0');
  }else if(type==='Cannon'){
-  p(-18,-12,36,24,'#4a5a4a');p(-18,-12,36,4,'#5e705e');p(-18,8,36,4,'#3a4a3a');
-  p(-16,-16,32,5,'#5a6a5a');p(2,-8,24,10,'#2a3a2a');p(24,-10,4,14,'#1e2a1e');
-  p(-10,-8,8,6,'#3a4a3a');p(6,-6,6,4,'#666');
+  p(-15,-10,30,15,'#4a5650');p(-15,-10,30,4,'#6a786e');p(-15,2,30,3,'#222b26');
+  p(-5,-6,22,11,'#5a6860');p(15,-8,8,15,'#2a322e');p(21,-6,3,11,'#141a17');
+  p(-11,2,7,7,'#1d241f');p(4,2,7,7,'#1d241f');p(-9,4,3,3,'#88948a');p(6,4,3,3,'#88948a');
+  p(-12,-12,8,3,ACC);
  }else if(type==='Frost'){
-  p(-3,-22,6,20,'#bfe8ff');p(-11,-14,6,12,'#9ad4f2');p(5,-16,6,14,'#d4f0ff');
-  p(-12,-4,24,12,'#7ab0d0');p(-12,4,24,4,'#5a90b0');p(-4,-18,3,14,'#ffffff');
-  p(8,-13,2,10,'#ffffff');
+  p(-14,-2,28,9,'#2a5a72');p(-14,-2,28,3,'#4a86a0');
+  p(-4,-25,8,24,'#bfe8ff');p(-12,-17,7,15,'#8bd8ff');p(5,-19,7,17,'#d4f0ff');
+  p(-2,-22,3,17,'#ffffff');p(-10,-14,2,10,'#e8faff');p(7,-16,2,11,'#ffffff');
+  p(-1,-29,3,5,'#ffffff');
  }else if(type==='Sniper'){
-  p(-10,-20,20,36,'#4a5238');p(-10,-20,20,4,'#5e6a48');p(-6,-24,12,6,'#3a4228');
-  p(-2,-14,30,4,'#2a2a2a');p(28,-16,4,8,'#1a1a1a');p(-4,-2,6,6,'#6a5a3a');
-  p(-10,10,4,4,'#3a4228');p(6,10,4,4,'#3a4228');
+  p(-11,-8,22,15,'#4a4a32');p(-11,-8,22,3,'#6a6a48');
+  p(-3,-16,28,4,'#24282a');p(23,-18,6,8,'#14181a');p(-6,-14,8,3,'#5a5a4a');
+  p(2,-22,12,4,'#2a2e30');p(5,-25,7,3,'#8bd8ff');
+  p(-8,6,4,7,'#3a3a2a');p(5,6,4,7,'#3a3a2a');p(-1,2,5,5,ACC);
  }else if(type==='Poison'){
-  p(-13,-4,26,18,'#3a5a2a');p(-13,-4,26,4,'#4a6a3a');
-  p(-9,-10,7,7,'#7ac93a');p(2,-12,8,8,'#5ab32a');p(-2,-14,4,5,'#a0e85a');
-  p(-16,-2,3,10,'#8a5a2a');p(13,-2,3,10,'#8a5a2a');
+  p(-14,-3,28,12,'#2f5a28');p(-14,-3,28,3,'#4a7a3a');
+  p(-10,-12,20,10,'#1f3a1c');p(-8,-14,16,3,'#7ade4a');
+  p(-7,-18,6,6,'#7ade4a');p(3,-21,7,7,'#5ab32a');p(-1,-24,4,5,'#b0ff7a');
+  p(10,-16,3,3,'#b0ff7a');p(-13,9,3,5,'#8a5a2a');p(10,9,3,5,'#8a5a2a');
  }else if(type==='Tesla'){
-  p(-9,-2,18,16,'#3a3a4a');p(-9,-2,18,3,'#4e4e62');
-  p(-6,-20,12,18,'#5a5a7a');p(-9,-24,18,5,'#2a2a3a');p(-3,-30,6,7,'#40b0e0');
-  p(-1,-34,2,4,'#a0e8ff');p(4,-27,5,3,'#80d8f0');
+  p(-11,-3,22,11,'#2a2a3a');p(-11,-3,22,3,'#4e4e62');
+  p(-7,-20,14,18,'#4a4a6a');p(-10,-24,20,5,'#22223a');
+  p(-4,-29,8,7,'#40b0e0');p(-2,-33,4,5,'#a0e8ff');
+  p(-13,-17,4,3,'#80d8f0');p(10,-12,4,3,'#80d8f0');p(-1,-38,2,4,'#ffffff');
  }else if(type==='Laser'){
-  p(-14,-8,28,18,'#5a2a2a');p(-14,-8,28,4,'#7a3a3a');
-  p(0,-14,16,8,'#8a3a3a');p(14,-20,6,14,'#3a1a1a');p(18,-22,4,5,'#ff6060');
-  p(-8,-12,6,4,'#aa4444');p(-2,-10,4,4,'#ff8080');
+  p(-15,-7,30,14,'#5a2a2a');p(-15,-7,30,3,'#8a3a3a');
+  p(-3,-15,17,9,'#7a3030');p(13,-18,8,15,'#2a1414');p(19,-16,4,11,'#ff6060');
+  p(-10,-12,6,4,'#aa4444');p(-2,-13,5,4,'#ff8080');p(6,-19,5,3,ACC);
  }else if(type==='Mortar'){
-  p(-16,-4,32,18,'#4a4a5a');p(-16,-4,32,4,'#5e5e70');
-  cx.save();cx.rotate(-0.5);p(-6,-26,12,26,'#3a3a4a');p(-6,-26,12,3,'#5a5a6a');cx.restore();
-  p(-10,10,5,6,'#2a2a3a');p(6,10,5,6,'#2a2a3a');
+  p(-16,-3,32,12,'#4a465e');p(-16,-3,32,3,'#6a6480');
+  g.save();g.rotate(-0.62);p(-7,-30,14,29,'#3a3650');p(-7,-30,14,4,'#6a6480');p(-5,-33,10,4,'#a898e0');g.restore();
+  p(-12,8,7,7,'#23202e');p(5,8,7,7,'#23202e');p(-10,10,3,3,'#8a80a8');p(7,10,3,3,'#8a80a8');
  }else if(type==='Bank'){
-  p(-15,-10,30,24,'#c9a23a');p(-15,-10,30,4,'#e0bc50');p(-15,10,30,4,'#a8822a');
-  p(-6,-4,12,10,'#8a6a1a');p(-3,-1,6,6,'#ffd000');p(-4,-6,8,2,'#e0bc50');
+  p(-16,-12,32,22,'#c9a23a');p(-16,-12,32,4,'#e8c45a');p(-16,7,32,3,'#8a6a1a');
+  p(-10,-7,20,13,'#8a6a1a');p(-7,-4,14,8,'#5a4410');p(-3,-2,6,5,'#ffd000');
+  p(-5,-9,10,2,'#e8c45a');p(12,-9,3,3,'#fff0a0');
  }
- if(lvl>1){cx.fillStyle='#ffd000';cx.fillRect(-6,18,12,4);}
- cx.restore();
+ g.restore();
+ /* level pips sit outside the turret so they never spin */
+ for(var i=0;i<Math.min(lvl,4);i++)p(-10+i*6,16,4,4,ACC);
+ if(lvl>=3){g.strokeStyle=ACC;g.globalAlpha=0.5;g.lineWidth=1;
+  g.beginPath();g.arc(0,0,20,0,Math.PI*2);g.stroke();g.globalAlpha=1;}
+ if(flash>0){
+  var fx=Math.cos(angle||0)*22,fy=Math.sin(angle||0)*22;
+  p(fx-3,fy-3,6,6,'#fff6c0');p(fx-1,fy-1,2,2,ACC);
+ }
+ g.restore();
 }
 
 // ---------- game state ----------
@@ -309,30 +345,36 @@ bind('btnSpeed',cycleSpeed);
 
 // ---------- shop + intel ----------
 var shopEl=document.getElementById('shop');
-shopEl.innerHTML='<tr><th>Tower</th><th>Cost</th><th>Info</th></tr>';
+shopEl.innerHTML='';
 TOWERLIST.forEach(function(n){
  var d=TW[n];var info=d.bank?'+8 gold / 4s':'dmg '+d.dmg+(d.noAir?' (ground only)':'');
- var tr=document.createElement('tr');
- tr.innerHTML='<td class="t" data-n="'+n+'">'+n+'</td><td class="cost">$'+d.cost+'</td><td>'+info+'</td>';
- shopEl.appendChild(tr);
+ var card=document.createElement('button');
+ card.type='button';card.className='tower-card';card.dataset.n=n;
+ card.innerHTML='<canvas class="tower-icon" width="48" height="48"></canvas>'+
+  '<span class="tc-name">'+n+'</span><span class="tc-cost">$'+d.cost+'</span>'+
+  '<span class="tc-info">'+info+'</span>';
+ shopEl.appendChild(card);
+ var icon=card.querySelector('canvas'),ig=icon.getContext('2d');
+ ig.imageSmoothingEnabled=false;
+ drawTowerSprite(n,24,26,0,1,ig);
 });
-function selectTower(n,td){
- document.querySelectorAll('td.t').forEach(function(el){el.classList.remove('sel');});
- if(td)td.classList.add('sel');
- else{var el=shopEl.querySelector('td.t[data-n="'+n+'"]');if(el)el.classList.add('sel');}
+function selectTower(n,card){
+ document.querySelectorAll('.tower-card').forEach(function(el){el.classList.remove('sel');});
+ if(card)card.classList.add('sel');
+ else{var el=shopEl.querySelector('.tower-card[data-n="'+n+'"]');if(el)el.classList.add('sel');}
  selTower=n;
  msg('Selected: '+n+' — click a dark tile to build.');
  tip(TW[n].desc+' Upgrade: '+TW[n].per);
 }
 shopEl.addEventListener('click',function(e){
- var td=e.target.closest('td.t');if(!td)return;
- selectTower(td.dataset.n,td);
+ var card=e.target.closest('.tower-card');if(!card)return;
+ selectTower(card.dataset.n,card);
 });
 window.addEventListener('keydown',function(ev){
  var k=ev.key;
  if(k===' '){ev.preventDefault();togglePause();return;}
  if(k==='t'||k==='T'){if(hoverTower)cycleTarget(hoverTower);return;}
- if(k==='Escape'){selTower=null;document.querySelectorAll('td.t').forEach(function(el){el.classList.remove('sel');});msg('');tip('');return;}
+ if(k==='Escape'){selTower=null;document.querySelectorAll('.tower-card').forEach(function(el){el.classList.remove('sel');});msg('');tip('');return;}
  if(/^[1-9]$/.test(k)){var n=TOWERLIST[Number(k)-1];if(n)selectTower(n);}
 });
 
@@ -473,6 +515,7 @@ function stepEnemies(){
    var reward=Math.round(e.def.gold*currentMode().gold);
    coins+=reward;updHUD();
    fx.push({x:e.x,y:e.y,t:'txt',s:'+$'+reward,col:'#ffd000'});
+   fx.push({x:e.x,y:e.y,r:2,max:e.def.boss?42:20,col:e.def.fly?'#8bd8ff':(e.def.boss?'#ffd45e':'#8fd05a')});
    if(e.def.boss){shakeT=30;msg(e.def.fly?'SKY WARLORD SLAIN!':'WARLORD SLAIN!');}
    enemies.splice(i,1);
   }
@@ -524,7 +567,7 @@ cv.addEventListener('click',function(ev){
  if(coins>=d.cost){
   coins-=d.cost;updHUD();
   grid[ty][tx]={type:selTower,def:d,lvl:1,cd:0,totalCost:d.cost,angle:0,
-   rx:tx*T+T/2,ry:ty*T+T/2,rngv:d.rng||0,targetMode:'close'};
+   rx:tx*T+T/2,ry:ty*T+T/2,rngv:d.rng||0,targetMode:'close',flash:0};
   msg('Built '+selTower+'.');
  }else msg('Not enough gold for '+selTower+'.');
 });
@@ -582,6 +625,7 @@ function stepTowers(){
   var best=pickTarget(t);
   if(!best)continue;
   t.cd=Math.max(3,Math.floor(t.def.rate/(0.8+0.15*t.lvl)));
+  t.flash=5;
   t.angle=Math.atan2(best.y-t.ry,best.x-t.rx);
   var dmg=towerDmg(t);
   if(t.def.beam){applyHit(best,dmg);shots.push({x1:t.rx,y1:t.ry,x2:best.x,y2:best.y,beam:true,life:4,col:'#ff4040'});}
@@ -640,23 +684,59 @@ function stepFx(){
 }
 
 // ---------- render ----------
-function drawMap(){
- var th=MAPS[curMapIdx].theme;
- for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
-  var px=x*T,py=y*T;
-  if(pathSet[x+','+y]){cx.fillStyle=th.p;cx.fillRect(px,py,T,T);
-   cx.fillStyle=th.p2;for(var d2=0;d2<T;d2+=12)cx.fillRect(px+d2,py+(d2/2)%T*2,6,6);
-  }else{cx.fillStyle=((x+y)%2===0)?th.g1:th.g2;cx.fillRect(px,py,T,T);
-   cx.fillStyle='rgba(60,90,40,0.5)';
-   if((x*7+y*3)%5===0)cx.fillRect(px+6,py+8,4,4);
-   if((x*3+y*5)%4===0)cx.fillRect(px+30,py+30,4,4);
-   if((x*5+y*7)%6===0)cx.fillRect(px+20,py+16,4,4);
-  }
-  cx.strokeStyle='#0e1408';cx.strokeRect(px,py,T,T);
+function drawDeco(kind,px,py,x,y,acc){
+ var k=(x*7+y*11)%7;if(k>2)return;
+ var ox=px+8+(x*3+y*5)%28,oy=py+10+(x*5+y*2)%24;
+ if(kind==='tree'){
+  cx.fillStyle='#5a3a18';cx.fillRect(ox+4,oy+12,4,10);
+  cx.fillStyle=acc;cx.fillRect(ox,oy+2,12,10);cx.fillRect(ox+3,oy-3,6,5);
+ }else if(kind==='rock'){
+  cx.fillStyle='#5a5a52';cx.fillRect(ox,oy+6,14,8);cx.fillRect(ox+3,oy+2,8,5);
+  cx.fillStyle='#7a7a70';cx.fillRect(ox+3,oy+3,4,3);
+ }else if(kind==='reed'){
+  cx.strokeStyle=acc;cx.lineWidth=2;
+  for(var i=0;i<3;i++){cx.beginPath();cx.moveTo(ox+i*5,oy+14);cx.lineTo(ox+i*5+2,oy);cx.stroke();}
+ }else if(kind==='ice'){
+  cx.fillStyle=acc;cx.fillRect(ox+5,oy,4,18);cx.fillRect(ox+1,oy+7,12,4);
+  cx.fillStyle='#dff4ff';cx.fillRect(ox+5,oy+2,2,12);
+ }else if(kind==='ember'){
+  cx.fillStyle=acc;cx.fillRect(ox+6,oy+6,5,5);cx.fillStyle='#ffd45e';cx.fillRect(ox+7,oy+7,2,2);
+ }else if(kind==='crystal'){
+  cx.fillStyle=acc;cx.fillRect(ox+6,oy,6,14);cx.fillRect(ox+3,oy+5,12,5);
+  cx.fillStyle='#efe0ff';cx.fillRect(ox+7,oy+2,2,8);
+ }else if(kind==='lava'){
+  cx.fillStyle=acc;cx.fillRect(ox,oy+8,16,4);cx.fillStyle='#ffd45e';cx.fillRect(ox+5,oy+9,5,2);
  }
- cx.fillStyle='#ffe08a';cx.font='bold 12px monospace';
- cx.fillText('IN',4,WAYP[0][1]+4);
- cx.fillText('OUT',cv.width-32,WAYP[WAYP.length-1][1]+4);
+}
+function portal(x,y,col,label,phase){
+ var r=8+Math.round(Math.sin(phase)*2);
+ cx.strokeStyle=col;cx.lineWidth=2;cx.beginPath();cx.arc(x,y,r,0,Math.PI*2);cx.stroke();
+ cx.fillStyle=col;cx.globalAlpha=0.22;cx.beginPath();cx.arc(x,y,r-2,0,Math.PI*2);cx.fill();cx.globalAlpha=1;
+ cx.fillStyle='#ffe08a';cx.font='bold 10px monospace';
+ cx.fillText(label,x-9,y-r-6);
+}
+function drawMap(){
+ var m=MAPS[curMapIdx],th=m.theme,phase=frame/22;
+ for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
+  var px=x*T,py=y*T,isPath=!!pathSet[x+','+y];
+  if(isPath){
+   cx.fillStyle=th.p;cx.fillRect(px,py,T,T);
+   cx.fillStyle=th.edge;
+   if(!pathSet[(x-1)+','+y])cx.fillRect(px,py,4,T);
+   if(!pathSet[(x+1)+','+y])cx.fillRect(px+T-4,py,4,T);
+   if(!pathSet[x+','+(y-1)])cx.fillRect(px,py,T,4);
+   if(!pathSet[x+','+(y+1)])cx.fillRect(px,py+T-4,T,4);
+   cx.fillStyle=th.p2;
+   if((x+y)%2===0)cx.fillRect(px+22,py+22,5,5);
+  }else{
+   cx.fillStyle=((x+y)%2===0)?th.g1:th.g2;cx.fillRect(px,py,T,T);
+   drawDeco(th.deco,px,py,x,y,th.acc);
+  }
+  cx.strokeStyle='rgba(0,0,0,0.34)';cx.strokeRect(px,py,T,T);
+ }
+ var s=WAYP[0],e=WAYP[WAYP.length-1];
+ portal(s[0],s[1],th.acc,'IN',phase);
+ portal(e[0],e[1],'#ff5a5a','OUT',phase+1.6);
 }
 function drawRangeCircles(){
  if(selTower&&hoverTile&&!pathSet[hoverTile[0]+','+hoverTile[1]]){
@@ -679,8 +759,9 @@ function drawRangeCircles(){
 function drawTowers(){
  for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
   var t=grid[y][x];if(!t)continue;
+  if(t.flash>0)t.flash--;
   cx.fillStyle='rgba(0,0,0,0.3)';cx.fillRect(t.rx-16,t.ry+16,32,6);
-  drawTowerSprite(t.type,t.rx,t.ry,t.type==='Mortar'?0:t.angle,t.lvl);
+  drawTowerSprite(t.type,t.rx,t.ry,t.type==='Mortar'?0:t.angle,t.lvl,t.flash||0);
  }
 }
 function drawEnemies(){
@@ -692,10 +773,15 @@ function drawEnemies(){
   cx.fillRect(Math.round(e.x)-8,Math.round(e.y)+16,16,4);
   drawE(e);});
  function drawE(e){
+  if(!e.def.fly){cx.fillStyle='rgba(0,0,0,0.28)';cx.fillRect(Math.round(e.x)-11,Math.round(e.y)+15,22,5);}
   drawSprite(e.def.spr,e.x,e.y,e.frame,e.flash>0);
-  var w=e.def.boss?40:26,hp=Math.max(0,e.hp/e.maxhp);
-  cx.fillStyle='#000';cx.fillRect(e.x-w/2-1,e.y-32,w+2,5);
-  cx.fillStyle=hp>0.5?'#4ac92a':(hp>0.25?'#ffd000':'#ff4040');cx.fillRect(e.x-w/2,e.y-31,w*hp,3);
+  var w=e.def.boss?44:28,hp=Math.max(0,e.hp/e.maxhp);
+  cx.fillStyle='#000';cx.fillRect(e.x-w/2-1,e.y-34,w+2,6);
+  cx.fillStyle=hp>0.5?'#4ac92a':(hp>0.25?'#ffd000':'#ff4040');cx.fillRect(e.x-w/2,e.y-33,w*hp,4);
+  if(e.def.boss){cx.fillStyle='#ffd45e';cx.font='bold 9px monospace';cx.textAlign='center';
+   cx.fillText('BOSS',e.x,e.y-39);cx.textAlign='left';}
+  var icon=e.slowT>0?'❄':(e.poiT>0?'☠':'');
+  if(icon){cx.fillStyle=e.slowT>0?'#8bd8ff':'#8fd05a';cx.font='bold 12px monospace';cx.fillText(icon,e.x+12,e.y-26);}
  }
 }
 function drawShots(){

@@ -43,6 +43,7 @@ Client-side checks — obstacles, not security.
 - **TD1 added.** Pixel Orcs tower defense is live as PLD-08 — one self-contained HTML file, no assets or CDN.
 - **TD1 tuned.** Per-tower target priority (CLOSE/FIRST/LAST/STRONG), pause + 1-3× speed, best wave/loop saved locally, stacking poison, level-scaled frost, Tesla chain falloff, generated intel table and a wave-overlap guard.
 - **TD1 design + modes.** Pixel HUD with shop/bestiary panels; CLASSIC / RUSH / KUPAL difficulty (lives, gold, enemy HP/speed, spawn rate, loop size), saved on device. Reduced-motion aware.
+- **TD1 art pass.** Card-based shop with live tower previews, 7 themed maps with edges/deco/portals, brighter monster palettes and a distinct sky boss, rebuilt towers with level pips and muzzle flashes.
 - **Aurora v4 / chat v5.** FreeModel-only, key stays on the server; CORS wall and dead relay named; KDL // MISSION CONTROL skin with lightning storm and sky.
 - **Security.** No real keys in the repo; `.fmkey.php` begins with `<?php exit; ?>`; pasted keys treated as leaked.
 

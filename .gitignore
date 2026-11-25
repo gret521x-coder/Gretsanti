@@ -1,3 +1,6 @@
 download/
 preview/
 htdocs*.zip
+
+# web reference images pulled while designing — never shipped
+image-search/

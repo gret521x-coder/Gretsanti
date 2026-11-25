@@ -29,6 +29,21 @@ declare(strict_types=1);
  */
 
 /* ---------------------------------------------------------------- config */
+/**
+ * Where the ladder lives.
+ *
+ * Default: a "data" folder beside this file. That is fine, but anything inside
+ * the web root can be requested by a browser, so the folder is guarded by an
+ * .htaccess and an empty index.html.
+ *
+ * Safer, and one line: put it outside the web root, for example
+ *     const DATA_DIR = __DIR__ . '/../pindutan-data';
+ * On XAMPP that is the difference between htdocs\game\data (reachable) and
+ * htdocs\pindutan-data (not reachable at all). No .htaccess needed then, and
+ * no "hidden file" tricks — the file simply is not on the web.
+ */
+define('DATA_DIR', __DIR__ . '/data');
+
 const LB_SECRET    = 'kdl-pindutan-lb-2026-7f3a';
 const MIN_NAME     = 2;
 const MAX_NAME     = 14;
@@ -74,14 +89,34 @@ function fail(string $message, int $code = 400): void
 
 function data_dir(): string
 {
-    $dir = __DIR__ . '/data';
+    $dir = DATA_DIR;
     if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
         fail('storage unavailable', 500);
     }
+
+    /* Apache 2.4 and 2.2 speak different languages; each block is ignored by
+       the other generation instead of turning the folder into a 500 */
     $guard = $dir . '/.htaccess';
     if (!file_exists($guard)) {
-        @file_put_contents($guard, "Require all denied\nDeny from all\n");
+        @file_put_contents(
+            $guard,
+            "# keep the ladder off the web\n" .
+            "<IfModule mod_authz_core.c>\n" .
+            "  Require all denied\n" .
+            "</IfModule>\n" .
+            "<IfModule !mod_authz_core.c>\n" .
+            "  Order allow,deny\n" .
+            "  Deny from all\n" .
+            "</IfModule>\n"
+        );
     }
+
+    /* a blank index stops a directory listing even when .htaccess is ignored */
+    $index = $dir . '/index.html';
+    if (!file_exists($index)) {
+        @file_put_contents($index, "<!doctype html><title>not here</title>");
+    }
+
     return $dir;
 }
 

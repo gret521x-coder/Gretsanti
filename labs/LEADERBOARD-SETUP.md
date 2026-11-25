@@ -41,6 +41,37 @@ read from outside — only through the endpoint.
 > If the host refuses to create folders, make a `data` folder next to the PHP yourself and `chmod`
 > it 755 (or 775). Nothing else is needed — no MySQL, no composer, no extensions.
 
+### Keeping the ladder file private
+
+Short answer: **do not rely on a hidden file.** On Windows you can right-click `data` →
+Properties → Hidden (or run `attrib +h data`), and it will vanish from Explorer — but Apache does not
+care about file attributes. A hidden folder is still served at
+`https://yoursite/data/pindutan-leaderboard.json` if the server lets it through. Hiding is tidiness,
+not protection. The free host has no Properties dialog at all.
+
+Three levels, worst to best:
+
+1. **The guards that already ship with the PHP.** On first use it writes `data/.htaccess` (deny rules in
+   both Apache 2.4 and 2.2 dialects) and an empty `data/index.html` so no directory listing appears.
+   This works on most shared hosts as-is, and on XAMPP as long as `AllowOverride` is not `None` in
+   `httpd.conf`.
+
+2. **Check it, don't assume it.** Open `https://yoursite/data/pindutan-leaderboard.json` in a browser.
+   You want **403 Forbidden**. If you get JSON, the guard is being ignored — go to level 3.
+
+3. **Move the folder out of the web root.** One line at the top of `api-leaderboard.php`:
+
+   ```php
+   define('DATA_DIR', __DIR__ . '/../pindutan-data');
+   ```
+
+   On XAMPP that turns `htdocs/game/data` (reachable) into `htdocs/pindutan-data` (not reachable, so the
+   browser gets 404 before Apache even looks). On a shared host, `__DIR__ . '/../../pindutan-data'`
+   usually lands outside `public_html`. The PHP creates the folder itself; nothing else changes.
+
+While a request is being served PHP reads the file directly from disk, so all three levels work
+identically for the game — the difference is only who *else* can read it.
+
 ### Changing the address
 
 The game points at that URL in one place. Search `labs/pindutan-v18.html` for:

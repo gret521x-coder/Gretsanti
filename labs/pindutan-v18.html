@@ -2715,6 +2715,16 @@
       try { localStorage.setItem(LB_CACHE, JSON.stringify(cache)); } catch (e) {}
     }
 
+    function lbShowError() {
+      const note = document.getElementById("lbNote");
+      if (!note || !lbLastError) return;
+      const waiting = lbPending().length;
+      note.textContent = (waiting
+        ? waiting + " result" + (waiting === 1 ? " is" : "s are") + " waiting to go up — " + lbLastError + "."
+        : "The last result did not go up — " + lbLastError + ".");
+      note.className = "lb-note warn";
+    }
+
     function lbNote(text, cls) {
       const note = document.getElementById("lbNote");
       if (!note) return;
@@ -2798,10 +2808,14 @@
       roomStatusText("Leaderboard is offline — results stay on this phone for now.");
     }
 
+    let lbLastError = "";
+
+    /* returns {ok, rank, of} on success, or {ok:false, why:"..."} so the card
+       can say what actually went wrong instead of shrugging */
     async function lbSend(payload) {
+      const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 7000) : null;
       try {
-        const ctrl = typeof AbortController === "function" ? new AbortController() : null;
-        const timer = ctrl ? setTimeout(() => ctrl.abort(), 6000) : null;
         const res = await fetch(LEADERBOARD_URL + "?action=report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -2809,11 +2823,71 @@
           signal: ctrl ? ctrl.signal : undefined
         });
         if (timer) clearTimeout(timer);
-        if (!res.ok) return null;
-        return await res.json();
+        let body = null;
+        try { body = await res.json(); } catch (e) { body = null; }
+        if (!res.ok) {
+          lbLastError = "HTTP " + res.status + (body && body.error ? " — " + body.error : "");
+          return { ok: false, why: lbLastError };
+        }
+        if (!body || !body.ok) {
+          lbLastError = (body && body.error) || "the host refused the result";
+          return { ok: false, why: lbLastError };
+        }
+        lbLastError = "";
+        return body;
       } catch (e) {
-        return null;
+        const ename = (e && e.name) || "";
+        const emsg = (e && e.message) || "";
+        /* phones say things like "Failed to fetch" — say it in plain words */
+        if (ename === "AbortError") lbLastError = "the host took too long";
+        else if (/file:/i.test(location.href)) lbLastError = "this copy is a file, it cannot post";
+        else if (/failed to fetch|networkerror|load failed|network|offline|timeout|err_/i.test(ename + " " + emsg) || !emsg) lbLastError = "no internet right now";
+        else lbLastError = "the host would not answer";
+        return { ok: false, why: lbLastError };
+      } finally {
+        if (timer) clearTimeout(timer);
       }
+    }
+
+    /* ------------ results that never made it, kept until they do ------------ */
+    const LB_PENDING = "pindutan_lb_pending";
+
+    function lbPending() {
+      try { const list = JSON.parse(localStorage.getItem(LB_PENDING) || "[]"); return Array.isArray(list) ? list : []; }
+      catch (e) { return []; }
+    }
+
+    function lbPendingSave(list) {
+      try { localStorage.setItem(LB_PENDING, JSON.stringify(list.slice(-40))); } catch (e) {}
+    }
+
+    function lbQueue(payload) {
+      const list = lbPending();
+      list.push({ id: payload.id, name: payload.name, mode: payload.mode, win: payload.win,
+                  score: payload.score, lines: payload.lines, ts: payload.ts, at: Date.now() });
+      lbPendingSave(list);
+    }
+
+    function lbUnqueue(id) {
+      lbPendingSave(lbPending().filter(p => p.id !== id));
+    }
+
+    async function lbFlush() {
+      const list = lbPending();
+      if (!list.length) return 0;
+      let done = 0;
+      for (const item of list.slice()) {
+        const payload = {
+          id: item.id, name: item.name, mode: item.mode, win: item.win,
+          score: item.score, lines: item.lines,
+          ts: Math.floor(Date.now() / 1000)          /* fresh stamp: the host refuses stale ones */
+        };
+        payload.sig = lbSign(payload);
+        const answer = await lbSend(payload);
+        if (answer && answer.ok) { lbUnqueue(item.id); done++; }
+        else break;
+      }
+      return done;
     }
 
     async function reportBattle(win) {
@@ -2825,6 +2899,7 @@
       const name = cleanName(stripMark(raw));
       if (name.length < 2) return;
       const payload = {
+        id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
         name: name,
         mode: currentMode === "1v1" ? "duel" : "group",
         win: win ? 1 : 0,
@@ -2841,16 +2916,23 @@
         roomStatusText((win ? "Win" : "Loss") + " saved — you are #" + answer.rank + " on the ladder.");
         lbFetch(lbMode, true);
       } else {
-        roomStatusText("Result kept on this phone — the leaderboard host did not answer.");
+        lbQueue(payload);
+        roomStatusText("Kept on this phone (" + (lbLastError || "host unreachable") + ") — it goes up by itself next time.");
+        lbShowError();
       }
     }
 
     function lbEnsure() {
       const list = document.getElementById("lbList");
-      if (list && !list.dataset.loaded) {
-        list.dataset.loaded = "1";
-        lbFetch(lbMode);
-      }
+      if (!list) return;
+      const first = !list.dataset.loaded;
+      if (first) list.dataset.loaded = "1";
+      /* a result left behind on the phone gets another chance every time you
+         open the lobby, not only on the first one */
+      lbFlush().then(sent => {
+        if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up.");
+        if (first || sent) lbFetch(lbMode);
+      });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -2861,7 +2943,11 @@
         });
       });
       const refresh = document.getElementById("lbRefresh");
-      if (refresh) refresh.addEventListener("click", () => lbFetch(lbMode));
+      if (refresh) refresh.addEventListener("click", async () => {
+        const sent = await lbFlush();
+        if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up.");
+        lbFetch(lbMode);
+      });
     });
 
     /* ---------- room lifecycle: there is exactly one lobby ---------- */

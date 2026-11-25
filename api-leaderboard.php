@@ -247,6 +247,7 @@ function blank_player(string $name): array
         'streak' => 0,
         'bestStreak' => 0,
         'last' => 0,
+        'ids' => [],
         'duel' => ['wins' => 0, 'losses' => 0, 'best' => 0],
         'group' => ['wins' => 0, 'losses' => 0, 'best' => 0]
     ];
@@ -366,6 +367,9 @@ if ($action === 'report') {
         $input = $_POST;
     }
 
+    /* an id per battle: a retry after a lost reply must not count twice */
+    $report_id = substr(preg_replace('/[^A-Za-z0-9]/', '', (string) ($input['id'] ?? '')) ?? '', 0, 24);
+
     $name = clean_name((string) ($input['name'] ?? ''));
     $mode_in = strtolower((string) ($input['mode'] ?? ''));
     $win = (int) ($input['win'] ?? 0) === 1 ? 1 : 0;
@@ -404,9 +408,20 @@ if ($action === 'report') {
     $key = name_key($name);
     $player = $table['players'][$key] ?? blank_player($name);
 
-    /* one report per battle: the same name + second twice is ignored */
+    /* one report per battle, twice over: the same id is the same battle, and a
+       timestamp that is not newer than the last one is a replay */
+    $seen_ids = isset($player['ids']) && is_array($player['ids']) ? $player['ids'] : [];
+    if ($report_id !== '' && in_array($report_id, $seen_ids, true)) {
+        [$rank, $of] = rank_of($table['players'], $mode_in, $key);
+        out(['ok' => true, 'duplicate' => true, 'rank' => $rank, 'of' => $of, 'name' => $player['name']]);
+    }
     if ((int) $player['last'] >= $ts) {
-        out(['ok' => true, 'duplicate' => true, 'name' => $player['name']]);
+        [$rank, $of] = rank_of($table['players'], $mode_in, $key);
+        out(['ok' => true, 'duplicate' => true, 'rank' => $rank, 'of' => $of, 'name' => $player['name']]);
+    }
+    if ($report_id !== '') {
+        $seen_ids[] = $report_id;
+        $player['ids'] = array_slice($seen_ids, -20);
     }
 
     $player['name'] = $name;

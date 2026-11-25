@@ -1028,6 +1028,8 @@
     .touch-controls { gap: 5px; padding-top: 6px; }
     .touch-controls button { height: 38px; font-size: 0.86rem; border-radius: 10px; }
     .touch-controls button small { font-size: 0.44rem; margin-top: 0; }
+    .touch-controls button[data-hold] { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    .touch-controls button.held { border-color: rgba(61, 214, 245, 0.6); background: linear-gradient(170deg, #1a2a3a, #0e1824); transform: scale(0.97); }
 
     .bot-panel { padding: 6px; gap: 8px; }
 
@@ -1238,14 +1240,14 @@
     <button class="rot" onclick="mobileAction('rotCCW')">↺<small>ROTATE</small></button>
     <button class="rot" onclick="mobileAction('rotCW')">↻<small>ROTATE</small></button>
     <button class="hard" onclick="mobileAction('drop')">⤓<small>DROP</small></button>
-    <button onclick="mobileAction('left')">◀<small>LEFT</small></button>
-    <button onclick="mobileAction('down')">▼<small>SOFT</small></button>
-    <button onclick="mobileAction('right')">▶<small>RIGHT</small></button>
+    <button data-hold="left">◀<small>LEFT</small></button>
+    <button data-hold="down">▼<small>SOFT</small></button>
+    <button data-hold="right">▶<small>RIGHT</small></button>
     <button class="pauseb" onclick="togglePause()">⏸<small>PAUSE</small></button>
   </div>
 
   <footer>
-    <b>← →</b> move · <b>↑ / X</b> rotate · <b>Z</b> rotate back · <b>↓</b> soft drop ·
+    <b>← →</b> move (hold to glide) · <b>↑ / X</b> rotate · <b>Z</b> rotate back · <b>↓</b> soft drop ·
     <b>Space</b> hard drop · <b>C</b> hold · <b>E</b> Pindutan burst · <b>P</b> pause
   </footer>
 
@@ -1365,6 +1367,13 @@
     const LOCK_RESETS = 15;      /* moves/rotations that may restart the delay */
     const CLEAR_FLASH = 150;     /* ms the cleared rows flash before collapsing */
     const MAX_QUEUE = 3;
+
+    /* --- glide: the game repeats held moves itself instead of waiting on the OS key repeat --- */
+    const GLIDE_DAS = 130;       /* ms a left/right press waits before it starts gliding */
+    const GLIDE_ARR = 38;        /* ms between glide steps — about 26 columns a second */
+    const SOFT_ARR = 32;         /* ms between soft-drop steps while ↓ is held */
+    const GLIDE_TAU_X = 26;      /* ms: how quickly the drawn piece catches up sideways */
+    const GLIDE_TAU_Y = 34;      /* ms: and downward */
 
     let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
     let bag = [];
@@ -1503,6 +1512,99 @@
         lockResets++;
       }
     }
+
+    /* ---------- glide input ----------
+       Left and right are a pair: the last one pressed wins, releasing it hands control back to
+       the other if that is still held. One step on press, then after GLIDE_DAS a step every
+       GLIDE_ARR. A held direction carries over to the next piece, so it keeps gliding. */
+    const glide = { left: false, right: false, dir: 0, pressedAt: 0, lastStep: 0, down: false, downLast: 0 };
+
+    function glidePress(dir) {
+      if (dir < 0) glide.left = true; else glide.right = true;
+      glide.dir = dir;
+      glide.pressedAt = performance.now();
+      glide.lastStep = glide.pressedAt;
+      if (gameRunning && !isPaused && !isSpectator) { move(dir); drawBoard(); }
+    }
+
+    function glideRelease(dir) {
+      if (dir < 0) glide.left = false; else glide.right = false;
+      if (glide.dir !== dir) return;
+      const other = dir < 0 ? glide.right : glide.left;
+      if (other) {
+        glide.dir = -dir;
+        glide.pressedAt = performance.now();
+        glide.lastStep = glide.pressedAt;
+        if (gameRunning && !isPaused && !isSpectator) move(-dir);
+      } else {
+        glide.dir = 0;
+      }
+    }
+
+    function softPress() {
+      if (glide.down) return;
+      glide.down = true;
+      glide.downLast = performance.now();
+      if (gameRunning && !isPaused && !isSpectator) { softStep(); drawBoard(); }
+    }
+
+    function softRelease() { glide.down = false; }
+
+    function glideReset() {
+      glide.left = glide.right = glide.down = false;
+      glide.dir = 0;
+    }
+
+    /* called every frame from the game loop */
+    function glideTick(now) {
+      if (!current || isSpectator) return;
+      if (glide.dir && now - glide.pressedAt >= GLIDE_DAS) {
+        /* catch up on every step that was due, capped so a hitch never teleports the piece */
+        let due = Math.min(4, Math.floor((now - glide.lastStep) / GLIDE_ARR));
+        if (glide.lastStep < glide.pressedAt + GLIDE_DAS) {
+          due = Math.max(1, Math.min(4, Math.floor((now - glide.pressedAt - GLIDE_DAS) / GLIDE_ARR) + 1));
+          glide.lastStep = glide.pressedAt + GLIDE_DAS - GLIDE_ARR;   /* the loop adds one ARR per step */
+        }
+        for (let i = 0; i < due; i++) {
+          move(glide.dir);
+          glide.lastStep += GLIDE_ARR;
+        }
+        if (now - glide.lastStep > GLIDE_ARR * 4) glide.lastStep = now;
+      }
+      if (glide.down && now - glide.downLast >= SOFT_ARR) {
+        const steps = Math.min(3, Math.floor((now - glide.downLast) / SOFT_ARR));
+        for (let i = 0; i < steps && current; i++) softStep();
+        glide.downLast = now;
+      }
+    }
+
+    /* ---------- drawn position: slides toward the real one ---------- */
+    const vis = { piece: null, x: 0, y: 0, at: 0 };
+
+    function visualPos() {
+      const now = performance.now();
+      if (!current) { vis.piece = null; return { x: 0, y: 0 }; }
+      if (vis.piece !== current || reduceMotion) {
+        vis.piece = current;
+        vis.x = current.x;
+        vis.y = current.y;
+        vis.at = now;
+        return { x: vis.x, y: vis.y };
+      }
+      const dt = Math.min(64, Math.max(0, now - vis.at));
+      vis.at = now;
+      const dx = current.x - vis.x;
+      const dy = current.y - vis.y;
+      vis.x = Math.abs(dx) > 3 ? current.x - Math.sign(dx) * 3 : vis.x;
+      vis.x += (current.x - vis.x) * (1 - Math.exp(-dt / GLIDE_TAU_X));
+      if (dy < 0 || dy > 2) vis.y = current.y;                     /* pushed up, or a big drop: snap */
+      else vis.y += dy * (1 - Math.exp(-dt / GLIDE_TAU_Y));
+      if (Math.abs(current.x - vis.x) < 0.02) vis.x = current.x;
+      if (Math.abs(current.y - vis.y) < 0.02) vis.y = current.y;
+      return { x: vis.x, y: vis.y };
+    }
+
+    const reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
     function move(dx) {
       if (!current || !gameRunning || isPaused) return false;
@@ -1935,13 +2037,14 @@
 
       /* ghost + active piece */
       if (current && gameRunning) {
+        const vp = visualPos();
         if (ghostEnabled) {
           let gy = current.y;
           while (!collide(board, current, 0, gy - current.y + 1)) gy++;
           for (let r = 0; r < current.matrix.length; r++) {
             for (let c = 0; c < current.matrix[r].length; c++) {
               if (current.matrix[r][c] && gy + r >= 0) {
-                drawCell(ctx, (current.x + c) * BLOCK, (gy + r) * BLOCK, BLOCK,
+                drawCell(ctx, (vp.x + c) * BLOCK, (gy + r) * BLOCK, BLOCK,
                   COLORS[current.type], { ghost: true });
               }
             }
@@ -1949,8 +2052,8 @@
         }
         for (let r = 0; r < current.matrix.length; r++) {
           for (let c = 0; c < current.matrix[r].length; c++) {
-            if (current.matrix[r][c] && current.y + r >= 0) {
-              drawCell(ctx, (current.x + c) * BLOCK, (current.y + r) * BLOCK, BLOCK,
+            if (current.matrix[r][c] && vp.y + r > -1) {
+              drawCell(ctx, (vp.x + c) * BLOCK, (vp.y + r) * BLOCK, BLOCK,
                 COLORS[current.type], { glow: true });
             }
           }
@@ -2099,6 +2202,9 @@
           clearTimer -= delta;
           if (clearTimer <= 0) collapseRows();
         } else if (current) {
+          glideTick(performance.now());
+        }
+        if (!clearingRows.length && current) {
           dropCounter += delta;
           const speed = gravityMs();
           while (dropCounter >= speed) {
@@ -3677,6 +3783,7 @@
 
     function togglePause() {
       if (!gameRunning) return;
+      glideReset();
       isPaused = !isPaused;
       document.getElementById("pauseBtn").textContent = isPaused ? "▶ Resume" : "⏸ Pause";
       if (isPaused) {
@@ -3731,11 +3838,12 @@
         return;
       }
       if (!gameRunning || isPaused || isSpectator) return;
+      if (e.repeat) return;      /* the glide engine repeats; the OS repeat is slow and jerky */
 
       switch (e.code) {
-        case "ArrowLeft": move(-1); break;
-        case "ArrowRight": move(1); break;
-        case "ArrowDown": softStep(); break;
+        case "ArrowLeft": glidePress(-1); return;
+        case "ArrowRight": glidePress(1); return;
+        case "ArrowDown": softPress(); return;
         case "ArrowUp":
         case "KeyX": tryRotate(1); break;
         case "KeyZ": tryRotate(-1); break;
@@ -3746,6 +3854,40 @@
         case "KeyE": tryBurst(); break;
       }
       drawBoard();
+    });
+
+    document.addEventListener("keyup", e => {
+      if (e.code === "ArrowLeft") glideRelease(-1);
+      else if (e.code === "ArrowRight") glideRelease(1);
+      else if (e.code === "ArrowDown") softRelease();
+    });
+    window.addEventListener("blur", glideReset);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) glideReset(); });
+
+    /* touch pad: hold ◀ ▶ ▼ to glide, exactly like the keys */
+    document.querySelectorAll(".touch-controls [data-hold]").forEach(btn => {
+      const kind = btn.dataset.hold;
+      const press = e => {
+        e.preventDefault();
+        if (!gameRunning || isPaused || isSpectator) return;
+        try { btn.setPointerCapture(e.pointerId); } catch (err) { /* old browser */ }
+        btn.classList.add("held");
+        if (kind === "left") glidePress(-1);
+        else if (kind === "right") glidePress(1);
+        else softPress();
+      };
+      const release = () => {
+        if (!btn.classList.contains("held")) return;
+        btn.classList.remove("held");
+        if (kind === "left") glideRelease(-1);
+        else if (kind === "right") glideRelease(1);
+        else softRelease();
+      };
+      btn.addEventListener("pointerdown", press);
+      btn.addEventListener("pointerup", release);
+      btn.addEventListener("pointercancel", release);
+      btn.addEventListener("lostpointercapture", release);
+      btn.addEventListener("contextmenu", e => e.preventDefault());
     });
 
     document.getElementById("backToGameBtn").addEventListener("click", () => {

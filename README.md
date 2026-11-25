@@ -54,6 +54,13 @@ bar and touch pad are all smaller. The board takes the space: at 500×800 it gro
 solo, and everything (touch pad included) fits without scrolling. VS CPU now uses the side-by-side row too,
 with the CPU's board on the right.
 
+**Pindutan v18 — glide.** Left, right and soft drop no longer wait on the operating system's key repeat (half a
+second, then jerky). The game repeats them itself: one step on press, then after 130 ms a column every 38 ms,
+and a row every 32 ms for soft drop. The last arrow pressed wins, a held arrow carries over to the next piece,
+and the touch pad's ◀ ▼ ▶ glide the same way when held. The drawn piece slides between columns instead of
+jumping, then lands exactly on the cell. Held Space or rotate no longer fire again and again, and the slide is
+off under `prefers-reduced-motion`.
+
 **Aurora v4 — FreeModel only.** One platform, `https://freemodel.in/v1`, default `deepseek-v4.1-flash`.
 Every other provider name is gone from the page and a test greps for 13 of them. A key inside an HTML file
 cannot be hidden — hashing is one-way — so the key lives in `api-free.php` on the server and the page sends

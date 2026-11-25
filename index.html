@@ -658,7 +658,8 @@
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc-v5.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
         { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "Aurora.html", newTab: true },
-        { code: "PLD-07", icon: "🩺", title: "Connection check", desc: "Arena access + VPN link", url: "arena-diag.html", newTab: true }
+        { code: "PLD-07", icon: "🩺", title: "Connection check", desc: "Arena access + VPN link", url: "arena-diag.html", newTab: true },
+        { code: "PLD-08", icon: "🛡️", title: "TD1 – Pixel Orcs", desc: "Tower defense", url: "TD1.html", newTab: true }
     ];
 
     let missionStart = Date.now();
@@ -821,9 +822,9 @@
         // The flag means a card the user deletes later stays deleted.
         if (localStorage.getItem("kdl_diag_card_v1") !== "1") {
             if (!apps.some(app => app && app.url === "arena-diag.html")) {
-                const codes = apps.map(app => app && app.code).filter(Boolean);
-                let n = 1;
-                while (codes.includes(`PLD-${String(n).padStart(2, "0")}`)) n++;
+                const nums = apps.map(app => app && /^PLD-(\d+)$/.exec(app.code || ''))
+                                 .filter(Boolean).map(m => Number(m[1]));
+                const n = nums.length ? Math.max.apply(null, nums) + 1 : 1;
                 apps.push({
                     code: `PLD-${String(n).padStart(2, "0")}`,
                     icon: "🩺", title: "Connection check",
@@ -832,6 +833,21 @@
                 });
             }
             localStorage.setItem("kdl_diag_card_v1", "1");
+            touched = true;
+        }
+        // Same one-time treatment for the TD1 game.
+        if (localStorage.getItem("kdl_td1_card_v1") !== "1") {
+            if (!apps.some(app => app && app.url === "TD1.html")) {
+                const nums = apps.map(app => app && /^PLD-(\d+)$/.exec(app.code || ''))
+                                 .filter(Boolean).map(m => Number(m[1]));
+                const n = nums.length ? Math.max.apply(null, nums) + 1 : 1;
+                apps.push({
+                    code: `PLD-${String(n).padStart(2, "0")}`,
+                    icon: "🛡️", title: "TD1 – Pixel Orcs",
+                    desc: "Tower defense", url: "TD1.html", newTab: true
+                });
+            }
+            localStorage.setItem("kdl_td1_card_v1", "1");
             touched = true;
         }
         if (touched) localStorage.setItem("kdl_spacex_apps_v11", JSON.stringify(apps));

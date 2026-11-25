@@ -61,6 +61,12 @@ and the touch pad's ◀ ▼ ▶ glide the same way when held. The drawn piece sl
 jumping, then lands exactly on the cell. Held Space or rotate no longer fire again and again, and the slide is
 off under `prefers-reduced-motion`.
 
+**Pindutan v18 — pick your own glide.** **🎚 Glide** in the top bar opens a picker. It has five presets:
+Relaxed, Smooth (the default), Fast, Pro, and Snap (classic: no slide, straight to the wall). Four sliders
+fine-tune it: start delay (40–300 ms), glide speed (0–100 ms a column, 0 = instant), slide look (off → floaty)
+and soft drop (5–80 ms a row). A live preview piece glides with your numbers. The choice is saved per device
+(`pindutan_glide`), the game pauses while the picker is open, and bad saved values fall back to Smooth.
+
 **Aurora v4 — FreeModel only.** One platform, `https://freemodel.in/v1`, default `deepseek-v4.1-flash`.
 Every other provider name is gone from the page and a test greps for 13 of them. A key inside an HTML file
 cannot be hidden — hashing is one-way — so the key lives in `api-free.php` on the server and the page sends

@@ -164,6 +164,22 @@ Nothing is invented: if the host does not answer, or the board is too long to se
 it sends nothing and tries again later. Each result also carries an id, so a retry after a
 lost reply never counts the same battle twice.
 
+## The ladder without a host at all
+
+Every phone already keeps its own wins. The lobby relay (the same public MQTT brokers the room
+uses) now also carries them, so the board can exist with **no server and no upload**:
+
+- each phone stores its own rows on the phone (`pindutan_lb_mine`, split by nickname),
+- every 15 seconds, and right after a battle, the phone sends what it knows — its own rows first,
+  then what it heard from others, so a result keeps travelling to phones it never met,
+- the receiving phone merges by name and mode, taking the larger number (wins and best only ever
+  grow), clamping anything silly (99,999 wins becomes 9,999), and forgets a phone not seen in a day,
+- the board draws host rows when the host answers and the phones' rows always, so the ladder works
+  on a copy Chrome will not let talk to any server (a file opened from Downloads).
+
+What it cannot do: keep a result after every phone has closed the page for a day, or show a player
+who never shared. The public brokers can read the topic, so treat this as a scoreboard for friends.
+
 ## Running the game straight from a file
 
 Clicking `pindutan-v18.html` on the phone (Chrome shows `file:///...`) works for the ladder too,

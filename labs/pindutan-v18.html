@@ -2406,6 +2406,11 @@
         remember(p.n);
       }
 
+      if (p.t === "LB") {
+        if (lbPeerMerge(p.rows)) lbRepaint();
+        return;
+      }
+
       if (p.t === "HI" || p.t === "SYNC") {
         const prev = peers[p.from];
         const incoming = decodeBoard(p.board);
@@ -2755,6 +2760,118 @@
       return { name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best, me: true, local: true };
     }
 
+    /* ---------- the ladder carried between phones ----------
+       No host needed: each phone keeps its own wins, and the lobby relay
+       (the same one the room uses) carries them to the other phones. A phone
+       that heard a result passes it on, so a player who leaves is still on
+       the board for the people who are here. Nothing is stored anywhere
+       except on the phones themselves. */
+    const LB_PEERS = "pindutan_lb_peers";
+    const LB_KEEP_MS = 1000 * 60 * 60 * 24;      /* forget a phone not seen in a day */
+
+    function lbPeers() {
+      try { const m = JSON.parse(localStorage.getItem(LB_PEERS) || "{}"); return m && typeof m === "object" ? m : {}; }
+      catch (e) { return {}; }
+    }
+
+    function lbPeersSave(map) {
+      try { localStorage.setItem(LB_PEERS, JSON.stringify(map)); } catch (e) {}
+    }
+
+    function lbPeerMerge(rows) {
+      if (!Array.isArray(rows) || !rows.length) return 0;
+      const map = lbPeers();
+      const now = Date.now();
+      let fresh = 0;
+      rows.slice(0, 24).forEach(r => {
+        if (!r || typeof r !== "object") return;
+        const name = cleanName(String(r.name || ""));
+        const key = lbNameKey(name);
+        if (key.length < 2) return;
+        const mode = r.mode === "group" ? "group" : r.mode === "duel" ? "duel" : "";
+        if (!mode) return;
+        const wins = Math.max(0, Math.min(9999, r.wins | 0));
+        const losses = Math.max(0, Math.min(9999, r.losses | 0));
+        const best = Math.max(0, Math.min(5000000, r.best | 0));
+        if (!wins && !losses) return;
+        const slot = key + "|" + mode;
+        const prev = map[slot];
+        if (!prev || wins > (prev.wins | 0) || best > (prev.best | 0)) fresh++;
+        map[slot] = {
+          name: name,
+          mode: mode,
+          wins: Math.max(prev ? prev.wins | 0 : 0, wins),
+          losses: Math.max(prev ? prev.losses | 0 : 0, losses),
+          best: Math.max(prev ? prev.best | 0 : 0, best),
+          seen: now
+        };
+      });
+      lbPeersSave(map);
+      return fresh;
+    }
+
+    /* one row per name; "all" adds the two columns together */
+    function lbPeerRows(mode) {
+      const map = lbPeers();
+      const cut = Date.now() - LB_KEEP_MS;
+      const want = mode || "all";
+      const out = new Map();
+      Object.keys(map).forEach(k => {
+        const r = map[k];
+        if (!r || (r.seen || 0) <= cut) return;
+        if (want !== "all" && r.mode !== want) return;
+        const key = lbNameKey(r.name);
+        const row = out.get(key) || { name: r.name, wins: 0, losses: 0, best: 0, peer: true };
+        row.wins += r.wins | 0;
+        row.losses += r.losses | 0;
+        row.best = Math.max(row.best, r.best | 0);
+        out.set(key, row);
+      });
+      return Array.from(out.values()).filter(r => r.wins || r.losses);
+    }
+
+    function lbMyRows() {
+      const mine = lbMine();
+      const rows = [];
+      Object.keys(mine.byName).forEach(k => {
+        const rec = mine.byName[k];
+        ["duel", "group"].forEach(mode => {
+          const slot = rec[mode];
+          if (!slot || (!slot.wins && !slot.losses)) return;
+          rows.push({ name: rec.name, mode: mode, wins: slot.wins | 0, losses: slot.losses | 0, best: slot.best | 0 });
+        });
+      });
+      return rows;
+    }
+
+    /* the raw per-mode row for a name, as it came off the wire */
+    function lbPeerSlot(name, mode) {
+      const map = lbPeers();
+      const r = map[lbNameKey(name) + "|" + mode];
+      if (!r || !r.wins && !r.losses) return null;
+      return { name: r.name, mode: r.mode, wins: r.wins | 0, losses: r.losses | 0, best: r.best | 0 };
+    }
+
+    let lbShareAt = 0;
+
+    /* send what this phone knows: my own wins first, then what it heard, so a
+       result keeps travelling to phones I never met */
+    function lbShareLadder(force) {
+      if (!roomCode || typeof sendPacket !== "function") return false;
+      if (!force && Date.now() - lbShareAt < 15000) return false;
+      const mine = lbMyRows();
+      const heard = [];
+      lbPeerRows().forEach(r => {          /* pass on what this phone heard */
+        ["duel", "group"].forEach(mode => {
+          const slot = lbPeerSlot(r.name, mode);
+          if (slot) heard.push(slot);
+        });
+      });
+      if (!mine.length && !heard.length) return false;
+      lbShareAt = Date.now();
+      return sendPacket({ t: "LB", rows: mine.concat(heard).slice(0, 24) });
+    }
+
     function lbCacheRead() {
       try { return JSON.parse(localStorage.getItem(LB_CACHE) || "null"); }
       catch (e) { return null; }
@@ -2784,7 +2901,16 @@
       note.className = "lb-note" + (cls ? " " + cls : "");
     }
 
+    let lbLastRows = null;
+    let lbLastSource = "";
+
+    function lbRepaint() {
+      lbRender(lbLastRows || [], lbLastSource);
+    }
+
     function lbRender(rows, source) {
+      lbLastRows = rows || [];
+      lbLastSource = source || "";
       const list = document.getElementById("lbList");
       const count = document.getElementById("lbCount");
       if (!list) return;
@@ -2792,12 +2918,33 @@
       list.innerHTML = "";
 
       const local = lbLocalRow(lbMode);
-      let all = (rows || []).slice(0, 25);
-      if (local && !all.some(r => cleanName(r.name).toLowerCase() === local.name.toLowerCase())) {
-        all.push(local);
-      }
-      all.sort((a, b) => (b.wins - a.wins) || (b.best - a.best) ||
-        String(a.name).localeCompare(String(b.name)));
+      const merged = new Map();
+      const put = r => {
+        if (!r || !r.name) return;
+        const key = lbNameKey(cleanName(r.name));
+        if (key.length < 2) return;
+        const prev = merged.get(key);
+        if (!prev) {
+          merged.set(key, {
+            name: cleanName(r.name), wins: r.wins | 0, losses: r.losses | 0, best: r.best | 0,
+            crown: !!r.crown, local: !!r.local, peer: !!r.peer
+          });
+          return;
+        }
+        prev.wins = Math.max(prev.wins, r.wins | 0);
+        prev.losses = Math.max(prev.losses, r.losses | 0);
+        prev.best = Math.max(prev.best, r.best | 0);
+        prev.crown = prev.crown || !!r.crown;
+        prev.local = prev.local || !!r.local;
+      };
+      (rows || []).slice(0, 25).forEach(put);
+      lbPeerRows(lbMode).forEach(put);     /* what the other phones told us */
+      if (local) put(local);
+      let all = Array.from(merged.values())
+        .filter(r => r.wins || r.losses)
+        .sort((a, b) => (b.wins - a.wins) || (b.best - a.best) ||
+          String(a.name).localeCompare(String(b.name)))
+        .slice(0, 25);
 
       if (!all.length) {
         list.innerHTML = '<div class="lb-empty">Nobody has won a human battle yet.<br>Challenge someone and take the top spot.</div>';
@@ -2844,9 +2991,13 @@
         const rows = (cache && cache[lbMode]) || [];
         lbRender(rows, "cache");
         const why = lbPlainReason(err);
-        if (lbClosedCopy(location.protocol)) {
+        const shared = lbPeerRows(lbMode).length;
+        if (shared) {
+          lbNote("Host not answering (" + why + ") — showing " + shared + " player" + (shared === 1 ? "" : "s") +
+                 " this lobby told us about. Results travel phone to phone here.", "warn");
+        } else if (lbClosedCopy(location.protocol)) {
           lbNote("This copy came from Downloads or Files, and Chrome gives it no address to send from. " +
-                 "Play from aidekupal.unaux.com/pindutan.html for the ladder.", "warn");
+                 "Your wins stay here and travel to the other phones in the lobby.", "warn");
         } else if (rows.length) {
           lbNote("Can't reach the host (" + why + ") — showing the last copy, " + new Date(cache.fetched || Date.now()).toLocaleTimeString() + ".", "warn");
         } else {
@@ -3102,6 +3253,7 @@
         ts: Math.floor(Date.now() / 1000)
       };
       lbKeepMine(payload);
+      if (typeof lbShareLadder === "function") lbShareLadder(true);
       payload.sig = lbSign(payload);
       const answer = await lbPost(payload);
       if (answer && answer.ok && answer.rank) {
@@ -3510,6 +3662,8 @@
       st.t = "SYNC";
       sendPacket(st);
 
+      if (typeof lbShareLadder === "function") lbShareLadder();   /* at most every 15s */
+
       sweepPresence();
       paintConn();
     }, 4000);
@@ -3757,6 +3911,7 @@
       renderLobby();
       paintConn();
       if (typeof lbEnsure === "function") lbEnsure();
+      if (typeof lbShareLadder === "function") lbShareLadder(true);
       startRelays();   /* warm the relays up while you are deciding */
     }
 

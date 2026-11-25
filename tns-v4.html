@@ -28,11 +28,11 @@ body{margin:0;padding:0 14px 30px 48px;background:var(--paper);color:var(--ink);
 .card{padding:2px 0 10px;margin-bottom:6px}
 .fg{margin-bottom:6px}
 .fl{font-weight:700;margin-right:4px}
-.w-row{display:inline;word-spacing:6px}
+.w-row{display:inline;word-spacing:4px}
 /* clickable words — no boxes */
 .w{background:none;border:none;padding:0;margin:0;font:inherit;line-height:var(--lh);color:var(--ink);cursor:pointer;text-decoration:underline dotted 1.5px;opacity:.72;word-spacing:0}
 .w:hover{opacity:1;text-decoration:underline solid}
-.w.active{opacity:1;font-weight:700;text-decoration:none;background:var(--hl);padding:0 3px}
+.w.active{opacity:1;text-decoration:none;background:var(--hl);padding:0 3px}
 .sub-panel{margin:2px 0 6px 18px}
 .sub-panel .fg{margin-bottom:4px}
 input,select,textarea{width:100%;border:none;background:transparent;color:var(--ink);font:inherit;font-size:.95rem;line-height:var(--lh);padding:0 2px;border-radius:0}
@@ -222,7 +222,7 @@ var wfData=[
 
 var groups=[
  {key:'caseType',label:'Case Type:',opts:[['Call','Call'],['Case','Case']]},
- {key:'auth',label:'Auth:',opts:[['Pre-Auth','Pre'],['Pin-Auth','Pin'],['Manual-Auth','Manual'],['U Hasnt been auth','U Hasnt been auth'],['na','na']]},
+ {key:'auth',label:'Auth:',opts:[['Pre-Auth','Pre'],['Pin-Auth','Pin'],['Manual-Auth','Manual'],['U Hasnt been auth','U Hasnt been auth'],['Failed-Auth','Failed'],['na','na']]},
  {key:'recording',label:'Recording:',opts:[['Yes','Yes'],['No','No']]},
  {key:'interpreter',label:'Interpreter:',opts:[['No','No'],['Yes','Yes']],sub:'interpreterPanel',panel:function(){return '<div class="fg"><span class="fl">Language:</span><input type="text" id="langName" placeholder="e.g., Spanish"></div><div class="fg"><span class="fl">Interpreter ID:</span><input type="text" id="interpId" placeholder="Enter interpreter ID..."></div>'}},
  {key:'urgency',label:'Urgency:',opts:[['Urgent','Urgent'],['Non-urgent','Non-urgent']]},
@@ -351,7 +351,7 @@ function updateNotes(){
   '',
   'Case Type: '+state.caseType,
   'Caller Name: ',
-  'Callback Number: ',
+  'Callback Number: '+(state.caseType==='Case'?'n/a':''),
   'Auth: '+state.auth,
   'Reservation Code: ',
   'Agreed to call recording: '+state.recording,

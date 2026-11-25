@@ -38,7 +38,7 @@ Leave `file` out while it is still on paper — the card renders without a link.
 ## Graduating an experiment
 
 Promote it out of `labs/` when it is decided, keep the original file untouched as a fallback in the
-same way `index.html` sits behind `index-v5.html`, and add it to the README table.
+same way `index.html` sits behind `previous/index-v5.html`, and add it to the README table.
 
 ## Moving this folder into its own repo
 

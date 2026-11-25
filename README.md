@@ -22,18 +22,19 @@ Client-side checks — obstacles, not security.
 ## Files
 
 - `index.html` — launcher, PLD-01…07; `index-v6.html` — separate gated copy with v6-only storage keys.
-- `arena-diag.html` — reachability check + saved VPN-portal link; `diag.html` — older PHP-host check.
+- `arena-diag.html` — reachability check + saved VPN-portal link.
 - `gc-v5.html` / `api-v5.php` — chat + backend, KDL skin, storm and sky.
 - `aurora-v4.html`, `Aurora.html`, `api-free.php`, `worker-free.js` — Aurora + FreeModel relay.
-- `pindutan.html`, `labs/pindutan-v15…v17.html` — Pindutan builds; v17 is the current lobby.
+- `labs/pindutan-v15…v17.html` — Pindutan builds; v17 is the current lobby.
 - `labs/` — Fortress, Castle Defense, Call Spider, transcript extension, auto-clicker APK.
 - `agent-widget.js`, `api-ai.php`, `agent-demo.html` — floating agent.
 - `tns.html`, `Screenshot.html`, `save.php` — dispatch and collectibles vault.
-- `index-v1…v5.html`, older `gc*`, `api-v2…v4.php` — archive.
+- `previous/` — archived launchers, chat/APIs, Aurora v2-v3, Pindutan v14, old diag.
 
 ## Changes
 
 - **Repo public, no Pages site.** `has_pages: false` — nothing published on `github.io`.
+- **Old builds moved to `previous/`.** Current work stays in the root; `labs/` back-link now points at `index.html`.
 - **Live-site fixes.** Bardagulan → `gc-v5.html`, Aurora → `Aurora.html`; saved grids upgraded off dead `gc.html` / `aurora-v4.html`. Launcher must sit in the host **root** — `/labs/index.html` breaks its relative cards.
 - **PLD-07 Connection check.** Probes `arena.ai`, the PHP host and the public web, says whether the block is the network or Arena, and stores an `http(s)` VPN-portal link. Own `arena1x` lock screen with LOCK AGAIN.
 - **Three gates.** Launcher `kupal`, Bardagulan `sheryl`, diag `arena1x`; v6 keeps its own unlock/grid keys.

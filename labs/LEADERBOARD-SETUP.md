@@ -14,6 +14,16 @@ the game is unchanged: the same engine, the same one-lobby network, the same tou
 
 ## What you have to upload, once
 
+Two files, same folder as the pages you already host there (`gc.html`, `api-v2.php`, `save.php`):
+
+| file | where it goes | what it does |
+|---|---|---|
+| `labs/pindutan-v18.html` | `pindutan.html` (or any name you like) | the game |
+| `api-leaderboard.php` | `api-leaderboard.php`, same folder | the ladder |
+
+Keep the PHP's name exactly as it is, or edit `LEADERBOARD_URL` near the top of the game's script to
+match. Everything else is optional.
+
 1. Take **`api-leaderboard.php`** from this repo's root.
 2. Upload it to the same folder on `aidekupal.unaux.com` that already serves your other pages
    (`api-v2.php`, `save.php`, `gc.html` sit there), so it answers at:

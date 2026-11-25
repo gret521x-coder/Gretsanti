@@ -659,7 +659,7 @@
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
         { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "Aurora.html", newTab: true },
         { code: "PLD-07", icon: "🩺", title: "Connection check", desc: "Arena access + VPN link", url: "arena-diag.html", newTab: true },
-        { code: "PLD-08", icon: "🛡️", title: "TD v5 – Pixel Orcs", desc: "Tower defense", url: "labs/td-v5.html", newTab: true }
+        { code: "PLD-08", icon: "🛡️", title: "TD v6 – Pixel Orcs", desc: "Tower defense · new art pass", url: "labs/td-v6.html", newTab: true }
     ];
 
     let missionStart = Date.now();
@@ -808,7 +808,8 @@
         "https://aidekupal.unaux.com/gc-v5.html": "https://aidekupal.unaux.com/gc-v5.html",
         "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html",
         "aurora-v4.html": "Aurora.html",
-        "TD1.html": "labs/td-v5.html",
+        "TD1.html": "labs/td-v6.html",
+        "labs/td-v5.html": "labs/td-v6.html",
         "pindutan-v17.html": "pindutan-v18.html"
     };
 
@@ -837,16 +838,16 @@
             localStorage.setItem("kdl_diag_card_v1", "1");
             touched = true;
         }
-        // Same one-time treatment for the TD1 game.
+        // Same one-time treatment for the TD game.
         if (localStorage.getItem("kdl_td1_card_v1") !== "1") {
-            if (!apps.some(app => app && app.url === "labs/td-v5.html")) {
+            if (!apps.some(app => app && app.url === "labs/td-v6.html")) {
                 const nums = apps.map(app => app && /^PLD-(\d+)$/.exec(app.code || ''))
                                  .filter(Boolean).map(m => Number(m[1]));
                 const n = nums.length ? Math.max.apply(null, nums) + 1 : 1;
                 apps.push({
                     code: `PLD-${String(n).padStart(2, "0")}`,
-                    icon: "🛡️", title: "TD v5 – Pixel Orcs",
-                    desc: "Tower defense", url: "labs/td-v5.html", newTab: true
+                    icon: "🛡️", title: "TD v6 – Pixel Orcs",
+                    desc: "Tower defense · new art pass", url: "labs/td-v6.html", newTab: true
                 });
             }
             localStorage.setItem("kdl_td1_card_v1", "1");

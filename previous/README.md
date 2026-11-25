@@ -9,7 +9,7 @@ Archived builds, kept for reference. Nothing here is linked from the current lau
 | Chat backends | `api-v2.php`, `api-v3.php`, `api-v4.php` |
 | Aurora | `aurora-v2.html`, `aurora-v3.html` |
 | Pindutan | `pindutan.html` (v14), `pindutan-v15.html`, `pindutan-v16.html`, `pindutan-v17.html` |
-| Labs games | `fortress.html`, `castle-defense.html`, `assets/fortress/` |
+| Labs games | `fortress.html`, `castle-defense.html`, `assets/fortress/`, `td-v5.html` |
 | Tools | `diag.html` (older PHP-host check) |
 
-Current work stays in the repository root: `index.html`, `index-v6.html`, `arena-diag.html`, `pindutan-v18.html`, `gc-v5.html`, `api-v5.php`, `Aurora.html`, `api-free.php`, `labs/`.
+Current work stays in the repository root: `index.html`, `index-v6.html`, `arena-diag.html`, `pindutan-v18.html`, `gc-v5.html`, `api-v5.php`, `Aurora.html`, `api-free.php`, `labs/td-v6.html`.

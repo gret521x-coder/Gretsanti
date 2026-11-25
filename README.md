@@ -25,7 +25,7 @@ Client-side checks — obstacles, not security.
 - `arena-diag.html` — reachability check + saved VPN-portal link.
 - `gc-v5.html` / `api-v5.php` — chat + backend, KDL skin, storm and sky.
 - `aurora-v4.html`, `Aurora.html`, `api-free.php`, `worker-free.js` — Aurora + FreeModel relay.
-- `pindutan-v17.html` — the only current Pindutan build, graduated out of `labs/`.
+- `pindutan-v18.html` — current Pindutan build; the human-vs-human rival board is finally visible.
 - `labs/td-v5.html` — Pixel Orcs tower defense, self-contained canvas game.
 - `labs/` — TD v5, Pindutan v17 design refs, Call Spider, transcript extension, auto-clicker APK.
 - `agent-widget.js`, `api-ai.php`, `agent-demo.html` — floating agent.
@@ -35,11 +35,11 @@ Client-side checks — obstacles, not security.
 ## Changes
 
 - **Repo public, no Pages site.** `has_pages: false` — nothing published on `github.io`.
-- **Old builds moved to `previous/`.** Current work stays in the root; v17 was promoted to `pindutan-v17.html`, v15/v16/Fortress/Castle Defense archived.
+- **Old builds moved to `previous/`.** Current work stays in the root; v18 supersedes Pindutan v17, and v14-v17/Fortress/Castle Defense are archived.
 - **Live-site fixes.** Bardagulan → `gc-v5.html`, Aurora → `Aurora.html`; saved grids upgraded off dead `gc.html` / `aurora-v4.html`. Launcher must sit in the host **root** — `/labs/index.html` breaks its relative cards.
 - **PLD-07 Connection check.** Probes `arena.ai`, the PHP host and the public web, says whether the block is the network or Arena, and stores an `http(s)` VPN-portal link. Own `arena1x` lock screen with LOCK AGAIN.
 - **Three gates.** Launcher `kupal`, Bardagulan `sheryl`, diag `arena1x`; v6 keeps its own unlock/grid keys.
-- **Pindutan v17.** Lobby redesign — block wordmark, dot grid, tetromino avatars, 2×2 game cards; engine unchanged from v16.
+- **Pindutan v18.** The 1v1/group rival board is now visible side by side with yours: the old opponents panel was stuck on `display:none`. Live board snapshots (including the falling piece), rival score/lines/sent tabs, spectator view and saved-grid upgrade from v17; v17 lobby redesign and engine kept.
 - **TD v5 added.** Pixel Orcs tower defense is live as PLD-08 in `labs/` — one HTML file, no assets or CDN.
 - **TD v5 tuned.** Per-tower target priority (CLOSE/FIRST/LAST/STRONG), pause + 1-3× speed, best wave/loop saved locally, stacking poison, level-scaled frost, Tesla chain falloff, generated intel table and a wave-overlap guard.
 - **TD v5 design + modes.** Pixel HUD with shop/bestiary panels; CLASSIC / RUSH / KUPAL difficulty (lives, gold, enemy HP/speed, spawn rate, loop size), saved on device. Reduced-motion aware.
@@ -49,4 +49,4 @@ Client-side checks — obstacles, not security.
 
 ## Checks
 
-Node/jsdom: chat 71/37/41/14/11, skin 31, launcher 70, Aurora 49+54. PHP parsed with a grammar, CSS through PostCSS. Live check: `api-v5.php?action=health` ok; chat, Arena diag, Pindutan v17, Aurora, TNS and Collectibles load.
+Node/jsdom: chat 71/37/41/14/11, skin 31, launcher 70, Aurora 49+54, Pindutan v18 16 + two-client 12. PHP parsed with a grammar, CSS through PostCSS. Live check: `api-v5.php?action=health` ok; chat, Arena diag, Pindutan v17, Aurora, TNS and Collectibles load.

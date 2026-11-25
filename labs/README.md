@@ -5,7 +5,7 @@ Experimental build area. Work in progress lives here so the shipped pages stay e
 Nothing in this folder is part of the launcher until it graduates — it is reachable at
 `/labs/index.html`, but no card on the launcher points here.
 
-TD v5 is the current tower-defense build. Pindutan v17 graduated to `../pindutan-v17.html`; its design references stay here. v15, v16, Fortress, Castle Defense and the Fortress art are in `../previous/`.
+TD v5 is the current tower-defense build. Pindutan v18 graduated to `../pindutan-v18.html`; the v17 design references stay here. v14-v17, Fortress, Castle Defense and the Fortress art are in `../previous/`.
 
 ## What is in here
 

@@ -1266,14 +1266,23 @@
       return nameHasMark(text) ? text.slice(0, -CREATOR_MARK.length).trim() : text;
     }
 
-    function isCreator() {
-      try { return localStorage.getItem("pindutan_creator") === "1"; } catch (e) { return false; }
-    }
+    /* lives in memory only: a reload, or the 🔒 button, takes it away.
+       nothing about it is ever written to local or session storage. */
+    let creatorOn = false;
+
+    /* an older build kept this lying around; clear it on every load */
+    try { localStorage.removeItem("pindutan_creator"); sessionStorage.removeItem("pindutan_creator"); } catch (e) {}
+
+    function isCreator() { return creatorOn; }
 
     function setCreator(on) {
+      creatorOn = !!on;
+      if (!creatorOn) { kupalLightOn = false; autoPlan = null; }
+      /* older builds left the crown in the browser for good — clear it */
       try {
-        if (on) localStorage.setItem("pindutan_creator", "1");
-        else localStorage.removeItem("pindutan_creator");
+        localStorage.removeItem("pindutan_creator");
+        sessionStorage.removeItem("pindutan_creator");
+        sessionStorage.removeItem("pindutan_kupal_join");
       } catch (e) {}
       applyCreatorLock();
       if (typeof renderLobby === "function" && typeof roomCode !== "undefined" && roomCode) renderLobby();
@@ -1335,7 +1344,7 @@
       const name = cleanName(stripMark(raw));
       if (name.length < 2) { rejectGateName(); return; }
       localStorage.setItem("pindutan_nick", name);
-      if (maker) setCreator(true);
+      setCreator(maker);          /* no mark, no crown — asked again next visit */
       const ni = document.getElementById("nicknameInput");
       if (ni) ni.value = name;
       sessionStorage.setItem("pindutan_unlocked", "1");
@@ -1355,6 +1364,7 @@
 
     function lockEverything() {
       sessionStorage.removeItem("pindutan_unlocked");
+      setCreator(false);           /* the crown and the light go with it */
       lockScreen.style.display = "flex";
       showLockStep(1);
     }
@@ -3111,21 +3121,18 @@
           just not your hands. Solo and VS CPU are left alone, and
           nobody in the room is told anything.
        ========================================================= */
-    const KUPAL_KEY = "pindutan_kupal_join";
-
+    let kupalLightOn = false;
     let autoPlan = null;
     let autoStepT = 0;
     let autoRotFails = 0;
     let autoMoveFails = 0;
 
-    function kupalJoinWanted() {
-      try { return isCreator() && localStorage.getItem(KUPAL_KEY) === "1"; } catch (e) { return false; }
-    }
+    function kupalJoinWanted() { return creatorOn && kupalLightOn; }
 
     function toggleKupalJoin() {
       if (!isCreator()) return;
       const on = !kupalJoinWanted();
-      try { localStorage.setItem(KUPAL_KEY, on ? "1" : "0"); } catch (e) {}
+      kupalLightOn = on;
       autoPlan = null;
       applyCreatorLock();
       renderLobby();
@@ -4033,7 +4040,7 @@
       const typed = field.value;
       const maker = nameHasMark(typed);
       const chosen = cleanName(stripMark(typed));
-      if (maker && chosen.length >= 2) { field.value = chosen; setCreator(true); }
+      if (chosen.length >= 2) { field.value = chosen; setCreator(maker); }
       if (chosen.length >= 2) localStorage.setItem("pindutan_nick", chosen);
       if (roomCode) sendPacket(Object.assign({ t: "SYNC" }, myState()));
       renderLobby();

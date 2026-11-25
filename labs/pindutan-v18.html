@@ -623,7 +623,24 @@
     body.battle .play-bar,
     body.battle footer { display: none; }
 
-    body.battle .stage { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; }
+    body.battle .stage,
+    body.cpu .stage { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; }
+    body.cpu .board-wrapper { flex: none; }
+
+    /* VS CPU uses the same row: the CPU's board on the right, a size smaller */
+    body.cpu .bot-panel.on {
+      flex: none;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 5px;
+      max-width: none;
+      padding: 6px;
+    }
+    body.cpu .bot-panel canvas { width: 100%; height: auto; }
+    body.cpu .bot-meta { flex: none; font-size: 0.56rem; line-height: 1.45; cursor: pointer; }
+    body.cpu .bot-meta b { font-size: 0.64rem; }
+    body.cpu .bot-panel button { width: 100%; padding: 5px 6px; font-size: 0.56rem; }
     body.battle .board-wrapper { flex: none; }
 
     body.battle .opponents-panel.on {
@@ -973,6 +990,52 @@
     .touch-controls button.hard {
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
     }
+
+    /* ================= v18 compact: smaller buttons, the board gets the room ================= */
+    header { padding-top: 7px; gap: 6px; }
+    #logoCanvas { height: 24px; }
+    .version-badge { font-size: 0.54rem; padding: 2px 6px; }
+    .icon-btn { padding: 5px 9px; font-size: 0.64rem; border-radius: 8px; }
+
+    .ctrl-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+    .ctrl-row .top-pills { gap: 5px; }
+    .pill { font-size: 0.54rem; padding: 4px 7px; border-radius: 7px; }
+    #lobbyBtn { padding: 4px 9px !important; font-size: 0.56rem !important; border-radius: 7px !important; box-shadow: none; }
+    .settings-bar { gap: 5px; }
+    .settings-bar button { padding: 4px 8px; font-size: 0.56rem; border-radius: 7px; }
+
+    .play-bar { gap: 4px; }
+    .play-bar button { padding: 6px 3px; font-size: 0.56rem; border-radius: 8px; }
+
+    .arena { gap: 5px; padding-top: 6px; }
+    .hud-strip { gap: 4px; }
+    .chip { min-width: 44px; padding: 3px 5px; border-radius: 8px; }
+    .chip h3 { font-size: 0.46rem; margin-bottom: 1px; letter-spacing: 0.1em; }
+    .chip .val { font-size: 0.78rem; }
+
+    /* hold + next: one slim tray instead of two tall boxes */
+    .pods { gap: 5px; }
+    .pod { gap: 6px; padding: 3px 7px; border-radius: 9px; }
+    .pod h3 { font-size: 0.46rem; letter-spacing: 0.1em; }
+    #holdCanvas { width: 44px; height: 32px; }
+    #nextCanvas { width: 120px; height: 32px; }
+
+    .power-wrap { gap: 5px; }
+    .power-meter { height: 18px; border-radius: 7px; }
+    .power-meter span.lbl { font-size: 0.5rem; }
+    #powerBtn { padding: 3px 10px; font-size: 0.58rem; border-radius: 7px; }
+
+    .touch-controls { gap: 5px; padding-top: 6px; }
+    .touch-controls button { height: 38px; font-size: 0.86rem; border-radius: 10px; }
+    .touch-controls button small { font-size: 0.44rem; margin-top: 0; }
+
+    .bot-panel { padding: 6px; gap: 8px; }
+
+    /* lobby sheet: slimmer play cards and invite pill */
+    .play-card { padding: 8px 10px; border-radius: 11px; font-size: 0.66rem; }
+    .play-card canvas { width: 18px; height: 18px; }
+    .invite-wide { padding: 10px 10px; font-size: 0.6rem; }
+    .pg-btn { padding: 5px 9px; }
   </style>
 </head>
 <body>
@@ -1003,10 +1066,19 @@
       <button class="icon-btn" id="lockBtn">🔒</button>
     </div>
 
+    <div class="ctrl-row">
     <div class="top-pills">
       <span class="pill room live" id="roomPill">LOBBY</span>
       <span class="pill relay" id="relayPill">RELAY 0/3</span>
       <button class="primary" id="lobbyBtn" style="padding:6px 11px;font-size:0.62rem;border-radius:9px;">🌐 Lobby</button>
+    </div>
+
+
+    <div class="settings-bar">
+      <button id="toggleGhost" class="on">Ghost ON</button>
+      <button id="toggleAutoPause" class="on">Auto-Pause ON</button>
+      <button id="toggleSfx" class="on">SFX ON</button>
+    </div>
     </div>
 
     <div class="play-bar" id="playBar">
@@ -1014,12 +1086,6 @@
       <button data-play="bot">VS CPU</button>
       <button data-play="duel">1v1</button>
       <button data-play="group">GROUP</button>
-    </div>
-
-    <div class="settings-bar">
-      <button id="toggleGhost" class="on">Ghost ON</button>
-      <button id="toggleAutoPause" class="on">Auto-Pause ON</button>
-      <button id="toggleSfx" class="on">SFX ON</button>
     </div>
   </header>
 
@@ -1109,11 +1175,11 @@
     <div class="pods">
       <div class="pod" id="playerLeftStats">
         <h3>Hold</h3>
-        <canvas id="holdCanvas" width="96" height="96"></canvas>
+        <canvas id="holdCanvas" width="132" height="96"></canvas>
       </div>
       <div class="pod" id="playerRightStats">
         <h3>Next</h3>
-        <canvas id="nextCanvas" width="288" height="96"></canvas>
+        <canvas id="nextCanvas" width="360" height="96"></canvas>
       </div>
     </div>
 
@@ -1143,6 +1209,16 @@
         </div>
       </div>
     </div>
+
+    <div class="bot-panel" id="botPanel">
+      <canvas id="botCanvas" width="160" height="320"></canvas>
+      <div class="bot-meta" id="botMetaBox" title="tap to change level">
+        CPU <b id="botName">INTERMEDIATE</b><br />
+        <span id="botLine">Score 0 · Lines 0 · Lv 1</span><br />
+        <span class="hint">tap to change level</span>
+      </div>
+      <button id="botRestart">Restart</button>
+    </div>
     </div>
 
     <div class="power-wrap">
@@ -1153,15 +1229,6 @@
       <button id="powerBtn" disabled>GO</button>
     </div>
 
-    <div class="bot-panel" id="botPanel">
-      <canvas id="botCanvas" width="80" height="160"></canvas>
-      <div class="bot-meta" id="botMetaBox" title="tap to change level">
-        CPU <b id="botName">INTERMEDIATE</b><br />
-        <span id="botLine">Score 0 · Lines 0 · Lv 1</span><br />
-        <span class="hint">tap here to change level</span>
-      </div>
-      <button id="botRestart">Restart</button>
-    </div>
 
   </main>
 
@@ -1910,22 +1977,36 @@
       ctx.restore();
     }
 
+    /* the filled part of a shape, without its empty rows and columns */
+    function trimmedShape(type) {
+      const mat = SHAPES[type];
+      let r0 = 99, r1 = -1, c0 = 99, c1 = -1;
+      mat.forEach((row, r) => row.forEach((v, c) => {
+        if (!v) return;
+        r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+        c0 = Math.min(c0, c); c1 = Math.max(c1, c);
+      }));
+      return { mat, r0, c0, rows: r1 - r0 + 1, cols: c1 - c0 + 1 };
+    }
+
+    function drawShapeIn(context, type, x, y, w, h, pad) {
+      const t = trimmedShape(type);
+      const size = Math.min((w - pad * 2) / t.cols, (h - pad * 2) / t.rows, h / 2.4);
+      const offX = x + (w - t.cols * size) / 2;
+      const offY = y + (h - t.rows * size) / 2;
+      for (let r = 0; r < t.rows; r++) {
+        for (let c = 0; c < t.cols; c++) {
+          if (t.mat[t.r0 + r][t.c0 + c]) drawCell(context, offX + c * size, offY + r * size, size, COLORS[type]);
+        }
+      }
+    }
+
     function drawMiniPiece(context, type) {
       const w = context.canvas.width;
       const h = context.canvas.height;
       context.clearRect(0, 0, w, h);
       if (!type) return;
-      const mat = SHAPES[type];
-      const cells = mat.length;
-      const pad = Math.max(3, w * 0.05);
-      const size = Math.min((w - pad * 2) / cells, (h - pad * 2) / cells);
-      const offX = (w - cells * size) / 2;
-      const offY = (h - cells * size) / 2;
-      for (let r = 0; r < cells; r++) {
-        for (let c = 0; c < cells; c++) {
-          if (mat[r][c]) drawCell(context, offX + c * size, offY + r * size, size, COLORS[type]);
-        }
-      }
+      drawShapeIn(context, type, 0, 0, w, h, Math.max(4, w * 0.08));
     }
 
     function drawQueue() {
@@ -1936,18 +2017,9 @@
       const order = queue.slice(0, MAX_QUEUE);
       if (current && order.length < MAX_QUEUE) order.unshift(current.type);
       order.slice(0, MAX_QUEUE).forEach((type, i) => {
-        const mat = SHAPES[type];
-        const cells = mat.length;
-        const size = Math.min((slot - 10) / cells, (h - 10) / cells);
-        const offX = i * slot + (slot - cells * size) / 2;
-        const offY = (h - cells * size) / 2;
         nextCtx.save();
         if (i > 0) nextCtx.globalAlpha = 0.62;
-        for (let r = 0; r < cells; r++) {
-          for (let c = 0; c < cells; c++) {
-            if (mat[r][c]) drawCell(nextCtx, offX + c * size, offY + r * size, size, COLORS[type]);
-          }
-        }
+        drawShapeIn(nextCtx, type, i * slot, 0, slot, h, Math.max(4, slot * 0.1));
         nextCtx.restore();
       });
     }
@@ -1955,30 +2027,36 @@
     /* ---------- responsive canvas ---------- */
     /* In a human battle the board sits beside the rivals' column, so its size comes from
        what the window has left: the height under the header, and the width of two boards
-       (yours, and theirs at 70%). The touch pad is only counted on touch screens. */
+       (yours, and theirs at 70%). Outside a battle the same fit sizes the solo / CPU board.
+       The touch pad, when it shows, always stays on screen. */
     const RIVAL_SCALE = 0.7;
 
     function fitBattleBoard() {
       const panel = document.getElementById("opponentsPanel");
-      if (!document.body.classList.contains("battle")) {
-        boardWrapper.style.width = "";
-        if (panel) panel.style.width = "";
-        return;
-      }
+      const battle = document.body.classList.contains("battle");
+      const cpu = document.body.classList.contains("cpu");
+      const side = battle || cpu;
+      const sidePanel = battle ? panel : cpu ? document.getElementById("botPanel") : null;
+      if (panel && panel !== sidePanel) panel.style.width = "";
+      const botEl = document.getElementById("botPanel");
+      if (botEl && botEl !== sidePanel) botEl.style.width = "";
+      if (boardWrapper.style.display === "none") return;          /* watching: no board of mine */
       const stage = document.getElementById("stage");
       const arena = document.querySelector(".arena");
       const power = document.querySelector(".power-wrap");
       const pad = document.querySelector(".touch-controls");
-      const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-      const padH = coarse && pad && getComputedStyle(pad).display !== "none" ? pad.offsetHeight + 4 : 0;
+      /* the touch pad shows under 700 px wide; keep it on screen, mouse or finger */
+      const padH = pad && getComputedStyle(pad).display !== "none" ? pad.offsetHeight + 4 : 0;
       const top = stage.getBoundingClientRect().top + window.scrollY;
-      const below = (power ? power.offsetHeight : 26) + 7 + padH + 10;
+      const below = (power ? power.offsetHeight : 20) + 5 + padH + 10;
       const byHeight = (window.innerHeight - top - below) / 2;
       const inner = arena.clientWidth - 24;                       /* arena padding */
-      const byWidth = (inner - 8 - 14) / (1 + RIVAL_SCALE);       /* gap + panel padding */
-      const w = Math.floor(Math.max(130, Math.min(byHeight, byWidth, 320)));
+      const byWidth = side
+        ? (inner - 8 - 14) / (1 + RIVAL_SCALE)                    /* gap + panel padding */
+        : Math.min(inner, 300);
+      const w = Math.floor(Math.max(130, Math.min(byHeight, byWidth, side ? 320 : 300)));
       boardWrapper.style.width = w + "px";
-      if (panel) panel.style.width = Math.floor(w * RIVAL_SCALE + 14) + "px";
+      if (sidePanel) sidePanel.style.width = Math.floor(w * RIVAL_SCALE + 14) + "px";
     }
 
     function resizeBoard() {
@@ -3138,7 +3216,10 @@
       bot.dropT = 0;
       bot.moveT = 0;
       bot.placed = 0;
+      const panelWasOff = !document.getElementById("botPanel").classList.contains("on");
       document.getElementById("botPanel").classList.add("on");
+      document.body.classList.add("cpu");
+      if (panelWasOff) resizeBoard();          /* the CPU column takes width from the board */
       paintCpuLevels();
       botMeta();
       botSpawn();
@@ -3147,7 +3228,10 @@
 
     function botStop() {
       bot.on = false;
+      const panelWasOn = document.getElementById("botPanel").classList.contains("on");
       document.getElementById("botPanel").classList.remove("on");
+      document.body.classList.remove("cpu");
+      if (panelWasOn) resizeBoard();
     }
 
     function botMeta() {

@@ -46,7 +46,13 @@ characters on a new `pindutan/v17/` topic, so old v16 tabs stay in their own roo
 **Pindutan v18 — side by side** (`labs/pindutan-v18.html`, the launcher card opens it; v17 stays as the fallback and shares the same lobby). In a human battle your board is on the left and your rivals are on the
 right at 70% of its size: one big board in a 1v1, a 2-column grid for 2–4 rivals, 3 columns for 5–6. The
 board sizes itself to the window, so at 500×800 (or a 500×690 Chrome window) everything is visible without
-scrolling. On touch screens the touch pad is counted too. Solo and VS CPU keep the old stacked layout.
+scrolling.
+
+**Pindutan v18 — slimmer buttons.** The Hold/Next tray is one 40 px strip (pieces drawn trimmed, so they stay
+big), the pills and the Ghost / Auto-pause / SFX toggles share one row, and the score chips, mode tabs, charge
+bar and touch pad are all smaller. The board takes the space: at 500×800 it grows from 208 to 250 px wide in
+solo, and everything (touch pad included) fits without scrolling. VS CPU now uses the side-by-side row too,
+with the CPU's board on the right.
 
 **Aurora v4 — FreeModel only.** One platform, `https://freemodel.in/v1`, default `deepseek-v4.1-flash`.
 Every other provider name is gone from the page and a test greps for 13 of them. A key inside an HTML file

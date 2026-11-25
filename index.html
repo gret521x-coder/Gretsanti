@@ -653,7 +653,7 @@
     // Clean payload definitions without visible .html filenames, Luh removed
     const DEFAULT_APPS = [
         { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
-        { code: "PLD-02", icon: "🎮", title: "Pindutan v20", desc: "Lobby, ladder, blocks", url: "labs/pindutan-v20.html", newTab: true },
+        { code: "PLD-02", icon: "🎮", title: "Pindutan v20", desc: "Lobby, ladder, blocks", url: "https://aidekupal.unaux.com/pindutan.html", newTab: true },
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
@@ -798,7 +798,7 @@
     // =========================================================================
     // Saved grids keep whatever filenames they were stored with — move the two
     // that were renamed so an existing localStorage still opens the live pages.
-    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html" };
+    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html", "labs/pindutan-v20.html": "https://aidekupal.unaux.com/pindutan.html", "labs/pindutan-v18.html": "https://aidekupal.unaux.com/pindutan.html", "pindutan-v20.html": "https://aidekupal.unaux.com/pindutan.html", "pindutan-v18.html": "https://aidekupal.unaux.com/pindutan.html" };
 
     function upgradeAppLinks(apps) {
         let touched = false;
@@ -850,7 +850,6 @@
                 card.href = app.url;
                 card.target = "_blank";
                 card.rel = "noopener noreferrer";
-                if (/^labs\/pindutan-v20\.html$/.test(app.url)) resolveFlatGame(card, app.url);
             }
 
             const lockTag = app.lock ? " <span style=\"font-size:0.68rem;\">🔒</span>" : "";
@@ -873,23 +872,6 @@
         addBtn.onclick = () => openModal("addModal");
         addBtn.innerHTML = `<div style="font-size: 1.4rem; margin-bottom: 6px;">+</div><div>DEPLOY PAYLOAD</div>`;
         grid.appendChild(addBtn);
-    }
-
-    /* In the repo the game sits in labs/. On the host it is uploaded flat, as
-       pindutan.html, so this card would 404 there. Ask which copy exists — once —
-       and point the card at it. Open from a file and the check simply does not
-       run, so the repo path stays. */
-    var flatGameChecked = null;
-
-    function resolveFlatGame(card, url) {
-        var useFlat = function (flat) { card.href = flat ? url.replace(/^labs\//, "") : url; };
-        if (flatGameChecked !== null) { useFlat(flatGameChecked); return; }
-        try {
-            fetch(url, { method: "HEAD", cache: "no-store" }).then(function (r) {
-                flatGameChecked = (r.status === 404 || r.status === 403);
-                useFlat(flatGameChecked);
-            }).catch(function () { /* file:// or offline: keep the repo path */ });
-        } catch (e) { /* keep the repo path */ }
     }
 
     function saveNewApp() {

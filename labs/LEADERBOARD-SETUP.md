@@ -156,7 +156,9 @@ So the ladder degrades to a personal scoreboard instead of breaking, and nothing
 
 The phone is the only place a battle is written down, so it is the only place that can tell
 something is missing up there. On every lobby visit (and on ↻) it reads what the host has for
-your name and sends only the difference: phone says 3 wins, host says 1, two go up.
+each name this phone has played under, and sends only the difference: phone says 3 wins, host
+says 1, two go up. Names are kept apart, so a friend playing on your phone does not collect
+your wins and you do not collect theirs.
 
 Nothing is invented: if the host does not answer, or the board is too long to see in full,
 it sends nothing and tries again later. Each result also carries an id, so a retry after a
@@ -194,3 +196,4 @@ Or just delete `data/pindutan-leaderboard.json` over FTP.
 | Ladder loads but never changes | you are playing solo or VS CPU — only human battles report |
 | Empty after playing a friend on the same phone | you are both reporting the same nickname; use two names |
 | Two rows for one person | the nickname changed at some point; the old name keeps its wins, play on under one name and it climbs on its own |
+| Two people share one phone | each name keeps its own wins (`pindutan_lb_mine` → `byName`), so both climb separately; playing the same name merges you on purpose |

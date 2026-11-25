@@ -2673,34 +2673,85 @@
                       payload.score + "|" + payload.lines + "|" + payload.ts + "|" + LB_KEY);
     }
 
+    /* what this phone remembers, kept under the name it was played with:
+       two people can share one phone and one ladder */
+    function lbNameKey(name) { return String(name || "").trim().toLowerCase(); }
+
     function lbMine() {
-      try { return JSON.parse(localStorage.getItem(LB_MINE) || "{}") || {}; }
-      catch (e) { return {}; }
+      let mine = null;
+      try { mine = JSON.parse(localStorage.getItem(LB_MINE) || "null"); } catch (e) { mine = null; }
+      if (!mine || typeof mine !== "object") mine = {};
+      if (!mine.byName || typeof mine.byName !== "object") {
+        /* older phones kept a single bag of wins: move it under its name */
+        const moved = { byName: {} };
+        const key = lbNameKey(mine.name);
+        if (key && (mine.duel || mine.group)) {
+          moved.byName[key] = {
+            name: String(mine.name).trim(),
+            duel: mine.duel || { wins: 0, losses: 0, best: 0 },
+            group: mine.group || { wins: 0, losses: 0, best: 0 },
+            synced: mine.synced || 0
+          };
+          moved.name = String(mine.name).trim();
+        }
+        mine = moved;
+      }
+      return mine;
+    }
+
+    function lbMineSave(mine) {
+      try { localStorage.setItem(LB_MINE, JSON.stringify(mine)); } catch (e) {}
+    }
+
+    function lbMineRec(mine, name) {
+      const key = lbNameKey(name);
+      if (!key) return null;
+      let rec = mine.byName[key];
+      if (!rec) {
+        rec = mine.byName[key] = {
+          name: String(name).trim(),
+          duel: { wins: 0, losses: 0, best: 0 },
+          group: { wins: 0, losses: 0, best: 0 },
+          synced: 0
+        };
+      }
+      rec.duel = rec.duel || { wins: 0, losses: 0, best: 0 };
+      rec.group = rec.group || { wins: 0, losses: 0, best: 0 };
+      return rec;
+    }
+
+    function lbMineTotal(rec) {
+      const pick = m => rec[m] || { wins: 0, losses: 0, best: 0 };
+      return {
+        wins: pick("duel").wins + pick("group").wins,
+        losses: pick("duel").losses + pick("group").losses,
+        best: Math.max(pick("duel").best || 0, pick("group").best || 0)
+      };
     }
 
     function lbKeepMine(payload) {
       const mine = lbMine();
-      const slot = mine[payload.mode] || (mine[payload.mode] = { wins: 0, losses: 0, best: 0 });
+      const rec = lbMineRec(mine, payload.name);
+      if (!rec) return;
+      const slot = rec[payload.mode] || (rec[payload.mode] = { wins: 0, losses: 0, best: 0 });
       if (payload.win) slot.wins += 1; else slot.losses += 1;
       if (payload.score > slot.best) slot.best = payload.score;
-      mine.name = payload.name;
+      mine.name = rec.name;
       mine.updated = Date.now();
-      try { localStorage.setItem(LB_MINE, JSON.stringify(mine)); } catch (e) {}
+      lbMineSave(mine);
     }
 
     function lbLocalRow(mode) {
       const mine = lbMine();
-      if (!mine.name) return null;
-      const pick = m => mine[m] || { wins: 0, losses: 0, best: 0 };
+      const key = lbNameKey(cleanName(stripMark(getMyName())));
+      const rec = (key && mine.byName[key]) || (mine.name ? mine.byName[lbNameKey(mine.name)] : null);
+      if (!rec) return null;
+      const pick = m => rec[m] || { wins: 0, losses: 0, best: 0 };
       const slot = mode === "all"
-        ? {
-            wins: pick("duel").wins + pick("group").wins,
-            losses: pick("duel").losses + pick("group").losses,
-            best: Math.max(pick("duel").best || 0, pick("group").best || 0)
-          }
+        ? lbMineTotal(rec)
         : pick(mode);
       if (!slot.wins && !slot.losses) return null;
-      return { name: mine.name, wins: slot.wins, losses: slot.losses, best: slot.best, me: true, local: true };
+      return { name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best, me: true, local: true };
     }
 
     function lbCacheRead() {
@@ -2900,7 +2951,11 @@
        host has for this name, and send only the difference. */
     function lbSyncDue() {
       const mine = lbMine();
-      return !!mine.name && Date.now() - (mine.synced || 0) > 120000;
+      const cut = Date.now() - 120000;
+      return Object.keys(mine.byName).some(k => {
+        const rec = mine.byName[k];
+        return (rec.synced || 0) < cut && (rec.duel.wins || rec.group.wins);
+      });
     }
 
     async function lbTopRows(mode) {
@@ -2918,35 +2973,43 @@
 
     async function lbSync() {
       const mine = lbMine();
-      if (!mine.name) return 0;
-      const name = mine.name;
-      const key = name.toLowerCase();
+      const cut = Date.now() - 120000;
+      const here = lbNameKey(cleanName(stripMark(getMyName())));
+      const keys = Object.keys(mine.byName).filter(k => (mine.byName[k].synced || 0) < cut);
+      if (!keys.length) return 0;
+      keys.sort((a, b) => (b === here ? 1 : 0) - (a === here ? 1 : 0));   /* you first */
       let added = 0;
       let room = 20;                      /* the host takes 30 reports a minute */
-      for (const mode of ["duel", "group"]) {
-        const slot = mine[mode];
-        if (!slot || !slot.wins || room <= 0) continue;
-        const rows = await lbTopRows(mode);
-        if (!rows) return 0;
-        const row = rows.find(r => String(r.name).toLowerCase() === key);
-        if (!row && rows.length >= 100) continue;   /* can't see the whole board: leave it */
-        const have = row ? row.wins : 0;
-        const missing = Math.min(slot.wins - have, room);
-        for (let i = 0; i < missing; i++) {
-          const payload = {
-            id: "s" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36) + i,
-            name: name, mode: mode, win: 1,
-            score: Math.max(0, Math.round(slot.best || 0)), lines: 0,
-            ts: Math.floor(Date.now() / 1000)
-          };
-          payload.sig = lbSign(payload);
-          lbQueue(payload);
-          added++;
-          room--;
+      let looked = 0;
+      for (const key of keys) {
+        if (room <= 0 || looked >= 2) break;
+        const rec = mine.byName[key];
+        looked++;
+        rec.synced = Date.now();
+        for (const mode of ["duel", "group"]) {
+          const slot = rec[mode];
+          if (!slot || !slot.wins || room <= 0) continue;
+          const rows = await lbTopRows(mode);
+          if (!rows) { rec.synced = 0; lbMineSave(mine); return added; }
+          const row = rows.find(r => String(r.name).toLowerCase() === key);
+          if (!row && rows.length >= 100) continue;   /* can't see the whole board: leave it */
+          const have = row ? row.wins : 0;
+          const missing = Math.min(slot.wins - have, room);
+          for (let i = 0; i < missing; i++) {
+            const payload = {
+              id: "s" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36) + i,
+              name: rec.name, mode: mode, win: 1,
+              score: Math.max(0, Math.round(slot.best || 0)), lines: 0,
+              ts: Math.floor(Date.now() / 1000)
+            };
+            payload.sig = lbSign(payload);
+            lbQueue(payload);
+            added++;
+            room--;
+          }
         }
       }
-      mine.synced = Date.now();           /* compare again in two minutes at most */
-      try { localStorage.setItem(LB_MINE, JSON.stringify(mine)); } catch (e) {}
+      lbMineSave(mine);                   /* compare again in two minutes at most */
       return added;
     }
 
@@ -3017,8 +3080,8 @@
         const list = document.getElementById("lbList");
         if (list) delete list.dataset.busy;
         const mine = lbMine();
-        mine.synced = 0;                  /* the refresh button means "check now" */
-        try { localStorage.setItem(LB_MINE, JSON.stringify(mine)); } catch (e) {}
+        Object.keys(mine.byName).forEach(k => { mine.byName[k].synced = 0; });   /* "check now" */
+        lbMineSave(mine);
         lbEnsure();
       });
     });

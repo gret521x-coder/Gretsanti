@@ -1059,7 +1059,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v18.5</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v18.6</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -3137,6 +3137,8 @@
       return done;
     }
 
+    let bridgingLast = false;
+
     function lbMarkSynced(name) {
       const mine = lbMine();
       const rec = mine.byName[lbNameKey(name)];
@@ -3149,14 +3151,19 @@
        The phone is the only place a battle is written down, so the phone is
        also the only place that knows one is missing up there. Read what the
        host has for this name, and send only the difference. */
+    let lbBridgeAt = 0;
+
     function lbSyncDue() {
       const mine = lbMine();
       const cut = Date.now() - 120000;
       const settle = Date.now() - 10000;      /* let a battle just played land first */
-      return Object.keys(mine.byName).some(k => {
+      const ownDue = Object.keys(mine.byName).some(k => {
         const rec = mine.byName[k];
         return (rec.synced || 0) < cut && (rec.stamp || 0) < settle && (rec.duel.wins || rec.group.wins);
       });
+      if (ownDue) return true;
+      /* anything another phone told us is worth carrying up too */
+      return Date.now() - lbBridgeAt > 120000 && !!(lbPeerRows("duel").length || lbPeerRows("group").length);
     }
 
     async function lbTopRows(mode) {
@@ -3174,13 +3181,17 @@
 
     async function lbSync() {
       if (lbSending) return 0;                /* a result is on its way: compare after */
+      let carried = 0;
+      bridgingLast = false;
       const mine = lbMine();
       const cut = Date.now() - 120000;
       const here = lbNameKey(cleanName(stripMark(getMyName())));
       const settle = Date.now() - 10000;
       const keys = Object.keys(mine.byName).filter(k => (mine.byName[k].synced || 0) < cut &&
         (mine.byName[k].stamp || 0) < settle);
-      if (!keys.length) return 0;
+      const peerRows = { duel: lbPeerRows("duel"), group: lbPeerRows("group") };
+      const bridging = !!(peerRows.duel.length || peerRows.group.length);
+      if (!keys.length && !bridging) return 0;
       keys.sort((a, b) => (b === here ? 1 : 0) - (a === here ? 1 : 0));   /* you first */
       let added = 0;
       let room = 20;                      /* the host takes 30 reports a minute */
@@ -3215,6 +3226,38 @@
           }
         }
       }
+      /* a phone Chrome will not let talk to the host (a Downloads copy, say) still
+         gets its wins up: any phone here that can reach the host carries them */
+      if (room > 0 && bridging) {
+        lbBridgeAt = Date.now();
+        for (const mode of ["duel", "group"]) {
+          if (room <= 0) break;
+          const list = peerRows[mode].filter(r => !mine.byName[lbNameKey(r.name)]);
+          if (!list.length) continue;
+          const rows = await lbTopRows(mode);
+          if (!rows) break;
+          if (rows.length >= 100) continue;
+          for (const peer of list) {
+            if (room <= 0) break;
+            const row = rows.find(r => String(r.name).toLowerCase() === lbNameKey(peer.name));
+            const missing = Math.min(peer.wins - (row ? row.wins : 0), room);
+            for (let i = 0; i < missing; i++) {
+              const payload = {
+                id: "b" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36) + i,
+                name: peer.name, mode: mode, win: 1,
+                score: Math.max(0, Math.round(peer.best || 0)), lines: 0,
+                ts: Math.floor(Date.now() / 1000)
+              };
+              payload.sig = lbSign(payload);
+              lbQueue(payload);
+              added++;
+              carried++;
+              room--;
+            }
+          }
+        }
+        bridgingLast = carried > 0;
+      }
       lbMineSave(mine);                   /* compare again in two minutes at most */
       return added;
     }
@@ -3229,7 +3272,8 @@
           if (!sent) lbShowError();
         }
       }
-      if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up.");
+      if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up" +
+        (bridgingLast ? " (some were another phone's, carried by this one)." : "."));
       else if (lbPending().length) lbShowError();
       lbFetch(lbMode);
       if (list) list.dataset.loaded = "1";

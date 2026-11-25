@@ -177,6 +177,11 @@ uses) now also carries them, so the board can exist with **no server and no uplo
 - the board draws host rows when the host answers and the phones' rows always, so the ladder works
   on a copy Chrome will not let talk to any server (a file opened from Downloads).
 
+If any phone in that lobby can reach `api-leaderboard.php`, it also **carries the others up**: it
+compares what it heard with what the host has and posts the difference (the message says "carried by
+this one"). That is how a copy Chrome will not let talk to a server still reaches the server — its
+wins travel to a phone that can.
+
 What it cannot do: keep a result after every phone has closed the page for a day, or show a player
 who never shared. The public brokers can read the topic, so treat this as a scoreboard for friends.
 

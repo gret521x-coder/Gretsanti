@@ -1059,7 +1059,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v18.4</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -2843,10 +2843,14 @@
         const cache = lbCacheRead();
         const rows = (cache && cache[lbMode]) || [];
         lbRender(rows, "cache");
-        if (rows.length) {
-          lbNote("Can't reach the host — showing the last copy, " + new Date(cache.fetched || Date.now()).toLocaleTimeString() + ".", "warn");
+        const why = lbPlainReason(err);
+        if (lbClosedCopy(location.protocol)) {
+          lbNote("This copy came from Downloads or Files, and Chrome gives it no address to send from. " +
+                 "Play from aidekupal.unaux.com/pindutan.html for the ladder.", "warn");
+        } else if (rows.length) {
+          lbNote("Can't reach the host (" + why + ") — showing the last copy, " + new Date(cache.fetched || Date.now()).toLocaleTimeString() + ".", "warn");
         } else {
-          lbNote("Can't reach the host right now. Your battles are kept on this phone and sent next time.", "warn");
+          lbNote("Can't reach the host (" + why + "). Your battles are kept on this phone and sent next time.", "warn");
         }
         if (!quiet) lbFlashOffline();
       } finally {
@@ -2868,6 +2872,20 @@
     }
 
     let lbLastError = "";
+
+    /* a page opened from Downloads or Files has no address of its own; Chrome
+       then refuses most network calls no matter what the host allows */
+    function lbClosedCopy(proto) { return /^(file|content):$/i.test(String(proto || "")); }
+
+    function lbPlainReason(e) {
+      const ename = (e && e.name) || "";
+      const emsg = (e && e.message) || "";
+      if (ename === "AbortError") return "the host took too long";
+      if (lbClosedCopy(location.protocol)) return "this copy has no address to send from";
+      if (/scheme|not supported/i.test(ename + " " + emsg)) return "the browser will not let this copy send";
+      if (/failed to fetch|networkerror|load failed|network|offline|timeout|err_/i.test(ename + " " + emsg) || !emsg) return "no internet right now";
+      return "the host would not answer";
+    }
 
     /* returns {ok, rank, of} on success, or {ok:false, why:"..."} so the card
        can say what actually went wrong instead of shrugging */
@@ -2900,12 +2918,8 @@
         lbLastError = "";
         return body;
       } catch (e) {
-        const ename = (e && e.name) || "";
-        const emsg = (e && e.message) || "";
         /* phones say things like "Failed to fetch" — say it in plain words */
-        if (ename === "AbortError") lbLastError = "the host took too long";
-        else if (/failed to fetch|networkerror|load failed|network|offline|timeout|err_/i.test(ename + " " + emsg) || !emsg) lbLastError = "no internet right now";
-        else lbLastError = "the host would not answer";
+        lbLastError = lbPlainReason(e);
         return { ok: false, why: lbLastError, net: true };
       } finally {
         if (timer) clearTimeout(timer);

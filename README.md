@@ -1,85 +1,46 @@
-# Gretsanti
+# Kupal works
 
-Launcher, group chat and Aurora — plain HTML files, no build step, no framework.
+Launcher, chat and Aurora — plain HTML/PHP, no build step. Repo is **public with Pages off**; live copies run on the PHP host.
 
-**The live copies run on the PHP host.** The repository is private, and a private repo stops publishing
-Pages on a free account, so `github.io` serves nothing.
-
-| What | Address |
+| Live | URL |
 |---|---|
 | Launcher | `https://aidekupal.unaux.com/index.html` |
 | Aurora | `https://aidekupal.unaux.com/Aurora.html` |
-| Group chat | `https://aidekupal.unaux.com/gc-v5.html` |
+| Chat | `https://aidekupal.unaux.com/gc-v5.html` |
 | FreeModel relay | `https://aidekupal.unaux.com/api-free.php` |
+
+## Codes
+
+| Gate | Code |
+|---|---|
+| Launcher (`index.html`, `index-v6.html`) | `kupal` |
+| Bardagulan card | `sheryl` |
+| `arena-diag.html` | `arena1x` |
+
+Client-side checks — obstacles, not security.
 
 ## Files
 
-| File | Size | What |
-|---|---|---|
-| `index.html` | 31 KB | Launcher gated by `kupal` (an upload of `index-v5.html`) |
-| `index-v5.html` | 54 KB | Launcher in use — motion, and cards that open the file name the host actually has |
-| `index-v6.html` | 32 KB | Launcher variant gated by `kupal` — same deck, with the PLD-07 connection check |
-| `gc-v5.html` | 139 KB | Group chat — KDL skin, lightning storm, sky of stars/satellites/rockets |
-| `api-v5.php` | 43 KB | Backend for the chat: log, presence, uploads, single admin slot |
-| `aurora-v4.html` | 118 KB | Aurora — FreeModel only, KDL skin |
-| `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
-| `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
-| `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `tns.html` | 33 KB | TNS — Safety Dispatch |
-| `pindutan.html` | 43 KB | Pindutan v14 arcade game |
-| `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
-| `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
-| `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
-| `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
-| `arena-diag.html` | 9 KB | Arena access check gated by `arena1x` — reachability test + saved VPN-portal link |
-| `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
+- `index.html` — launcher, PLD-01…07; `index-v6.html` — separate gated copy with v6-only storage keys.
+- `arena-diag.html` — reachability check + saved VPN-portal link; `diag.html` — older PHP-host check.
+- `gc-v5.html` / `api-v5.php` — chat + backend, KDL skin, storm and sky.
+- `aurora-v4.html`, `Aurora.html`, `api-free.php`, `worker-free.js` — Aurora + FreeModel relay.
+- `pindutan.html`, `labs/pindutan-v15…v17.html` — Pindutan builds; v17 is the current lobby.
+- `labs/` — Fortress, Castle Defense, Call Spider, transcript extension, auto-clicker APK.
+- `agent-widget.js`, `api-ai.php`, `agent-demo.html` — floating agent.
+- `tns.html`, `Screenshot.html`, `save.php` — dispatch and collectibles vault.
+- `index-v1…v5.html`, older `gc*`, `api-v2…v4.php` — archive.
 
-## Latest changes
+## Changes
 
-**Aurora v4 — FreeModel only.** One platform, `https://freemodel.in/v1`, default `deepseek-v4.1-flash`.
-Every other provider name is gone from the page and a test greps for 13 of them. A key inside an HTML file
-cannot be hidden — hashing is one-way — so the key lives in `api-free.php` on the server and the page sends
-no `Authorization` header at all.
-
-**Why "Failed to fetch".** FreeModel does not let a page on another site call it. The page now says that
-plainly instead of blaming the key, the Proxy box refuses FreeModel's own address, and **🩺 Test connection**
-checks both doors — the model list, then one real chat request — and saves the address it proved.
-
-**Launcher.** Cards now point at the file names the host actually serves: `Aurora.html` and `gc-v5.html`.
-Saved grids are upgraded off the dead `aurora-v4.html` and `gc.html` targets. Relative cards (`tns.html`,
-`labs/pindutan-v17.html`, `arena-diag.html`) assume the launcher sits in the **host root** — uploading it to
-`/labs/index.html` breaks them all.
-
-**Chat.** The KDL // MISSION CONTROL skin — pure black deck, hairline grid, square corners, mono caps, one
-cyan accent. A cyan lightning storm fires on send and on arrival, and a sky runs behind the messages: stars
-drifting, satellites on slow orbits, a rocket every few seconds. Paused when the tab hides, off under
-`prefers-reduced-motion`.
-
-**Connection check.** A new launcher card opens `arena-diag.html`. It probes `arena.ai`, the PHP host and the
-public web with `no-cors` fetches, then says whether the failure is the network or just Arena. It cannot make
-a VPN — a browser page has no such power — so it stores your company VPN portal link on the device instead,
-and only accepts `http://` or `https://` addresses. Older saved launcher grids get the card once; deleting it
-afterwards keeps it deleted.
-
-**v6 launcher and the three gates.** `index-v6.html` is a separate copy with PLD-07 in the grid; its unlock,
-grid and card-flag keys are all `v6`, so it neither inherits nor overwrites the older launcher's session.
-There are three different codes: **launcher `kupal`**, **Bardagulan `sheryl`** (the existing signature already
-matched that word), and **diag `arena1x`** behind its own lock screen with a LOCK AGAIN button. All three are
-client-side checks — obstacles, not real security; anyone with the files can read or bypass them.
-
-**Security.** The key never enters the repository and never enters the page. Pasted keys are treated as
-leaked — revoke them. `.fmkey.php` on the server starts with `<?php exit; ?>`, so it reads blank over the web.
+- **Repo public, no Pages site.** `has_pages: false` — nothing published on `github.io`.
+- **Live-site fixes.** Bardagulan → `gc-v5.html`, Aurora → `Aurora.html`; saved grids upgraded off dead `gc.html` / `aurora-v4.html`. Launcher must sit in the host **root** — `/labs/index.html` breaks its relative cards.
+- **PLD-07 Connection check.** Probes `arena.ai`, the PHP host and the public web, says whether the block is the network or Arena, and stores an `http(s)` VPN-portal link. Own `arena1x` lock screen with LOCK AGAIN.
+- **Three gates.** Launcher `kupal`, Bardagulan `sheryl`, diag `arena1x`; v6 keeps its own unlock/grid keys.
+- **Pindutan v17.** Lobby redesign — block wordmark, dot grid, tetromino avatars, 2×2 game cards; engine unchanged from v16.
+- **Aurora v4 / chat v5.** FreeModel-only, key stays on the server; CORS wall and dead relay named; KDL // MISSION CONTROL skin with lightning storm and sky.
+- **Security.** No real keys in the repo; `.fmkey.php` begins with `<?php exit; ?>`; pasted keys treated as leaked.
 
 ## Checks
 
-All suites run in Node with jsdom, no browser needed.
-
-- **Chat v5** — 71 · **v4 features** 37 · **v3 features** 41 · **API errors** 14 · **Pages** 11
-- **Chat skin and sky** — 31: palette, square corners, mono caps, storm on send and arrival, canvas seeds
-  stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
-- **Launcher** — 70: every card resolves to a file the host actually serves, dead `aurora-v4.html` and
-  `gc.html` targets upgraded, refused probe never read as missing, chosen name remembered
-- **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
-  own message, Test connection proves a chat request
-- `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and
-  every page's CSS goes through PostCSS before it ships
+Node/jsdom: chat 71/37/41/14/11, skin 31, launcher 70, Aurora 49+54. PHP parsed with a grammar, CSS through PostCSS. Live check: `api-v5.php?action=health` ok; chat, Arena diag, Pindutan v17, Aurora, TNS and Collectibles load.

@@ -164,6 +164,22 @@ Nothing is invented: if the host does not answer, or the board is too long to se
 it sends nothing and tries again later. Each result also carries an id, so a retry after a
 lost reply never counts the same battle twice.
 
+## Running the game straight from a file
+
+Clicking `pindutan-v18.html` on the phone (Chrome shows `file:///...`) works for the ladder too,
+with two wrinkles that are handled in the page:
+
+- the report is sent as `text/plain`, which is a "simple" request. Browsers do not run a
+  pre-flight check for those, and free hosts often never answer a pre-flight — this is the usual
+  reason a local copy never gets its results up while the uploaded copy does;
+- a file page can be refused permission to read the reply even when the write went through. If the
+  plain attempt fails on the network the page sends the same report once more "blind" (no reply
+  expected). Each report carries its id, so the host counts it once even if both arrived.
+
+What a file page can still not do is *read* the board back — some browsers block that from
+`file://`. The card then shows the phone's copy and says so. Open the uploaded page
+(`aidekupal.unaux.com/pindutan.html`) to see everyone on the ladder.
+
 ## Changing the game later
 
 Files live in the same folder on the host. When the game itself changes, upload
@@ -190,7 +206,8 @@ Or just delete `data/pindutan-leaderboard.json` over FTP.
 
 | symptom | cause |
 |---|---|
-| Every result says "kept on this phone" | the PHP is not at that URL, or CORS is blocked by the host — open the URL by hand and check the JSON comes back |
+| Every result says "kept on this phone" | the PHP is not at that URL, or the host blocked the write — open the URL by hand and check the JSON comes back |
+| A local copy shows results but the board never moves | the page was opened from a file and the browser dropped the write: play from the uploaded page once and the queue goes up by itself |
 | `bad signature` in the network tab | the secret in the PHP and the HTML differ |
 | `stale report` | the phone's clock is more than 15 minutes out |
 | Ladder loads but never changes | you are playing solo or VS CPU — only human battles report |

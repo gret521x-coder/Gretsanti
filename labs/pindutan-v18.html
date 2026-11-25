@@ -2736,6 +2736,7 @@
       const slot = rec[payload.mode] || (rec[payload.mode] = { wins: 0, losses: 0, best: 0 });
       if (payload.win) slot.wins += 1; else slot.losses += 1;
       if (payload.score > slot.best) slot.best = payload.score;
+      rec.stamp = Date.now();              /* a sync in flight must notice this */
       mine.name = rec.name;
       mine.updated = Date.now();
       lbMineSave(mine);
@@ -2821,9 +2822,11 @@
       if (count) count.textContent = String(all.length);
     }
 
+    let lbAgain = false;
+
     async function lbFetch(mode, quiet) {
       lbMode = mode || lbMode;
-      if (lbBusy) return;
+      if (lbBusy) { lbAgain = true; return; }     /* draw it after this one lands */
       lbBusy = true;
       const ctrl = typeof AbortController === "function" ? new AbortController() : null;
       const timer = ctrl ? setTimeout(() => ctrl.abort(), 6000) : null;
@@ -2849,6 +2852,7 @@
       } finally {
         if (timer) clearTimeout(timer);
         lbBusy = false;
+        if (lbAgain) { lbAgain = false; lbFetch(lbMode, true); }
       }
     }
 
@@ -2867,17 +2871,22 @@
 
     /* returns {ok, rank, of} on success, or {ok:false, why:"..."} so the card
        can say what actually went wrong instead of shrugging */
-    async function lbSend(payload) {
-      const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    async function lbSend(payload, blind) {
+      const ctrl = (typeof AbortController === "function" && !blind) ? new AbortController() : null;
       const timer = ctrl ? setTimeout(() => ctrl.abort(), 7000) : null;
       try {
         const res = await fetch(LEADERBOARD_URL + "?action=report", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          /* text/plain keeps this a "simple" request. A page opened straight
+             from a file (file://) otherwise needs a pre-flight check that many
+             free hosts never answer, and the result silently never leaves. */
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
           body: JSON.stringify(payload),
+          mode: blind ? "no-cors" : "cors",
           signal: ctrl ? ctrl.signal : undefined
         });
         if (timer) clearTimeout(timer);
+        if (blind) return { ok: true, blind: true };   /* the reply is hidden, the write is not */
         let body = null;
         try { body = await res.json(); } catch (e) { body = null; }
         if (!res.ok) {
@@ -2895,12 +2904,30 @@
         const emsg = (e && e.message) || "";
         /* phones say things like "Failed to fetch" — say it in plain words */
         if (ename === "AbortError") lbLastError = "the host took too long";
-        else if (/file:/i.test(location.href)) lbLastError = "this copy is a file, it cannot post";
         else if (/failed to fetch|networkerror|load failed|network|offline|timeout|err_/i.test(ename + " " + emsg) || !emsg) lbLastError = "no internet right now";
         else lbLastError = "the host would not answer";
-        return { ok: false, why: lbLastError };
+        return { ok: false, why: lbLastError, net: true };
       } finally {
         if (timer) clearTimeout(timer);
+      }
+    }
+
+    /* a page opened from a file can be stopped from reading the reply even
+       though the write went through: if the plain attempt fails on the network,
+       send it blind once, then let the id on the host sort out the difference */
+    let lbSending = 0;
+
+    async function lbPost(payload) {
+      lbSending++;
+      try {
+        const answer = await lbSend(payload, false);
+        if (answer && answer.ok) return answer;
+        if (!answer || !answer.net) return answer;   /* the host said no: saying it again won't help */
+        const blind = await lbSend(payload, true);
+        if (blind && blind.ok) return blind;
+        return answer;
+      } finally {
+        lbSending--;
       }
     }
 
@@ -2938,11 +2965,19 @@
           ts: Math.floor(Date.now() / 1000)          /* fresh stamp: the host refuses stale ones */
         };
         payload.sig = lbSign(payload);
-        const answer = await lbSend(payload);
+        const answer = await lbPost(payload);
         if (answer && answer.ok) { lbUnqueue(item.id); done++; }
         else break;
       }
       return done;
+    }
+
+    function lbMarkSynced(name) {
+      const mine = lbMine();
+      const rec = mine.byName[lbNameKey(name)];
+      if (!rec) return;
+      rec.synced = Date.now();
+      lbMineSave(mine);
     }
 
     /* ---- wins that never reached the host --------------------------------
@@ -2952,9 +2987,10 @@
     function lbSyncDue() {
       const mine = lbMine();
       const cut = Date.now() - 120000;
+      const settle = Date.now() - 10000;      /* let a battle just played land first */
       return Object.keys(mine.byName).some(k => {
         const rec = mine.byName[k];
-        return (rec.synced || 0) < cut && (rec.duel.wins || rec.group.wins);
+        return (rec.synced || 0) < cut && (rec.stamp || 0) < settle && (rec.duel.wins || rec.group.wins);
       });
     }
 
@@ -2972,10 +3008,13 @@
     }
 
     async function lbSync() {
+      if (lbSending) return 0;                /* a result is on its way: compare after */
       const mine = lbMine();
       const cut = Date.now() - 120000;
       const here = lbNameKey(cleanName(stripMark(getMyName())));
-      const keys = Object.keys(mine.byName).filter(k => (mine.byName[k].synced || 0) < cut);
+      const settle = Date.now() - 10000;
+      const keys = Object.keys(mine.byName).filter(k => (mine.byName[k].synced || 0) < cut &&
+        (mine.byName[k].stamp || 0) < settle);
       if (!keys.length) return 0;
       keys.sort((a, b) => (b === here ? 1 : 0) - (a === here ? 1 : 0));   /* you first */
       let added = 0;
@@ -2989,8 +3028,10 @@
         for (const mode of ["duel", "group"]) {
           const slot = rec[mode];
           if (!slot || !slot.wins || room <= 0) continue;
+          const stamp = rec.stamp;
           const rows = await lbTopRows(mode);
           if (!rows) { rec.synced = 0; lbMineSave(mine); return added; }
+          if (rec.stamp !== stamp || lbSending) continue;   /* a battle landed meanwhile: it counts itself */
           const row = rows.find(r => String(r.name).toLowerCase() === key);
           if (!row && rows.length >= 100) continue;   /* can't see the whole board: leave it */
           const have = row ? row.wins : 0;
@@ -3048,11 +3089,16 @@
       };
       lbKeepMine(payload);
       payload.sig = lbSign(payload);
-      const answer = await lbSend(payload);
+      const answer = await lbPost(payload);
       if (answer && answer.ok && answer.rank) {
         const line = document.getElementById("overStats");
         if (line) line.innerHTML += statLine("Leaderboard", "#" + answer.rank + " of " + answer.of);
         roomStatusText((win ? "Win" : "Loss") + " saved — you are #" + answer.rank + " on the ladder.");
+        lbMarkSynced(name);
+        lbFetch(lbMode, true);            /* redraw so your new row is on it */
+      } else if (answer && answer.ok && answer.blind) {
+        roomStatusText((win ? "Win" : "Loss") + " saved — it went up. This copy can't read the board back.");
+        lbMarkSynced(name);
         lbFetch(lbMode, true);
       } else {
         lbQueue(payload);

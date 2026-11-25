@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KDL // ARENA ACCESS CHECK</title>
+<style>
+  :root{
+    --bg:#05060a; --panel:#0b0d13; --card:#101320; --line:#1f2433;
+    --text:#e8ecf5; --dim:#8f96a8; --cyan:#38bdf8; --ok:#00e676; --bad:#ff3d5a; --warn:#ffb020;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+       padding:18px 14px 40px;line-height:1.5}
+  h1{font-size:15px;letter-spacing:.18em;color:var(--cyan);margin:0 0 4px;font-weight:600}
+  .sub{color:var(--dim);font-size:11px;letter-spacing:.08em;margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .row{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .row:last-child{border-bottom:0}
+  .k{color:var(--dim);flex:0 0 auto}
+  .v{text-align:right;word-break:break-word}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .big{font-size:15px;line-height:1.45;padding:16px;border-radius:14px;margin-bottom:12px;
+       border:1px solid var(--line);background:var(--card)}
+  button{width:100%;padding:14px;border:0;border-radius:12px;font:inherit;font-size:13px;
+         letter-spacing:.1em;background:var(--cyan);color:#04121c;font-weight:700;margin-top:4px;cursor:pointer}
+  button.ghost{background:transparent;color:var(--cyan);border:1px solid var(--cyan)}
+  button.small{width:auto;padding:10px 14px;margin:0;font-size:11px}
+  .spin{display:inline-block;width:10px;height:10px;border-radius:50%;
+        border:2px solid var(--dim);border-top-color:var(--cyan);animation:s .8s linear infinite;vertical-align:-1px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .steps{margin:6px 0 12px;padding-left:20px;font-size:12px;color:var(--text)}
+  .steps li{padding:3px 0}
+  label{display:block;color:var(--dim);font-size:11px;letter-spacing:.08em;margin-bottom:6px}
+  .fieldrow{display:flex;gap:8px;align-items:center}
+  input{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;
+        padding:11px 12px;color:var(--text);font:inherit;font-size:12px}
+  input:focus{outline:1px solid var(--cyan)}
+  .hint{color:var(--dim);font-size:11px;margin-top:6px;min-height:16px}
+  .note{color:var(--dim);font-size:11px;margin-top:12px}
+  #diagLock{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+            padding:18px;background:rgba(5,6,10,.97)}
+  #diagLock[hidden]{display:none}
+  .lockbox{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);
+           border-radius:14px;padding:18px}
+  .lockbox h2{font-size:14px;letter-spacing:.18em;color:var(--cyan);margin:0 0 6px}
+  .lockbox p{color:var(--dim);font-size:11px;margin:0 0 14px}
+  .lockbox input{width:100%}
+  .err{color:var(--bad);font-size:11px;min-height:16px;margin-top:8px}
+  @media (prefers-reduced-motion: reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+  <div id="diagLock">
+    <div class="lockbox">
+      <h2>ARENA ACCESS CHECK</h2>
+      <p>ENTER DIAG CODE TO RUN THE TESTS</p>
+      <form id="diagUnlockForm">
+        <input type="password" id="diagPass" placeholder="DIAG CODE..." autocomplete="off" required>
+        <button type="submit">UNLOCK</button>
+      </form>
+      <div class="err" id="diagErr"></div>
+    </div>
+  </div>
+
+  <h1>ARENA ACCESS CHECK</h1>
+  <div class="sub">Rough reachability test + the way back in</div>
+
+  <div class="big" id="verdict"><span class="spin"></span> Running tests…</div>
+  <div class="card" id="facts"></div>
+  <button id="again">RUN AGAIN</button>
+  <button id="direct" class="ghost">OPEN ARENA.AI ↗</button>
+  <button id="lockAgain" class="ghost">LOCK AGAIN</button>
+
+  <div class="card" style="margin-top:14px">
+    <div class="k" style="margin-bottom:8px">IF IT IS BLOCKED</div>
+    <ol class="steps">
+      <li>Use your company's <b>approved VPN</b>, then run this check again.</li>
+      <li>Or try <b>mobile data / a different network</b> — that also tells you if it is the office network.</li>
+      <li>Ask IT to allowlist <b>arena.ai</b>. If the block is policy, get approval before routing around it.</li>
+    </ol>
+    <label for="portal">COMPANY VPN PORTAL (OPTIONAL — SAVED ON THIS DEVICE)</label>
+    <div class="fieldrow">
+      <input id="portal" type="url" placeholder="https://vpn.your-company.com" autocomplete="off">
+      <button id="savePortal" class="small">SAVE</button>
+    </div>
+    <button id="openPortal" class="ghost" hidden>OPEN SAVED VPN PORTAL ↗</button>
+    <div class="hint" id="portalMsg"></div>
+    <div class="note">Browser pages cannot create a VPN. This only stores a link to your real VPN client/portal.</div>
+  </div>
+
+<script>
+var $ = function (s) { return document.querySelector(s); };
+var esc = function (s) { return String(s).replace(/[&<>]/g, function (c) {
+  return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]);
+}); };
+
+/* --- diag gate: signature of "arena1x", same salt as the launcher --- */
+var DIAG_SIG = '313e3660603b283f343b6b22';
+var DIAG_UNLOCK_KEY = 'kdl_diag_unlocked_v1';
+
+function diagSig(input) {
+  var s = 'kdl::' + String(input).trim().toLowerCase(), o = '', i;
+  for (i = 0; i < s.length; i++) o += (s.charCodeAt(i) ^ 0x5A).toString(16);
+  return o;
+}
+function diagUnlocked() {
+  try { return localStorage.getItem(DIAG_UNLOCK_KEY) === 'true'; }
+  catch (e) { return false; }
+}
+function showDiag(unlocked) { $('#diagLock').hidden = !!unlocked; }
+
+var TARGETS = [
+  { key: 'arena.ai', url: 'https://arena.ai/' },
+  { key: 'our PHP host', url: 'https://aidekupal.unaux.com/index.html' },
+  { key: 'public web', url: 'https://example.com/' }
+];
+
+function row(k, v, cls) {
+  return '<div class="row"><span class="k">' + k + '</span><span class="v ' +
+         (cls || '') + '">' + v + '</span></div>';
+}
+
+/* no-cors fetch: we cannot read the body, but a successful opaque response
+   means the browser got an HTTP answer. A firewall that returns a block page
+   with 200 will still look "reachable" — hence "rough check" above. */
+function probe(target) {
+  var t0 = Date.now();
+  var url = target.url + (target.url.indexOf('?') >= 0 ? '&' : '?') + 'probe=' + Date.now();
+  if (!window.fetch) {
+    return Promise.resolve({ state: 'unknown', detail: 'no fetch support', ms: 0 });
+  }
+  return fetch(url, {
+    mode: 'no-cors',
+    cache: 'no-store',
+    referrerPolicy: 'no-referrer'
+  }).then(function () {
+    return { state: 'ok', detail: '', ms: Date.now() - t0 };
+  }).catch(function (e) {
+    return {
+      state: 'blocked',
+      detail: (e && (e.name + ': ' + e.message)) || String(e),
+      ms: Date.now() - t0
+    };
+  });
+}
+
+function label(result) {
+  if (result.state === 'ok') {
+    return '<span class="ok">reachable · ' + result.ms + ' ms</span>';
+  }
+  if (result.state === 'blocked') {
+    return '<span class="bad">' + esc(result.detail || 'request failed') + '</span>';
+  }
+  return '<span class="warn">' + esc(result.detail) + '</span>';
+}
+
+function render(results) {
+  var a = results[0], host = results[1], web = results[2];
+  var verdict, cls;
+
+  if (!navigator.onLine) {
+    verdict = 'DEVICE IS OFFLINE — reconnect, then run the check again.';
+    cls = 'bad';
+  } else if (web.state !== 'ok' && host.state !== 'ok') {
+    verdict = 'NO GENERAL INTERNET FROM HERE — fix the connection/proxy before chasing Arena.';
+    cls = 'bad';
+  } else if (a.state === 'ok') {
+    verdict = 'ARENA LOOKS REACHABLE — the network is not the problem. Try the button above. ' +
+              'If the site still fails, it may be a browser or account challenge.';
+    cls = 'ok';
+  } else {
+    verdict = 'ARENA BLOCKED FROM THIS NETWORK — other sites still load, so the block is aimed ' +
+              'at arena.ai. Try the approved VPN, another network, or ask IT.';
+    cls = 'warn';
+  }
+
+  $('#verdict').innerHTML = '<b class="' + cls + '">' + esc(verdict) + '</b>';
+
+  var facts = '';
+  facts += row('this page', esc(location.origin));
+  facts += row('device reports online', navigator.onLine
+    ? '<span class="ok">yes</span>' : '<span class="bad">no</span>');
+  results.forEach(function (r, i) {
+    facts += row(TARGETS[i].key, label(r));
+  });
+  facts += row('checked', esc(new Date().toLocaleString()));
+  facts += row('caveat', 'a proxy block page with HTTP 200 can look reachable');
+  $('#facts').innerHTML = facts;
+}
+
+function run() {
+  $('#verdict').innerHTML = '<span class="spin"></span> Running tests…';
+  $('#facts').innerHTML = '';
+  Promise.all(TARGETS.map(probe)).then(render);
+}
+
+/* --- saved VPN portal: only http(s) links, nothing else gets into href --- */
+var PORTAL_KEY = 'kdl_vpn_portal';
+
+function safeUrl(value) {
+  try {
+    var u = new URL(String(value).trim());
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function renderPortal() {
+  var saved = safeUrl(localStorage.getItem(PORTAL_KEY) || '');
+  var input = $('#portal');
+  var open = $('#openPortal');
+  if (saved) {
+    input.value = saved;
+    open.hidden = false;
+    open.onclick = function () { window.open(saved, '_blank', 'noopener,noreferrer'); };
+  } else {
+    open.hidden = true;
+    open.onclick = null;
+  }
+}
+
+$('#savePortal').addEventListener('click', function () {
+  var value = safeUrl($('#portal').value);
+  if (!value) {
+    $('#portalMsg').textContent = 'Enter a full http:// or https:// address.';
+    return;
+  }
+  try {
+    localStorage.setItem(PORTAL_KEY, value);
+    $('#portalMsg').textContent = 'Saved on this device.';
+  } catch (e) {
+    $('#portalMsg').textContent = 'Storage is blocked here — the link was not saved.';
+  }
+  renderPortal();
+});
+
+$('#direct').addEventListener('click', function () {
+  window.open('https://arena.ai/', '_blank', 'noopener,noreferrer');
+});
+$('#again').addEventListener('click', run);
+
+$('#diagUnlockForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (diagSig($('#diagPass').value) === DIAG_SIG) {
+    try { localStorage.setItem(DIAG_UNLOCK_KEY, 'true'); } catch (err) {}
+    $('#diagErr').textContent = '';
+    showDiag(true);
+    run();
+  } else {
+    $('#diagErr').textContent = 'ACCESS DENIED // INVALID CODE';
+  }
+});
+
+$('#lockAgain').addEventListener('click', function () {
+  try { localStorage.removeItem(DIAG_UNLOCK_KEY); } catch (err) {}
+  $('#diagPass').value = '';
+  $('#diagErr').textContent = '';
+  showDiag(false);
+});
+
+renderPortal();
+if (diagUnlocked()) {
+  showDiag(true);
+  run();
+} else {
+  showDiag(false);
+}
+</script>
+</body>
+</html>

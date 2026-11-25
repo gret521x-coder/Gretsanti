@@ -645,10 +645,10 @@
     const HARDCODED_OPENROUTER_KEY = "sk-or-v1-PASTE-YOUR-KEY-HERE";
     const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-    const VALID_PASSWORDS = ["kupal", "qpal", "ano ba", "hello kupal", "kdl"];
+    const VALID_PASSWORDS = ["kupal"]; // launcher access code
 
     // Channel integrity signature (obfuscated access token)
-    const BARDAGULAN_SIG = "313e36606029323f282336";
+    const BARDAGULAN_SIG = "313e36606029323f282336"; // signature of "sheryl"
 
     // Clean payload definitions without visible .html filenames, Luh removed
     const DEFAULT_APPS = [
@@ -657,7 +657,8 @@
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
-        { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v4.html", newTab: true }
+        { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v4.html", newTab: true },
+        { code: "PLD-07", icon: "🩺", title: "Connection check", desc: "Arena access + VPN link", url: "arena-diag.html", newTab: true }
     ];
 
     let missionStart = Date.now();
@@ -687,7 +688,7 @@
     function handleUnlock(e) {
         e.preventDefault();
         const val = document.getElementById("passInput").value.trim().toLowerCase();
-        if (val.length > 0 && (VALID_PASSWORDS.includes(val) || val.includes("kupal") || val.includes("qpal"))) {
+        if (val.length > 0 && VALID_PASSWORDS.includes(val)) {
             localStorage.setItem("kdl_unlocked_v11", "true");
             showDashboard();
         } else {
@@ -808,6 +809,23 @@
                 touched = true;
             }
         });
+        // One-time: give older saved grids the connection-check card too.
+        // The flag means a card the user deletes later stays deleted.
+        if (localStorage.getItem("kdl_diag_card_v1") !== "1") {
+            if (!apps.some(app => app && app.url === "arena-diag.html")) {
+                const codes = apps.map(app => app && app.code).filter(Boolean);
+                let n = 1;
+                while (codes.includes(`PLD-${String(n).padStart(2, "0")}`)) n++;
+                apps.push({
+                    code: `PLD-${String(n).padStart(2, "0")}`,
+                    icon: "🩺", title: "Connection check",
+                    desc: "Arena access + VPN link",
+                    url: "arena-diag.html", newTab: true
+                });
+            }
+            localStorage.setItem("kdl_diag_card_v1", "1");
+            touched = true;
+        }
         if (touched) localStorage.setItem("kdl_spacex_apps_v11", JSON.stringify(apps));
         return apps;
     }

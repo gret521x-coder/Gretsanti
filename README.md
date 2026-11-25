@@ -16,8 +16,9 @@ Pages on a free account, so `github.io` serves nothing.
 
 | File | Size | What |
 |---|---|---|
-| `index.html` | 31 KB | Launcher (an upload of `index-v5.html`) |
+| `index.html` | 31 KB | Launcher gated by `kupal` (an upload of `index-v5.html`) |
 | `index-v5.html` | 54 KB | Launcher in use — motion, and cards that open the file name the host actually has |
+| `index-v6.html` | 32 KB | Launcher variant gated by `kupal` — same deck, with the PLD-07 connection check |
 | `gc-v5.html` | 139 KB | Group chat — KDL skin, lightning storm, sky of stars/satellites/rockets |
 | `api-v5.php` | 43 KB | Backend for the chat: log, presence, uploads, single admin slot |
 | `aurora-v4.html` | 118 KB | Aurora — FreeModel only, KDL skin |
@@ -30,6 +31,7 @@ Pages on a free account, so `github.io` serves nothing.
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
+| `arena-diag.html` | 9 KB | Arena access check gated by `arena1x` — reachability test + saved VPN-portal link |
 | `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
 
 ## Latest changes
@@ -51,6 +53,18 @@ launcher works wherever it is opened from.
 cyan accent. A cyan lightning storm fires on send and on arrival, and a sky runs behind the messages: stars
 drifting, satellites on slow orbits, a rocket every few seconds. Paused when the tab hides, off under
 `prefers-reduced-motion`.
+
+**Connection check.** A new launcher card opens `arena-diag.html`. It probes `arena.ai`, the PHP host and the
+public web with `no-cors` fetches, then says whether the failure is the network or just Arena. It cannot make
+a VPN — a browser page has no such power — so it stores your company VPN portal link on the device instead,
+and only accepts `http://` or `https://` addresses. Older saved launcher grids get the card once; deleting it
+afterwards keeps it deleted.
+
+**v6 launcher and the three gates.** `index-v6.html` is a separate copy with PLD-07 in the grid; its unlock,
+grid and card-flag keys are all `v6`, so it neither inherits nor overwrites the older launcher's session.
+There are three different codes: **launcher `kupal`**, **Bardagulan `sheryl`** (the existing signature already
+matched that word), and **diag `arena1x`** behind its own lock screen with a LOCK AGAIN button. All three are
+client-side checks — obstacles, not real security; anyone with the files can read or bypass them.
 
 **Security.** The key never enters the repository and never enters the page. Pasted keys are treated as
 leaked — revoke them. `.fmkey.php` on the server starts with `<?php exit; ?>`, so it reads blank over the web.

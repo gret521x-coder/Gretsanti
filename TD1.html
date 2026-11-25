@@ -21,12 +21,12 @@ p{font-size:13px;color:#b8c4a8;margin:6px 0 0}
 </head>
 <body>
 <h1>TDv10 - PIXEL ORCS</h1>
-<div id="hud">&#10084;&#65039; <span id="lives">20</span> &nbsp;|&nbsp; &#128176; <span id="coins">250</span> &nbsp;|&nbsp; &#127754; <span id="wave">0</span> &nbsp;|&nbsp; &#128260; Loop <span id="loop">0</span> &nbsp;|&nbsp; &#128506; <span id="mapname">Forest Trail</span></div>
-<div><button id="btnWave">Start Wave</button><button id="btnRestart">Restart</button></div>
+<div id="hud">&#10084;&#65039; <span id="lives">20</span> &nbsp;|&nbsp; &#128176; <span id="coins">250</span> &nbsp;|&nbsp; &#127754; <span id="wave">0</span> &nbsp;|&nbsp; &#128260; Loop <span id="loop">0</span> &nbsp;|&nbsp; &#127942; Best <span id="best">W0 &middot; L0</span> &nbsp;|&nbsp; &#128506; <span id="mapname">Forest Trail</span></div>
+<div><button id="btnWave">Start Wave</button><button id="btnPause">PAUSE</button><button id="btnSpeed">SPEED 1&times;</button><button id="btnRestart">Restart</button></div>
 <div id="msg"></div>
 <div id="tip"></div>
 <canvas id="cv" width="720" height="480"></canvas>
-<p>Pick a tower, click a dark tile to build. Hover towers for range + upgrade details. Click a tower to upgrade, SHIFT+click to sell (60% refund). FLYING monsters (bats, gargoyles, wyverns) ignore the path — Cannon &amp; Mortar can't hit them! After wave 20 the stage loops back to 1 with more, stronger monsters.</p>
+<p>Pick a tower, click a dark tile to build. Click a tower to upgrade, SHIFT+click to sell (60% refund), RIGHT-CLICK or press T over it to cycle target: CLOSE / FIRST / LAST / STRONG. SPACE pauses, 1-9 pick towers, Esc clears. FLYING monsters ignore the path — Cannon &amp; Mortar can't hit them! After wave 20 the stage loops.</p>
 <table id="shop"></table>
 <table id="intel"></table>
 <script>
@@ -126,10 +126,10 @@ var ENEMY={
 var TW={
  Archer:{cost:50,rng:110,rate:28,dmg:6,col:'#8a6a3a',desc:'Archer: fast arrows, hits air & ground',per:'+35% dmg, +10% range/lvl'},
  Cannon:{cost:85,rng:95,rate:70,dmg:22,splash:34,col:'#5a5a5a',desc:'Cannon: tank splash, GROUND ONLY',per:'+35% dmg, +10% range/lvl'},
- Frost:{cost:75,rng:95,rate:45,dmg:4,slow:true,col:'#7ab0d0',desc:'Frost: slows any target to 45% speed',per:'+35% dmg, +10% range/lvl'},
+ Frost:{cost:75,rng:95,rate:45,dmg:4,slow:true,col:'#7ab0d0',desc:'Frost: slows air & ground, stronger each level',per:'+35% dmg, +10% range, stronger slow/lvl'},
  Sniper:{cost:120,rng:230,rate:100,dmg:40,col:'#3a3a3a',desc:'Sniper: huge range, hits air & ground',per:'+35% dmg, +10% range/lvl'},
- Poison:{cost:95,rng:100,rate:70,dmg:3,poison:true,col:'#7ac93a',desc:'Poison: damage-over-time stacks',per:'+35% dmg, +10% range/lvl'},
- Tesla:{cost:130,rng:105,rate:55,dmg:9,chain:true,col:'#40b0e0',desc:'Tesla: chains, hits air & ground',per:'+35% dmg, +10% range/lvl'},
+ Poison:{cost:95,rng:100,rate:70,dmg:3,poison:true,col:'#7ac93a',desc:'Poison: damage over time, stacks up to 4x',per:'+35% dmg, stronger poison/lvl'},
+ Tesla:{cost:130,rng:105,rate:55,dmg:9,chain:true,col:'#40b0e0',desc:'Tesla: chains up to 4 targets, 25% less dmg per jump',per:'+35% dmg, +10% range/lvl'},
  Laser:{cost:150,rng:135,rate:14,dmg:4,beam:true,col:'#ff4040',desc:'Laser: rapid beam, hits air & ground',per:'+35% dmg, +10% range/lvl'},
  Mortar:{cost:160,rng:270,rate:140,dmg:50,splash:60,col:'#4a4a6a',desc:'Mortar: biggest splash, GROUND ONLY',per:'+35% dmg, +10% range/lvl'},
  Bank:{cost:140,bank:true,col:'#c9a23a',desc:'Bank: +8 gold/4s per level',per:'+8 gold/4s per level'}
@@ -183,10 +183,11 @@ function drawTowerSprite(type,x,y,angle,lvl){
 }
 
 // ---------- game state ----------
-var lives,coins,waveNum,grid,enemies,shots,fx,spawnT,spawnQ,selTower,gameOver,shakeT,frame,hoverTile,hoverTower,loopCount;
+var lives,coins,waveNum,grid,enemies,shots,fx,spawnT,spawnQ,selTower,gameOver,shakeT,frame,hoverTile,hoverTower,loopCount,paused,speed,bestWave,bestLoop;
 function init(){
  lives=20;coins=250;waveNum=0;grid=[];enemies=[];shots=[];fx=[];
  spawnT=0;spawnQ=[];selTower=null;gameOver=false;shakeT=0;frame=0;hoverTile=null;hoverTower=null;loopCount=0;
+ paused=false;speed=1;loadBest();
  for(var y=0;y<ROWS;y++){grid[y]=[];for(var x=0;x<COLS;x++)grid[y][x]=null;}
  loadMap(0);
  msg('');updHUD();
@@ -199,9 +200,41 @@ function updHUD(){
  document.getElementById('coins').textContent=coins;
  document.getElementById('wave').textContent=waveNum;
  document.getElementById('loop').textContent=loopCount;
+ document.getElementById('best').textContent='W'+bestWave+' · L'+bestLoop;
 }
 function bind(id,fn){document.getElementById(id).addEventListener('click',fn);}
 bind('btnRestart',restart);
+
+// ---------- best run + pause / speed ----------
+function loadBest(){
+ try{
+  bestWave=Number(localStorage.getItem('td1_best_wave'))||0;
+  bestLoop=Number(localStorage.getItem('td1_best_loop'))||0;
+ }catch(e){bestWave=0;bestLoop=0;}
+}
+function saveBest(){
+ var changed=false;
+ if(waveNum>bestWave){bestWave=waveNum;changed=true;}
+ if(loopCount>bestLoop){bestLoop=loopCount;changed=true;}
+ if(!changed)return;
+ try{
+  localStorage.setItem('td1_best_wave',String(bestWave));
+  localStorage.setItem('td1_best_loop',String(bestLoop));
+ }catch(e){}
+ updHUD();
+}
+function togglePause(){
+ paused=!paused;
+ document.getElementById('btnPause').textContent=paused?'RESUME':'PAUSE';
+ msg(paused?'PAUSED — press SPACE or RESUME to continue.':'Resumed.');
+}
+function cycleSpeed(){
+ speed=speed===1?2:(speed===2?3:1);
+ document.getElementById('btnSpeed').innerHTML='SPEED '+speed+'&times;';
+ msg('Game speed: '+speed+'&times;');
+}
+bind('btnPause',togglePause);
+bind('btnSpeed',cycleSpeed);
 
 // ---------- shop + intel ----------
 var shopEl=document.getElementById('shop');
@@ -212,29 +245,41 @@ TOWERLIST.forEach(function(n){
  tr.innerHTML='<td class="t" data-n="'+n+'">'+n+'</td><td>$'+d.cost+'</td><td>'+info+'</td>';
  shopEl.appendChild(tr);
 });
-shopEl.addEventListener('click',function(e){
- var td=e.target.closest('td.t');if(!td)return;
- var n=td.dataset.n;
+function selectTower(n,td){
  document.querySelectorAll('td.t').forEach(function(el){el.classList.remove('sel');});
- td.classList.add('sel');selTower=n;
+ if(td)td.classList.add('sel');
+ else{var el=shopEl.querySelector('td.t[data-n="'+n+'"]');if(el)el.classList.add('sel');}
+ selTower=n;
  msg('Selected: '+n+' — click a dark tile to build.');
  tip(TW[n].desc+' Upgrade: '+TW[n].per);
+}
+shopEl.addEventListener('click',function(e){
+ var td=e.target.closest('td.t');if(!td)return;
+ selectTower(td.dataset.n,td);
 });
+window.addEventListener('keydown',function(ev){
+ var k=ev.key;
+ if(k===' '){ev.preventDefault();togglePause();return;}
+ if(k==='t'||k==='T'){if(hoverTower)cycleTarget(hoverTower);return;}
+ if(k==='Escape'){selTower=null;document.querySelectorAll('td.t').forEach(function(el){el.classList.remove('sel');});msg('');tip('');return;}
+ if(/^[1-9]$/.test(k)){var n=TOWERLIST[Number(k)-1];if(n)selectTower(n);}
+});
+
 var intelEl=document.getElementById('intel');
+var INTEL_ORDER=['grunt','berserker','brute','shaman','necro','goblin','ogre','skeleton','boss','bat','gargoyle','wyvern','skyboss'];
+function hpWord(h){return h<25?'very low':h<80?'low':h<200?'medium':h<500?'high':h<1000?'very high':'boss';}
+function spdWord(v){return v<0.6?'very slow':v<1?'slow':v<1.5?'normal':v<2.2?'fast':'very fast';}
+function traitWord(d){
+ return d.fly?('FLIES over towers'+(d.boss?' · boss':'')):
+        d.boss?'spawns goblins':
+        d.heal?'heals orcs':
+        d.raise?'raises skeletons':'basic';
+}
 intelEl.innerHTML='<tr><th>Monster</th><th>HP</th><th>Speed</th><th>Trait</th></tr>'+
- '<tr><td>Cave Bat &#9992;</td><td>very low</td><td>fast</td><td>FLIES over towers</td></tr>'+
- '<tr><td>Goblin Runner</td><td>very low</td><td>very fast</td><td>swarms</td></tr>'+
- '<tr><td>Orc Berserker</td><td>low</td><td>fast</td><td>rushes</td></tr>'+
- '<tr><td>Skeleton</td><td>low</td><td>fast</td><td>raised by Necromancers</td></tr>'+
- '<tr><td>Orc Grunt</td><td>medium</td><td>normal</td><td>basic</td></tr>'+
- '<tr><td>Gargoyle &#9992;</td><td>high</td><td>medium</td><td>FLIES over towers</td></tr>'+
- '<tr><td>Orc Shaman</td><td>high</td><td>slow</td><td>heals orcs</td></tr>'+
- '<tr><td>Orc Necromancer</td><td>high</td><td>slow</td><td>raises skeletons</td></tr>'+
- '<tr><td>Orc Brute</td><td>very high</td><td>very slow</td><td>tanky</td></tr>'+
- '<tr><td>Wyvern &#9992;</td><td>very high</td><td>slow</td><td>FLIES, tanky</td></tr>'+
- '<tr><td>Stone Ogre</td><td>extreme</td><td>very slow</td><td>super tanky</td></tr>'+
- '<tr><td>WARLORD</td><td>boss</td><td>slow</td><td>spawns goblins</td></tr>'+
- '<tr><td>Sky WARLORD &#9992;</td><td>boss</td><td>medium</td><td>FLYING boss</td></tr>';
+ INTEL_ORDER.map(function(k){
+  var d=ENEMY[k];
+  return '<tr><td>'+d.name+(d.fly?' &#9992;':'')+'</td><td>'+hpWord(d.hp)+'</td><td>'+spdWord(d.spd)+'</td><td>'+traitWord(d)+'</td></tr>';
+ }).join('');
 
 // ---------- waves ----------
 function waveList(n){
@@ -263,9 +308,10 @@ function waveList(n){
  return q;
 }
 function startWave(){
- if(gameOver||spawnQ.length)return;
+ if(gameOver)return;
+ if(spawnQ.length||enemies.length){msg('Finish the current wave first ('+(enemies.length||spawnQ.length)+' left).');return;}
  if(waveNum>=20){
-  waveNum=0;loopCount++;
+  waveNum=0;loopCount++;saveBest();
   msg('LOOP '+loopCount+'! Stage resets — monsters are +50% more & stronger!');
  }
  var newIdx=mapIdxForWave(waveNum+1);
@@ -279,7 +325,7 @@ function startWave(){
   coins+=refund;updHUD();
   msg('NEW MAP: '+MAPS[curMapIdx].name+(refund?(' — +'+refund+' gold refunded'):'!'));
  }
- waveNum++;updHUD();
+ waveNum++;saveBest();updHUD();
  spawnQ=waveList(waveNum);
  spawnT=20;
  document.getElementById('btnWave').disabled=false;
@@ -297,7 +343,7 @@ function spawnEnemy(type,atWp,ax,ay){
  var d=ENEMY[type];
  var e={type:type,def:d,hp:hpFor(type),maxhp:hpFor(type),
   x:WAYP[0][0],y:WAYP[0][1],wi:atWp||0,
-  slow:0,poi:0,flash:0,frame:0,flyT:Math.random()*6};
+  slowT:0,slowMul:0.45,poiT:0,poiStacks:0,poiPow:0,flash:0,frame:0,flyT:Math.random()*6};
  if(d.fly){e.x=-20;e.y=40+Math.random()*(cv.height-80);}
  if(ax!==undefined){e.x=ax;e.y=ay;}
  enemies.push(e);
@@ -305,7 +351,7 @@ function spawnEnemy(type,atWp,ax,ay){
 function stepEnemies(){
  for(var i=enemies.length-1;i>=0;i--){
   var e=enemies[i];
-  var spd=e.def.spd*(e.slow>0?0.45:1);
+  var spd=e.def.spd*(e.slowT>0?(e.slowMul||0.45):1);
   if(e.def.fly){
    e.flyT+=0.05;
    e.x+=spd;
@@ -313,7 +359,7 @@ function stepEnemies(){
    if(e.x>cv.width+20){
     lives-=e.def.dmg;updHUD();enemies.splice(i,1);
     fx.push({x:cv.width-30,y:e.y,t:'txt',s:'-'+e.def.dmg+' \u2665',col:'#ff4040'});
-    if(lives<=0){gameOver=true;msg('GAME OVER — the horde broke through!');}
+    if(lives<=0){gameOver=true;saveBest();msg('GAME OVER — the horde broke through!');}
     continue;
    }
   }else{
@@ -324,17 +370,20 @@ function stepEnemies(){
     if(e.wi>=WAYP.length){
      lives-=e.def.dmg;updHUD();enemies.splice(i,1);
      fx.push({x:WAYP[WAYP.length-1][0],y:WAYP[WAYP.length-1][1],t:'txt',s:'-'+e.def.dmg+' \u2665',col:'#ff4040'});
-     if(lives<=0){gameOver=true;msg('GAME OVER — the horde broke through!');}
+     if(lives<=0){gameOver=true;saveBest();msg('GAME OVER — the horde broke through!');}
      continue;
     }
     wp=WAYP[e.wi];dx=wp[0]-e.x;dy=wp[1]-e.y;dist=Math.hypot(dx,dy);
    }
    if(dist>0){e.x+=dx/dist*spd;e.y+=dy/dist*spd;}
   }
-  if(e.slow>0)e.slow--;
+  if(e.slowT>0)e.slowT--;
   if(e.flash>0)e.flash--;
   e.frame=Math.floor(frame/10)%2;
-  if(e.poi>0){e.hp-=0.06;e.poi--;}
+  if(e.poiT>0){
+   e.hp-=(e.poiPow||0);e.poiT--;
+   if(e.poiT<=0){e.poiStacks=0;e.poiPow=0;}
+  }
   if(e.def.heal&&frame%90===0){
    var healed=false;
    enemies.forEach(function(o){if(o!==e&&Math.hypot(o.x-e.x,o.y-e.y)<70&&o.hp<o.maxhp){o.hp=Math.min(o.maxhp,o.hp+4);healed=true;}});
@@ -342,7 +391,7 @@ function stepEnemies(){
   }
   if(e.def.raise&&frame%150===0&&enemies.length<120){
    var sk={type:'skeleton',def:ENEMY.skeleton,hp:hpFor('skeleton'),maxhp:hpFor('skeleton'),
-    x:e.x,y:e.y,wi:e.wi,slow:0,poi:0,flash:0,frame:0,flyT:0};
+    x:e.x,y:e.y,wi:e.wi,slowT:0,slowMul:0.45,poiT:0,poiStacks:0,poiPow:0,flash:0,frame:0,flyT:0};
    enemies.push(sk);
    fx.push({x:e.x,y:e.y,r:2,max:30,col:'#a040ff'});
   }
@@ -373,11 +422,12 @@ cv.addEventListener('mousemove',function(ev){
   tip(TW[selTower].desc+' Range: '+TW[selTower].rng+' Upgrade: '+TW[selTower].per);
  }else if(ht){
   var lvlDmg=ht.def.bank?'+8 gold/4s':Math.round((ht.def.dmg||1)*(1+0.35*ht.lvl));
-  tip(ht.type+' lvl '+ht.lvl+' — dmg now '+lvlDmg+', range '+Math.round((ht.def.rng||100)*(1+0.1*(ht.lvl-1)))+' — '+TW[ht.type].per);
+  tip(ht.type+' lvl '+ht.lvl+' — dmg now '+lvlDmg+', range '+Math.round((ht.def.rng||100)*(1+0.1*(ht.lvl-1)))+', target '+MODE_LABEL[ht.targetMode||'close']+' — '+TW[ht.type].per);
  }else tip('');
 });
 cv.addEventListener('mouseleave',function(){hoverTile=null;hoverTower=null;tip('');});
 cv.addEventListener('click',function(ev){
+ if(gameOver){restart();return;}
  var rect=cv.getBoundingClientRect();
  var mx=(ev.clientX-rect.left)*(cv.width/rect.width);
  var my=(ev.clientY-rect.top)*(cv.height/rect.height);
@@ -402,13 +452,51 @@ cv.addEventListener('click',function(ev){
  if(coins>=d.cost){
   coins-=d.cost;updHUD();
   grid[ty][tx]={type:selTower,def:d,lvl:1,cd:0,totalCost:d.cost,angle:0,
-   rx:tx*T+T/2,ry:ty*T+T/2,rngv:d.rng||0};
+   rx:tx*T+T/2,ry:ty*T+T/2,rngv:d.rng||0,targetMode:'close'};
   msg('Built '+selTower+'.');
  }else msg('Not enough gold for '+selTower+'.');
+});
+cv.addEventListener('contextmenu',function(ev){
+ ev.preventDefault();
+ var rect=cv.getBoundingClientRect();
+ var tx=Math.floor((ev.clientX-rect.left)*(cv.width/rect.width)/T);
+ var ty=Math.floor((ev.clientY-rect.top)*(cv.height/rect.height)/T);
+ if(tx<0||ty<0||tx>=COLS||ty>=ROWS)return;
+ var t=grid[ty][tx];if(t)cycleTarget(t);
 });
 function towerRange(t){return t.rngv||t.def.rng||100;}
 function towerDmg(t){return(t.def.dmg||1)*(1+0.35*(t.lvl-1));}
 function applyHit(e,dmg){e.hp-=dmg;e.flash=5;}
+
+// ---------- target priority ----------
+var TARGET_MODES=['close','first','last','strong'];
+var MODE_LABEL={close:'CLOSE',first:'FIRST',last:'LAST',strong:'STRONG'};
+function enemyProgress(e){
+ if(e.def.fly)return e.x/cv.width;
+ var wi=Math.max(0,Math.min(e.wi,WAYP.length-1)),wp=WAYP[wi],seg=0;
+ if(wi>0){var prev=WAYP[wi-1];seg=Math.hypot(wp[0]-prev[0],wp[1]-prev[1]);}
+ var d=Math.hypot(wp[0]-e.x,wp[1]-e.y);
+ return wi+(seg?1-Math.min(1,d/seg):0);
+}
+function pickTarget(t){
+ var mode=t.targetMode||'close',best=null,bd=1e9,bp=-1e9,lp=1e9,bh=-1;
+ enemies.forEach(function(e){
+  if(t.def.noAir&&e.def.fly)return;
+  var d=Math.hypot(e.x-t.rx,e.y-t.ry);
+  if(d>=towerRange(t))return;
+  if(mode==='first'){var pr=enemyProgress(e);if(pr>bp){bp=pr;best=e;}}
+  else if(mode==='last'){var pl=enemyProgress(e);if(pl<lp){lp=pl;best=e;}}
+  else if(mode==='strong'){if(e.hp>bh){bh=e.hp;best=e;}}
+  else if(d<bd){bd=d;best=e;}
+ });
+ return best;
+}
+function cycleTarget(t){
+ var i=TARGET_MODES.indexOf(t.targetMode||'close');
+ t.targetMode=TARGET_MODES[(i+1)%TARGET_MODES.length];
+ msg(t.type+' target: '+MODE_LABEL[t.targetMode]);
+ tip(t.type+' lvl '+t.lvl+' — target '+MODE_LABEL[t.targetMode]+'. Right-click / T to cycle.');
+}
 
 // ---------- towers firing ----------
 function stepTowers(){
@@ -419,20 +507,28 @@ function stepTowers(){
    if(frame%240===0){coins+=8*t.lvl;updHUD();fx.push({x:t.rx,y:t.ry,t:'txt',s:'+$'+(8*t.lvl),col:'#ffd000'});}
    continue;
   }
-  var best=null,bd=1e9;
-  enemies.forEach(function(e){
-   if(t.def.noAir&&e.def.fly)return;
-   var d=Math.hypot(e.x-t.rx,e.y-t.ry);if(d<towerRange(t)&&d<bd){bd=d;best=e;}});
+  var best=pickTarget(t);
   if(!best)continue;
   t.cd=Math.max(3,Math.floor(t.def.rate/(0.8+0.15*t.lvl)));
   t.angle=Math.atan2(best.y-t.ry,best.x-t.rx);
   var dmg=towerDmg(t);
   if(t.def.beam){applyHit(best,dmg);shots.push({x1:t.rx,y1:t.ry,x2:best.x,y2:best.y,beam:true,life:4,col:'#ff4040'});}
   else if(t.def.chain){
-   var hit=[best],cur=best;
-   enemies.forEach(function(e){if(hit.indexOf(e)<0&&Math.hypot(e.x-cur.x,e.y-cur.y)<55)hit.push(e);});
-   hit.forEach(function(e){applyHit(e,dmg);});
-   shots.push({x1:t.rx,y1:t.ry,x2:best.x,y2:best.y,beam:true,life:5,col:'#40b0e0'});
+   var hit=[best],cur=best,fromX=t.rx,fromY=t.ry;
+   for(var j=0;j<4;j++){
+    applyHit(cur,dmg*Math.pow(0.75,j));
+    shots.push({x1:fromX,y1:fromY,x2:cur.x,y2:cur.y,beam:true,life:5,col:'#40b0e0'});
+    fromX=cur.x;fromY=cur.y;
+    var next=null,nd=55;
+    enemies.forEach(function(e){
+     if(hit.indexOf(e)<0){
+      var dd=Math.hypot(e.x-cur.x,e.y-cur.y);
+      if(dd<nd){nd=dd;next=e;}
+     }
+    });
+    if(!next)break;
+    hit.push(next);cur=next;
+   }
   }
   else if(t.def.splash){
    enemies.forEach(function(e){if(!(t.def.noAir&&e.def.fly)&&Math.hypot(e.x-best.x,e.y-best.y)<t.def.splash)applyHit(e,dmg);});
@@ -440,8 +536,12 @@ function stepTowers(){
   }
   else{
    applyHit(best,dmg);
-   if(t.def.poison)best.poi=100;
-   if(t.def.slow)best.slow=100;
+   if(t.def.poison){
+    best.poiStacks=Math.min(4,(best.poiStacks||0)+1);
+    best.poiT=100;
+    best.poiPow=0.02*dmg*best.poiStacks;
+   }
+   if(t.def.slow){best.slowT=100;best.slowMul=Math.max(0.25,0.45-0.06*(t.lvl-1));}
    shots.push({x:t.rx,y:t.ry,tgt:best,proj:true,life:400,col:t.def.col});
   }
  }
@@ -500,6 +600,8 @@ function drawRangeCircles(){
   cx.strokeStyle='rgba(255,224,138,0.8)';cx.setLineDash([6,5]);cx.lineWidth=2;
   cx.beginPath();cx.arc(t.rx,t.ry,r2,0,Math.PI*2);cx.stroke();cx.setLineDash([]);
   cx.fillStyle='rgba(255,224,138,0.08)';cx.beginPath();cx.arc(t.rx,t.ry,r2,0,Math.PI*2);cx.fill();
+  cx.fillStyle='#ffe08a';cx.font='bold 11px monospace';cx.textAlign='center';
+  cx.fillText(MODE_LABEL[t.targetMode||'close'],t.rx,t.ry-30);cx.textAlign='left';
  }
 }
 function drawTowers(){
@@ -545,20 +647,29 @@ function drawWaveInfo(){
 
 // ---------- main loop ----------
 var SPAWN_EVERY=20;
-function loop(){
+function simulate(){
  frame++;
- if(!gameOver){
-  if(spawnQ.length){
-   if(spawnT>0)spawnT--;
-   if(spawnT<=0){spawnEnemy(spawnQ.shift());spawnT=SPAWN_EVERY;}
-  }
-  stepEnemies();stepTowers();stepShots();stepFx();
+ if(spawnQ.length){
+  if(spawnT>0)spawnT--;
+  if(spawnT<=0){spawnEnemy(spawnQ.shift());spawnT=SPAWN_EVERY;}
  }
+ stepEnemies();
+ if(gameOver)return;
+ stepTowers();stepShots();stepFx();
+}
+function loop(){
+ if(!gameOver&&!paused){for(var s=0;s<speed&&!gameOver;s++)simulate();}
+ else if(gameOver){stepFx();}
  cx.save();
  if(shakeT>0){shakeT--;cx.translate(Math.floor(Math.random()*6-3),Math.floor(Math.random()*6-3));}
  drawMap();drawRangeCircles();drawTowers();drawEnemies();drawShots();drawFx();drawWaveInfo();
  cx.restore();
- if(gameOver){cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle='#ff4040';cx.font='bold 34px monospace';cx.textAlign='center';cx.fillText('GAME OVER',cv.width/2,cv.height/2);cx.textAlign='left';}
+ if(paused&&!gameOver){cx.fillStyle='rgba(0,0,0,0.55)';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle='#ffe08a';cx.font='bold 34px monospace';cx.textAlign='center';cx.fillText('PAUSED',cv.width/2,cv.height/2);cx.textAlign='left';}
+ if(gameOver){cx.fillStyle='rgba(0,0,0,0.7)';cx.fillRect(0,0,cv.width,cv.height);cx.textAlign='center';
+  cx.fillStyle='#ff4040';cx.font='bold 34px monospace';cx.fillText('GAME OVER',cv.width/2,cv.height/2-14);
+  cx.fillStyle='#ffe08a';cx.font='bold 16px monospace';
+  cx.fillText('Best: wave '+bestWave+' · loop '+bestLoop+' — click to restart',cv.width/2,cv.height/2+22);
+  cx.textAlign='left';}
  requestAnimationFrame(loop);
 }
 init();

@@ -642,6 +642,27 @@
       color: var(--mut);
     }
 
+    .kupal-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.58rem; letter-spacing: 0.14em; padding: 5px 8px;
+      background: #0b1310; border-color: #1d2b23; color: #7d8f84;
+      cursor: pointer;
+    }
+    .kupal-pill .kd {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #2a3a31; box-shadow: none; flex: 0 0 auto;
+    }
+    .kupal-pill.on {
+      color: #4ade80; border-color: rgba(74, 222, 128, 0.45);
+      background: rgba(74, 222, 128, 0.09);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.18);
+    }
+    .kupal-pill.on .kd {
+      background: #4ade80; box-shadow: 0 0 8px #4ade80;
+      animation: kpulse 1.8s ease-in-out infinite;
+    }
+    @keyframes kpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
     .pill.room {
       color: var(--cyan);
       border-color: rgba(61, 214, 245, 0.35);
@@ -996,6 +1017,7 @@
     <div class="top-pills">
       <span class="pill room live" id="roomPill">LOBBY</span>
       <span class="pill relay" id="relayPill">RELAY 0/3</span>
+      <button class="pill kupal-pill" id="kupalJoinBtn" style="display:none;" title="Kupal joins the next human battle"><span class="kd"></span>KUPAL</button>
       <button class="primary" id="lobbyBtn" style="padding:6px 11px;font-size:0.62rem;border-radius:9px;">🌐 Lobby</button>
     </div>
 
@@ -1250,14 +1272,14 @@
       if (typeof lbFetch === "function" && typeof lbMode !== "undefined") lbFetch(lbMode, true);
     }
 
-    /* Kupal is not on the menu unless the maker's name is in use */
+    /* everybody gets Kupal in VS CPU; the maker just also gets the crown and
+       the option to drop Kupal into a human battle */
     function applyCreatorLock() {
-      const kupalBtn = document.querySelector('#cpuLevelBar button[data-lvl="kupal"]');
       const maker = isCreator();
-      if (kupalBtn) kupalBtn.style.display = maker ? "" : "none";
-      if (!maker && typeof cpuLevel !== "undefined" && cpuLevel === "kupal" && typeof setCpuLevel === "function") {
-        cpuLevel = "intermediate";
-        try { localStorage.setItem("pindutan_cpu", "intermediate"); } catch (e) {}
+      const joinBtn = document.getElementById("kupalJoinBtn");
+      if (joinBtn) {
+        joinBtn.style.display = maker ? "inline-flex" : "none";
+        joinBtn.classList.toggle("on", maker && kupalJoinWanted());
       }
       const badge = document.getElementById("versionBadge");
       if (badge) badge.textContent = maker ? "v18 👑" : "v18";
@@ -1346,6 +1368,7 @@
       document.getElementById("hintText").style.display = "block";
     });
     document.getElementById("lockBtn").addEventListener("click", lockEverything);
+    document.getElementById("kupalJoinBtn").addEventListener("click", toggleKupalJoin);
 
     /* =========================================================
        2. WEB AUDIO SOUND EFFECTS
@@ -2125,7 +2148,8 @@
           }
         }
 
-        if (currentMode === "bot") botTick(delta);
+        if (currentMode === "bot" || kupalInBattle) botTick(delta);
+        if (kupalInBattle) pushKupalFrame(false);
         boardWrapper.classList.toggle("danger", topRowOfStack() <= 3);
         drawBoard();
         pushBoardFrame(false);
@@ -2178,7 +2202,8 @@
 
       document.getElementById("boardOverlay").style.display = "none";
       document.getElementById("overStats").innerHTML = "";
-      if (currentMode === "bot") botStart(); else botStop();
+      if (currentMode === "bot") botStart();
+      else if (!kupalInBattle) botStop();   /* Kupal keeps playing while it fights humans */
       broadcastState(true);
       lastTime = performance.now();
       requestAnimationFrame(gameLoop);
@@ -2209,6 +2234,7 @@
         document.getElementById("overlayTitle").textContent = currentMode === "1v1" ? "YOU LOSE" : "KNOCKED OUT";
         document.getElementById("startBtn").textContent = "Rematch";
         reportBattle(false);
+        if (kupalInBattle) setTimeout(() => kupalEndBattle(), 400);
       }
       document.getElementById("startBtn").style.display = "inline-block";
       document.getElementById("boardOverlay").style.display = "flex";
@@ -2333,9 +2359,9 @@
     }
 
     /* ---------- send ---------- */
-    function sendPacket(p) {
+    function sendPacket(p, as) {
       if (!roomCode) return false;
-      p.from = myId;
+      p.from = as || myId;
       p.n = nextNonce();
       p.ts = Date.now();
       remember(p.n);
@@ -2356,6 +2382,12 @@
     function onPacket(p) {
       if (!p || typeof p !== "object" || !p.t) return;
       if (p.from === myId) return;
+      /* the page that speaks for Kupal must not listen to its own echoes */
+      if (p.from === KUPAL_ID && kupalJoinWanted()) return;
+      if (p.to === KUPAL_ID && p.t === "GARBAGE") {
+        if (kupalInBattle && bot.alive) botIncoming(Math.min(8, p.amount | 0));
+        return;
+      }
       if (p.n) {
         if (seen.has(p.n)) return;
         remember(p.n);
@@ -2848,6 +2880,7 @@
     function hostStartBattle() {
       if (!battle || battle.host !== myId) return;
       const ids = [myId].concat(Object.keys(battle.joiners).slice(0, MAX_PLAYERS - 1));
+      if (kupalJoinWanted() && !ids.includes(KUPAL_ID)) ids.push(KUPAL_ID);
       if (ids.length < 2) {
         roomStatusText("Nobody joined this time. Invite again when more players are in.");
         battle = null;
@@ -2865,6 +2898,8 @@
       battleReported = false;
       battlePlayers = {};
       ids.forEach(id => { battlePlayers[id] = true; });
+      if (ids.includes(KUPAL_ID) && kupalJoinWanted()) kupalStartBattle();
+      else if (kupalInBattle) kupalEndBattle();
       battleId = data.battleId || ("B" + Date.now().toString(36));
       battleSeenAlive = {};
       battleOver = false;
@@ -2925,6 +2960,7 @@
       document.getElementById("startBtn").style.display = "inline-block";
       document.getElementById("boardOverlay").style.display = "flex";
       broadcastState(false);
+      if (kupalInBattle) { /* let the last frame land, then pull Kupal out */ setTimeout(() => kupalEndBattle(), 400); }
       renderOpponentsGrid();
     }
 
@@ -2964,6 +3000,7 @@
 
     function challenge(id) {
       if (!roomCode) { roomStatusText("Still connecting — try again in a second."); return; }
+      if (id === KUPAL_ID) { roomStatusText("Kupal does not take challenges — flip the green button and it joins you."); return; }
       if (!peers[id]) return;
       const duelId = "D" + Date.now().toString(36).toUpperCase();
       battle = { id: duelId, mode: "1v1", host: myId, joiners: {}, started: false };
@@ -3046,12 +3083,132 @@
       sendPacket({ t: "B", b, alive: true, mode: currentMode, score: score || 0, lines: lines || 0, sent: sentLines || 0 });
     }
 
+    /* =========================================================
+       8. KUPAL IN A HUMAN BATTLE (the maker's green button)
+          The bot has no phone of its own, so this page speaks for it:
+          it announces Kupal in the lobby, pushes its board as if Kupal
+          sent it, throws Kupal's garbage at the humans and takes theirs.
+          Everyone else in the room sees an ordinary player.
+       ========================================================= */
+    const KUPAL_ID = "P-KUPAL";
+    const KUPAL_KEY = "pindutan_kupal_join";
+
+    let kupalInBattle = false;
+    let kupalFrameAt = 0;
+    let kupalDeathSent = false;
+
+    function kupalJoinWanted() {
+      try { return isCreator() && localStorage.getItem(KUPAL_KEY) === "1"; } catch (e) { return false; }
+    }
+
+    function toggleKupalJoin() {
+      if (!isCreator()) return;
+      const on = !kupalJoinWanted();
+      try { localStorage.setItem(KUPAL_KEY, on ? "1" : "0"); } catch (e) {}
+      applyCreatorLock();
+      if (on) {
+        kupalAnnounce("idle");
+        roomStatusText("Kupal will join your next human battle. 👑");
+      } else {
+        kupalLeave();
+        roomStatusText("Kupal sits this one out.");
+      }
+    }
+
+    /* keep a local card for Kupal so the lobby and the opponent grid can use it */
+    function kupalPeer(mode, alive, board) {
+      const prev = peers[KUPAL_ID] || {};
+      peers[KUPAL_ID] = Object.assign({
+        name: "Kupal", id: KUPAL_ID, lastSeen: Date.now(), crown: false, bot: true
+      }, prev, {
+        name: "Kupal",
+        id: KUPAL_ID,
+        mode: mode || prev.mode || "idle",
+        alive: !!alive,
+        board: board === undefined ? (prev.board || null) : board,
+        score: bot.score || 0,
+        lines: bot.lines || 0,
+        sent: 0,
+        won: false,
+        lastSeen: Date.now(),
+        bot: true
+      });
+    }
+
+    function kupalAnnounce(mode) {
+      if (!kupalJoinWanted() || !roomCode) return;
+      kupalPeer(mode || "idle", kupalInBattle && bot.alive, bot.board ? encodeBoard(bot.board) : null);
+      sendPacket({
+        t: "SYNC", name: "Kupal", mode: mode || "idle",
+        alive: kupalInBattle && bot.alive, score: bot.score || 0,
+        lines: bot.lines || 0, sent: 0, won: false, board: null
+      }, KUPAL_ID);
+      renderLobby();
+    }
+
+    function kupalLeave() {
+      if (!roomCode) return;
+      sendPacket({ t: "BYE" }, KUPAL_ID);
+      delete peers[KUPAL_ID];
+      kupalInBattle = false;
+      botStop();
+      renderLobby();
+      renderOpponentsGrid();
+    }
+
+    function kupalStartBattle() {
+      if (kupalInBattle) return;
+      kupalInBattle = true;
+      kupalDeathSent = false;
+      botStart();                      /* the real engine, at Kupal's settings */
+      renderOpponentsGrid();
+    }
+
+    function kupalEndBattle() {
+      kupalInBattle = false;
+      botStop();
+      delete peers[KUPAL_ID];
+      renderLobby();
+      renderOpponentsGrid();
+    }
+
+    /* one board frame, 220 ms apart, exactly what a human would send */
+    function pushKupalFrame(force) {
+      if (!kupalInBattle || !kupalJoinWanted() || !roomCode) return;
+      const now = Date.now();
+      if (!force && now - kupalFrameAt < 220) return;
+      kupalFrameAt = now;
+      const alive = !!bot.alive;
+      kupalPeer(currentMode, alive, bot.board ? encodeBoard(bot.board) : null);
+      sendPacket({
+        t: "B", b: bot.board ? encodeBoard(bot.board) : null,
+        alive: alive, mode: currentMode,
+        score: bot.score || 0, lines: bot.lines || 0, sent: 0
+      }, KUPAL_ID);
+      if (!alive && !kupalDeathSent) {
+        kupalDeathSent = true;
+        roomStatusText("Kupal topped out. 👑");
+        setTimeout(() => { if (!bot.alive && kupalInBattle) renderOpponentsGrid(); }, 30);
+      }
+    }
+
+    /* Kupal's attack lands on a real human, once per clear */
+    function kupalAttack(atk) {
+      if (!kupalInBattle || !atk) return;
+      const humans = battleOpponents().filter(id => id !== KUPAL_ID && peers[id] && peers[id].alive);
+      if (!humans.length) return;
+      const target = humans[Math.floor(Math.random() * humans.length)];
+      sendPacket({ t: "GARBAGE", to: target, amount: atk }, KUPAL_ID);
+    }
+
     /* ---------- presence ---------- */
     setInterval(() => {
       if (!roomCode) return;
       const st = myState();
       st.t = "SYNC";
       sendPacket(st);
+
+      if (kupalJoinWanted()) kupalAnnounce(kupalInBattle ? currentMode : "idle");
 
       sweepPresence();
       paintConn();
@@ -3262,6 +3419,12 @@
         tag.className = "pg-you";
         tag.textContent = "YOU";
         card.appendChild(tag);
+      } else if (p.id === KUPAL_ID) {
+        const tag = document.createElement("span");
+        tag.className = "pg-you";
+        tag.style.cssText = "background:rgba(74,222,128,.14);color:#4ade80;border-color:rgba(74,222,128,.4);";
+        tag.textContent = "AI";
+        card.appendChild(tag);
       } else {
         const btn = document.createElement("button");
         btn.className = "pg-btn";
@@ -3379,7 +3542,10 @@
       if (saved && CPU_LEVELS[saved]) cpuLevel = saved;
     } catch (e) { /* private mode */ }
 
-    function cpuCfg() { return CPU_LEVELS[cpuLevel] || CPU_LEVELS.intermediate; }
+    function cpuCfg() {
+      if (typeof kupalInBattle !== "undefined" && kupalInBattle) return CPU_LEVELS.kupal;
+      return CPU_LEVELS[cpuLevel] || CPU_LEVELS.intermediate;
+    }
 
     function setCpuLevel(key) {
       if (!CPU_LEVELS[key]) return;
@@ -3625,7 +3791,9 @@
 
         let atk = ([0, 0, 1, 2, 4][cleared] || 0);
         if (atk > 0) atk += cpuCfg().attackBonus;
-        if (atk > 0 && currentMode === "bot" && gameRunning && !isPaused) {
+        if (atk > 0 && kupalInBattle) {
+          kupalAttack(atk);
+        } else if (atk > 0 && currentMode === "bot" && gameRunning && !isPaused) {
           pendingGarbage += atk;
           updateHUD();
           addFloater("+" + atk + " INCOMING", "#ff4d6d");

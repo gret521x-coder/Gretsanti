@@ -855,6 +855,7 @@
 
     .pg-top { display: flex; align-items: center; gap: 7px; min-width: 0; }
     .pg-av { width: 26px; height: 26px; flex: none; border-radius: 7px; background: rgba(255, 255, 255, 0.04); }
+    .pg-name.crowned { color: var(--amber); text-shadow: 0 0 12px rgba(255, 176, 32, 0.45); }
     .pg-name {
       font-size: 0.73rem; font-weight: 800; letter-spacing: 0.01em;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -986,7 +987,7 @@
   <header>
     <div class="title-row">
       <canvas id="logoCanvas" width="240" height="36" role="img" aria-label="Pindutan"></canvas>
-      <span class="version-badge">v18</span>
+      <span class="version-badge" id="versionBadge">v18</span>
       <span class="title-spacer"></span>
       <button class="icon-btn" id="pauseBtn">⏸ Pause</button>
       <button class="icon-btn" id="lockBtn">🔒</button>
@@ -1223,6 +1224,46 @@
             No name means no arena, and the password has to be typed again. ---- */
     const gateNick = document.getElementById("gateNick");
 
+    /* the maker's key — kept out of sight, stripped before a name is used or stored */
+    const CREATOR_MARK = atob("Kyt2");
+
+    function nameHasMark(raw) {
+      return String(raw || "").trim().toLowerCase().endsWith(CREATOR_MARK);
+    }
+
+    function stripMark(raw) {
+      const text = String(raw || "").trim();
+      return nameHasMark(text) ? text.slice(0, -CREATOR_MARK.length).trim() : text;
+    }
+
+    function isCreator() {
+      try { return localStorage.getItem("pindutan_creator") === "1"; } catch (e) { return false; }
+    }
+
+    function setCreator(on) {
+      try {
+        if (on) localStorage.setItem("pindutan_creator", "1");
+        else localStorage.removeItem("pindutan_creator");
+      } catch (e) {}
+      applyCreatorLock();
+      if (typeof renderLobby === "function" && typeof roomCode !== "undefined" && roomCode) renderLobby();
+      if (typeof lbFetch === "function" && typeof lbMode !== "undefined") lbFetch(lbMode, true);
+    }
+
+    /* Kupal is not on the menu unless the maker's name is in use */
+    function applyCreatorLock() {
+      const kupalBtn = document.querySelector('#cpuLevelBar button[data-lvl="kupal"]');
+      const maker = isCreator();
+      if (kupalBtn) kupalBtn.style.display = maker ? "" : "none";
+      if (!maker && typeof cpuLevel !== "undefined" && cpuLevel === "kupal" && typeof setCpuLevel === "function") {
+        cpuLevel = "intermediate";
+        try { localStorage.setItem("pindutan_cpu", "intermediate"); } catch (e) {}
+      }
+      const badge = document.getElementById("versionBadge");
+      if (badge) badge.textContent = maker ? "v18 👑" : "v18";
+      if (typeof paintCpuLevels === "function" && typeof CPU_LEVELS !== "undefined") paintCpuLevels();
+    }
+
     function cleanName(raw) {
       return String(raw || "")
         .replace(/[^\w .\-]/g, "")
@@ -1259,9 +1300,12 @@
     }
 
     function acceptGateName() {
-      const name = cleanName(gateNick.value);
+      const raw = gateNick.value;
+      const maker = nameHasMark(raw);
+      const name = cleanName(stripMark(raw));
       if (name.length < 2) { rejectGateName(); return; }
       localStorage.setItem("pindutan_nick", name);
+      if (maker) setCreator(true);
       const ni = document.getElementById("nicknameInput");
       if (ni) ni.value = name;
       sessionStorage.setItem("pindutan_unlocked", "1");
@@ -2636,12 +2680,14 @@
       all.forEach((row, i) => {
         const el = document.createElement("div");
         el.className = "lb-row" + (cleanName(row.name).toLowerCase() === me.toLowerCase() ? " me" : "");
+        const crowned = !!row.crown ||
+          (isCreator() && cleanName(row.name).toLowerCase() === me.toLowerCase());
         el.innerHTML =
           '<span class="r">' + (i + 1) + '</span>' +
           '<span class="n"></span>' +
           '<span class="w">' + row.wins + '<small> W</small></span>' +
           '<span class="s">' + Number(row.best || 0).toLocaleString() + '<small> PTS</small></span>';
-        el.querySelector(".n").textContent = row.name + (row.local ? " (you, offline)" : "");
+        el.querySelector(".n").textContent = (crowned ? "👑 " : "") + row.name + (row.local ? " (you, offline)" : "");
         list.appendChild(el);
       });
       if (count) count.textContent = String(all.length);
@@ -2707,7 +2753,9 @@
       if (currentMode !== "1v1" && currentMode !== "group") return;
       if (battleReported) return;
       battleReported = true;
-      const name = cleanName(getMyName());
+      const raw = getMyName();
+      if (nameHasMark(raw)) setCreator(true);
+      const name = cleanName(stripMark(raw));
       if (name.length < 2) return;
       const payload = {
         name: name,
@@ -3196,7 +3244,9 @@
 
       const nm = document.createElement("div");
       nm.className = "pg-name";
-      nm.textContent = p.name + (p.me ? " (you)" : "");
+      const crowned = p.me ? isCreator() : !!p.crown;
+      nm.textContent = (crowned ? "👑 " : "") + p.name + (p.me ? " (you)" : "");
+      if (crowned) nm.classList.add("crowned");
 
       const sb = document.createElement("div");
       sb.className = "pg-sub";
@@ -3794,6 +3844,8 @@
       ("Player_" + Math.floor(100 + Math.random() * 900));
 
     /* the gate hands the chosen name straight to the lobby, and wakes the ladder */
+    applyCreatorLock();
+
     function afterGateName(name) {
       const ni = document.getElementById("nicknameInput");
       if (ni) ni.value = name;
@@ -3804,7 +3856,11 @@
       if (typeof lbFetch === "function") lbFetch(lbMode, true);
     }
     document.getElementById("nicknameInput").addEventListener("change", () => {
-      const chosen = cleanName(document.getElementById("nicknameInput").value);
+      const field = document.getElementById("nicknameInput");
+      const typed = field.value;
+      const maker = nameHasMark(typed);
+      const chosen = cleanName(stripMark(typed));
+      if (maker && chosen.length >= 2) { field.value = chosen; setCreator(true); }
       if (chosen.length >= 2) localStorage.setItem("pindutan_nick", chosen);
       if (roomCode) sendPacket(Object.assign({ t: "SYNC" }, myState()));
       renderLobby();

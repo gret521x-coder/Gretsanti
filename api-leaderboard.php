@@ -40,6 +40,11 @@ const RATE_REPORTS = 30;           // reports per window per IP
 const RATE_READS   = 120;          // reads per window per IP
 const TS_SKEW      = 900;          // seconds a report may be off before it is stale
 
+/* Names that get the crown next to them on the ladder, for everyone to see.
+   Lowercase, exactly as it is typed in the game. This is not a permission —
+   it is decoration — so it lives here instead of in the game. */
+const CREATOR_NAMES = ['ace'];
+
 /* ------------------------------------------------------------------ CORS */
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -225,6 +230,7 @@ function view_row(string $key, array $p, string $mode, int $rank): array
     return [
         'rank' => $rank,
         'name' => (string) $p['name'],
+        'crown' => in_array(name_key((string) $p['name']), CREATOR_NAMES, true),
         'wins' => $slice['wins'],
         'losses' => $slice['losses'],
         'best' => $slice['best'],

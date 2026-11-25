@@ -1013,8 +1013,8 @@
     .chip h3 { font-size: 0.46rem; margin-bottom: 1px; letter-spacing: 0.1em; }
     .chip .val { font-size: 0.78rem; }
 
-    /* hold + next: one slim tray instead of two tall boxes */
-    .pods { gap: 5px; }
+    /* hold + next: one slim tray instead of two tall boxes, on the left above your board */
+    .pods { gap: 5px; justify-content: flex-start; }
     .pod { gap: 6px; padding: 3px 7px; border-radius: 9px; }
     .pod h3 { font-size: 0.46rem; letter-spacing: 0.1em; }
     #holdCanvas { width: 44px; height: 32px; }
@@ -2320,6 +2320,13 @@
       const w = Math.floor(Math.max(130, Math.min(byHeight, byWidth, side ? 320 : 300)));
       boardWrapper.style.width = w + "px";
       if (sidePanel) sidePanel.style.width = Math.floor(w * RIVAL_SCALE + 14) + "px";
+      /* Hold / Next sit on the left, starting at the board's left edge: the tray is as wide as
+         the board row and packs its boxes to the start */
+      const pods = document.querySelector(".pods");
+      if (pods) {
+        const rowW = side ? w + 8 + Math.floor(w * RIVAL_SCALE + 14) : w;
+        pods.style.width = Math.min(inner, rowW) + "px";
+      }
     }
 
     function resizeBoard() {

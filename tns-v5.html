@@ -262,7 +262,7 @@ var spiels=[
 var sl=el('spielList');
 spiels.forEach(function(s){
  var d=document.createElement('div');d.className='spiel-card';
- d.innerHTML='<div class="spiel-title"><span>'+s.t+'</span><button type="button" class="btn copy-spiel-btn" data-spiel="'+s.id+'">'+s.b+'</button></div>'+(s.a?'<p class="spiel-act">'+s.a+'</p>':'')+'<p class="spiel-text" id="spiel_'+s.id+'">'+s.x+'</p>';
+ d.innerHTML='<div class="spiel-title"><span>'+s.t+'</span></div>'+(s.a?'<p class="spiel-act">'+s.a+'</p>':'')+'<p class="spiel-text" id="spiel_'+s.id+'">'+s.x+'</p>';
  sl.appendChild(d);
 });
 
@@ -437,12 +437,7 @@ el('btnOpenWF').addEventListener('click',function(){el('wfModal').classList.remo
 el('btnCloseWF').addEventListener('click',function(){el('wfModal').classList.add('hidden')});
 el('wfModal').addEventListener('click',function(e){if(e.target===el('wfModal'))el('wfModal').classList.add('hidden')});
 
-document.querySelectorAll('.copy-spiel-btn').forEach(function(btn){
- btn.addEventListener('click',function(){
-  var t=el('spiel_'+btn.getAttribute('data-spiel'));
-  if(t){copyText(t.textContent,'notesStatus','Spiel');btn.textContent='Copied!';setTimeout(function(){btn.textContent=btn.getAttribute('data-spiel').indexOf('aud')===0?'Copy Script':'Copy'},1500)}
- });
-});
+
 
 el('tabBtnNotes').addEventListener('click',function(){el('tabBtnNotes').classList.add('active');el('tabBtnMacro').classList.remove('active');el('panelCaseNotes').classList.remove('hidden');el('panelMacro').classList.add('hidden')});
 el('tabBtnMacro').addEventListener('click',function(){el('tabBtnMacro').classList.add('active');el('tabBtnNotes').classList.remove('active');el('panelMacro').classList.remove('hidden');el('panelCaseNotes').classList.add('hidden')});

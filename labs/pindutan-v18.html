@@ -939,6 +939,14 @@
       letter-spacing: 0.12em;
     }
 
+    /* ---------- crowns ---------- */
+    .crown { display: inline-block; vertical-align: -1px; margin-right: 3px; line-height: 0; }
+    .crown.gold   { filter: drop-shadow(0 0 5px rgba(255, 210, 87, 0.75)); }
+    .crown.silver { filter: drop-shadow(0 0 4px rgba(207, 216, 227, 0.45)); }
+    .crown.bronze { filter: drop-shadow(0 0 4px rgba(200, 129, 74, 0.4)); }
+    .crown.wood   { opacity: 0.8; }
+    .lb-row .r { display: inline-flex; align-items: center; gap: 3px; min-width: 30px; }
+
     /* ---------- hall of fame ---------- */
     .lb-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
     .lb-tab {
@@ -1282,7 +1290,7 @@
         joinBtn.classList.toggle("on", maker && kupalJoinWanted());
       }
       const badge = document.getElementById("versionBadge");
-      if (badge) badge.textContent = maker ? "v18 👑" : "v18";
+      if (badge) badge.innerHTML = maker ? "v18 " + crownSvg("gold", 10) : "v18";
       if (typeof paintCpuLevels === "function" && typeof CPU_LEVELS !== "undefined") paintCpuLevels();
     }
 
@@ -2620,6 +2628,24 @@
     let lbBusy = false;
     let battleReported = false;
 
+    const CROWN_COLORS = { gold: "#ffd257", silver: "#cfd8e3", bronze: "#c8814a", wood: "#9a6b3f" };
+
+    /* a five-point crown, tinted: gold for the maker, then the podium */
+    function crownSvg(tier, size) {
+      const color = CROWN_COLORS[tier] || CROWN_COLORS.wood;
+      const w = size || 11;
+      return '<span class="crown ' + tier + '">' +
+        '<svg viewBox="0 0 24 18" width="' + w + '" height="' + Math.round(w * 0.75) + '" aria-hidden="true">' +
+        '<path d="M2 15 L1 5 L6.5 9.5 L12 2 L17.5 9.5 L23 5 L22 15 Z" fill="' + color + '" ' +
+        'stroke="rgba(0,0,0,.45)" stroke-width="1.2" stroke-linejoin="round"/>' +
+        '<rect x="3" y="15.4" width="18" height="2.2" rx="1" fill="' + color + '" stroke="rgba(0,0,0,.45)" stroke-width="1"/>' +
+        '</svg></span>';
+    }
+
+    function podiumTier(rank) {
+      return rank === 1 ? "gold" : rank === 2 ? "silver" : rank === 3 ? "bronze" : "wood";
+    }
+
     /* One digest, computed identically by the page and by the PHP file. It does
        not use crypto.subtle, because a game served over plain http on a LAN
        address has no subtle crypto at all — and both sides must agree. */
@@ -2715,11 +2741,13 @@
         const crowned = !!row.crown ||
           (isCreator() && cleanName(row.name).toLowerCase() === me.toLowerCase());
         el.innerHTML =
-          '<span class="r">' + (i + 1) + '</span>' +
+          '<span class="r">' + crownSvg(podiumTier(i + 1), 10) + (i + 1) + '</span>' +
           '<span class="n"></span>' +
           '<span class="w">' + row.wins + '<small> W</small></span>' +
           '<span class="s">' + Number(row.best || 0).toLocaleString() + '<small> PTS</small></span>';
-        el.querySelector(".n").textContent = (crowned ? "👑 " : "") + row.name + (row.local ? " (you, offline)" : "");
+        const nmCell = el.querySelector(".n");
+        if (crowned) nmCell.insertAdjacentHTML("afterbegin", crownSvg("gold", 12));
+        nmCell.appendChild(document.createTextNode(row.name + (row.local ? " (you, offline)" : "")));
         list.appendChild(el);
       });
       if (count) count.textContent = String(all.length);
@@ -3106,13 +3134,9 @@
       const on = !kupalJoinWanted();
       try { localStorage.setItem(KUPAL_KEY, on ? "1" : "0"); } catch (e) {}
       applyCreatorLock();
-      if (on) {
-        kupalAnnounce("idle");
-        roomStatusText("Kupal will join your next human battle. 👑");
-      } else {
-        kupalLeave();
-        roomStatusText("Kupal sits this one out.");
-      }
+      if (on) kupalAnnounce("idle");
+      else kupalLeave();
+      renderLobby();
     }
 
     /* keep a local card for Kupal so the lobby and the opponent grid can use it */
@@ -3187,7 +3211,6 @@
       }, KUPAL_ID);
       if (!alive && !kupalDeathSent) {
         kupalDeathSent = true;
-        roomStatusText("Kupal topped out. 👑");
         setTimeout(() => { if (!bot.alive && kupalInBattle) renderOpponentsGrid(); }, 30);
       }
     }
@@ -3402,8 +3425,13 @@
       const nm = document.createElement("div");
       nm.className = "pg-name";
       const crowned = p.me ? isCreator() : !!p.crown;
-      nm.textContent = (crowned ? "👑 " : "") + p.name + (p.me ? " (you)" : "");
-      if (crowned) nm.classList.add("crowned");
+      if (crowned) {
+        nm.innerHTML = crownSvg("gold", 13);
+        nm.appendChild(document.createTextNode(p.name + (p.me ? " (you)" : "")));
+        nm.classList.add("crowned");
+      } else {
+        nm.textContent = p.name + (p.me ? " (you)" : "");
+      }
 
       const sb = document.createElement("div");
       sb.className = "pg-sub";

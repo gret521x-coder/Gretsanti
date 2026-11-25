@@ -2805,7 +2805,11 @@
     function lbFlashOffline() {
       if (Date.now() - lbOfflineFlashAt < 4000) return;
       lbOfflineFlashAt = Date.now();
-      roomStatusText("Leaderboard is offline — results stay on this phone for now.");
+      const waiting = lbPending().length;
+      roomStatusText(waiting
+        ? waiting + " result" + (waiting === 1 ? " is" : "s are") + " waiting to go up — " +
+          (lbLastError || "no internet right now") + ". It goes up by itself next time."
+        : "Leaderboard is offline — results stay on this phone for now.");
     }
 
     let lbLastError = "";
@@ -2890,6 +2894,78 @@
       return done;
     }
 
+    /* ---- wins that never reached the host --------------------------------
+       The phone is the only place a battle is written down, so the phone is
+       also the only place that knows one is missing up there. Read what the
+       host has for this name, and send only the difference. */
+    function lbSyncDue() {
+      const mine = lbMine();
+      return !!mine.name && Date.now() - (mine.synced || 0) > 120000;
+    }
+
+    async function lbTopRows(mode) {
+      try {
+        const res = await fetch(LEADERBOARD_URL + "?action=top&mode=" + encodeURIComponent(mode) +
+          "&limit=100&t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("http " + res.status);
+        const data = await res.json();
+        if (!data || !data.ok) throw new Error("bad payload");
+        return data.rows || [];
+      } catch (e) {
+        return null;                      /* host not answering: change nothing */
+      }
+    }
+
+    async function lbSync() {
+      const mine = lbMine();
+      if (!mine.name) return 0;
+      const name = mine.name;
+      const key = name.toLowerCase();
+      let added = 0;
+      let room = 20;                      /* the host takes 30 reports a minute */
+      for (const mode of ["duel", "group"]) {
+        const slot = mine[mode];
+        if (!slot || !slot.wins || room <= 0) continue;
+        const rows = await lbTopRows(mode);
+        if (!rows) return 0;
+        const row = rows.find(r => String(r.name).toLowerCase() === key);
+        if (!row && rows.length >= 100) continue;   /* can't see the whole board: leave it */
+        const have = row ? row.wins : 0;
+        const missing = Math.min(slot.wins - have, room);
+        for (let i = 0; i < missing; i++) {
+          const payload = {
+            id: "s" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36) + i,
+            name: name, mode: mode, win: 1,
+            score: Math.max(0, Math.round(slot.best || 0)), lines: 0,
+            ts: Math.floor(Date.now() / 1000)
+          };
+          payload.sig = lbSign(payload);
+          lbQueue(payload);
+          added++;
+          room--;
+        }
+      }
+      mine.synced = Date.now();           /* compare again in two minutes at most */
+      try { localStorage.setItem(LB_MINE, JSON.stringify(mine)); } catch (e) {}
+      return added;
+    }
+
+    async function lbBoot() {
+      const list = document.getElementById("lbList");
+      let sent = await lbFlush();
+      if (lbSyncDue()) {
+        const added = await lbSync();
+        if (added) {
+          sent += await lbFlush();
+          if (!sent) lbShowError();
+        }
+      }
+      if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up.");
+      else if (lbPending().length) lbShowError();
+      lbFetch(lbMode);
+      if (list) list.dataset.loaded = "1";
+    }
+
     async function reportBattle(win) {
       if (currentMode !== "1v1" && currentMode !== "group") return;
       if (battleReported) return;
@@ -2924,15 +3000,9 @@
 
     function lbEnsure() {
       const list = document.getElementById("lbList");
-      if (!list) return;
-      const first = !list.dataset.loaded;
-      if (first) list.dataset.loaded = "1";
-      /* a result left behind on the phone gets another chance every time you
-         open the lobby, not only on the first one */
-      lbFlush().then(sent => {
-        if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up.");
-        if (first || sent) lbFetch(lbMode);
-      });
+      if (!list || list.dataset.busy) return;
+      list.dataset.busy = "1";            /* every lobby visit: send, compare, read */
+      lbBoot().catch(() => {}).then(() => { delete list.dataset.busy; });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -2944,9 +3014,12 @@
       });
       const refresh = document.getElementById("lbRefresh");
       if (refresh) refresh.addEventListener("click", async () => {
-        const sent = await lbFlush();
-        if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up.");
-        lbFetch(lbMode);
+        const list = document.getElementById("lbList");
+        if (list) delete list.dataset.busy;
+        const mine = lbMine();
+        mine.synced = 0;                  /* the refresh button means "check now" */
+        try { localStorage.setItem(LB_MINE, JSON.stringify(mine)); } catch (e) {}
+        lbEnsure();
       });
     });
 

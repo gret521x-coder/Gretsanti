@@ -217,6 +217,16 @@
 
     .settings-bar { display: flex; gap: 5px; flex-wrap: wrap; }
     .settings-bar button { padding: 6px 9px; font-size: 0.68rem; border-radius: 8px; }
+    .move-bar { display: flex; gap: 5px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+    .move-bar .move-label {
+      font-size: 0.56rem; letter-spacing: 0.06em; color: var(--mut);
+      font-weight: 800; margin-right: 2px;
+    }
+    .move-bar button { padding: 5px 9px; font-size: 0.6rem; border-radius: 8px; }
+    .move-bar button.active {
+      background: linear-gradient(160deg, rgba(255, 176, 32, 0.95), rgba(255, 122, 24, 0.9));
+      color: #1a1206; border-color: transparent;
+    }
 
     /* ============ ONLINE ROOM CARD ============ */
     .room-bar {
@@ -1041,6 +1051,13 @@
       <button id="toggleAutoPause" class="on">Auto-Pause ON</button>
       <button id="toggleSfx" class="on">SFX ON</button>
     </div>
+
+    <div class="move-bar" id="moveBar">
+      <span class="move-label">MOVE ◀▶</span>
+      <button data-move="slow">Slow</button>
+      <button data-move="normal" class="active">Normal</button>
+      <button data-move="fast">Fast</button>
+    </div>
   </header>
 
   <!-- INVITE BANNER -->
@@ -1059,7 +1076,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v20.0</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.1</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -1207,9 +1224,9 @@
     <button class="rot" onclick="mobileAction('rotCCW')">↺<small>ROTATE</small></button>
     <button class="rot" onclick="mobileAction('rotCW')">↻<small>ROTATE</small></button>
     <button class="hard" onclick="mobileAction('drop')">⤓<small>DROP</small></button>
-    <button onclick="mobileAction('left')">◀<small>LEFT</small></button>
+    <button id="btnLeft">◀<small>LEFT</small></button>
     <button onclick="mobileAction('down')">▼<small>SOFT</small></button>
-    <button onclick="mobileAction('right')">▶<small>RIGHT</small></button>
+    <button id="btnRight">▶<small>RIGHT</small></button>
     <button class="pauseb" onclick="togglePause()">⏸<small>PAUSE</small></button>
   </div>
 
@@ -3951,6 +3968,7 @@
     }
 
     function openLobby() {
+      if (typeof slideStop === "function") slideStop();
       document.getElementById("lobbySheet").style.display = "block";
       document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
       renderLobby();
@@ -4565,8 +4583,100 @@
       e.target.className = sfxEnabled ? "on" : "off";
     });
 
+    /* ---------- how ◀ and ▶ behave ----------
+       A tap is one square, exactly as before. Hold it and it slides: a short
+       pause first, then a square every gap, at the speed picked below.
+       The speed is one value, saved on this phone. */
+    const MOVE_SPEEDS = {
+      slow:   { label: "Slow",   delay: 260, gap: 150 },
+      normal: { label: "Normal", delay: 160, gap: 85 },
+      fast:   { label: "Fast",   delay: 90,  gap: 45 }
+    };
+    const MOVE_KEY = "pindutan_move";
+    let moveSpeed = "normal";
+
+    function loadMoveSpeed() {
+      try {
+        const saved = localStorage.getItem(MOVE_KEY);
+        if (saved && MOVE_SPEEDS[saved]) moveSpeed = saved;
+      } catch (e) { /* private mode: keep the default */ }
+      return moveSpeed;
+    }
+
+    function paintMoveSpeed() {
+      document.querySelectorAll("#moveBar button").forEach(b => {
+        b.classList.toggle("active", b.dataset.move === moveSpeed);
+      });
+    }
+
+    function setMoveSpeed(name) {
+      if (!MOVE_SPEEDS[name]) return moveSpeed;
+      moveSpeed = name;
+      try { localStorage.setItem(MOVE_KEY, name); } catch (e) {}
+      paintMoveSpeed();
+      return moveSpeed;
+    }
+
+    let slideWait = 0;
+    let slideEvery = 0;
+
+    function slideStop() {
+      if (slideWait) { clearTimeout(slideWait); slideWait = 0; }
+      if (slideEvery) { clearInterval(slideEvery); slideEvery = 0; }
+    }
+
+    function slideCanPlay() { return gameRunning && !isPaused && !isSpectator; }
+
+    function slideStep(dir) {
+      if (!slideCanPlay()) { slideStop(); return false; }
+      move(dir);
+      drawBoard();
+      return true;
+    }
+
+    /* one square now, then keep going while the finger stays down */
+    function slideStart(dir) {
+      slideStop();
+      if (!slideCanPlay()) return false;
+      move(dir);
+      drawBoard();
+      const sp = MOVE_SPEEDS[moveSpeed] || MOVE_SPEEDS.normal;
+      slideWait = setTimeout(() => {
+        slideWait = 0;
+        slideEvery = setInterval(() => slideStep(dir), sp.gap);
+      }, sp.delay);
+      return true;
+    }
+
+    function bindSlideButton(btn, dir) {
+      if (!btn) return;
+      let pressedAt = 0;
+      btn.addEventListener("pointerdown", e => {
+        if (e.button && e.button !== 0) return;
+        pressedAt = Date.now();
+        try { btn.setPointerCapture(e.pointerId); } catch (err) { /* old browser */ }
+        e.preventDefault();
+        slideStart(dir);
+      });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach(evt =>
+        btn.addEventListener(evt, slideStop));
+      btn.addEventListener("click", e => {
+        if (Date.now() - pressedAt < 600) { e.preventDefault(); return; }  /* the press did it */
+        slideStep(dir);                     /* keyboard, or a browser with no pointer events */
+      });
+    }
+
+    loadMoveSpeed();
+    paintMoveSpeed();
+    document.querySelectorAll("#moveBar button").forEach(btn => {
+      btn.addEventListener("click", () => setMoveSpeed(btn.dataset.move));
+    });
+    bindSlideButton(document.getElementById("btnLeft"), -1);
+    bindSlideButton(document.getElementById("btnRight"), 1);
+
     function togglePause() {
       if (!gameRunning) return;
+      slideStop();
       isPaused = !isPaused;
       document.getElementById("pauseBtn").textContent = isPaused ? "▶ Resume" : "⏸ Pause";
       if (isPaused) {

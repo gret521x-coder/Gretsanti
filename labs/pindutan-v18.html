@@ -2642,8 +2642,10 @@
         '</svg></span>';
     }
 
+    /* one medal only: the top of the ladder wears silver. Everyone below carries
+       just their number. */
     function podiumTier(rank) {
-      return rank === 1 ? "gold" : rank === 2 ? "silver" : rank === 3 ? "bronze" : "wood";
+      return rank === 1 ? "silver" : "";
     }
 
     /* One digest, computed identically by the page and by the PHP file. It does
@@ -2741,7 +2743,7 @@
         const crowned = !!row.crown ||
           (isCreator() && cleanName(row.name).toLowerCase() === me.toLowerCase());
         el.innerHTML =
-          '<span class="r">' + crownSvg(podiumTier(i + 1), 10) + (i + 1) + '</span>' +
+          '<span class="r">' + (i === 0 ? crownSvg("silver", 10) : "") + (i + 1) + '</span>' +
           '<span class="n"></span>' +
           '<span class="w">' + row.wins + '<small> W</small></span>' +
           '<span class="s">' + Number(row.best || 0).toLocaleString() + '<small> PTS</small></span>';

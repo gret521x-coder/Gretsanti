@@ -26,8 +26,8 @@ Client-side checks — obstacles, not security.
 - `gc-v5.html` / `api-v5.php` — chat + backend, KDL skin, storm and sky.
 - `aurora-v4.html`, `Aurora.html`, `api-free.php`, `worker-free.js` — Aurora + FreeModel relay.
 - `pindutan-v17.html` — the only current Pindutan build, graduated out of `labs/`.
-- `TD1.html` — Pixel Orcs, self-contained tower-defense canvas game.
-- `labs/` — v17 design refs, Call Spider, transcript extension, auto-clicker APK.
+- `labs/td-v5.html` — Pixel Orcs tower defense, self-contained canvas game.
+- `labs/` — TD v5, Pindutan v17 design refs, Call Spider, transcript extension, auto-clicker APK.
 - `agent-widget.js`, `api-ai.php`, `agent-demo.html` — floating agent.
 - `tns.html`, `Screenshot.html`, `save.php` — dispatch and collectibles vault.
 - `previous/` — archived launchers, chat/APIs, Aurora v2-v3, Pindutan v14-v16, Fortress, Castle Defense, old diag.
@@ -40,10 +40,10 @@ Client-side checks — obstacles, not security.
 - **PLD-07 Connection check.** Probes `arena.ai`, the PHP host and the public web, says whether the block is the network or Arena, and stores an `http(s)` VPN-portal link. Own `arena1x` lock screen with LOCK AGAIN.
 - **Three gates.** Launcher `kupal`, Bardagulan `sheryl`, diag `arena1x`; v6 keeps its own unlock/grid keys.
 - **Pindutan v17.** Lobby redesign — block wordmark, dot grid, tetromino avatars, 2×2 game cards; engine unchanged from v16.
-- **TD1 added.** Pixel Orcs tower defense is live as PLD-08 — one self-contained HTML file, no assets or CDN.
-- **TD1 tuned.** Per-tower target priority (CLOSE/FIRST/LAST/STRONG), pause + 1-3× speed, best wave/loop saved locally, stacking poison, level-scaled frost, Tesla chain falloff, generated intel table and a wave-overlap guard.
-- **TD1 design + modes.** Pixel HUD with shop/bestiary panels; CLASSIC / RUSH / KUPAL difficulty (lives, gold, enemy HP/speed, spawn rate, loop size), saved on device. Reduced-motion aware.
-- **TD1 art pass.** Card-based shop with live tower previews, 7 themed maps with edges/deco/portals, brighter monster palettes and a distinct sky boss, rebuilt towers with level pips and muzzle flashes.
+- **TD v5 added.** Pixel Orcs tower defense is live as PLD-08 in `labs/` — one HTML file, no assets or CDN.
+- **TD v5 tuned.** Per-tower target priority (CLOSE/FIRST/LAST/STRONG), pause + 1-3× speed, best wave/loop saved locally, stacking poison, level-scaled frost, Tesla chain falloff, generated intel table and a wave-overlap guard.
+- **TD v5 design + modes.** Pixel HUD with shop/bestiary panels; CLASSIC / RUSH / KUPAL difficulty (lives, gold, enemy HP/speed, spawn rate, loop size), saved on device. Reduced-motion aware.
+- **TD v5 art pass.** Card-based shop with live tower previews, 7 themed maps with edges/deco/portals, brighter monster palettes and a distinct sky boss, rebuilt towers with level pips and muzzle flashes.
 - **Aurora v4 / chat v5.** FreeModel-only, key stays on the server; CORS wall and dead relay named; KDL // MISSION CONTROL skin with lightning storm and sky.
 - **Security.** No real keys in the repo; `.fmkey.php` begins with `<?php exit; ?>`; pasted keys treated as leaked.
 

@@ -1,4 +1,4 @@
-# Pindutan v18 — the leaderboard, and how to make it live
+# Pindutan v20 — the leaderboard, and how to make it live
 
 Two new things in v18:
 
@@ -18,7 +18,7 @@ Two files, same folder as the pages you already host there (`gc.html`, `api-v2.p
 
 | file | where it goes | what it does |
 |---|---|---|
-| `labs/pindutan-v18.html` | `pindutan.html` (or any name you like) | the game |
+| `labs/pindutan-v20.html` | `pindutan.html` (or any name you like) | the game |
 | `api-leaderboard.php` | `api-leaderboard.php`, same folder | the ladder |
 
 Keep the PHP's name exactly as it is, or edit `LEADERBOARD_URL` near the top of the game's script to
@@ -84,7 +84,7 @@ identically for the game — the difference is only who *else* can read it.
 
 ### Changing the address
 
-The game points at that URL in one place. Search `labs/pindutan-v18.html` for:
+The game points at that URL in one place. Search `labs/pindutan-v20.html` for:
 
 ```js
 const LEADERBOARD_URL = "https://aidekupal.unaux.com/api-leaderboard.php";
@@ -187,7 +187,7 @@ who never shared. The public brokers can read the topic, so treat this as a scor
 
 ## Running the game straight from a file
 
-Clicking `pindutan-v18.html` on the phone (Chrome shows `file:///...`) works for the ladder too,
+Clicking `pindutan-v20.html` on the phone (Chrome shows `file:///...`) works for the ladder too,
 with two wrinkles that are handled in the page:
 
 - the report is sent as `text/plain`, which is a "simple" request. Browsers do not run a

@@ -34,6 +34,14 @@ Pages on a free account, so `github.io` serves nothing.
 
 ## Latest changes
 
+**Pindutan v17 — you can see your opponent now.** In 1v1 and group battles the opponents panel was never
+switched on (CSS hid it and nothing showed it again), and a SYNC without a board wiped the last board
+anyway. Now, during a battle, a short strip under the board shows every rival's board live, about 4 frames a
+second with the falling piece. The last one standing gets **YOU WIN** or **LAST ONE STANDING**, the rest get
+**YOU LOSE** or **KNOCKED OUT**, and **Rematch** re-invites the same players. A group invite stays open for
+its full window, and someone who joins late is added without restarting anyone. Boards travel as 200
+characters on a new `pindutan/v17/` topic, so old v16 tabs stay in their own room.
+
 **Aurora v4 — FreeModel only.** One platform, `https://freemodel.in/v1`, default `deepseek-v4.1-flash`.
 Every other provider name is gone from the page and a test greps for 13 of them. A key inside an HTML file
 cannot be hidden — hashing is one-way — so the key lives in `api-free.php` on the server and the page sends

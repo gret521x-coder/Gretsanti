@@ -579,6 +579,44 @@
     .opp-stats { font-size: 0.52rem; color: var(--mut); line-height: 1.5; margin-top: 3px; }
     .opp-stats b { color: var(--amber); }
 
+    /* v17.1 — the panel is on whenever you are in a human battle or watching */
+    .opponents-panel.on { display: block; padding: 7px 8px 8px; max-width: 560px; }
+    /* a short strip, same height as the CPU panel, so the touch pad stays on screen */
+    .opponents-panel.on #opponentsGrid {
+      margin-top: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: flex-start;
+      scrollbar-width: none;
+    }
+    .opponents-panel.on #opponentsGrid::-webkit-scrollbar { display: none; }
+    .opponents-panel.on #opponentsGrid > :first-child { margin-left: auto; }
+    .opponents-panel.on #opponentsGrid > :last-child { margin-right: auto; }
+    .opponents-panel.watch #opponentsGrid { flex-wrap: wrap; justify-content: center; }
+    .opponents-panel.watch #opponentsGrid > * { margin-left: 0 !important; margin-right: 0 !important; }
+
+    .opp-card { position: relative; width: auto; flex: none; display: flex; gap: 7px; align-items: center; }
+    .opp-card .opp-board { position: relative; flex: none; }
+    .opp-card canvas { width: 50px; height: 100px; }
+    .opponents-panel.duel .opp-card canvas { width: 62px; height: 124px; }
+    .opp-card .opp-info { min-width: 62px; max-width: 110px; }
+    .opponents-panel.duel .opp-card .opp-info { max-width: 180px; }
+    .opponents-panel.duel .opp-name { font-size: 0.7rem; }
+    .opponents-panel.duel .opp-stats { font-size: 0.6rem; }
+    .opp-card.live { border-color: rgba(61, 214, 245, 0.45); }
+    .opp-card .ko {
+      position: absolute;
+      left: 0; right: 0; top: 42%;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: var(--red);
+      text-shadow: 0 0 10px rgba(255, 77, 109, 0.6);
+      pointer-events: none;
+    }
+    .opp-card.dead { filter: grayscale(0.55); }
+
     @media (min-width: 700px) {
       h1 { font-size: 1.5rem; }
       .board-wrapper { width: min(100%, 34vh, 300px); }
@@ -1932,6 +1970,7 @@
         if (currentMode === "bot") botTick(delta);
         boardWrapper.classList.toggle("danger", topRowOfStack() <= 3);
         drawBoard();
+        pushBoardFrame(false);
       }
       requestAnimationFrame(gameLoop);
     }
@@ -2007,6 +2046,11 @@
         statLine("Max combo", maxCombo) +
         statLine("Sent", sentLines);
       document.getElementById("startBtn").textContent = "Play Again";
+      if (typeof inBattle === "function" && inBattle()) {
+        battleOver = true;
+        document.getElementById("overlayTitle").textContent = currentMode === "1v1" ? "YOU LOSE" : "KNOCKED OUT";
+        document.getElementById("startBtn").textContent = "Rematch";
+      }
       document.getElementById("startBtn").style.display = "inline-block";
       document.getElementById("boardOverlay").style.display = "flex";
       broadcastState(false);
@@ -2021,7 +2065,7 @@
           No PHP, no server of ours, nothing to upload.
        ========================================================= */
     const MAX_PLAYERS = 7;
-    const RELAY_TOPIC = "pindutan/v16/";
+    const RELAY_TOPIC = "pindutan/v17/";
     const BROKERS = [
       { name: "EMQX", url: "wss://broker.emqx.io:8084/mqtt", client: null, state: "off" },
       { name: "HiveMQ", url: "wss://broker.hivemq.com:8884/mqtt", client: null, state: "off" },
@@ -2037,6 +2081,10 @@
     let pendingInvite = null;
     let subscribedTopic = "";
     let nonceSeq = 0;
+    let battleId = "";           /* battle I am playing in */
+    let battleSeenAlive = {};    /* id -> true once that opponent was seen playing this battle */
+    let battleOver = false;
+    let battleWon = false;
     let mqttLoading = false;
 
     const seen = new Set();
@@ -2070,11 +2118,44 @@
         score: score || 0,
         lines: lines || 0,
         sent: sentLines || 0,
+        won: battleWon,
         board: (withBoard !== false && gameRunning) ? getCompactBoard() : null
       };
     }
 
+    /* a board travels as 200 characters: "." empty, I O T S Z J L, G garbage */
+    function encodeBoard(b) {
+      let out = "";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const v = b[r] && b[r][c];
+          out += v ? String(v).charAt(0) : ".";
+        }
+      }
+      return out;
+    }
+
+    function decodeBoard(raw) {
+      if (!raw) return null;
+      if (Array.isArray(raw)) return raw;                       /* old array form */
+      if (typeof raw !== "string" || raw.length < ROWS * COLS) return null;
+      const out = [];
+      for (let r = 0; r < ROWS; r++) {
+        const row = [];
+        for (let c = 0; c < COLS; c++) {
+          const ch = raw.charAt(r * COLS + c);
+          row.push(ch === "." ? null : ch);
+        }
+        out.push(row);
+      }
+      return out;
+    }
+
     function getCompactBoard() {
+      return encodeBoard(getLiveBoard());
+    }
+
+    function getLiveBoard() {
       const copy = board.map(r => [...r]);
       if (current && gameRunning) {
         for (let r = 0; r < current.matrix.length; r++) {
@@ -2120,6 +2201,8 @@
       }
 
       if (p.t === "HI" || p.t === "SYNC") {
+        const prev = peers[p.from];
+        const incoming = decodeBoard(p.board);
         peers[p.from] = {
           id: p.from,
           name: (p.name || "Player").slice(0, 14),
@@ -2128,11 +2211,42 @@
           score: p.score | 0,
           lines: p.lines | 0,
           sent: p.sent | 0,
-          board: p.board || null,
+          won: !!p.won,
+          /* a packet without a board never wipes the last board we drew */
+          board: incoming || (prev ? prev.board : null),
           lastSeen: Date.now()
         };
         if (p.t === "HI") sendPacket(Object.assign({ t: "SYNC" }, myState()));
+        noteBattleAlive(p.from);
         renderLobby();
+        renderOpponentsGrid();
+        checkBattleWin();
+        return;
+      }
+
+      /* live board frame — several per second while someone is playing */
+      if (p.t === "B") {
+        const prev = peers[p.from];
+        if (!prev) return;            /* their next SYNC introduces them */
+        const b = decodeBoard(p.b);
+        if (b) prev.board = b;
+        prev.alive = p.alive !== false;
+        prev.score = p.score | 0;
+        prev.lines = p.lines | 0;
+        prev.sent = p.sent | 0;
+        if (p.mode) prev.mode = p.mode;
+        prev.lastSeen = Date.now();
+        noteBattleAlive(p.from);
+        renderOpponentsGrid();
+        checkBattleWin();
+        return;
+      }
+
+      if (p.t === "ROSTER") {
+        if (!battleId || p.battleId !== battleId) return;
+        const ids = p.players || [];
+        if (!ids.includes(myId)) return;
+        ids.forEach(id => { battlePlayers[id] = true; });
         renderOpponentsGrid();
         return;
       }
@@ -2160,13 +2274,32 @@
 
       if (p.t === "JOIN") {
         if (!battle || battle.host !== myId || (p.battleId && p.battleId !== battle.id)) return;
+        if (battle.joiners[p.from]) return;
+        const who = peers[p.from] ? peers[p.from].name : "A player";
+
+        if (battle.started) {
+          /* late arrival: a 1v1 is full; a group battle takes them in without restarting anyone */
+          if (battle.mode !== "group" || battle.players.length >= MAX_PLAYERS) return;
+          battle.joiners[p.from] = true;
+          battle.players.push(p.from);
+          battlePlayers[p.from] = true;
+          sendPacket({ t: "START", to: p.from, battleId: battle.id, mode: battle.mode, players: battle.players });
+          sendPacket({ t: "ROSTER", battleId: battle.id, players: battle.players });
+          renderOpponentsGrid();
+          roomStatusText("⚔ " + who + " joined the battle.");
+          return;
+        }
+
         battle.joiners[p.from] = true;
-        sendPacket({
-          t: "SYNC", name: getMyName(), mode: "idle", alive: false,
-          score: 0, lines: 0, sent: 0, board: null
-        });
-        scheduleHostStart(900);
-        roomStatusText("⚔ " + (peers[p.from] ? peers[p.from].name : "A player") + " joined — starting...");
+        if (battle.mode === "1v1") {
+          scheduleHostStart(900);
+          roomStatusText("⚔ " + who + " accepted — starting...");
+        } else {
+          /* group: keep the invite window open so everyone gets the chance to tap Join */
+          const left = Math.max(900, battle.startAt - Date.now());
+          scheduleHostStart(left);
+          roomStatusText("⚔ " + who + " joined — " + (Object.keys(battle.joiners).length + 1) + " players, starting soon...");
+        }
         return;
       }
 
@@ -2174,22 +2307,14 @@
         if (p.to && p.to !== myId) return;
         const ids = p.players || [];
         if (!ids.includes(myId)) return;
-        battlePlayers = {};
-        ids.forEach(id => { battlePlayers[id] = true; });
-        currentMode = p.mode === "1v1" ? "1v1" : "group";
-        isSpectator = false;
-        toggleSpectatorLayout(false);
-        syncPlayBar();
-        closeLobby();
-        showInviteBar(null);
-        startNewGame();
-        roomStatusText("⚔ Battle live — " + ids.length + " players.");
+        beginBattle({ players: ids, mode: p.mode, battleId: p.battleId });
         return;
       }
 
       if (p.t === "GARBAGE") {
         if (p.to !== myId) return;
         if (!gameRunning || isPaused || isSpectator) return;
+        if (!battlePlayers[p.from]) return;
         pendingGarbage += Math.min(8, p.amount | 0);
         updateHUD();
         addFloater("+" + p.amount + " INCOMING", "#ff4d6d");
@@ -2234,7 +2359,7 @@
       paintConn();
       try {
         b.client = mqtt.connect(b.url, {
-          clientId: "pin16_" + myId + "_" + b.name.toLowerCase() + "_" + Math.random().toString(36).slice(2, 7),
+          clientId: "pin17_" + myId + "_" + b.name.toLowerCase() + "_" + Math.random().toString(36).slice(2, 7),
           keepalive: 30,
           reconnectPeriod: 6000,
           connectTimeout: 9000,
@@ -2301,7 +2426,7 @@
       subscribedTopic = "";
 
       if (typeof BroadcastChannel !== "undefined") {
-        localChannel = new BroadcastChannel("pindutan_v16_lobby");
+        localChannel = new BroadcastChannel("pindutan_v17_lobby");
         localChannel.onmessage = e => onPacket(e.data);
       }
 
@@ -2338,10 +2463,15 @@
     function hostStartBattle() {
       if (!battle || battle.host !== myId) return;
       const ids = [myId].concat(Object.keys(battle.joiners).slice(0, MAX_PLAYERS - 1));
+      if (ids.length < 2) {
+        roomStatusText("Nobody joined this time. Invite again when more players are in.");
+        battle = null;
+        return;
+      }
       battle.players = ids;
       battle.started = true;
       sendPacket({ t: "START", battleId: battle.id, mode: battle.mode, players: ids });
-      beginBattle({ players: ids, mode: battle.mode });
+      beginBattle({ players: ids, mode: battle.mode, battleId: battle.id });
     }
 
     function beginBattle(data) {
@@ -2349,6 +2479,12 @@
       if (!ids.includes(myId)) return;
       battlePlayers = {};
       ids.forEach(id => { battlePlayers[id] = true; });
+      battleId = data.battleId || ("B" + Date.now().toString(36));
+      battleSeenAlive = {};
+      battleOver = false;
+      battleWon = false;
+      /* a board left from the lobby must not count as "alive in this battle" */
+      ids.forEach(id => { if (peers[id]) { peers[id].alive = false; peers[id].board = null; } });
       currentMode = data.mode === "1v1" ? "1v1" : "group";
       isSpectator = false;
       toggleSpectatorLayout(false);
@@ -2356,7 +2492,74 @@
       closeLobby();
       showInviteBar(null);
       startNewGame();
+      renderOpponentsGrid();
       roomStatusText("⚔ Battle live — " + ids.length + " players.");
+    }
+
+    function inBattle() {
+      return (currentMode === "1v1" || currentMode === "group") && Object.keys(battlePlayers).length > 1;
+    }
+
+    function battleOpponents() {
+      return Object.keys(battlePlayers).filter(id => id !== myId);
+    }
+
+    function noteBattleAlive(id) {
+      if (!inBattle() || !battlePlayers[id] || !peers[id]) return;
+      if (peers[id].alive && (peers[id].mode === "1v1" || peers[id].mode === "group")) battleSeenAlive[id] = true;
+    }
+
+    /* last one standing wins — only once every rival was seen playing, then topped out or left */
+    function checkBattleWin() {
+      if (!inBattle() || battleOver || !gameRunning || isSpectator) return;
+      const opp = battleOpponents();
+      if (!opp.length) return;
+      const allOut = opp.every(id => {
+        if (!battleSeenAlive[id]) return false;
+        return !peers[id] || !peers[id].alive;
+      });
+      if (allOut) winBattle();
+    }
+
+    function winBattle() {
+      battleOver = true;
+      battleWon = true;
+      gameRunning = false;
+      current = null;
+      playTone(980, "square", 0.25, 0.09);
+      const opp = battleOpponents();
+      const oneName = opp.length === 1 && peers[opp[0]] ? peers[opp[0]].name : "";
+      document.getElementById("overlayTitle").textContent = currentMode === "1v1" ? "YOU WIN" : "LAST ONE STANDING";
+      document.getElementById("overlayDesc").textContent = (oneName ? oneName + " topped out. " : "Everyone else topped out. ") +
+        "Score " + score.toLocaleString() + ".";
+      document.getElementById("overStats").innerHTML =
+        statLine("Lines", lines) + statLine("Sent", sentLines) + statLine("Max combo", maxCombo);
+      document.getElementById("startBtn").textContent = "Rematch";
+      document.getElementById("startBtn").style.display = "inline-block";
+      document.getElementById("boardOverlay").style.display = "flex";
+      broadcastState(false);
+      renderOpponentsGrid();
+    }
+
+    function rematch() {
+      if (currentMode === "1v1") {
+        const opp = battleOpponents()[0];
+        if (opp && peers[opp]) {
+          challenge(opp);
+          document.getElementById("overlayDesc").textContent = "Rematch sent to " + peers[opp].name + " — waiting for them.";
+          return;
+        }
+        roomStatusText("Your opponent left the lobby. Pick someone else.");
+        openLobby();
+        return;
+      }
+      inviteAll();
+      document.getElementById("overlayDesc").textContent = "Invite sent to everyone — starting in a few seconds.";
+    }
+
+    function onStartBtn() {
+      if (inBattle() && !gameRunning) { rematch(); return; }
+      startNewGame();
     }
 
     function inviteAll() {
@@ -2366,7 +2569,7 @@
         return;
       }
       const id = "B" + Date.now().toString(36).toUpperCase();
-      battle = { id, mode: "group", host: myId, joiners: {}, started: false };
+      battle = { id, mode: "group", host: myId, joiners: {}, started: false, startAt: Date.now() + 4500 };
       sendPacket({ t: "INVITE", kind: "group", to: "all", battleId: id, name: getMyName() });
       roomStatusText("⚔ Invited everyone in the room. Starting in a few seconds...");
       scheduleHostStart(4500);
@@ -2375,9 +2578,9 @@
     function challenge(id) {
       if (!roomCode) { roomStatusText("Still connecting — try again in a second."); return; }
       if (!peers[id]) return;
-      const battleId = "D" + Date.now().toString(36).toUpperCase();
-      battle = { id: battleId, mode: "1v1", host: myId, joiners: {}, started: false };
-      sendPacket({ t: "INVITE", kind: "duel", to: id, battleId, name: getMyName() });
+      const duelId = "D" + Date.now().toString(36).toUpperCase();
+      battle = { id: duelId, mode: "1v1", host: myId, joiners: {}, started: false };
+      sendPacket({ t: "INVITE", kind: "duel", to: id, battleId: duelId, name: getMyName() });
       roomStatusText("⚔ Challenge sent to " + peers[id].name + ". Waiting for them to accept.");
     }
 
@@ -2427,7 +2630,9 @@
 
     function sendGarbageAttack(amount) {
       if (currentMode === "bot") { botIncoming(amount); return; }
-      const targets = Object.keys(battlePlayers).filter(id => id !== myId);
+      const all = battleOpponents();
+      const living = all.filter(id => peers[id] && peers[id].alive);
+      const targets = living.length ? living : all;
       if (!targets.length) return;
       const target = targets[Math.floor(Math.random() * targets.length)];
       sendPacket({ t: "GARBAGE", to: target, amount });
@@ -2435,6 +2640,23 @@
 
     function onRunEnd() {
       broadcastState(false);
+    }
+
+    /* live frames: what the opponent sees of your board, falling piece included */
+    let lastFrameAt = 0;
+    let lastFrameBoard = "";
+
+    function pushBoardFrame(force) {
+      if (!roomCode || !gameRunning || isSpectator) return;
+      if (!Object.keys(peers).length) return;
+      const now = Date.now();
+      const gap = inBattle() ? 220 : 1000;   /* fast in a battle, slow for anyone watching a solo run */
+      if (!force && now - lastFrameAt < gap) return;
+      const b = getCompactBoard();
+      if (!force && b === lastFrameBoard && now - lastFrameAt < 2500) return;
+      lastFrameAt = now;
+      lastFrameBoard = b;
+      sendPacket({ t: "B", b, alive: true, mode: currentMode, score: score || 0, lines: lines || 0, sent: sentLines || 0 });
     }
 
     /* ---------- presence ---------- */
@@ -2464,62 +2686,119 @@
 
     window.addEventListener("beforeunload", () => { if (roomCode) sendPacket({ t: "BYE" }); });
 
-    /* ---------- opponents grid ---------- */
-    function renderOpponentsGrid() {
-      const grid = document.getElementById("opponentsGrid");
-      if (!grid) return;
-      const ids = Object.keys(peers).filter(id => {
-        if (isSpectator) return peers[id].alive || Object.keys(battlePlayers).includes(id) || true;
-        return !!battlePlayers[id];
-      });
-      const limit = currentMode === "1v1" ? 2 : MAX_PLAYERS;
-      document.getElementById("opponentsTitle").textContent =
-        (isSpectator ? "LIVE ROOM (" : "OPPONENTS (") + (ids.length + 1) + "/" + limit + ")";
-      document.getElementById("spectatorCount").textContent = "👁 " + (Object.keys(peers).length + 1) + " in lobby";
+    /* ---------- opponents grid ----------
+       On during a 1v1 / group battle (only the people in it) and while watching (everyone).
+       Cards are kept per player and only their canvas is repainted, because live frames
+       arrive several times a second. */
+    const oppCards = {};
+    let oppPaintQueued = false;
 
+    function opponentsWanted() {
+      return isSpectator || inBattle();
+    }
+
+    function renderOpponentsGrid() {
+      if (oppPaintQueued) return;
+      oppPaintQueued = true;
+      const run = () => { oppPaintQueued = false; paintOpponentsGrid(); };
+      if (typeof requestAnimationFrame === "function" && !document.hidden) requestAnimationFrame(run);
+      else setTimeout(run, 0);
+    }
+
+    function paintOpponentsGrid() {
+      const panel = document.getElementById("opponentsPanel");
+      const grid = document.getElementById("opponentsGrid");
+      if (!grid || !panel) return;
+
+      const on = opponentsWanted();
+      panel.classList.toggle("on", on);
+      panel.classList.toggle("duel", currentMode === "1v1" && !isSpectator);
+      panel.classList.toggle("watch", isSpectator);
+      document.getElementById("spectatorCount").textContent = "👁 " + (Object.keys(peers).length + 1) + " in lobby";
+      if (!on) return;
+
+      const ids = isSpectator
+        ? Object.keys(peers)
+        : battleOpponents().filter(id => peers[id]);
+      const limit = currentMode === "1v1" && !isSpectator ? 2 : MAX_PLAYERS;
+      const total = isSpectator ? ids.length + 1 : Object.keys(battlePlayers).length;
+      document.getElementById("opponentsTitle").textContent =
+        (isSpectator ? "LIVE ROOM (" : currentMode === "1v1" ? "OPPONENT (" : "OPPONENTS (") + total + "/" + limit + ")";
+
+      /* drop cards of players no longer shown */
+      Object.keys(oppCards).forEach(id => {
+        if (!ids.includes(id)) { oppCards[id].card.remove(); delete oppCards[id]; }
+      });
+
+      let empty = grid.querySelector(".opp-empty");
       if (!ids.length) {
-        grid.innerHTML = '<div style="color:var(--mut);font-size:0.66rem;padding:10px;text-align:center;line-height:1.6;">' +
-          (roomCode ? 'Waiting for players in room <b style="color:var(--cyan)">' + roomCode + '</b>...' :
-            'Create or join a room to see opponents here.') + '</div>';
+        if (!empty) {
+          empty = document.createElement("div");
+          empty.className = "opp-empty";
+          empty.style.cssText = "color:var(--mut);font-size:0.66rem;padding:10px;text-align:center;line-height:1.6;";
+          grid.appendChild(empty);
+        }
+        const missing = battleOpponents().length;
+        empty.textContent = isSpectator
+          ? "Nobody else is in the lobby yet."
+          : missing ? "Waiting for your opponent's board..." : "Waiting for players...";
         return;
       }
+      if (empty) empty.remove();
 
-      grid.innerHTML = "";
       ids.slice(0, MAX_PLAYERS).forEach(id => {
         const p = peers[id];
-        const card = document.createElement("div");
-        card.className = "opp-card" + (p.alive ? "" : " dead");
+        let ref = oppCards[id];
+        if (!ref) {
+          const card = document.createElement("div");
+          const title = document.createElement("div");
+          title.className = "opp-name";
+          const mini = document.createElement("canvas");
+          mini.width = 80;
+          mini.height = 160;
+          const ko = document.createElement("div");
+          ko.className = "ko";
+          ko.textContent = "KO";
+          const stats = document.createElement("div");
+          stats.className = "opp-stats";
+          const holder = document.createElement("div");
+          holder.className = "opp-board";
+          holder.appendChild(mini);
+          holder.appendChild(ko);
+          const info = document.createElement("div");
+          info.className = "opp-info";
+          info.appendChild(title);
+          info.appendChild(stats);
+          card.appendChild(holder);
+          card.appendChild(info);
+          grid.appendChild(card);
+          ref = oppCards[id] = { card, title, mini, ko, stats, ctx: mini.getContext("2d") };
+        }
 
-        const title = document.createElement("div");
-        title.className = "opp-name";
-        title.textContent = p.name + (p.alive ? "" : " (idle)");
+        const inGame = !isSpectator ? !!battleSeenAlive[id] : true;
+        const dead = !p.alive && (isSpectator ? !!p.board : inGame);
+        ref.card.className = "opp-card" + (p.alive ? " live" : "") + (dead ? " dead" : "");
+        ref.title.textContent = p.name + (p.alive ? "" : inGame ? "" : " (joining)");
+        ref.ko.textContent = p.won ? "WIN" : "KO";
+        ref.ko.style.color = p.won ? "var(--lime)" : "";
+        ref.ko.style.display = (dead || p.won) && !isSpectator ? "block" : "none";
+        ref.stats.innerHTML = "Score <b>" + (p.score | 0) + "</b><br>Lines <b>" + (p.lines | 0) + "</b> · Sent <b>" + (p.sent | 0) + "</b>";
 
-        const mini = document.createElement("canvas");
-        mini.width = 80;
-        mini.height = 160;
-        const mCtx = mini.getContext("2d");
+        const mCtx = ref.ctx;
         mCtx.fillStyle = "#070a11";
         mCtx.fillRect(0, 0, 80, 160);
+        mCtx.strokeStyle = "rgba(255,255,255,0.035)";
+        mCtx.lineWidth = 1;
+        for (let c = 1; c < COLS; c++) { mCtx.beginPath(); mCtx.moveTo(c * 8 + 0.5, 0); mCtx.lineTo(c * 8 + 0.5, 160); mCtx.stroke(); }
         const cell = 8;
         if (p.board) {
           for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
-              if (p.board[r] && p.board[r][c]) {
-                drawCell(mCtx, c * cell, r * cell, cell, COLORS[p.board[r][c]] || "#94a3b8",
-                  { garbage: p.board[r][c] === "G" });
-              }
+              const v = p.board[r] && p.board[r][c];
+              if (v) drawCell(mCtx, c * cell, r * cell, cell, COLORS[v] || "#94a3b8", { garbage: v === "G" });
             }
           }
         }
-
-        const stats = document.createElement("div");
-        stats.className = "opp-stats";
-        stats.innerHTML = "Score: <b>" + p.score + "</b><br>Lines: <b>" + p.lines + "</b> · Sent: <b>" + p.sent + "</b>";
-
-        card.appendChild(title);
-        card.appendChild(mini);
-        card.appendChild(stats);
-        grid.appendChild(card);
       });
     }
 
@@ -2647,6 +2926,7 @@
         botStop();
         isSpectator = false;
         battlePlayers = {};
+        battleId = "";
         toggleSpectatorLayout(false);
         syncPlayBar();
         closeLobby();
@@ -2655,6 +2935,7 @@
         currentMode = "bot";
         isSpectator = false;
         battlePlayers = {};
+        battleId = "";
         toggleSpectatorLayout(false);
         syncPlayBar();
         closeLobby();
@@ -2674,6 +2955,7 @@
       document.getElementById("playerRightStats").style.display = spectating ? "none" : "flex";
       document.getElementById("liveBadge").style.display = spectating ? "inline-block" : "none";
       document.getElementById("opponentsPanel").style.maxWidth = spectating ? "100%" : "640px";
+      renderOpponentsGrid();
       if (!spectating) setTimeout(resizeBoard, 30);
     }
 
@@ -3191,7 +3473,7 @@
       if (currentMode === "bot") startNewGame();
     });
 
-    document.getElementById("startBtn").addEventListener("click", () => startNewGame());
+    document.getElementById("startBtn").addEventListener("click", onStartBtn);
 
     document.getElementById("toggleGhost").addEventListener("click", e => {
       ghostEnabled = !ghostEnabled;

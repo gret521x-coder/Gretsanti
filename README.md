@@ -45,9 +45,10 @@ no `Authorization` header at all.
 plainly instead of blaming the key, the Proxy box refuses FreeModel's own address, and **🩺 Test connection**
 checks both doors — the model list, then one real chat request — and saves the address it proved.
 
-**Launcher.** Cards resolve the real file name on the host (`Aurora.html` vs `aurora-v4.html`), remember the
-answer, and never read a refused probe as a missing file. Relative cards point at the PHP host, so the
-launcher works wherever it is opened from.
+**Launcher.** Cards now point at the file names the host actually serves: `Aurora.html` and `gc-v5.html`.
+Saved grids are upgraded off the dead `aurora-v4.html` and `gc.html` targets. Relative cards (`tns.html`,
+`labs/pindutan-v17.html`, `arena-diag.html`) assume the launcher sits in the **host root** — uploading it to
+`/labs/index.html` breaks them all.
 
 **Chat.** The KDL // MISSION CONTROL skin — pure black deck, hairline grid, square corners, mono caps, one
 cyan accent. A cyan lightning storm fires on send and on arrival, and a sky runs behind the messages: stars
@@ -76,8 +77,8 @@ All suites run in Node with jsdom, no browser needed.
 - **Chat v5** — 71 · **v4 features** 37 · **v3 features** 41 · **API errors** 14 · **Pages** 11
 - **Chat skin and sky** — 31: palette, square corners, mono caps, storm on send and arrival, canvas seeds
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
-- **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
-  missing, refused probe never read as missing, chosen name remembered
+- **Launcher** — 70: every card resolves to a file the host actually serves, dead `aurora-v4.html` and
+  `gc.html` targets upgraded, refused probe never read as missing, chosen name remembered
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

@@ -89,7 +89,7 @@ button.auto-on{background:linear-gradient(#3a6a70,#234a52);border-color:#67b7c7;
 <div id="tip"></div>
 <div class="preview" id="preview"></div>
 <canvas id="cv" width="720" height="480"></canvas>
-<p class="legend">Pick a tower, click a dark tile to build. Click a tower to upgrade, SHIFT+click to sell (60% refund), RIGHT-CLICK or press T over it to cycle target: CLOSE / FIRST / LAST / STRONG. SPACE pauses, AUTO starts the next wave for you, 1-9 pick towers, Esc clears. FLYING monsters ignore the path — Cannon &amp; Mortar can't hit them! After wave 20 the stage loops.</p>
+<p class="legend">Pick a tower, click a dark tile to build. Click a tower to upgrade, SHIFT+click to sell (60% refund), RIGHT-CLICK or press T over it to cycle target: CLOSE / FIRST / LAST / STRONG. SPACE pauses, AUTO is ON by default (next wave starts automatically), 1-9 pick towers, Esc clears, PLAY AGAIN restarts after game over. FLYING monsters ignore the path — Cannon &amp; Mortar can't hit them! After wave 20 the stage loops.</p>
 <div class="panels">
  <div class="panel"><h2>BUILD / SHOP</h2><div class="shop-grid" id="shop"></div></div>
  <div class="panel"><h2>BESTIARY</h2><table id="intel"></table></div>
@@ -309,12 +309,13 @@ function drawTowerSprite(type,x,y,angle,lvl,g,flash){
 
 // ---------- game state ----------
 var lives,coins,waveNum,grid,enemies,shots,fx,spawnT,spawnQ,selTower,gameOver,shakeT,frame,hoverTile,hoverTower,loopCount,paused,speed,bestWave,bestLoop;
-var autoWave=false,autoNextAt=0;
+var autoWave=true,autoNextAt=0,waveClearNotified=false;
 function init(){
  lives=currentMode().lives;coins=currentMode().coins;waveNum=0;grid=[];enemies=[];shots=[];fx=[];
  SPAWN_EVERY=currentMode().spawn;applyModeUI();
  spawnT=0;spawnQ=[];selTower=null;gameOver=false;shakeT=0;frame=0;hoverTile=null;hoverTower=null;loopCount=0;
- paused=false;speed=1;autoWave=false;autoNextAt=0;loadBest();
+ paused=false;speed=1;autoWave=true;autoNextAt=0;waveClearNotified=false;loadBest();
+ paintAuto();
  for(var y=0;y<ROWS;y++){grid[y]=[];for(var x=0;x<COLS;x++)grid[y][x]=null;}
  loadMap(0);
  msg('');updHUD();updatePreview();
@@ -362,12 +363,15 @@ function cycleSpeed(){
 }
 bind('btnPause',togglePause);
 bind('btnSpeed',cycleSpeed);
-function toggleAuto(){
- autoWave=!autoWave;autoNextAt=0;
+function paintAuto(){
  var b=document.getElementById('btnAuto');
+ if(!b)return;
  b.textContent='AUTO: '+(autoWave?'ON':'OFF');
  b.classList.toggle('auto-on',autoWave);
- msg(autoWave?'AUTO WAVE ON — next wave starts 1.2s after the field clears.':'AUTO WAVE OFF — start waves by hand.');
+}
+function toggleAuto(){
+ autoWave=!autoWave;autoNextAt=0;waveClearNotified=false;paintAuto();
+ msg(autoWave?'AUTO WAVE ON — next wave starts 1.2s after the field clears.':'AUTO WAVE OFF — click START WAVE after each clear.');
 }
 bind('btnAuto',toggleAuto);
 
@@ -461,8 +465,9 @@ function waveList(n){
  return q;
 }
 function startWave(){
- if(gameOver)return;
+ if(gameOver){restart();return;}
  if(spawnQ.length||enemies.length){msg('Finish the current wave first ('+(enemies.length||spawnQ.length)+' left).');return;}
+ waveClearNotified=false;
  if(waveNum>=currentMode().loopAt){
   waveNum=0;loopCount++;saveBest();
   msg('LOOP '+loopCount+'! Stage resets — monsters are +'+Math.round(currentMode().loopMul*100)+'% more & stronger!');
@@ -505,6 +510,7 @@ function spawnEnemy(type,atWp,ax,ay){
 function stepEnemies(){
  for(var i=enemies.length-1;i>=0;i--){
   var e=enemies[i];
+  var px=e.x,py=e.y;
   var spd=e.def.spd*currentMode().spd*(e.slowT>0?(e.slowMul||0.45):1);
   if(e.def.fly){
    e.flyT+=0.05;
@@ -530,6 +536,12 @@ function stepEnemies(){
     wp=WAYP[e.wi];dx=wp[0]-e.x;dy=wp[1]-e.y;dist=Math.hypot(dx,dy);
    }
    if(dist>0){e.x+=dx/dist*spd;e.y+=dy/dist*spd;}
+  }
+  /* safety net: if a walker ever stalls on a corner, hop to the next waypoint
+     instead of holding the wave open forever */
+  if(!e.def.fly){
+   if(Math.abs(e.x-px)+Math.abs(e.y-py)<0.01)e.stall=(e.stall||0)+1;else e.stall=0;
+   if(e.stall>120){e.wi=Math.min((e.wi||0)+1,WAYP.length-1);e.x=WAYP[e.wi][0];e.y=WAYP[e.wi][1];e.stall=0;}
   }
   if(e.slowT>0)e.slowT--;
   if(e.flash>0)e.flash--;
@@ -878,9 +890,17 @@ function simulate(){
  stepEnemies();
  if(gameOver)return;
  stepTowers();stepShots();stepFx();
- if(autoWave&&waveNum>0&&!spawnQ.length&&!enemies.length&&!autoNextAt)autoNextAt=Date.now()+1200;
+ if(waveNum>0&&!spawnQ.length&&!enemies.length){
+  if(autoWave){if(!autoNextAt)autoNextAt=Date.now()+1200;}
+  else if(!waveClearNotified){
+   waveClearNotified=true;
+   msg('WAVE '+waveNum+' CLEAR — click START WAVE or turn AUTO ON.');
+  }
+ }
 }
 function loop(){
+ var waveBtn=document.getElementById('btnWave');
+ if(waveBtn)waveBtn.textContent=gameOver?'PLAY AGAIN':((spawnQ.length||enemies.length)?'WAVE RUNNING':'START WAVE');
  if(!paused&&!gameOver&&autoNextAt&&Date.now()>=autoNextAt){autoNextAt=0;startWave();}
  if(!gameOver&&!paused){for(var s=0;s<speed&&!gameOver;s++)simulate();}
  else if(gameOver){stepFx();}

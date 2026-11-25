@@ -44,10 +44,10 @@ Client-side checks — obstacles, not security.
 - **TD v5 tuned.** Per-tower target priority (CLOSE/FIRST/LAST/STRONG), pause + 1-3× speed, best wave/loop saved locally, stacking poison, level-scaled frost, Tesla chain falloff, generated intel table and a wave-overlap guard.
 - **TD v5 design + modes.** Pixel HUD with shop/bestiary panels; CLASSIC / RUSH / KUPAL difficulty (lives, gold, enemy HP/speed, spawn rate, loop size), saved on device. Reduced-motion aware.
 - **TD v5 art pass.** Card-based shop with live tower previews, 7 themed maps with edges/deco/portals, brighter monster palettes and a distinct sky boss, rebuilt towers with level pips and muzzle flashes.
-- **TD v6 art + changes.** Embedded battlefield briefing image, animated map glows/deco, boss health bar, next-wave preview with air and warlord warnings, AUTO wave toggle; the 24 TD checks plus 9 new ones pass.
+- **TD v6 art + changes.** Embedded battlefield briefing image, animated map glows/deco, boss health bar, next-wave preview with air and warlord warnings. AUTO wave is ON by default, a wave-clear prompt explains manual mode, PLAY AGAIN restarts without refresh, and a stuck-enemy watchdog keeps waves from hanging; 37 TD checks plus a 7-check flow test pass.
 - **Aurora v4 / chat v5.** FreeModel-only, key stays on the server; CORS wall and dead relay named; KDL // MISSION CONTROL skin with lightning storm and sky.
 - **Security.** No real keys in the repo; `.fmkey.php` begins with `<?php exit; ?>`; pasted keys treated as leaked.
 
 ## Checks
 
-Node/jsdom: chat 71/37/41/14/11, skin 31, launcher 70, Aurora 49+54, Pindutan v18 16 + two-client 12, TD v6 33. PHP parsed with a grammar, CSS through PostCSS. Live check: `api-v5.php?action=health` ok; chat, Arena diag, Pindutan v18, TD v6, Aurora, TNS and Collectibles load.
+Node/jsdom: chat 71/37/41/14/11, skin 31, launcher 70, Aurora 49+54, Pindutan v18 16 + two-client 12, TD v6 37 + flow 7. PHP parsed with a grammar, CSS through PostCSS. Live check: `api-v5.php?action=health` ok; chat, Arena diag, Pindutan v18, TD v6, Aurora, TNS and Collectibles load.

@@ -714,7 +714,7 @@
     }
 
     /* the two autopilot pills: same shape and type as the RELAY pill,
-       a signal glyph first, then the single letter (K / I) */
+       a green lamp dot first, then the single letter (K / I) */
     .sig-pill {
       display: inline-flex; align-items: center; gap: 5px;
       font-family: ui-monospace, Menlo, monospace;
@@ -723,23 +723,20 @@
       border: 1px solid var(--line); background: #0d121c; color: var(--mut);
       cursor: pointer; -webkit-tap-highlight-color: transparent;
     }
-    .sig-pill .sig { width: 11px; height: 11px; display: block; flex: 0 0 auto; }
-    .sig-pill .sig-arc {
-      fill: none; stroke: currentColor; stroke-width: 1.4;
-      stroke-linecap: round; opacity: 0.4;
-      transition: opacity 0.15s ease;
-    }
-    .sig-pill .sig-dot {
-      fill: currentColor; stroke: none; opacity: 0.4;
-      transition: opacity 0.15s ease;
+    .sig-pill .lamp {
+      width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto;
+      background: #4ade80; opacity: 0.45;
+      transition: opacity 0.15s ease, box-shadow 0.15s ease;
     }
     .sig-pill.on {
       color: #4ade80; border-color: rgba(74, 222, 128, 0.45);
       background: rgba(74, 222, 128, 0.09);
       box-shadow: 0 0 12px rgba(74, 222, 128, 0.18);
     }
-    .sig-pill.on .sig-arc, .sig-pill.on .sig-dot { opacity: 1; }
-    .sig-pill.on .sig-dot { animation: kpulse 1.8s ease-in-out infinite; }
+    .sig-pill.on .lamp {
+      opacity: 1; box-shadow: 0 0 8px #4ade80;
+      animation: kpulse 1.8s ease-in-out infinite;
+    }
     @keyframes kpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
     .pill.room {
@@ -1104,8 +1101,8 @@
     <div class="top-pills">
       <span class="pill room live" id="roomPill">LOBBY</span>
       <span class="pill relay" id="relayPill">RELAY 0/3</span>
-      <button class="pill sig-pill" id="kupalJoinBtn" style="display:none;" aria-pressed="false" title="Signal Kupal: let Kupal play your board"><svg class="sig" viewBox="0 0 14 14" aria-hidden="true"><circle class="sig-dot" cx="2.6" cy="11.4" r="1.5" /><path class="sig-arc" d="M2.6 7.4A4 4 0 0 1 6.6 11.4" /><path class="sig-arc" d="M2.6 3.9A7.5 7.5 0 0 1 10.1 11.4" /><path class="sig-arc" d="M2.6 0.4A11 11 0 0 1 13.6 11.4" /></svg><span>K</span></button>
-      <button class="pill sig-pill" id="interJoinBtn" style="display:none;" aria-pressed="false" title="Signal Intermediate: let the Intermediate brain play your board"><svg class="sig" viewBox="0 0 14 14" aria-hidden="true"><circle class="sig-dot" cx="2.6" cy="11.4" r="1.5" /><path class="sig-arc" d="M2.6 7.4A4 4 0 0 1 6.6 11.4" /><path class="sig-arc" d="M2.6 3.9A7.5 7.5 0 0 1 10.1 11.4" /><path class="sig-arc" d="M2.6 0.4A11 11 0 0 1 13.6 11.4" /></svg><span>I</span></button>
+      <button class="pill sig-pill" id="kupalJoinBtn" style="display:none;" aria-pressed="false" title="Signal Kupal: let Kupal play your board"><span class="lamp"></span><span class="key">K</span></button>
+      <button class="pill sig-pill" id="interJoinBtn" style="display:none;" aria-pressed="false" title="Signal Intermediate: let the Intermediate brain play your board"><span class="lamp"></span><span class="key">I</span></button>
       <button class="primary" id="lobbyBtn" style="padding:6px 11px;font-size:0.62rem;border-radius:9px;">🌐 Lobby</button>
     </div>
 
@@ -1208,7 +1205,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v20.5</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.6</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -2370,7 +2367,7 @@
         if (currentMode === "bot") botTick(delta);
         if (autopilotOn()) {
           autoStepT += delta;
-          if (autoStepT >= 45) { autoStepT = 0; autoPlayStep(); }
+          if (autoStepT >= autoHand()) { autoStepT = 0; autoPlayStep(); }
         }
         boardWrapper.classList.toggle("danger", topRowOfStack() <= 3);
         drawBoard();
@@ -3836,6 +3833,10 @@
 
     function toggleKupalJoin() { chooseAutopilot("kupal"); }
 
+    /* how long the pilot waits between its own taps: Beginner is a human pace,
+       Intermediate is brisk, Kupal barely waits at all */
+    function autoHand() { return cpuCfg().hand || 45; }
+
     function autopilotOn() {
       return kupalJoinWanted() && gameRunning && !isPaused && !isSpectator &&
              (currentMode === "1v1" || currentMode === "group");
@@ -4240,21 +4241,21 @@
     const CPU_LEVELS = {
       beginner: {
         key: "beginner", label: "BEGINNER",
-        drop: 155, minDrop: 115, move: 48, mistake: 0.3, safeHeight: 3,
-        holes: -6, agg: -0.4, bump: -0.2, tall: -0.8, clear: 45,
-        attackBonus: 0, lookahead: false, blurb: "slow hands, leaves holes"
+        drop: 155, minDrop: 115, move: 48, mistake: 0.2, safeHeight: 3, sloppy: 9,
+        holes: -5, agg: -0.4, bump: -0.18, tall: -0.6, clear: 34,
+        attackBonus: 0, lookahead: false, hand: 180, blurb: "slow hands, settles for a lesser spot"
       },
       intermediate: {
         key: "intermediate", label: "INTERMEDIATE",
-        drop: 88, minDrop: 46, move: 26, mistake: 0.09, safeHeight: 5,
+        drop: 88, minDrop: 46, move: 26, mistake: 0.08, safeHeight: 5, sloppy: 6,
         holes: -13.5, agg: -0.55, bump: -0.42, tall: -1.9, clear: 60,
-        attackBonus: 0, lookahead: false, blurb: "steady, clears when it can"
+        attackBonus: 0, lookahead: false, hand: 120, blurb: "steady, clears when it can"
       },
       kupal: {
         key: "kupal", label: "KUPAL",
-        drop: 46, minDrop: 22, move: 13, mistake: 0.004, safeHeight: 0,
+        drop: 46, minDrop: 22, move: 13, mistake: 0.004, safeHeight: 0, sloppy: 1,
         holes: -24, agg: -0.62, bump: -0.52, tall: -2.7, clear: 70,
-        attackBonus: 1, lookahead: true, blurb: "two pieces ahead, never stops"
+        attackBonus: 1, lookahead: true, hand: 32, blurb: "two pieces ahead, never stops"
       }
     };
 
@@ -4401,10 +4402,10 @@
     function botPlan(b, type, cfg, nextType) {
       const cands = botCandidates(b, type, cfg);
       if (!cands.length) return null;
+      cands.sort((a, c) => c.score - a.score);
 
       let best;
       if (cfg.lookahead && nextType) {
-        cands.sort((a, c) => c.score - a.score);
         const top = cands.slice(0, 8);
         top.forEach(c => {
           const nextCands = botCandidates(c.board, nextType, cfg);
@@ -4416,11 +4417,17 @@
         best = cands.reduce((a, c) => (c.score > a.score ? c : a), cands[0]);
       }
 
-      /* a little sloppiness keeps the easy levels beatable — never an illegal spot */
-      if (best && botStackHeight(b) < cfg.safeHeight && Math.random() < cfg.mistake) {
-        const alt = best.x + (Math.random() < 0.5 ? -1 : 1);
-        const probe = { type, matrix: best.matrix, x: alt, y: 0 };
-        if (!collide(b, probe)) return { score: best.score, x: alt, matrix: best.matrix };
+      /* the easy levels take a lesser spot on purpose: that is what actually
+         shows up on the board as a hole or a short stack. Never an illegal one. */
+      /* no height gate: the old one stopped firing as soon as the stack grew,
+         which made all three levels play the very same best move */
+      const sloppy = Math.max(1, cfg.sloppy || 1);
+      if (best && sloppy > 1 && Math.random() < cfg.mistake) {
+        const reach = Math.min(sloppy, cands.length);
+        if (reach > 1) {
+          const pick = cands[1 + Math.floor(Math.random() * (reach - 1))];
+          if (pick) return pick;
+        }
       }
       return best;
     }

@@ -18,7 +18,7 @@ Two files, same folder as the pages you already host there (`gc.html`, `api-v2.p
 
 | file | where it goes | what it does |
 |---|---|---|
-| `labs/pindutan-v20.html` | `pindutan.html` (or any name you like) | the game |
+| `labs/pindutan-v21.html` | `pindutan.html` (or any name you like) | the game |
 | `api-leaderboard.php` | `api-leaderboard.php`, same folder | the ladder |
 
 **And that is the last time you upload the game.** From v20.8 on it updates itself. When it opens it
@@ -32,7 +32,7 @@ has, so the file still works offline.
 
 To publish a new build (this is for whoever edits the repo):
 
-1. put the new game on `main` as `labs/pindutan-v20.html`, with its `BUILD_TAG` bumped;
+1. put the new game on `main` as `labs/pindutan-v21.html`, with its `BUILD_TAG` bumped;
 2. bump `build` in `labs/pindutan-build.json` to the same tag.
 
 The line under the wordmark and the little `data-build` on the page both come from `BUILD_TAG`, so
@@ -101,7 +101,7 @@ identically for the game — the difference is only who *else* can read it.
 
 ### Changing the address
 
-The game points at that URL in one place. Search `labs/pindutan-v20.html` for:
+The game points at that URL in one place. Search `labs/pindutan-v21.html` for:
 
 ```js
 const LEADERBOARD_URL = "https://aidekupal.unaux.com/api-leaderboard.php";
@@ -204,7 +204,7 @@ who never shared. The public brokers can read the topic, so treat this as a scor
 
 ## Running the game straight from a file
 
-Clicking `pindutan-v20.html` on the phone (Chrome shows `file:///...`) works for the ladder too,
+Clicking `pindutan-v21.html` on the phone (Chrome shows `file:///...`) works for the ladder too,
 with two wrinkles that are handled in the page:
 
 - the report is sent as `text/plain`, which is a "simple" request. Browsers do not run a

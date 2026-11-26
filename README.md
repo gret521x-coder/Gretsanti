@@ -35,6 +35,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `labs/pindutan-v21.html` | 192 KB | Pindutan v21 — the game, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, and where |
+| `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
 | `labs/index.html` | 12 KB | The experiment list |
 | `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
 

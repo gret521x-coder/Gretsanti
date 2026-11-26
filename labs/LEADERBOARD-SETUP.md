@@ -36,6 +36,27 @@ from the same small file the updater uses.
 
 The game accepts only a plain `https://` address there; anything else is ignored and the default is kept.
 
+## Or run the board on Cloudflare (no PHP host at all)
+
+`labs/worker-leaderboard.js` is the same board as `api-leaderboard.php`, written as a Cloudflare Worker. It
+answers the same three endpoints with the same JSON, so the game cannot tell the difference — you only change
+the `ladder` address. It needs a free Cloudflare account and one KV namespace; there is no PHP, no folder to
+make writable, and none of the free-host 503s.
+
+1. Sign in at `dash.cloudflare.com` (the free plan is enough).
+2. **Storage & Databases → KV → Create instance.** Name it `pindutan-ladder`.
+3. **Workers & Pages → Create → Worker.** Name it `pindutan-ladder`, deploy the starter.
+4. **Edit code.** Delete the starter, paste all of `labs/worker-leaderboard.js`, **Deploy**.
+5. **Settings → Bindings → Add → KV namespace.** Variable name must be exactly `LADDER`, pick the namespace
+   from step 2, save and deploy again.
+6. Open `https://pindutan-ladder.<your-subdomain>.workers.dev/?action=top&mode=all` — you should see
+   `{"ok":true,"mode":"all","updated":0,"players":0,"rows":[]}`.
+7. Put that address in `labs/pindutan-build.json` as `"ladder"`.
+
+Notes: the Cloudflare board starts empty — the rows on the old host stay on the old host. KV allows about one
+write per second to the same key, so the worker retries a refused write once; that is plenty for a board of
+friends. The secret and the crown name live at the top of the worker file, exactly as they do in the PHP.
+
 ## What you have to upload, once
 
 Two files, same folder as the pages you already host there (`gc.html`, `api-v2.php`, `save.php`):

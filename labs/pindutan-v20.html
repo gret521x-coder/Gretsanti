@@ -1205,7 +1205,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v20.7</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.8</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -5181,6 +5181,88 @@
     /* straight into the lobby — no codes, no joining */
     joinLobby();
     openLobby();
+
+    /* =========================================================
+       13. SELF-UPDATE
+          Upload this file to the host once. From then on it keeps
+          itself current: it reads a tiny build file on GitHub, and
+          if that says there is something newer it quietly opens
+          that copy — same address, same saved names, same ladder.
+          No signal, no file, or a half download and it simply
+          plays the copy it already has.
+       ========================================================= */
+    const BUILD_TAG = "v20.8";
+    const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
+    const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v20.html";
+    const UPDATE_APPLIED = "pindutan_applied_build";
+
+    /* Navigate to the new copy as a blob: it keeps this exact address and all
+       the saved names, and the browser tears the old page down properly — no
+       leftover timers or relay connections running behind the new one. */
+    function swapDocument(next) {
+      const url = URL.createObjectURL(new Blob([next], { type: "text/html" }));
+      location.replace(url);
+    }
+
+    async function selfUpdateCheck(opts = {}) {
+      const get = opts.fetch || (typeof fetch === "function" ? fetch.bind(window) : null);
+      const swap = opts.swap || swapDocument;
+      if (!get) return { state: "no-fetch" };
+      /* a copy opened from disk updates nothing: it is meant to work offline */
+      const proto = String(location.protocol || "");
+      if (!opts.force && proto !== "http:" && proto !== "https:") return { state: "local" };
+
+      /* a page that was just swapped in must not swap again */
+      let applied = "";
+      try { applied = sessionStorage.getItem(UPDATE_APPLIED) || ""; } catch (e) { }
+      if (applied === BUILD_TAG) return { state: "skipped", build: BUILD_TAG };
+
+      const bust = "?t=" + Date.now();
+      let feed;
+      try {
+        const r = await get((opts.feed || UPDATE_FEED) + bust, { cache: "no-store" });
+        if (!r || !r.ok || typeof r.json !== "function") return { state: "offline" };
+        feed = await r.json();
+      } catch (e) { return { state: "offline" }; }
+
+      const build = feed && String(feed.build || "").trim();
+      if (!build || build === BUILD_TAG) return { state: "same", build: BUILD_TAG };
+
+      let next = "";
+      try {
+        const url = (feed && feed.html) || UPDATE_HTML;
+        const r = await get(url + (url.indexOf("?") < 0 ? bust : "&" + bust.slice(1)), { cache: "no-store" });
+        if (!r || !r.ok || typeof r.text !== "function") return { state: "offline", build };
+        next = await r.text();
+      } catch (e) { return { state: "offline", build }; }
+
+      /* only a whole page that calls itself that build is worth swapping in */
+      if (!next || next.length < 20000 || next.indexOf("</html>") < 0 ||
+          next.indexOf("SELF-UPDATE") < 0 || next.indexOf(build) < 0) {
+        return { state: "bad-page", build };
+      }
+      try { sessionStorage.setItem(UPDATE_APPLIED, build); } catch (e) { }
+      swap(next);
+      return { state: "swapped", build };
+    }
+
+    /* keep the little line under the wordmark honest with the build above */
+    try {
+      const hero = document.querySelector(".hero-sub");
+      if (hero) hero.textContent = "neon block arena · one lobby for everyone · " + BUILD_TAG;
+      document.documentElement.dataset.build = BUILD_TAG;
+    } catch (e) { }
+
+    /* arrived through an update? put the real address back in the bar, so a
+       reload later still finds the hosted page (which updates itself again) */
+    try {
+      if (location.protocol === "blob:") {
+        const ref = document.referrer;
+        if (ref && ref.indexOf(location.origin) === 0) history.replaceState(null, "", ref);
+      }
+    } catch (e) { }
+
+    try { selfUpdateCheck().catch(() => { }); } catch (e) { }
   </script>
 </body>
 </html>

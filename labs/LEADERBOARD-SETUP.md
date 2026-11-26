@@ -21,6 +21,22 @@ Two files, same folder as the pages you already host there (`gc.html`, `api-v2.p
 | `labs/pindutan-v20.html` | `pindutan.html` (or any name you like) | the game |
 | `api-leaderboard.php` | `api-leaderboard.php`, same folder | the ladder |
 
+**And that is the last time you upload the game.** From v20.8 on it updates itself. When it opens it
+reads a small file from this repo — `labs/pindutan-build.json` on the `main` branch — and if that
+names a newer build it quietly opens that copy instead: same address, same saved nickname, same
+crown, same ladder. Offline, or a half download, and it just plays the copy it already has.
+
+That also means a copy opened from your own phone's storage never updates itself — that is what you
+want when you are playing with no signal.
+
+To publish a new build (this is for whoever edits the repo):
+
+1. put the new game on `main` as `labs/pindutan-v20.html`, with its `BUILD_TAG` bumped;
+2. bump `build` in `labs/pindutan-build.json` to the same tag.
+
+The line under the wordmark and the little `data-build` on the page both come from `BUILD_TAG`, so
+they cannot drift apart. A hosted copy older than the tag on `main` will swap on its next open.
+
 Keep the PHP's name exactly as it is, or edit `LEADERBOARD_URL` near the top of the game's script to
 match. Everything else is optional.
 

@@ -31,6 +31,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
+| `pindutan-run.html` | 8 KB | Pindutan runner — no game code; loads whichever build the feed names |
 | `labs/pindutan-v21.html` | 192 KB | Pindutan v21 — the game, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, and where |
@@ -38,6 +39,10 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
 
 ## Latest changes
+
+**Pindutan runner — one small file, always the newest game.** `pindutan-run.html` holds no game at all: it
+reads `labs/pindutan-build.json` on `main` and then loads the build that file names, so a copy kept on a phone
+never goes stale. If the repo cannot be reached it says so, offers a retry and a link to the hosted copy.
 
 **Pindutan v21 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
 `labs/pindutan-build.json`; if that names something newer, it runs that instead. A hosted copy moves to the

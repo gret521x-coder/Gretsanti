@@ -1,15 +1,16 @@
 # Gretsanti
 
-Launcher, group chat and Aurora — plain HTML files, no build step, no framework.
+Launcher, group chat, Aurora and Pindutan — plain HTML files, no build step, no framework.
 
-**The live copies run on the PHP host.** The repository is private, and a private repo stops publishing
-Pages on a free account, so `github.io` serves nothing.
+**The live copies run on the PHP host.** Pages is not used: the files are uploaded to the host and opened
+from there. The repository is public, which is what lets a hosted page read a build file from it.
 
 | What | Address |
 |---|---|
 | Launcher | `https://aidekupal.unaux.com/index.html` |
 | Aurora | `https://aidekupal.unaux.com/Aurora.html` |
 | Group chat | `https://aidekupal.unaux.com/gc-v5.html` |
+| Pindutan | `https://aidekupal.unaux.com/pindutan.html` |
 | FreeModel relay | `https://aidekupal.unaux.com/api-free.php` |
 
 ## Files
@@ -30,9 +31,27 @@ Pages on a free account, so `github.io` serves nothing.
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
+| `labs/pindutan-v21.html` | 192 KB | Pindutan v21 — the game, and the build that keeps itself current |
+| `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
+| `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, and where |
+| `labs/index.html` | 12 KB | The experiment list |
 | `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
 
 ## Latest changes
+
+**Pindutan v21 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
+`labs/pindutan-build.json`; if that names something newer, it runs that instead. A hosted copy moves to the
+new page — same address, same saved name, same ladder. A copy kept on a phone has the newer page written over
+itself, after letting go of its relays, its lobby channel and its timers, so two versions never talk at once.
+No signal, or a half download, and it simply plays the copy it has. **The game is uploaded to the host once
+and never again**; publishing a build means putting it on `main` and bumping the tag in that one file.
+Everything from the v20 line is inside it: the name gate and the hall of fame (wins from human battles only,
+carried up to `api-leaderboard.php`), a **GLIDE** panel that sets how a held button moves — five presets and
+four sliders, remembered on that phone — and two small pills beside RELAY, a green lamp then **K** or **I**,
+that hand your own board to the Kupal brain or the Intermediate one in a 1v1, a group battle and against the
+CPU, with the lit pill again to take your hands back. The three CPU levels were measured and rebuilt because
+they had been playing the same best move: Beginner now settles for lesser spots and taps slowest,
+Intermediate is brisk and leaves the odd hole, Kupal looks a piece ahead and barely waits.
 
 **Pindutan v17 — you can see your opponent now.** In 1v1 and group battles the opponents panel was never
 switched on (CSS hid it and nothing showed it again), and a SYNC without a board wiped the last board
@@ -72,6 +91,11 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
+- **Pindutan v21** — 156: engine, glance rules, rooms over four paths, the lobby, the CPU rival and its
+  three levels, the name gate, the hall of fame, the GLIDE panel, hold-to-slide, the pills, and the
+  self-update (nothing newer leaves it alone, a newer build comes over whole, a broken download refused, a
+  swap lets go of the relays first, the feed tag must match the game's own)
+- **Pindutan v17** — 48 · **labs pages** — 20 · **leaderboard PHP** — 23
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

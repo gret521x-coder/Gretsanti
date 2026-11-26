@@ -1199,7 +1199,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v20.3</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.4</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -1414,6 +1414,47 @@
       return cleanName(stripMark(getMyName()));
     }
 
+    /* A nickname field never shows a plus. Every "+" typed is swallowed and
+       remembered; a "v" straight after them finishes the key, so the name in
+       the box is always clean and nobody watching the screen sees a mark. */
+    function wireMarkField(field, arm) {
+      if (!field) return;
+      let hidden = 0;        /* pluses typed and not shown */
+      let hiddenAt = 0;
+      let since = 0;         /* characters typed since those pluses */
+      const reset = () => { hidden = 0; since = 0; };
+      field.addEventListener("input", () => {
+        const raw = field.value;
+        /* any edit that does not finish the key takes the crown away again */
+        if (arm) arm(false);
+        if (!raw) { reset(); return; }
+        /* the whole key pasted in one go */
+        if (nameHasMark(raw)) {
+          field.value = raw.slice(0, -CREATOR_MARK.length)
+            .replace(/[+\uFF0B]/g, "");
+          reset();
+          if (arm) arm(true);
+          return;
+        }
+        const pluses = (raw.match(/[+\uFF0B]/g) || []).length;
+        if (pluses) {
+          field.value = raw.replace(/[+\uFF0B]/g, "");
+          hidden += pluses;
+          hiddenAt = Date.now();
+          since = 0;
+          return;
+        }
+        if (hidden && since === 0 && /v$/i.test(raw) && Date.now() - hiddenAt < 2500) {
+          field.value = raw.slice(0, -1);
+          reset();
+          if (arm) arm(true);
+          return;
+        }
+        if (hidden) since++;
+      });
+      field.addEventListener("blur", reset);
+    }
+
     /* lives in memory only: a reload, or the 🔒 button, takes it away.
        nothing about it is ever written to local or session storage. */
     let creatorOn = false;
@@ -1486,11 +1527,14 @@
       }
     }
 
+    let gateMarkArmed = false;
+
     function acceptGateName() {
       const raw = gateNick.value;
-      const maker = nameHasMark(raw);
+      const maker = nameHasMark(raw) || gateMarkArmed;
       const name = cleanName(stripMark(raw));
       if (name.length < 2) { rejectGateName(); return; }
+      gateMarkArmed = false;
       localStorage.setItem("pindutan_nick", name);
       setCreator(maker);          /* no mark, no crown — asked again next visit */
       const ni = document.getElementById("nicknameInput");
@@ -1503,6 +1547,7 @@
 
     function rejectGateName() {
       /* the whole gate resets: nothing is stored, the password is asked again */
+      gateMarkArmed = false;
       sessionStorage.removeItem("pindutan_unlocked");
       gateNick.value = "";
       showLockStep(1);
@@ -1530,6 +1575,7 @@
     document.getElementById("gateNameBtn").addEventListener("click", acceptGateName);
     gateNick.addEventListener("keydown", e => { if (e.key === "Enter") acceptGateName(); });
     document.getElementById("gateBackBtn").addEventListener("click", () => showLockStep(1));
+    wireMarkField(gateNick, armed => { gateMarkArmed = !!armed; });
     document.getElementById("hintBtn").addEventListener("click", () => {
       document.getElementById("hintText").style.display = "block";
     });
@@ -4670,10 +4716,14 @@
       renderLobby();
       if (typeof lbFetch === "function") lbFetch(lbMode, true);
     }
+    let nickMarkArmed = false;
+    wireMarkField(document.getElementById("nicknameInput"), armed => { nickMarkArmed = !!armed; });
+
     document.getElementById("nicknameInput").addEventListener("change", () => {
       const field = document.getElementById("nicknameInput");
       const typed = field.value;
-      const maker = nameHasMark(typed);
+      const maker = nameHasMark(typed) || nickMarkArmed;
+      nickMarkArmed = false;
       const chosen = cleanName(stripMark(typed));
       if (stripMark(typed) !== typed.trim()) field.value = chosen;   /* the pluses never stay */
       if (chosen.length >= 2) { field.value = chosen; setCreator(maker); }

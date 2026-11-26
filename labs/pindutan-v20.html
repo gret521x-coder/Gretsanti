@@ -1199,7 +1199,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v20.2</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.3</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -1402,8 +1402,16 @@
     }
 
     function stripMark(raw) {
-      const text = String(raw || "").trim();
-      return nameHasMark(text) ? text.slice(0, -CREATOR_MARK.length).trim() : text;
+      let text = String(raw || "").trim();
+      if (nameHasMark(text)) text = text.slice(0, -CREATOR_MARK.length);
+      /* the key ends in a plus, so "+" or "++" can be left behind: a name
+         never carries a trailing plus into the lobby, the packets or the ladder */
+      return text.replace(/[+\uFF0B]+$/, "").trim();
+    }
+
+    /* what other players, the lobby card and the ladder should see */
+    function myDisplayName() {
+      return cleanName(stripMark(getMyName()));
     }
 
     /* lives in memory only: a reload, or the 🔒 button, takes it away.
@@ -2460,7 +2468,7 @@
 
     function myState(withBoard) {
       return {
-        name: getMyName(),
+        name: myDisplayName(),
         mode: currentMode,
         alive: gameRunning && !isSpectator,
         score: score || 0,
@@ -2891,7 +2899,7 @@
 
     function lbLocalRow(mode) {
       const mine = lbMine();
-      const key = lbNameKey(cleanName(stripMark(getMyName())));
+      const key = lbNameKey(myDisplayName());
       const rec = (key && mine.byName[key]) || (mine.name ? mine.byName[lbNameKey(mine.name)] : null);
       if (!rec) return null;
       const pick = m => rec[m] || { wins: 0, losses: 0, best: 0 };
@@ -3056,7 +3064,7 @@
       const list = document.getElementById("lbList");
       const count = document.getElementById("lbCount");
       if (!list) return;
-      const me = cleanName(getMyName());
+      const me = myDisplayName();
       list.innerHTML = "";
 
       const local = lbLocalRow(lbMode);
@@ -3327,7 +3335,7 @@
       bridgingLast = false;
       const mine = lbMine();
       const cut = Date.now() - 120000;
-      const here = lbNameKey(cleanName(stripMark(getMyName())));
+      const here = lbNameKey(myDisplayName());
       const settle = Date.now() - 10000;
       const keys = Object.keys(mine.byName).filter(k => (mine.byName[k].synced || 0) < cut &&
         (mine.byName[k].stamp || 0) < settle);
@@ -3644,7 +3652,7 @@
       }
       const id = "B" + Date.now().toString(36).toUpperCase();
       battle = { id, mode: "group", host: myId, joiners: {}, started: false, startAt: Date.now() + 4500 };
-      sendPacket({ t: "INVITE", kind: "group", to: "all", battleId: id, name: getMyName() });
+      sendPacket({ t: "INVITE", kind: "group", to: "all", battleId: id, name: myDisplayName() });
       roomStatusText("⚔ Invited everyone in the room. Starting in a few seconds...");
       scheduleHostStart(4500);
     }
@@ -3654,7 +3662,7 @@
       if (!peers[id]) return;
       const duelId = "D" + Date.now().toString(36).toUpperCase();
       battle = { id: duelId, mode: "1v1", host: myId, joiners: {}, started: false };
-      sendPacket({ t: "INVITE", kind: "duel", to: id, battleId: duelId, name: getMyName() });
+      sendPacket({ t: "INVITE", kind: "duel", to: id, battleId: duelId, name: myDisplayName() });
       roomStatusText("⚔ Challenge sent to " + peers[id].name + ". Waiting for them to accept.");
     }
 
@@ -3794,7 +3802,9 @@
       /* one plan per piece: two of the same shape in a row must not reuse the
          old aim, or the second one lands in a spot that no longer exists */
       if (autoPlan && autoPlan.type === current.type && autoPlan.piece === pieces) return;
-      const cfg = CPU_LEVELS.kupal;
+      /* whoever plays for you is the level on the CPU bar: pick Kupal for the
+         full thing, Intermediate for something human, Beginner to be gentle */
+      const cfg = cpuCfg();
       const nextType = (typeof queue !== "undefined" && queue[0]) || null;
       let plan = null;
       try { plan = botPlan(board, current.type, cfg, nextType); } catch (e) { plan = null; }
@@ -4008,7 +4018,7 @@
       if (pillCount) pillCount.textContent = here + (here === 1 ? " player" : " players") + " in";
 
       list.innerHTML = "";
-      list.appendChild(playerCard({ id: myId, name: getMyName(), mode: currentMode, alive: gameRunning, me: true }));
+      list.appendChild(playerCard({ id: myId, name: myDisplayName(), mode: currentMode, alive: gameRunning, me: true }));
 
       if (!ids.length) {
         const hint = document.createElement("div");
@@ -4665,6 +4675,7 @@
       const typed = field.value;
       const maker = nameHasMark(typed);
       const chosen = cleanName(stripMark(typed));
+      if (stripMark(typed) !== typed.trim()) field.value = chosen;   /* the pluses never stay */
       if (chosen.length >= 2) { field.value = chosen; setCreator(maker); }
       if (chosen.length >= 2) localStorage.setItem("pindutan_nick", chosen);
       if (roomCode) sendPacket(Object.assign({ t: "SYNC" }, myState()));

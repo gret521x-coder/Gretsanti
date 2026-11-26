@@ -76,12 +76,21 @@
       background: radial-gradient(circle at 50% 30%, rgba(190, 225, 255, 0.85), rgba(90, 140, 255, 0.35) 45%, rgba(0, 0, 0, 0) 75%);
     }
     .storm-fx.on { animation: stormFlash 2.6s ease-out both; }
-    .storm-fx i {
-      position: absolute; top: 0; bottom: 0; width: 3px;
-      background: linear-gradient(180deg, #ffffff, rgba(160, 210, 255, 0.1));
-      transform-origin: top center; filter: drop-shadow(0 0 10px #cfe6ff); opacity: 0;
+    .storm-fx svg.bolt {
+      position: absolute; top: -6%; height: 112%; width: auto; opacity: 0;
+      transform-origin: 50% 0;
+      filter: drop-shadow(0 0 9px #dbeaff) drop-shadow(0 0 26px #6aa8ff);
+      pointer-events: none;
     }
-    .storm-fx.on i { animation: bolt 1.6s ease-out both; }
+    .storm-fx svg.bolt polyline {
+      fill: none; stroke: #f7fbff; stroke-width: 5;
+      stroke-linejoin: round; stroke-linecap: round;
+    }
+    .storm-fx svg.bolt polyline.glow {
+      stroke: #8fc4ff; stroke-width: 15; opacity: 0.45;
+      filter: blur(1px);
+    }
+    .storm-fx.on svg.bolt { animation: bolt 1.7s ease-out both; }
     @keyframes stormFlash {
       0%, 100% { opacity: 0; }
       6%, 16% { opacity: 0.95; }
@@ -89,10 +98,13 @@
       34% { opacity: 0.8; }
     }
     @keyframes bolt {
-      0%, 100% { opacity: 0; transform: scaleY(0.2) rotate(6deg); }
-      8%, 22% { opacity: 1; transform: scaleY(1) rotate(3deg); }
-      30% { opacity: 0.2; transform: scaleY(1) rotate(-4deg); }
-      44% { opacity: 0.9; transform: scaleY(1) rotate(2deg); }
+      0%, 100% { opacity: 0; transform: scaleY(0.25) scaleX(0.7); }
+      5% { opacity: 1; transform: scaleY(1) scaleX(1); }
+      12% { opacity: 0.15; transform: scaleY(1) scaleX(1.05); }
+      20% { opacity: 1; transform: scaleY(1) scaleX(1); }
+      32% { opacity: 0.25; }
+      44% { opacity: 0.85; }
+      60% { opacity: 0; }
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -1131,7 +1143,11 @@
 <body>
 
   <!-- LIGHTNING, FOR EVERYONE -->
-  <div class="storm-fx" id="stormFx" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="storm-fx" id="stormFx" aria-hidden="true">
+<svg class="bolt" viewBox="0 0 120 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><polyline class="glow" points="64,0 40,148 76,166 42,296 78,314 46,452 72,470 50,600"></polyline><polyline points="64,0 40,148 76,166 42,296 78,314 46,452 72,470 50,600"></polyline></svg>
+    <svg class="bolt" viewBox="0 0 120 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><polyline class="glow" points="58,0 78,150 48,170 74,300 44,320 66,470 40,486 60,600"></polyline><polyline points="58,0 78,150 48,170 74,300 44,320 66,470 40,486 60,600"></polyline></svg>
+    <svg class="bolt" viewBox="0 0 120 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><polyline class="glow" points="52,0 30,140 60,158 34,290 66,308 38,470 58,486 44,600"></polyline><polyline points="52,0 30,140 60,158 34,290 66,308 38,470 58,486 44,600"></polyline></svg>
+  </div>
 
   <!-- ENCRYPTED LOCK SCREEN -->
   <div id="lockScreen">
@@ -1280,7 +1296,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.5</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.6</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -2578,8 +2594,9 @@
       const now = performance.now();
       if (now - stormAt < 600) return false;          /* one at a time */
       stormAt = now;
-      document.querySelectorAll("#stormFx i").forEach((bolt, i) => {
-        bolt.style.left = [18, 46, 74][i] + "%";
+      document.querySelectorAll("#stormFx svg.bolt").forEach((bolt, i) => {
+        bolt.style.left = [6, 41, 72][i] + "%";
+        bolt.style.transform = "rotate(" + [-7, 2, 8][i] + "deg)";
         bolt.style.animationDelay = (i * 0.18) + "s";
       });
       fx.classList.remove("on");
@@ -5689,7 +5706,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.5";
+    const BUILD_TAG = "v21.6";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

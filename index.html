@@ -653,7 +653,7 @@
     // Clean payload definitions without visible .html filenames, Luh removed
     const DEFAULT_APPS = [
         { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
-        { code: "PLD-02", icon: "🎮", title: "Pindutan v17", desc: "Lobby block arena", url: "labs/pindutan-v17.html", newTab: true },
+        { code: "PLD-02", icon: "🎮", title: "Pindutan v20", desc: "Neon block arena · opens on unaux", url: "https://aidekupal.unaux.com/pindutan.html", newTab: true },
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
@@ -798,13 +798,24 @@
     // =========================================================================
     // Saved grids keep whatever filenames they were stored with — move the two
     // that were renamed so an existing localStorage still opens the live pages.
-    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html" };
+    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html", "labs/pindutan-v20.html": "https://aidekupal.unaux.com/pindutan.html", "labs/pindutan-v18.html": "https://aidekupal.unaux.com/pindutan.html", "pindutan-v20.html": "https://aidekupal.unaux.com/pindutan.html", "pindutan-v18.html": "https://aidekupal.unaux.com/pindutan.html" };
+
+    /* the wording the game asks for, kept in one place */
+    const PINDUTAN_NAME = "Pindutan v20";
+    const PINDUTAN_DESC = "Neon block arena · opens on unaux";
 
     function upgradeAppLinks(apps) {
         let touched = false;
         apps.forEach(app => {
             if (app && APP_URL_UPGRADES[app.url]) {
                 app.url = APP_URL_UPGRADES[app.url];
+                touched = true;
+            }
+            /* a saved list keeps the old words otherwise: follow the game */
+            if (app && /pindutan/i.test(app.url || "") &&
+                (app.title !== PINDUTAN_NAME || app.desc !== PINDUTAN_DESC)) {
+                app.title = PINDUTAN_NAME;
+                app.desc = PINDUTAN_DESC;
                 touched = true;
             }
         });

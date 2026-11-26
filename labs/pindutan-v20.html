@@ -1,0 +1,5268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#07080d" />
+<title>Pindutan v20 - Neon Block Arena</title>
+<style>
+    :root {
+      --ink: #07080d;
+      --ink2: #0b0e17;
+      --card: #121826;
+      --card2: #18202f;
+      --line: #232e42;
+      --txt: #eaf1fb;
+      --mut: #8496b0;
+      --amber: #ffb020;
+      --amber2: #ff7a18;
+      --cyan: #3dd6f5;
+      --lime: #4ade80;
+      --red: #ff4d6d;
+      --violet: #a855f7;
+      --glow: rgba(255, 176, 32, 0.35);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: var(--ink);
+      color: var(--txt);
+      font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background:
+        radial-gradient(900px 420px at 50% -12%, rgba(255, 176, 32, 0.13), transparent 62%),
+        radial-gradient(700px 380px at 12% 108%, rgba(61, 214, 245, 0.09), transparent 60%),
+        linear-gradient(180deg, #07080d 0%, #090c14 55%, #05060a 100%);
+      background-attachment: fixed;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ============ LOCK SCREEN ============ */
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 30%, #131a29 0%, #05060a 72%);
+      backdrop-filter: blur(6px);
+    }
+
+    .lock-box {
+      width: 100%;
+      max-width: 340px;
+      padding: 26px 22px;
+      border-radius: 20px;
+      background: linear-gradient(160deg, #161d2c, #0c111b);
+      border: 1px solid var(--line);
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(255, 176, 32, 0.08);
+    }
+
+    .lock-badge {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 1.6rem;
+      background: linear-gradient(160deg, rgba(255, 176, 32, 0.2), rgba(255, 122, 24, 0.06));
+      border: 1px solid rgba(255, 176, 32, 0.35);
+      box-shadow: 0 0 22px rgba(255, 176, 32, 0.18);
+    }
+
+    .lock-box h2 { font-size: 1.3rem; margin: 0 0 6px; letter-spacing: 0.06em; }
+    .lock-box p { color: var(--mut); margin: 0 0 18px; font-size: 0.86rem; line-height: 1.5; }
+
+    .lock-box input {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #080b12;
+      color: var(--txt);
+      font-size: 1rem;
+      text-align: center;
+      letter-spacing: 0.14em;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .lock-box input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.14); }
+
+    .lock-actions { display: flex; gap: 8px; }
+    .lock-actions button { flex: 1; padding: 12px 10px; font-size: 0.85rem; }
+
+    #hintText {
+      font-size: 0.82rem;
+      color: var(--amber);
+      margin-top: 14px;
+      font-weight: 600;
+      display: none;
+    }
+
+    #lockError { color: var(--red); font-size: 0.8rem; margin-top: 10px; min-height: 16px; }
+
+    /* ============ BUTTONS ============ */
+    button {
+      background: var(--card2);
+      color: var(--txt);
+      border: 1px solid var(--line);
+      padding: 9px 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-family: inherit;
+      transition: transform 0.08s, border-color 0.15s, background 0.15s;
+    }
+
+    button:hover:not(:disabled) { border-color: rgba(255, 176, 32, 0.55); background: #1d2739; }
+    button:active:not(:disabled) { transform: scale(0.96); }
+    button:disabled { opacity: 0.42; cursor: not-allowed; }
+
+    button.primary {
+      background: linear-gradient(160deg, var(--amber), var(--amber2));
+      border-color: transparent;
+      color: #1a1206;
+      box-shadow: 0 6px 18px rgba(255, 140, 26, 0.28);
+    }
+
+    button.primary:hover:not(:disabled) { background: linear-gradient(160deg, #ffc247, #ff8a2b); }
+
+    button.ghost { background: transparent; }
+    button.on { border-color: rgba(74, 222, 128, 0.5); color: var(--lime); }
+    button.off { color: var(--mut); }
+
+    /* ============ HEADER ============ */
+    header {
+      width: 100%;
+      max-width: 720px;
+      padding: 10px 12px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    h1 {
+      margin: 0;
+      font-size: 1.28rem;
+      font-weight: 900;
+      letter-spacing: 0.22em;
+      background: linear-gradient(100deg, #ffe6a8, var(--amber) 46%, var(--amber2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 14px rgba(255, 176, 32, 0.28));
+    }
+
+    .version-badge {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      padding: 3px 7px;
+      border-radius: 6px;
+      color: var(--amber);
+      background: rgba(255, 176, 32, 0.12);
+      border: 1px solid rgba(255, 176, 32, 0.32);
+    }
+
+    .title-spacer { flex: 1; }
+    .icon-btn { padding: 7px 10px; font-size: 0.72rem; border-radius: 9px; }
+
+    /* segmented mode tabs */
+    .mode-bar {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 13px;
+      background: rgba(9, 12, 20, 0.9);
+      border: 1px solid var(--line);
+    }
+
+    .mode-bar button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--mut);
+      padding: 8px 4px;
+      border-radius: 9px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .mode-bar button.active-tab {
+      background: linear-gradient(160deg, rgba(255, 176, 32, 0.95), rgba(255, 122, 24, 0.9));
+      color: #1a1206;
+      box-shadow: 0 4px 14px rgba(255, 140, 26, 0.28);
+    }
+
+    .settings-bar { display: flex; gap: 5px; flex-wrap: wrap; }
+    .settings-bar button { padding: 6px 9px; font-size: 0.68rem; border-radius: 8px; }
+    .move-bar { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+    .move-bar .move-label {
+      font-size: 0.56rem; letter-spacing: 0.06em; color: var(--mut);
+      font-weight: 800; margin-right: 2px;
+    }
+    #glideOpen {
+      padding: 5px 10px; font-size: 0.62rem; border-radius: 8px; font-weight: 800;
+      border-color: rgba(61, 214, 245, 0.45); color: #9fe9ff;
+    }
+
+    /* ============ GLIDE SHEET ============ */
+    #glideSheet {
+      position: fixed; inset: 0; z-index: 70; display: none;
+      background: rgba(4, 7, 12, 0.86); backdrop-filter: blur(6px);
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 12px 10px 28px;
+    }
+    #glideSheet .glide-card {
+      max-width: 460px; margin: 0 auto; padding: 14px;
+      border-radius: 16px; border: 1px solid var(--line);
+      background: linear-gradient(165deg, #101827, #0a0f18);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+    }
+    .glide-head { display: flex; align-items: flex-start; gap: 8px; }
+    .glide-title {
+      font-size: 1.02rem; font-weight: 900; letter-spacing: 0.16em;
+      color: #3dd6f5; text-shadow: 0 0 14px rgba(61, 214, 245, 0.5);
+    }
+    .glide-sub { font-size: 0.58rem; letter-spacing: 0.1em; color: var(--mut); margin-top: 3px; }
+    #glideClose { margin-left: auto; padding: 6px 10px; }
+    #glidePreview {
+      display: block; width: 100%; height: 84px; margin: 12px 0 4px;
+      border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.07);
+      background: #070a11;
+    }
+    .glide-note { font-size: 0.54rem; color: var(--mut); }
+    .glide-row-title {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+      margin: 14px 0 6px; font-size: 0.56rem; letter-spacing: 0.12em; color: var(--mut);
+      font-weight: 800;
+    }
+    #glideBlurb { font-size: 0.54rem; letter-spacing: 0; text-transform: none; color: #7fb6c9; }
+    .glide-presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .glide-presets button { padding: 8px 2px; font-size: 0.56rem; border-radius: 9px; font-weight: 800; }
+    .glide-presets button.active {
+      background: #3dd6f5; color: #06212b; border-color: transparent;
+      box-shadow: 0 0 16px rgba(61, 214, 245, 0.35);
+    }
+    .glide-fine {
+      margin: 16px 0 8px; font-size: 0.56rem; letter-spacing: 0.12em;
+      color: var(--mut); font-weight: 800;
+    }
+    .glide-slider { display: block; margin-bottom: 12px; }
+    .glide-slider .gs-name { display: block; font-size: 0.72rem; font-weight: 800; }
+    .glide-slider .gs-name small {
+      display: block; font-size: 0.52rem; font-weight: 500; color: var(--mut);
+      letter-spacing: 0; margin-top: 2px;
+    }
+    .glide-slider .gs-line { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .glide-slider input[type="range"] {
+      flex: 1; height: 22px; accent-color: #3dd6f5; background: transparent;
+    }
+    .glide-slider .gs-value {
+      min-width: 62px; text-align: right; font-size: 0.66rem; font-weight: 800; color: #9fe9ff;
+    }
+    .glide-actions { display: flex; gap: 6px; margin-top: 14px; }
+    .glide-actions button { flex: 1; padding: 11px 8px; font-size: 0.72rem; }
+    .glide-actions #glideDone {
+      background: linear-gradient(160deg, rgba(255, 176, 32, 0.95), rgba(255, 122, 24, 0.9));
+      color: #1a1206; border-color: transparent; font-weight: 900;
+    }
+
+    /* ============ ONLINE ROOM CARD ============ */
+    .room-bar {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 11px;
+      border-radius: 14px;
+      background: linear-gradient(165deg, #121a28, #0b101a);
+      border: 1px solid var(--line);
+    }
+
+    .room-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .room-row input {
+      flex: 1 1 96px;
+      min-width: 0;
+      padding: 9px 10px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: #070a11;
+      color: var(--txt);
+      font-size: 0.8rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .room-row input:focus { border-color: var(--amber); }
+
+    .room-code-display {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      color: var(--cyan);
+      padding: 7px 8px;
+      border-radius: 8px;
+      background: rgba(61, 214, 245, 0.08);
+      border: 1px dashed rgba(61, 214, 245, 0.32);
+    }
+
+    .stream-btn { color: var(--violet); border-color: rgba(168, 85, 247, 0.4); }
+    .room-status { font-size: 0.7rem; color: var(--mut); line-height: 1.45; }
+    .room-status b { color: var(--txt); }
+
+    /* ============ ARENA ============ */
+    .arena {
+      width: 100%;
+      max-width: 720px;
+      padding: 8px 12px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* HUD strip */
+    .hud-strip {
+      width: 100%;
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 1px;
+    }
+    .hud-strip::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex: 1 0 auto;
+      min-width: 56px;
+      padding: 5px 8px;
+      border-radius: 10px;
+      background: linear-gradient(165deg, #131a28, #0b101a);
+      border: 1px solid var(--line);
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .chip h3 {
+      margin: 0 0 2px;
+      font-size: 0.54rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      color: var(--mut);
+      text-transform: uppercase;
+    }
+
+    .chip .val {
+      font-size: 0.92rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+    }
+
+    .chip.hot .val { color: var(--amber); }
+    .chip.warn .val { color: var(--red); }
+
+    /* Hold + Next pods */
+    .pods { display: flex; gap: 7px; align-items: stretch; justify-content: center; width: 100%; }
+
+    .pod {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 5px 9px;
+      border-radius: 12px;
+      background: linear-gradient(165deg, #121826, #0a0f18);
+      border: 1px solid var(--line);
+    }
+
+    .pod h3 {
+      margin: 0;
+      font-size: 0.54rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      color: var(--mut);
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    .pod canvas { display: block; border-radius: 6px; }
+
+    #holdCanvas { width: 48px; height: 48px; }
+    #nextCanvas { width: 150px; height: 50px; }
+
+    /* Board */
+    .board-wrapper {
+      position: relative;
+      width: min(100%, 26vh, 264px);
+      aspect-ratio: 1 / 2;
+      display: flex;
+      border-radius: 14px;
+      background: #05070c;
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(255, 176, 32, 0.05), 0 0 30px rgba(255, 176, 32, 0.08);
+      overflow: hidden;
+    }
+
+    .board-wrapper.danger { border-color: rgba(255, 77, 109, 0.55); box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.1), 0 0 34px rgba(255, 77, 109, 0.22); }
+
+    @supports (height: 100svh) {
+      .board-wrapper { width: min(100%, 26svh, 264px); }
+    }
+
+    #mainCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
+
+    .board-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 18px 16px;
+      text-align: center;
+      background: radial-gradient(circle at 50% 40%, rgba(14, 19, 30, 0.9), rgba(5, 7, 12, 0.96));
+      backdrop-filter: blur(3px);
+    }
+
+    .board-overlay h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      color: var(--amber);
+      text-shadow: 0 0 18px rgba(255, 176, 32, 0.4);
+    }
+
+    .board-overlay p { margin: 0; font-size: 0.74rem; color: var(--mut); line-height: 1.5; }
+    .board-overlay .over-stats { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .board-overlay .over-stats span {
+      font-size: 0.62rem;
+      color: var(--mut);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 3px 7px;
+    }
+    .board-overlay .over-stats b { color: var(--txt); }
+
+    /* ============ POWER BAR ============ */
+    .power-wrap { width: min(100%, 300px); display: flex; gap: 7px; align-items: center; }
+
+    .power-meter {
+      position: relative;
+      flex: 1;
+      height: 26px;
+      border-radius: 9px;
+      background: #0a0f18;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    #chargeFill {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #7c3aed, var(--cyan) 60%, #bdf4ff);
+      transition: width 0.22s ease;
+      box-shadow: 0 0 14px rgba(61, 214, 245, 0.5);
+    }
+
+    .power-meter span.lbl {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: #dceaf7;
+      mix-blend-mode: normal;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+    }
+
+    #powerBtn {
+      padding: 6px 12px;
+      font-size: 0.66rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      border-radius: 9px;
+      background: var(--card2);
+      border-color: var(--line);
+      color: var(--mut);
+    }
+
+    #powerBtn.ready {
+      background: linear-gradient(160deg, #ffe066, var(--amber2));
+      border-color: transparent;
+      color: #1a1206;
+      animation: pulse 1.1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 32, 0.55); }
+      50% { box-shadow: 0 0 22px 3px rgba(255, 176, 32, 0.35); }
+    }
+
+    /* ============ TOUCH PAD ============ */
+    .touch-controls {
+      width: 100%;
+      max-width: 460px;
+      padding: 9px 12px 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+    }
+
+    .touch-controls button {
+      height: 46px;
+      font-size: 1rem;
+      font-weight: 800;
+      border-radius: 12px;
+      background: linear-gradient(170deg, #17202f, #0d131e);
+      display: grid;
+      place-items: center;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .touch-controls button small {
+      display: block;
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      color: var(--mut);
+      font-weight: 800;
+      margin-top: 1px;
+    }
+
+    .touch-controls button.rot { color: var(--cyan); }
+    .touch-controls button.hard { color: var(--amber); border-color: rgba(255, 176, 32, 0.4); }
+    .touch-controls button.holdb { color: var(--violet); }
+    .touch-controls button.pauseb { color: var(--mut); }
+
+    footer {
+      padding: 10px 14px 16px;
+      font-size: 0.58rem;
+      color: #4d5b73;
+      text-align: center;
+      line-height: 1.7;
+      max-width: 640px;
+    }
+
+    footer b { color: #7d8da8; }
+
+    /* ============ OPPONENTS ============ */
+    .opponents-panel {
+      display: none;
+      width: 100%;
+      max-width: 640px;
+      padding: 10px;
+      border-radius: 14px;
+      background: linear-gradient(165deg, #101725, #0a0f18);
+      border: 1px solid var(--line);
+    }
+
+    .opponents-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+    .opponents-header h3 {
+      margin: 0;
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      color: var(--mut);
+      font-weight: 800;
+    }
+
+    .badges-group { display: flex; gap: 5px; }
+
+    .viewer-badge, .live-badge {
+      font-size: 0.56rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      padding: 3px 7px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      color: var(--mut);
+    }
+
+    .live-badge {
+      display: none;
+      color: var(--red);
+      border-color: rgba(255, 77, 109, 0.45);
+      background: rgba(255, 77, 109, 0.1);
+      animation: blink 1.6s ease-in-out infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0.45; } }
+
+    #opponentsGrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 9px;
+      justify-content: center;
+    }
+
+    .opp-card {
+      width: 88px;
+      padding: 5px;
+      border-radius: 10px;
+      background: #0a0f18;
+      border: 1px solid var(--line);
+      transition: border-color 0.2s;
+    }
+
+    .opp-card.dead { opacity: 0.45; filter: grayscale(0.7); }
+
+    .opp-name {
+      font-size: 0.58rem;
+      font-weight: 800;
+      color: var(--txt);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .opp-card canvas { display: block; width: 100%; height: auto; border-radius: 5px; }
+
+    .opp-stats { font-size: 0.52rem; color: var(--mut); line-height: 1.5; margin-top: 3px; }
+    .opp-stats b { color: var(--amber); }
+
+    /* v17.1 — the panel is on whenever you are in a human battle or watching */
+    .opponents-panel.on { display: block; padding: 7px 8px 8px; max-width: 560px; }
+    /* a short strip, same height as the CPU panel, so the touch pad stays on screen */
+    .opponents-panel.on #opponentsGrid {
+      margin-top: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: flex-start;
+      scrollbar-width: none;
+    }
+    .opponents-panel.on #opponentsGrid::-webkit-scrollbar { display: none; }
+    .opponents-panel.on #opponentsGrid > :first-child { margin-left: auto; }
+    .opponents-panel.on #opponentsGrid > :last-child { margin-right: auto; }
+    .opponents-panel.watch #opponentsGrid { flex-wrap: wrap; justify-content: center; }
+    .opponents-panel.watch #opponentsGrid > * { margin-left: 0 !important; margin-right: 0 !important; }
+
+    .opp-card { position: relative; width: auto; flex: none; display: flex; gap: 7px; align-items: center; }
+    .opp-card .opp-board { position: relative; flex: none; }
+    .opp-card canvas { width: 50px; height: 100px; }
+    .opponents-panel.duel .opp-card canvas { width: 62px; height: 124px; }
+    .opp-card .opp-info { min-width: 62px; max-width: 110px; }
+    .opponents-panel.duel .opp-card .opp-info { max-width: 180px; }
+    .opponents-panel.duel .opp-name { font-size: 0.7rem; }
+    .opponents-panel.duel .opp-stats { font-size: 0.6rem; }
+    .opp-card.live { border-color: rgba(61, 214, 245, 0.45); }
+    .opp-card .ko {
+      position: absolute;
+      left: 0; right: 0; top: 42%;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: var(--red);
+      text-shadow: 0 0 10px rgba(255, 77, 109, 0.6);
+      pointer-events: none;
+    }
+    .opp-card.dead { filter: grayscale(0.55); }
+
+    @media (min-width: 700px) {
+      h1 { font-size: 1.5rem; }
+      .board-wrapper { width: min(100%, 34vh, 300px); }
+      .touch-controls { display: none; }
+      .chip .val { font-size: 1rem; }
+    }
+
+    @media (max-width: 360px) {
+      .touch-controls button { height: 42px; }
+      .chip { min-width: 50px; }
+    }
+    /* ================= v16: rooms, lobby, bot ================= */
+    .top-pills { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+    .pill {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      padding: 6px 9px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: #0d121c;
+      color: var(--mut);
+    }
+
+    /* the two autopilot pills: same shape and type as the RELAY pill,
+       a green lamp dot first, then the single letter (K / I) */
+    .sig-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.18em;
+      padding: 6px 9px; border-radius: 9px;
+      border: 1px solid var(--line); background: #0d121c; color: var(--mut);
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .sig-pill .lamp {
+      width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto;
+      background: #4ade80; opacity: 0.45;
+      transition: opacity 0.15s ease, box-shadow 0.15s ease;
+    }
+    .sig-pill.on {
+      color: #4ade80; border-color: rgba(74, 222, 128, 0.45);
+      background: rgba(74, 222, 128, 0.09);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.18);
+    }
+    .sig-pill.on .lamp {
+      opacity: 1; box-shadow: 0 0 8px #4ade80;
+      animation: kpulse 1.8s ease-in-out infinite;
+    }
+    @keyframes kpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+    .pill.room {
+      color: var(--cyan);
+      border-color: rgba(61, 214, 245, 0.35);
+      font-family: ui-monospace, Menlo, monospace;
+      letter-spacing: 0.18em;
+    }
+
+    .pill.room.live { background: rgba(61, 214, 245, 0.1); }
+
+    .pill.relay.ok { color: var(--lime); border-color: rgba(74, 222, 128, 0.35); }
+    .pill.relay.warn { color: var(--amber); border-color: rgba(255, 176, 32, 0.4); }
+    .pill.relay.bad { color: var(--red); border-color: rgba(255, 77, 109, 0.4); }
+
+    .play-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+
+    .play-bar button {
+      padding: 9px 3px;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      border-radius: 10px;
+      color: var(--mut);
+    }
+
+    .play-bar button.active {
+      background: linear-gradient(160deg, rgba(255, 176, 32, 0.95), rgba(255, 122, 24, 0.9));
+      color: #1a1206;
+      border-color: transparent;
+      box-shadow: 0 4px 14px rgba(255, 140, 26, 0.25);
+    }
+
+    /* ---------- lobby sheet ---------- */
+    #lobbySheet {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      overflow-y: auto;
+      padding: 12px 12px 40px;
+      background: rgba(4, 6, 10, 0.9);
+      backdrop-filter: blur(8px);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .sheet { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 9px; }
+
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0; }
+    .sheet-head h2 { margin: 0; font-size: 0.9rem; letter-spacing: 0.24em; color: var(--amber); font-weight: 900; }
+    .hero-sub { font-size: 0.55rem; letter-spacing: 0.16em; color: var(--mut); margin-top: 3px; text-transform: uppercase; }
+    .room-item { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border-radius: 11px; background: #0b111b; border: 1px solid var(--line); }
+    .room-item + .room-item { margin-top: 6px; }
+    .room-tag {
+      font-family: ui-monospace, Menlo, monospace; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em;
+      color: var(--cyan); background: rgba(61, 214, 245, 0.1); border: 1px solid rgba(61, 214, 245, 0.3);
+      padding: 5px 6px; border-radius: 7px; flex: none;
+    }
+
+    .card-box {
+      background: linear-gradient(165deg, #111826, #0a0f18);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px;
+    }
+
+    .card-title {
+      font-size: 0.55rem;
+      letter-spacing: 0.17em;
+      color: var(--mut);
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .conn-row { display: flex; gap: 5px; flex-wrap: wrap; }
+
+    .conn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.58rem;
+      font-weight: 700;
+      color: var(--mut);
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #080c14;
+    }
+
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #39435a; flex: none; }
+    .dot.ok { background: var(--lime); box-shadow: 0 0 8px rgba(74, 222, 128, 0.75); }
+    .dot.wait { background: var(--amber); animation: blink 1.1s ease-in-out infinite; }
+    .dot.bad { background: var(--red); }
+
+    .lobby-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .p-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 9px;
+      border-radius: 11px;
+      background: #0b111b;
+      border: 1px solid var(--line);
+    }
+
+    .p-card.me { border-color: rgba(255, 176, 32, 0.45); background: rgba(255, 176, 32, 0.06); }
+    .p-card.busy { opacity: 0.72; }
+
+    .p-av {
+      width: 27px;
+      height: 27px;
+      flex: none;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 0.68rem;
+      font-weight: 900;
+      background: #1a2436;
+      color: var(--cyan);
+    }
+
+    .p-body { flex: 1; min-width: 0; }
+    .p-name { font-size: 0.72rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .p-sub { font-size: 0.56rem; color: var(--mut); letter-spacing: 0.03em; }
+    .p-card button { padding: 6px 8px; font-size: 0.56rem; border-radius: 8px; flex: none; }
+
+    #inviteBar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 95;
+      display: none;
+      padding: 9px 12px;
+      background: linear-gradient(160deg, #ffc247, var(--amber2));
+      color: #1a1206;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+    }
+
+    .ib-row { display: flex; align-items: center; gap: 8px; max-width: 560px; margin: 0 auto; }
+    .ib-row b { font-size: 0.7rem; line-height: 1.3; }
+    #inviteBar button { background: #1a1206; color: #ffd88a; border: none; padding: 8px 11px; font-size: 0.62rem; border-radius: 9px; }
+
+    /* ---------- bot panel ---------- */
+    .bot-panel {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+      gap: 9px;
+      align-items: center;
+      padding: 8px;
+      border-radius: 12px;
+      background: linear-gradient(165deg, #131a28, #0b101a);
+      border: 1px solid var(--line);
+    }
+
+    .bot-panel.on { display: flex; }
+    .bot-panel canvas { width: 62px; height: 124px; border-radius: 6px; display: block; flex: none; }
+    .bot-meta { flex: 1; font-size: 0.6rem; color: var(--mut); line-height: 1.55; }
+    .bot-meta b { color: var(--txt); font-size: 0.68rem; }
+    .bot-panel button { padding: 6px 9px; font-size: 0.58rem; }
+    .bot-meta .hint { color: #5d6c85; font-size: 0.54rem; }
+
+    .lvl-bar { grid-template-columns: repeat(3, 1fr); }
+    .lvl-bar button { font-size: 0.56rem; padding: 8px 2px; }
+    #cpuBlurb { font-size: 0.56rem; color: var(--mut); margin-top: 6px; }
+    /* ================= v17 look: block wordmark, dot grid, cards ================= */
+    body {
+      background-image:
+        radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1.2px),
+        radial-gradient(900px 420px at 50% -12%, rgba(255, 176, 32, 0.12), transparent 62%),
+        radial-gradient(700px 380px at 12% 108%, rgba(61, 214, 245, 0.08), transparent 60%),
+        linear-gradient(180deg, #080b11 0%, #090d15 55%, #06080d 100%);
+      background-size: 17px 17px, auto, auto, auto;
+      background-position: 0 0, center, center, center;
+    }
+
+    #lobbySheet { background: rgba(6, 9, 14, 0.94); }
+    #lobbySheet .sheet {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.2px);
+      background-size: 17px 17px;
+      border-radius: 18px;
+      padding: 4px 2px 10px;
+    }
+
+    #logoCanvas { display: block; height: 28px; width: auto; max-width: 58vw; }
+    #logoCanvasBig { display: block; height: 44px; width: auto; margin: 2px 0 4px; }
+
+    .wordmark-wrap { display: flex; flex-direction: column; gap: 2px; }
+
+    /* ---------- players as cards ---------- */
+    .player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+
+    .pg-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 8px 9px 8px;
+      border-radius: 13px;
+      background: linear-gradient(165deg, #131a26, #0b1018);
+      border: 1px solid var(--line);
+      min-width: 0;
+    }
+
+    .pg-card.me { border-color: rgba(255, 176, 32, 0.5); background: linear-gradient(165deg, #1a170f, #0d0f14); }
+    .pg-card.busy { opacity: 0.62; }
+
+    .pg-top { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .pg-av { width: 26px; height: 26px; flex: none; border-radius: 7px; background: rgba(255, 255, 255, 0.04); }
+    .pg-name.crowned { color: var(--amber); text-shadow: 0 0 12px rgba(255, 176, 32, 0.45); }
+    .pg-name {
+      font-size: 0.73rem; font-weight: 800; letter-spacing: 0.01em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pg-sub { font-size: 0.55rem; color: var(--mut); letter-spacing: 0.04em; }
+
+    .pg-btn {
+      margin-top: 4px;
+      padding: 5px 6px;
+      font-size: 0.52rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      border-radius: 999px;
+      background: transparent;
+      border: 1px solid rgba(61, 214, 245, 0.45);
+      color: var(--cyan);
+    }
+
+    .pg-btn:hover:not(:disabled) { background: rgba(61, 214, 245, 0.12); border-color: var(--cyan); }
+
+    .pg-you {
+      position: absolute; top: 7px; right: 8px;
+      font-size: 0.46rem; font-weight: 900; letter-spacing: 0.14em;
+      color: #1a1206; background: var(--amber); border-radius: 5px; padding: 1px 4px;
+    }
+
+    /* ---------- 2x2 play cards ---------- */
+    .play-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+
+    .play-card {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 11px;
+      border-radius: 13px;
+      background: linear-gradient(165deg, #131a26, #0b1018);
+      border: 1px solid var(--line);
+      color: var(--txt);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-align: left;
+    }
+
+    .play-card canvas { width: 22px; height: 22px; flex: none; }
+
+    .play-card.active {
+      border-color: rgba(255, 176, 32, 0.65);
+      background: linear-gradient(165deg, rgba(255, 176, 32, 0.18), rgba(255, 122, 24, 0.06));
+      color: #ffd98a;
+      box-shadow: 0 0 0 2px rgba(255, 176, 32, 0.12);
+    }
+
+    .invite-wide {
+      width: 100%;
+      margin-top: 8px;
+      padding: 13px 10px;
+      border-radius: 999px;
+      font-size: 0.66rem;
+      letter-spacing: 0.12em;
+    }
+
+    /* ---------- crowns ---------- */
+    .crown { display: inline-block; vertical-align: -1px; margin-right: 3px; line-height: 0; }
+    .crown.gold   { filter: drop-shadow(0 0 5px rgba(255, 210, 87, 0.75)); }
+    .crown.silver { filter: drop-shadow(0 0 4px rgba(207, 216, 227, 0.45)); }
+    .crown.bronze { filter: drop-shadow(0 0 4px rgba(200, 129, 74, 0.4)); }
+    .crown.wood   { opacity: 0.8; }
+    .lb-row .r { display: inline-flex; align-items: center; gap: 3px; min-width: 30px; }
+
+    /* ---------- hall of fame ---------- */
+    .lb-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+    .lb-tab {
+      flex: 1; padding: 7px 4px; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em;
+      color: var(--mut); background: #0b1220; border: 1px solid var(--line);
+      border-radius: 9px; cursor: pointer; text-transform: uppercase;
+    }
+    .lb-tab.active { color: var(--ink); background: linear-gradient(180deg, var(--amber), var(--amber2)); border-color: var(--amber); }
+    .lb-list { display: flex; flex-direction: column; gap: 4px; max-height: 210px; overflow-y: auto; }
+    .lb-row {
+      display: grid; grid-template-columns: 20px 1fr auto auto; gap: 8px; align-items: center;
+      padding: 6px 8px; border-radius: 8px; background: #0c1320; border: 1px solid transparent;
+      font-size: 0.66rem;
+    }
+    .lb-row.me { border-color: rgba(255, 176, 32, 0.45); background: rgba(255, 176, 32, 0.08); }
+    .lb-row .r { color: var(--mut); font-weight: 800; text-align: right; }
+    .lb-row .n { color: var(--txt); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-row .w { color: var(--lime); font-weight: 800; }
+    .lb-row .s { color: var(--mut); font-variant-numeric: tabular-nums; }
+    .lb-row .w small, .lb-row .s small { color: var(--mut); font-weight: 700; font-size: 0.5rem; letter-spacing: 0.08em; }
+    .lb-empty { color: var(--mut); font-size: 0.62rem; padding: 10px 6px; text-align: center; line-height: 1.5; }
+    .lb-note { color: var(--mut); font-size: 0.56rem; margin-top: 7px; line-height: 1.5; }
+    .lb-note.live { color: var(--lime); }
+    .lb-note.warn { color: var(--amber); }
+
+    /* ---------- the game screen keeps the same texture ---------- */
+    .arena { position: relative; }
+    .touch-controls button { background: linear-gradient(170deg, #141c29, #0a0f18); }
+    .touch-controls button.hard {
+      background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ENCRYPTED LOCK SCREEN -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <div class="lock-badge">🔒</div>
+      <h2>PINDUTAN</h2>
+
+      <div id="lockStep1">
+        <p>Enter the secret password to open the arena.</p>
+        <input type="password" id="passwordInput" placeholder="password" autocomplete="off" />
+        <div class="lock-actions">
+          <button class="primary" id="unlockBtn">Unlock</button>
+          <button id="hintBtn">Hint?</button>
+        </div>
+        <div class="hint-text" id="hintText">Hint: Ikaw ay isang?" 😉</div>
+      </div>
+
+      <div id="lockStep2" style="display:none;">
+        <p>Password accepted. Now pick the name you fight under — it goes on the leaderboard.</p>
+        <input type="text" id="gateNick" maxlength="14" placeholder="nickname" autocomplete="off" autocapitalize="words" />
+        <div class="lock-actions">
+          <button class="primary" id="gateNameBtn">Enter the arena</button>
+          <button id="gateBackBtn">Back</button>
+        </div>
+        <div class="hint-text" style="display:block;">No name, no game. Skip it and you start over at the password.</div>
+      </div>
+
+      <div class="error-text" id="lockError"></div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="title-row">
+      <canvas id="logoCanvas" width="240" height="36" role="img" aria-label="Pindutan"></canvas>
+      <span class="version-badge" id="versionBadge">v20</span>
+      <span class="title-spacer"></span>
+      <button class="icon-btn" id="pauseBtn">⏸ Pause</button>
+      <button class="icon-btn" id="lockBtn">🔒</button>
+    </div>
+
+    <div class="top-pills">
+      <span class="pill room live" id="roomPill">LOBBY</span>
+      <span class="pill relay" id="relayPill">RELAY 0/3</span>
+      <button class="pill sig-pill" id="kupalJoinBtn" style="display:none;" aria-pressed="false" title="Signal Kupal: let Kupal play your board"><span class="lamp"></span><span class="key">K</span></button>
+      <button class="pill sig-pill" id="interJoinBtn" style="display:none;" aria-pressed="false" title="Signal Intermediate: let the Intermediate brain play your board"><span class="lamp"></span><span class="key">I</span></button>
+      <button class="primary" id="lobbyBtn" style="padding:6px 11px;font-size:0.62rem;border-radius:9px;">🌐 Lobby</button>
+    </div>
+
+    <div class="play-bar" id="playBar">
+      <button data-play="solo" class="active">SOLO</button>
+      <button data-play="bot">VS CPU</button>
+      <button data-play="duel">1v1</button>
+      <button data-play="group">GROUP</button>
+    </div>
+
+    <div class="settings-bar">
+      <button id="toggleGhost" class="on">Ghost ON</button>
+      <button id="toggleAutoPause" class="on">Auto-Pause ON</button>
+      <button id="toggleSfx" class="on">SFX ON</button>
+    </div>
+
+    <div class="move-bar" id="moveBar">
+      <span class="move-label">GLIDE</span>
+      <button id="glideOpen">Smooth · 38 ms</button>
+    </div>
+  </header>
+
+  <!-- INVITE BANNER -->
+  <div id="inviteBar">
+    <div class="ib-row">
+      <b id="inviteText">Invite</b>
+      <span style="flex:1"></span>
+      <button id="inviteJoin">JOIN</button>
+      <button id="inviteNo">NO</button>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
+  <!-- GLIDE: how a held button moves the piece -->
+  <div id="glideSheet">
+    <div class="glide-card">
+      <div class="glide-head">
+        <div>
+          <div class="glide-title">GLIDE</div>
+          <div class="glide-sub">HOW YOUR PIECES MOVE · SAVED ON THIS DEVICE</div>
+        </div>
+        <button id="glideClose" aria-label="Close">✕</button>
+      </div>
+
+      <canvas id="glidePreview" width="360" height="96" role="img" aria-label="Preview of a held piece sliding"></canvas>
+      <div class="glide-note">Preview: a piece held — then with your settings</div>
+
+      <div class="glide-row-title"><span>PRESETS</span><span id="glideBlurb">the default — glides, still quick</span></div>
+      <div class="glide-presets" id="glidePresets">
+        <button data-preset="relaxed">Relaxed</button>
+        <button data-preset="smooth" class="active">Smooth</button>
+        <button data-preset="fast">Fast</button>
+        <button data-preset="pro">Pro</button>
+        <button data-preset="snap">Snap</button>
+      </div>
+
+      <div class="glide-fine">FINE-TUNE</div>
+
+      <label class="glide-slider">
+        <span class="gs-name">Start delay<small>wait before a held button glides</small></span>
+        <span class="gs-line">
+          <input type="range" id="glideDelay" min="0" max="400" step="10" value="130">
+          <span class="gs-value" id="glideDelayVal">130 ms</span>
+        </span>
+      </label>
+
+      <label class="glide-slider">
+        <span class="gs-name">Glide speed<small>time per column while held</small></span>
+        <span class="gs-line">
+          <input type="range" id="glideSpeed" min="4" max="200" step="1" value="38">
+          <span class="gs-value" id="glideSpeedVal">38 ms</span>
+        </span>
+      </label>
+
+      <label class="glide-slider">
+        <span class="gs-name">Slide look<small>how softly the piece slides</small></span>
+        <span class="gs-line">
+          <input type="range" id="glideLook" min="0" max="2" step="1" value="2">
+          <span class="gs-value" id="glideLookVal">soft</span>
+        </span>
+      </label>
+
+      <label class="glide-slider">
+        <span class="gs-name">Soft drop<small>time per row while ▼ is held</small></span>
+        <span class="gs-line">
+          <input type="range" id="glideSoft" min="4" max="200" step="1" value="32">
+          <span class="gs-value" id="glideSoftVal">32 ms</span>
+        </span>
+      </label>
+
+      <div class="glide-actions">
+        <button id="glideReset">Reset to Smooth</button>
+        <button id="glideDone">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lobbySheet">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="wordmark-wrap">
+          <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.8</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
+          <button id="lobbyClose">✕</button>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <div class="card-title"><span>Lobby</span><span id="lobbyPillCount">1 in</span></div>
+        <div class="conn-row">
+          <span class="conn"><span class="dot" id="dotLocal"></span>Local tabs</span>
+          <span class="conn"><span class="dot wait" id="dotB0"></span>EMQX</span>
+          <span class="conn"><span class="dot wait" id="dotB1"></span>HiveMQ</span>
+          <span class="conn"><span class="dot wait" id="dotB2"></span>Mosquitto</span>
+        </div>
+        <div class="room-row" style="margin-top:9px;">
+          <input type="text" id="nicknameInput" maxlength="14" placeholder="Your nickname" />
+          <button id="watchToggle">👁 Watch</button>
+        </div>
+        <div class="room-status" id="roomStatus" style="margin-top:8px;">
+          Everyone who opens the game lands here. No codes, no joining — you are already in.
+        </div>
+      </div>
+
+      <div class="card-box">
+        <div class="card-title"><span>Who is here</span><span id="lobbyCount">1 / 7</span></div>
+        <div class="player-grid" id="lobbyList">
+          <div style="color:var(--mut);font-size:0.62rem;padding:6px;">Nobody here yet.</div>
+        </div>
+        <button class="primary invite-wide" id="inviteAllBtn">⚔ INVITE EVERYONE TO A GROUP BATTLE</button>
+      </div>
+
+      <div class="card-box" id="lbCard">
+        <div class="card-title">
+          <span>🏆 Hall of fame</span>
+          <span style="display:flex;gap:6px;align-items:center;">
+            <span id="lbCount" style="color:var(--mut);font-size:0.55rem;">—</span>
+            <button id="lbRefresh" style="padding:2px 7px;font-size:0.6rem;border-radius:7px;">↻</button>
+          </span>
+        </div>
+        <div class="lb-tabs" id="lbTabs">
+          <button class="lb-tab active" data-lb="all">ALL</button>
+          <button class="lb-tab" data-lb="duel">1V1</button>
+          <button class="lb-tab" data-lb="group">GROUP</button>
+        </div>
+        <div class="lb-list" id="lbList">
+          <div class="lb-empty">Loading the ladder…</div>
+        </div>
+        <div class="lb-note" id="lbNote">Human battles only — solo runs and VS CPU never count.</div>
+      </div>
+
+      <div class="card-box">
+        <div class="card-title"><span>What do you want to play?</span></div>
+        <div class="play-grid" id="lobbyPlayBar">
+          <button class="play-card" data-play="solo"><canvas width="44" height="44"></canvas>SOLO</button>
+          <button class="play-card" data-play="bot"><canvas width="44" height="44"></canvas>VS CPU</button>
+          <button class="play-card" data-play="duel"><canvas width="44" height="44"></canvas>1V1</button>
+          <button class="play-card" data-play="group"><canvas width="44" height="44"></canvas>GROUP</button>
+        </div>
+        <div class="card-title" style="margin-top:10px;"><span>CPU level</span></div>
+        <div class="play-bar lvl-bar" id="cpuLevelBar">
+          <button data-lvl="beginner">Beginner</button>
+          <button data-lvl="intermediate">Intermediate</button>
+          <button data-lvl="kupal">Kupal</button>
+        </div>
+        <div id="cpuBlurb">steady, clears when it can</div>
+        <div class="room-status" id="playHint" style="margin-top:8px">
+          Solo and VS CPU start at once. For a human, tap ⚔ 1v1 on their name above.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN ARENA -->
+  <main class="arena">
+    <div class="hud-strip">
+      <div class="chip hot"><h3>Score</h3><div class="val" id="scoreVal">0</div></div>
+      <div class="chip"><h3>Best</h3><div class="val" id="bestVal">0</div></div>
+      <div class="chip"><h3>Lines</h3><div class="val" id="linesVal">0</div></div>
+      <div class="chip"><h3>Lvl</h3><div class="val" id="levelVal">1</div></div>
+      <div class="chip"><h3>Sent</h3><div class="val" id="sentVal">0</div></div>
+      <div class="chip"><h3>Combo</h3><div class="val" id="comboVal">0</div></div>
+      <div class="chip warn"><h3>In</h3><div class="val" id="garbageVal">0</div></div>
+    </div>
+
+    <div class="pods">
+      <div class="pod" id="playerLeftStats">
+        <h3>Hold</h3>
+        <canvas id="holdCanvas" width="96" height="96"></canvas>
+      </div>
+      <div class="pod" id="playerRightStats">
+        <h3>Next</h3>
+        <canvas id="nextCanvas" width="288" height="96"></canvas>
+      </div>
+    </div>
+
+    <div class="board-wrapper" id="playerBoardWrapper">
+      <canvas id="mainCanvas" width="260" height="520"></canvas>
+      <div class="board-overlay" id="boardOverlay">
+        <h2 id="overlayTitle">PINDUTAN</h2>
+        <p id="overlayDesc">Tap start. Stack the neon blocks, clear lines, and fire garbage at your rivals.</p>
+        <div class="over-stats" id="overStats"></div>
+        <button class="primary" id="startBtn">Start Game</button>
+      </div>
+    </div>
+
+    <div class="power-wrap">
+      <div class="power-meter">
+        <span id="chargeFill"></span>
+        <span class="lbl" id="chargeLabel">PINDUTAN CHARGE</span>
+      </div>
+      <button id="powerBtn" disabled>GO</button>
+    </div>
+
+    <div class="bot-panel" id="botPanel">
+      <canvas id="botCanvas" width="80" height="160"></canvas>
+      <div class="bot-meta" id="botMetaBox" title="tap to change level">
+        CPU <b id="botName">INTERMEDIATE</b><br />
+        <span id="botLine">Score 0 · Lines 0 · Lv 1</span><br />
+        <span class="hint">tap here to change level</span>
+      </div>
+      <button id="botRestart">Restart</button>
+    </div>
+
+    <!-- OPPONENTS & LIVE STREAM VIEW -->
+    <div class="opponents-panel" id="opponentsPanel">
+      <div class="opponents-header">
+        <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
+        <div class="badges-group">
+          <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
+          <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
+        </div>
+      </div>
+      <div id="opponentsGrid">
+        <div style="color:var(--mut); font-size:0.68rem; padding:10px; text-align:center;">
+          Waiting for players to join the room...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MOBILE TOUCH CONTROLS -->
+  <div class="touch-controls">
+    <button class="holdb" onclick="mobileAction('hold')">⇄<small>HOLD</small></button>
+    <button class="rot" onclick="mobileAction('rotCCW')">↺<small>ROTATE</small></button>
+    <button class="rot" onclick="mobileAction('rotCW')">↻<small>ROTATE</small></button>
+    <button class="hard" onclick="mobileAction('drop')">⤓<small>DROP</small></button>
+    <button id="btnLeft">◀<small>LEFT</small></button>
+    <button id="btnDown">▼<small>SOFT</small></button>
+    <button id="btnRight">▶<small>RIGHT</small></button>
+    <button class="pauseb" onclick="togglePause()">⏸<small>PAUSE</small></button>
+  </div>
+
+  <footer>
+    <b>← →</b> move · <b>↑ / X</b> rotate · <b>Z</b> rotate back · <b>↓</b> soft drop ·
+    <b>Space</b> hard drop · <b>C</b> hold · <b>E</b> Pindutan burst · <b>P</b> pause
+  </footer>
+
+<script>
+    /* =========================================================
+       1. ENCRYPTED PASSWORD VERIFICATION ("kupal" via SHA-256)
+       ========================================================= */
+    /* crypto.subtle only exists on https:// and localhost — over a plain-http LAN
+       address (XAMPP on 192.168.x.x) it is undefined and the lock could never open.
+       Both sides use this same function, so the fallback still matches. */
+    function fallbackHash(str) {
+      let h1 = 0x811c9dc5, h2 = 0xc2b2ae35;
+      for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+        h2 = Math.imul(h2 ^ c, 2654435761) >>> 0;
+      }
+      return (h1.toString(16) + h2.toString(16)).padStart(16, "0");
+    }
+
+    async function sha256(str) {
+      if (!(window.crypto && crypto.subtle && crypto.subtle.digest)) return fallbackHash(str);
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    let targetHash = "";
+    (async () => {
+      targetHash = await sha256(atob("a3VwYWw="));
+    })();
+
+    const lockScreen = document.getElementById("lockScreen");
+    const passwordInput = document.getElementById("passwordInput");
+    const lockError = document.getElementById("lockError");
+
+    /* ---- the gate has two steps: password, then a name you must give.
+            No name means no arena, and the password has to be typed again. ---- */
+    const gateNick = document.getElementById("gateNick");
+
+    /* the maker's key — kept out of sight, stripped before a name is used or stored */
+    const CREATOR_MARK = atob("Kyt2");
+
+    function nameHasMark(raw) {
+      return String(raw || "").trim().toLowerCase().endsWith(CREATOR_MARK);
+    }
+
+    function stripMark(raw) {
+      let text = String(raw || "").trim();
+      if (nameHasMark(text)) text = text.slice(0, -CREATOR_MARK.length);
+      /* the key ends in a plus, so "+" or "++" can be left behind: a name
+         never carries a trailing plus into the lobby, the packets or the ladder */
+      return text.replace(/[+\uFF0B]+$/, "").trim();
+    }
+
+    /* what other players, the lobby card and the ladder should see */
+    function myDisplayName() {
+      return cleanName(stripMark(getMyName()));
+    }
+
+    /* A nickname field never shows a plus. Every "+" typed is swallowed and
+       remembered; a "v" straight after them finishes the key, so the name in
+       the box is always clean and nobody watching the screen sees a mark. */
+    function wireMarkField(field, arm) {
+      if (!field) return;
+      let hidden = 0;        /* pluses typed and not shown */
+      let hiddenAt = 0;
+      let since = 0;         /* characters typed since those pluses */
+      const reset = () => { hidden = 0; since = 0; };
+      field.addEventListener("input", () => {
+        const raw = field.value;
+        /* any edit that does not finish the key takes the crown away again */
+        if (arm) arm(false);
+        if (!raw) { reset(); return; }
+        /* the whole key pasted in one go */
+        if (nameHasMark(raw)) {
+          field.value = raw.slice(0, -CREATOR_MARK.length)
+            .replace(/[+\uFF0B]/g, "");
+          reset();
+          if (arm) arm(true);
+          return;
+        }
+        const pluses = (raw.match(/[+\uFF0B]/g) || []).length;
+        if (pluses) {
+          field.value = raw.replace(/[+\uFF0B]/g, "");
+          hidden += pluses;
+          hiddenAt = Date.now();
+          since = 0;
+          return;
+        }
+        if (hidden && since === 0 && /v$/i.test(raw) && Date.now() - hiddenAt < 2500) {
+          field.value = raw.slice(0, -1);
+          reset();
+          if (arm) arm(true);
+          return;
+        }
+        if (hidden) since++;
+      });
+      field.addEventListener("blur", reset);
+    }
+
+    /* lives in memory only: a reload, or the 🔒 button, takes it away.
+       nothing about it is ever written to local or session storage. */
+    let creatorOn = false;
+
+    /* an older build kept this lying around; clear it on every load */
+    try { localStorage.removeItem("pindutan_creator"); sessionStorage.removeItem("pindutan_creator"); } catch (e) {}
+
+    function isCreator() { return creatorOn; }
+
+    function setCreator(on) {
+      creatorOn = !!on;
+      if (!creatorOn) { kupalLightOn = false; autoPlan = null; }
+      /* older builds left the crown in the browser for good — clear it */
+      try {
+        localStorage.removeItem("pindutan_creator");
+        sessionStorage.removeItem("pindutan_creator");
+        sessionStorage.removeItem("pindutan_kupal_join");
+      } catch (e) {}
+      applyCreatorLock();
+      if (typeof renderLobby === "function" && typeof roomCode !== "undefined" && roomCode) renderLobby();
+      if (typeof lbFetch === "function" && typeof lbMode !== "undefined") lbFetch(lbMode, true);
+    }
+
+    /* everybody gets Kupal in VS CPU; the maker just also gets the crown and
+       the two pills that hand their own board to a brain */
+    function applyCreatorLock() {
+      const maker = isCreator();
+      paintAutopilotButtons();
+      const badge = document.getElementById("versionBadge");
+      if (badge) badge.innerHTML = maker ? "v20 " + crownSvg("gold", 10) : "v20";
+      if (typeof paintCpuLevels === "function" && typeof CPU_LEVELS !== "undefined") paintCpuLevels();
+    }
+
+    function cleanName(raw) {
+      return String(raw || "")
+        .replace(/[^\w .\-]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 14);
+    }
+
+    function showLockStep(step) {
+      document.getElementById("lockStep1").style.display = step === 1 ? "block" : "none";
+      document.getElementById("lockStep2").style.display = step === 2 ? "block" : "none";
+      if (step === 1) {
+        passwordInput.value = "";
+        lockError.textContent = "";
+        setTimeout(() => passwordInput.focus(), 30);
+      } else {
+        const saved = localStorage.getItem("pindutan_nick") || "";
+        gateNick.value = /^Player_\d+$/.test(saved) ? "" : saved;
+        lockError.textContent = "";
+        setTimeout(() => { gateNick.focus(); gateNick.select(); }, 30);
+      }
+    }
+
+    async function attemptUnlock() {
+      const val = passwordInput.value.trim().toLowerCase();
+      if (!val) return;
+      const hashed = await sha256(val);
+      if (hashed === targetHash) {
+        passwordInput.value = "";
+        showLockStep(2);
+      } else {
+        lockError.textContent = "Wrong password! Try again.";
+      }
+    }
+
+    let gateMarkArmed = false;
+
+    function acceptGateName() {
+      const raw = gateNick.value;
+      const maker = nameHasMark(raw) || gateMarkArmed;
+      const name = cleanName(stripMark(raw));
+      if (name.length < 2) { rejectGateName(); return; }
+      gateMarkArmed = false;
+      localStorage.setItem("pindutan_nick", name);
+      setCreator(maker);          /* no mark, no crown — asked again next visit */
+      const ni = document.getElementById("nicknameInput");
+      if (ni) ni.value = name;
+      sessionStorage.setItem("pindutan_unlocked", "1");
+      lockScreen.style.display = "none";
+      lockError.textContent = "";
+      if (typeof afterGateName === "function") afterGateName(name);
+    }
+
+    function rejectGateName() {
+      /* the whole gate resets: nothing is stored, the password is asked again */
+      gateMarkArmed = false;
+      sessionStorage.removeItem("pindutan_unlocked");
+      gateNick.value = "";
+      showLockStep(1);
+      lockError.textContent = "A name is required — we start over. Type the password again.";
+      lockError.style.display = "block";
+    }
+
+    function lockEverything() {
+      sessionStorage.removeItem("pindutan_unlocked");
+      setCreator(false);           /* the crown and the light go with it */
+      lockScreen.style.display = "flex";
+      showLockStep(1);
+    }
+
+    if (sessionStorage.getItem("pindutan_unlocked") === "1" && cleanName(localStorage.getItem("pindutan_nick")).length >= 2) {
+      lockScreen.style.display = "none";
+    } else {
+      sessionStorage.removeItem("pindutan_unlocked");
+      lockScreen.style.display = "flex";
+      showLockStep(1);
+    }
+
+    document.getElementById("unlockBtn").addEventListener("click", attemptUnlock);
+    passwordInput.addEventListener("keydown", e => { if (e.key === "Enter") attemptUnlock(); });
+    document.getElementById("gateNameBtn").addEventListener("click", acceptGateName);
+    gateNick.addEventListener("keydown", e => { if (e.key === "Enter") acceptGateName(); });
+    document.getElementById("gateBackBtn").addEventListener("click", () => showLockStep(1));
+    wireMarkField(gateNick, armed => { gateMarkArmed = !!armed; });
+    document.getElementById("hintBtn").addEventListener("click", () => {
+      document.getElementById("hintText").style.display = "block";
+    });
+    document.getElementById("lockBtn").addEventListener("click", lockEverything);
+    document.getElementById("kupalJoinBtn").addEventListener("click", () => chooseAutopilot("kupal"));
+    document.getElementById("interJoinBtn").addEventListener("click", () => chooseAutopilot("intermediate"));
+
+    /* =========================================================
+       2. WEB AUDIO SOUND EFFECTS
+       ========================================================= */
+    let sfxEnabled = true;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(freq, type = "sine", duration = 0.08, vol = 0.07) {
+      if (!sfxEnabled) return;
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+    /* =========================================================
+       3. NEON BLOCK ENGINE (v15 rework)
+       New in v15: lock delay + slide, 3-piece preview queue,
+       T-spin / back-to-back / perfect-clear scoring,
+       PINDUTAN charge burst, line-clear flash, responsive board.
+       ========================================================= */
+    const COLS = 10;
+    const ROWS = 20;
+    let BLOCK = 26;            /* css px per cell, recalculated on resize */
+
+    const COLORS = {
+      I: "#22d3ee",
+      J: "#3b82f6",
+      L: "#f97316",
+      O: "#facc15",
+      S: "#22c55e",
+      T: "#a855f7",
+      Z: "#f43f5e",
+      G: "#4b5563"
+    };
+
+    const SHAPES = {
+      I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+      J: [[1,0,0],[1,1,1],[0,0,0]],
+      L: [[0,0,1],[1,1,1],[0,0,0]],
+      O: [[1,1],[1,1]],
+      S: [[0,1,1],[1,1,0],[0,0,0]],
+      T: [[0,1,0],[1,1,1],[0,0,0]],
+      Z: [[1,1,0],[0,1,1],[0,0,0]]
+    };
+
+    /* --- timing / feel --- */
+    const LOCK_DELAY = 480;      /* ms a piece may rest on the stack before locking */
+    const LOCK_RESETS = 15;      /* moves/rotations that may restart the delay */
+    const CLEAR_FLASH = 150;     /* ms the cleared rows flash before collapsing */
+    const MAX_QUEUE = 3;
+
+    let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    let bag = [];
+    let queue = [];
+    let current = null;
+    let holdPiece = null;
+    let canHold = true;
+
+    let score = 0;
+    let bestScore = parseInt(localStorage.getItem("pindutan_best") || "0", 10);
+    let lines = 0;
+    let level = 1;
+    let sentLines = 0;
+    let combo = -1;
+    let maxCombo = 0;
+    let b2b = false;
+    let pendingGarbage = 0;
+    let charge = 0;
+    let pieces = 0;
+    let startedAt = 0;
+
+    let lockTimer = 0;
+    let lockResets = 0;
+    let grounded = false;
+    let lastAction = "";
+    let clearingRows = [];
+    let clearTimer = 0;
+    let shake = 0;
+
+    let floaters = [];
+    let gameRunning = false;
+    let isPaused = false;
+    let ghostEnabled = true;
+    let autoPauseEnabled = true;
+    let currentMode = "solo";   /* "solo" | "bot" | "1v1" | "group" */
+    let isSpectator = false;
+
+    let dropCounter = 0;
+    let lastTime = 0;
+
+    const mainCanvas = document.getElementById("mainCanvas");
+    const ctx = mainCanvas.getContext("2d");
+    const holdCtx = document.getElementById("holdCanvas").getContext("2d");
+    const nextCtx = document.getElementById("nextCanvas").getContext("2d");
+    const boardWrapper = document.getElementById("playerBoardWrapper");
+    const chargeFill = document.getElementById("chargeFill");
+    const chargeLabel = document.getElementById("chargeLabel");
+    const powerBtn = document.getElementById("powerBtn");
+
+    document.getElementById("bestVal").textContent = bestScore;
+
+    /* ---------- piece supply ---------- */
+    function refillBag() {
+      const types = ["I", "J", "L", "O", "S", "T", "Z"];
+      for (let i = types.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [types[i], types[j]] = [types[j], types[i]];
+      }
+      bag.push(...types);
+    }
+
+    function takeType() {
+      if (bag.length < 2) refillBag();
+      return bag.shift();
+    }
+
+    function makePiece(type) {
+      return {
+        type,
+        matrix: SHAPES[type].map(r => [...r]),
+        x: Math.floor(COLS / 2) - Math.ceil(SHAPES[type].length / 2),
+        y: type === "I" ? -1 : 0
+      };
+    }
+
+    function refillQueue() {
+      while (queue.length < MAX_QUEUE) queue.push(takeType());
+    }
+
+    function takeFromBag() {
+      refillQueue();
+      return makePiece(queue.shift());
+    }
+
+    /* ---------- board maths ---------- */
+    function collide(b, piece, offX = 0, offY = 0, mat = piece.matrix) {
+      for (let r = 0; r < mat.length; r++) {
+        for (let c = 0; c < mat[r].length; c++) {
+          if (!mat[r][c]) continue;
+          const nx = piece.x + c + offX;
+          const ny = piece.y + r + offY;
+          if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+          if (ny >= 0 && b[ny][nx]) return true;
+        }
+      }
+      return false;
+    }
+
+    function isGrounded() {
+      return !!current && collide(board, current, 0, 1);
+    }
+
+    function rotateMatrix(mat, dir) {
+      const N = mat.length;
+      const res = Array.from({ length: N }, () => Array(N).fill(0));
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (dir > 0) res[c][N - 1 - r] = mat[r][c];
+          else res[N - 1 - c][r] = mat[r][c];
+        }
+      }
+      return res;
+    }
+
+    function tryRotate(dir) {
+      if (!current || !gameRunning || isPaused) return false;
+      const rotated = rotateMatrix(current.matrix, dir);
+      const kicks = [0, -1, 1, -2, 2];
+      for (const kick of kicks) {
+        if (!collide(board, current, kick, 0, rotated)) {
+          current.matrix = rotated;
+          current.x += kick;
+          lastAction = "rotate";
+          touchLock();
+          playTone(440, "triangle", 0.045, 0.05);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /* every successful shift/rotation while resting resets the lock timer */
+    function touchLock() {
+      if (isGrounded() && lockResets < LOCK_RESETS) {
+        lockTimer = 0;
+        lockResets++;
+      }
+    }
+
+    function move(dx) {
+      if (!current || !gameRunning || isPaused) return false;
+      if (!collide(board, current, dx, 0)) {
+        current.x += dx;
+        lastAction = "move";
+        touchLock();
+        return true;
+      }
+      return false;
+    }
+
+    function softStep() {
+      if (!current || !gameRunning || isPaused) return false;
+      if (!collide(board, current, 0, 1)) {
+        current.y++;
+        score += 1;
+        lastAction = "move";
+        updateHUD();
+        return true;
+      }
+      return false;
+    }
+
+    function hardDrop() {
+      if (!current || !gameRunning || isPaused) return;
+      let dropped = 0;
+      while (!collide(board, current, 0, 1)) {
+        current.y++;
+        dropped++;
+      }
+      score += dropped * 2;
+      shake = Math.min(6, 2 + dropped * 0.15);
+      playTone(190, "square", 0.05, 0.05);
+      lockPiece();
+    }
+
+    /* ---------- garbage ---------- */
+    function applyPendingGarbage() {
+      if (pendingGarbage <= 0) return;
+      const rows = Math.min(pendingGarbage, 8);
+      const holes = [];
+      for (let i = 0; i < rows; i++) holes.push(Math.floor(Math.random() * COLS));
+      for (let i = 0; i < rows; i++) {
+        board.shift();
+        const row = Array(COLS).fill("G");
+        row[holes[i]] = null;
+        board.push(row);
+      }
+      pendingGarbage -= rows;
+      updateHUD();
+      playTone(140, "sawtooth", 0.15, 0.08);
+      addFloater("+" + rows + " GARBAGE", "#ff4d6d");
+    }
+
+    /* ---------- lock / clear / score ---------- */
+    function tSpinKind() {
+      if (!current || current.type !== "T" || lastAction !== "rotate") return null;
+      const cx = current.x + 1;
+      const cy = current.y + 1;
+      const filled = (x, y) => (x < 0 || x >= COLS || y >= ROWS) ? true : (y >= 0 ? !!board[y][x] : false);
+      let n = 0;
+      if (filled(cx - 1, cy - 1)) n++;
+      if (filled(cx + 1, cy - 1)) n++;
+      if (filled(cx - 1, cy + 1)) n++;
+      if (filled(cx + 1, cy + 1)) n++;
+      if (n < 3) return null;
+      return n === 4 ? "full" : "mini";
+    }
+
+    function lockPiece() {
+      if (!current) return;
+
+      for (let r = 0; r < current.matrix.length; r++) {
+        for (let c = 0; c < current.matrix[r].length; c++) {
+          if (!current.matrix[r][c]) continue;
+          const by = current.y + r;
+          const bx = current.x + c;
+          if (by < 0) { endGame(); return; }
+          board[by][bx] = current.type;
+        }
+      }
+
+      const tspin = tSpinKind();
+      const full = [];
+      for (let r = 0; r < ROWS; r++) {
+        if (board[r].every(cell => cell !== null)) full.push(r);
+      }
+
+      current = null;
+      pieces++;
+
+      if (full.length) {
+        clearingRows = full;
+        clearTimer = CLEAR_FLASH;
+        if (tspin) addFloater(tspin === "full" ? "T-SPIN!" : "MINI SPIN", "#a855f7");
+        playTone(680 + full.length * 90, "square", 0.12, 0.07);
+      } else {
+        if (tspin) addFloater(tspin === "full" ? "T-SPIN" : "MINI", "#a855f7");
+        combo = -1;
+        applyPendingGarbage();
+        playTone(210, "sine", 0.05, 0.05);
+        finishTurn(0, tspin, false);
+        return;
+      }
+
+      /* remember the spin for the collapse step */
+      pendingSpin = tspin;
+    }
+
+    let pendingSpin = null;
+
+    function collapseRows() {
+      const count = clearingRows.length;
+      const tspin = pendingSpin;
+      pendingSpin = null;
+
+      for (let i = clearingRows.length - 1; i >= 0; i--) {
+        board.splice(clearingRows[i], 1);
+        board.unshift(Array(COLS).fill(null));
+      }
+      clearingRows = [];
+
+      const perfect = board.every(row => row.every(cell => cell === null));
+      finishTurn(count, tspin, perfect);
+    }
+
+    function finishTurn(cleared, tspin, perfect) {
+      if (cleared > 0) {
+        combo++;
+        maxCombo = Math.max(maxCombo, combo);
+        lines += cleared;
+        level = Math.floor(lines / 10) + 1;
+
+        /* a spin pays its own table, it does not stack on the line table */
+        const base = tspin
+          ? ([0, tspin === "full" ? 800 : 100, tspin === "full" ? 1200 : 200,
+              tspin === "full" ? 1600 : 400, 0][cleared] || 0)
+          : ([0, 100, 300, 500, 800][cleared] || 800);
+
+        const difficult = cleared === 4 || !!tspin;
+        const chain = difficult && b2b ? 1.5 : 1;
+        let pts = Math.round(base * level * chain) + combo * 50 * level;
+        if (perfect) pts += 1500 * level;
+        score += pts;
+
+        let attack = [0, 0, 1, 2, 4][cleared] || 0;
+        if (tspin === "full") attack = [0, 2, 4, 6, 0][cleared] || 0;
+        if (tspin === "mini") attack = [0, 1, 2, 4, 0][cleared] || 0;
+        if (perfect) attack += 6;
+        if (difficult && b2b) attack += 1;
+        if (combo > 0) attack += Math.floor(combo / 2);
+        b2b = difficult;
+
+        if (combo > 0) addFloater(combo + " COMBO", "#3dd6f5");
+        else if (cleared === 4) addFloater("TETRIS", "#22d3ee");
+        if (perfect) addFloater("PERFECT CLEAR", "#ffb020");
+
+        charge = Math.min(100, charge + cleared * 9 + (perfect ? 18 : 0) + (tspin ? 5 : 0));
+
+        if (attack > 0) {
+          if (pendingGarbage > 0) {
+            const cancel = Math.min(pendingGarbage, attack);
+            pendingGarbage -= cancel;
+            attack -= cancel;
+            if (cancel > 0) addFloater("CANCEL " + cancel, "#4ade80");
+          }
+          if (attack > 0 && currentMode !== "solo") {
+            sentLines += attack;
+            sendGarbageAttack(attack);
+            addFloater("SENT " + attack, "#ff4d6d");
+          }
+        }
+      } else {
+        b2b = false;
+      }
+
+      updateHUD();
+      updateCharge();
+      broadcastState(true);
+      spawnPiece();
+    }
+
+    function spawnPiece() {
+      canHold = true;
+      lockTimer = 0;
+      lockResets = 0;
+      lastAction = "";
+      current = takeFromBag();
+      refillQueue();
+      drawQueue();
+      if (collide(board, current)) {
+        endGame();
+      }
+    }
+
+    function holdCurrent() {
+      if (!canHold || !current || !gameRunning || isPaused) return;
+      canHold = false;
+      const prevType = current.type;
+      if (!holdPiece) {
+        holdPiece = prevType;
+        current = takeFromBag();
+        refillQueue();
+        drawQueue();
+      } else {
+        current = makePiece(holdPiece);
+        holdPiece = prevType;
+      }
+      lockTimer = 0;
+      lockResets = 0;
+      lastAction = "hold";
+      drawMiniPiece(holdCtx, holdPiece);
+      playTone(350, "triangle", 0.06, 0.05);
+    }
+
+    /* ---------- PINDUTAN burst ---------- */
+    function tryBurst() {
+      if (!gameRunning || isPaused || isSpectator) return;
+      if (charge < 100) {
+        playTone(160, "sine", 0.08, 0.04);
+        return;
+      }
+      charge = 0;
+
+      let removed = 0;
+      for (let i = 0; i < 2; i++) {
+        if (board.some(row => row.some(cell => cell !== null))) {
+          board.pop();
+          board.unshift(Array(COLS).fill(null));
+          removed++;
+        }
+      }
+
+      shake = 7;
+      addFloater("PINDUTAN!", "#ffb020");
+      playTone(760, "sawtooth", 0.18, 0.1);
+      setTimeout(() => playTone(1180, "square", 0.14, 0.08), 90);
+
+      if (currentMode === "solo") {
+        score += 300 * level;
+      } else {
+        const cancel = Math.min(pendingGarbage, 5);
+        pendingGarbage -= cancel;
+        const attack = 5;
+        sentLines += attack;
+        sendGarbageAttack(attack);
+        if (cancel) addFloater("CANCEL " + cancel, "#4ade80");
+      }
+
+      updateHUD();
+      updateCharge();
+      broadcastState(true);
+    }
+
+    /* ---------- hud ---------- */
+    function updateHUD() {
+      document.getElementById("scoreVal").textContent = score;
+      document.getElementById("linesVal").textContent = lines;
+      document.getElementById("levelVal").textContent = level;
+      document.getElementById("sentVal").textContent = sentLines;
+      document.getElementById("comboVal").textContent = Math.max(0, combo);
+      document.getElementById("garbageVal").textContent = pendingGarbage;
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem("pindutan_best", bestScore);
+      }
+      document.getElementById("bestVal").textContent = bestScore;
+    }
+
+    function updateCharge() {
+      const pct = Math.max(0, Math.min(100, charge));
+      chargeFill.style.width = pct + "%";
+      if (pct >= 100) {
+        chargeLabel.textContent = "PINDUTAN READY";
+        powerBtn.classList.add("ready");
+        powerBtn.disabled = false;
+        powerBtn.textContent = "BURST";
+      } else {
+        chargeLabel.textContent = "PINDUTAN " + Math.floor(pct) + "%";
+        powerBtn.classList.remove("ready");
+        powerBtn.disabled = true;
+        powerBtn.textContent = "GO";
+      }
+    }
+
+    function addFloater(text, color) {
+      floaters.push({ text, color, life: 1, y: 0 });
+      if (floaters.length > 4) floaters.shift();
+    }
+
+    /* ---------- drawing helpers ---------- */
+    function rr(c, x, y, w, h, r) {
+      const rad = Math.min(r, w / 2, h / 2);
+      c.beginPath();
+      c.moveTo(x + rad, y);
+      c.lineTo(x + w - rad, y);
+      c.quadraticCurveTo(x + w, y, x + w, y + rad);
+      c.lineTo(x + w, y + h - rad);
+      c.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+      c.lineTo(x + rad, y + h);
+      c.quadraticCurveTo(x, y + h, x, y + h - rad);
+      c.lineTo(x, y + rad);
+      c.quadraticCurveTo(x, y, x + rad, y);
+      c.closePath();
+    }
+
+    function drawCell(context, px, py, size, color, opts = {}) {
+      const pad = Math.max(1, size * 0.055);
+      const s = size - pad * 2;
+      const x = px + pad;
+      const y = py + pad;
+      const rad = Math.max(2, size * 0.18);
+
+      if (opts.ghost) {
+        context.save();
+        context.globalAlpha = 0.42;
+        context.strokeStyle = color;
+        context.lineWidth = Math.max(1.5, size * 0.075);
+        context.setLineDash([size * 0.22, size * 0.16]);
+        rr(context, x, y, s, s, rad);
+        context.stroke();
+        context.restore();
+        return;
+      }
+
+      if (opts.glow) {
+        context.save();
+        context.shadowColor = color;
+        context.shadowBlur = size * 0.65;
+        rr(context, x, y, s, s, rad);
+        context.fillStyle = color;
+        context.fill();
+        context.restore();
+      }
+
+      rr(context, x, y, s, s, rad);
+      context.fillStyle = color;
+      context.fill();
+
+      /* top gloss */
+      context.save();
+      context.clip();
+      const g = context.createLinearGradient(0, y, 0, y + s);
+      if (opts.garbage) {
+        g.addColorStop(0, "rgba(255,255,255,0.12)");
+        g.addColorStop(1, "rgba(0,0,0,0.35)");
+      } else {
+        g.addColorStop(0, "rgba(255,255,255,0.4)");
+        g.addColorStop(0.45, "rgba(255,255,255,0.06)");
+        g.addColorStop(1, "rgba(0,0,0,0.34)");
+      }
+      context.fillStyle = g;
+      context.fillRect(x, y, s, s);
+      context.restore();
+
+      /* inner rim */
+      context.strokeStyle = "rgba(0,0,0,0.45)";
+      context.lineWidth = 1;
+      rr(context, x + 0.5, y + 0.5, s - 1, s - 1, rad);
+      context.stroke();
+    }
+
+    function drawBoard() {
+      const W = COLS * BLOCK;
+      const H = ROWS * BLOCK;
+      ctx.save();
+
+      if (shake > 0.2) {
+        ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+      }
+
+      /* backdrop */
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, "#080b12");
+      bg.addColorStop(1, "#0b1018");
+      ctx.fillStyle = bg;
+      ctx.fillRect(-8, -8, W + 16, H + 16);
+
+      /* grid */
+      ctx.strokeStyle = "rgba(255,255,255,0.035)";
+      ctx.lineWidth = 1;
+      for (let c = 1; c < COLS; c++) {
+        ctx.beginPath();
+        ctx.moveTo(c * BLOCK, 0);
+        ctx.lineTo(c * BLOCK, H);
+        ctx.stroke();
+      }
+      for (let r = 1; r < ROWS; r++) {
+        ctx.beginPath();
+        ctx.moveTo(0, r * BLOCK);
+        ctx.lineTo(W, r * BLOCK);
+        ctx.stroke();
+      }
+
+      /* stack height glow */
+      let topRow = ROWS;
+      for (let r = 0; r < ROWS; r++) {
+        if (board[r].some(cell => cell !== null)) { topRow = r; break; }
+      }
+      if (topRow <= 4 && gameRunning) {
+        const dg = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+        dg.addColorStop(0, "rgba(255,77,109,0.20)");
+        dg.addColorStop(1, "rgba(255,77,109,0)");
+        ctx.fillStyle = dg;
+        ctx.fillRect(0, 0, W, H * 0.45);
+      }
+
+      /* locked blocks */
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const type = board[r][c];
+          if (!type) continue;
+          if (clearingRows.includes(r)) continue;
+          drawCell(ctx, c * BLOCK, r * BLOCK, BLOCK, COLORS[type] || "#94a3b8",
+            { garbage: type === "G" });
+        }
+      }
+
+      /* line clear flash */
+      if (clearingRows.length) {
+        const t = 1 - clearTimer / CLEAR_FLASH;
+        ctx.save();
+        for (const r of clearingRows) {
+          ctx.fillStyle = "rgba(255,255,255," + (0.35 + 0.55 * Math.abs(Math.sin(t * Math.PI * 3))) + ")";
+          ctx.fillRect(0, r * BLOCK + 1, W, BLOCK - 2);
+        }
+        ctx.restore();
+      }
+
+      /* ghost + active piece */
+      if (current && gameRunning) {
+        if (ghostEnabled) {
+          let gy = current.y;
+          while (!collide(board, current, 0, gy - current.y + 1)) gy++;
+          for (let r = 0; r < current.matrix.length; r++) {
+            for (let c = 0; c < current.matrix[r].length; c++) {
+              if (current.matrix[r][c] && gy + r >= 0) {
+                drawCell(ctx, (current.x + c) * BLOCK, (gy + r) * BLOCK, BLOCK,
+                  COLORS[current.type], { ghost: true });
+              }
+            }
+          }
+        }
+        const slip = (typeof slideOffset === "function") ? slideOffset() : 0;
+        for (let r = 0; r < current.matrix.length; r++) {
+          for (let c = 0; c < current.matrix[r].length; c++) {
+            if (current.matrix[r][c] && current.y + r >= 0) {
+              drawCell(ctx, (current.x + c) * BLOCK + slip, (current.y + r) * BLOCK, BLOCK,
+                COLORS[current.type], { glow: true });
+            }
+          }
+        }
+      }
+
+      /* floating callouts */
+      if (floaters.length) {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        floaters.forEach((f, i) => {
+          const size = Math.max(11, BLOCK * 0.62);
+          ctx.globalAlpha = Math.max(0, Math.min(1, f.life));
+          ctx.font = "900 " + size + "px 'Segoe UI', system-ui, sans-serif";
+          ctx.fillStyle = f.color;
+          ctx.shadowColor = "rgba(0,0,0,0.85)";
+          ctx.shadowBlur = 6;
+          ctx.fillText(f.text, W / 2, H * 0.3 - i * (size + 6) - f.y);
+        });
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function drawMiniPiece(context, type) {
+      const w = context.canvas.width;
+      const h = context.canvas.height;
+      context.clearRect(0, 0, w, h);
+      if (!type) return;
+      const mat = SHAPES[type];
+      const cells = mat.length;
+      const pad = Math.max(3, w * 0.05);
+      const size = Math.min((w - pad * 2) / cells, (h - pad * 2) / cells);
+      const offX = (w - cells * size) / 2;
+      const offY = (h - cells * size) / 2;
+      for (let r = 0; r < cells; r++) {
+        for (let c = 0; c < cells; c++) {
+          if (mat[r][c]) drawCell(context, offX + c * size, offY + r * size, size, COLORS[type]);
+        }
+      }
+    }
+
+    function drawQueue() {
+      const w = nextCtx.canvas.width;
+      const h = nextCtx.canvas.height;
+      nextCtx.clearRect(0, 0, w, h);
+      const slot = w / MAX_QUEUE;
+      const order = queue.slice(0, MAX_QUEUE);
+      if (current && order.length < MAX_QUEUE) order.unshift(current.type);
+      order.slice(0, MAX_QUEUE).forEach((type, i) => {
+        const mat = SHAPES[type];
+        const cells = mat.length;
+        const size = Math.min((slot - 10) / cells, (h - 10) / cells);
+        const offX = i * slot + (slot - cells * size) / 2;
+        const offY = (h - cells * size) / 2;
+        nextCtx.save();
+        if (i > 0) nextCtx.globalAlpha = 0.62;
+        for (let r = 0; r < cells; r++) {
+          for (let c = 0; c < cells; c++) {
+            if (mat[r][c]) drawCell(nextCtx, offX + c * size, offY + r * size, size, COLORS[type]);
+          }
+        }
+        nextCtx.restore();
+      });
+    }
+
+    /* ---------- responsive canvas ---------- */
+    function resizeBoard() {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const w = Math.max(120, boardWrapper.clientWidth);
+      const h = w * 2;
+      mainCanvas.width = Math.round(w * dpr);
+      mainCanvas.height = Math.round(h * dpr);
+      mainCanvas.style.width = w + "px";
+      mainCanvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      BLOCK = w / COLS;
+      drawBoard();
+    }
+
+    window.addEventListener("resize", () => { resizeBoard(); drawQueue(); });
+
+    /* ---------- main loop ---------- */
+    function gravityMs() {
+      return Math.max(60, 950 * Math.pow(0.855, level - 1));
+    }
+
+    function gameLoop(time = 0) {
+      if (!gameRunning) { lastTime = time; return; }
+
+      const delta = Math.min(120, time - (lastTime || time));
+      lastTime = time;
+
+      /* fade floaters even while paused so they never stick */
+      if (floaters.length) {
+        floaters.forEach(f => { f.life -= delta / 1100; f.y += delta * 0.022; });
+        floaters = floaters.filter(f => f.life > 0);
+      }
+
+      if (!isPaused) {
+        if (shake > 0) shake = Math.max(0, shake - delta * 0.045);
+
+        if (clearingRows.length) {
+          clearTimer -= delta;
+          if (clearTimer <= 0) collapseRows();
+        } else if (current) {
+          dropCounter += delta;
+          const speed = gravityMs();
+          while (dropCounter >= speed) {
+            dropCounter -= speed;
+            if (!collide(board, current, 0, 1)) {
+              current.y++;
+              lockTimer = 0;
+            } else {
+              dropCounter = 0;
+              break;
+            }
+          }
+
+          const wasGrounded = grounded;
+          grounded = isGrounded();
+          if (grounded) {
+            if (!wasGrounded) lockTimer = 0;
+            lockTimer += delta;
+            if (lockTimer >= LOCK_DELAY) {
+              lockTimer = 0;
+              lockResets = 0;
+              lockPiece();
+            }
+          } else {
+            lockTimer = 0;
+          }
+        }
+
+        if (currentMode === "bot") botTick(delta);
+        if (autopilotOn()) {
+          autoStepT += delta;
+          if (autoStepT >= autoHand()) { autoStepT = 0; autoPlayStep(); }
+        }
+        boardWrapper.classList.toggle("danger", topRowOfStack() <= 3);
+        drawBoard();
+        pushBoardFrame(false);
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    function topRowOfStack() {
+      for (let r = 0; r < ROWS; r++) {
+        if (board[r].some(cell => cell !== null)) return r;
+      }
+      return ROWS;
+    }
+
+    function startNewGame() {
+      if (isSpectator) return;
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+      bag = [];
+      queue = [];
+      holdPiece = null;
+      canHold = true;
+      current = null;
+      score = 0;
+      lines = 0;
+      level = 1;
+      sentLines = 0;
+      combo = -1;
+      maxCombo = 0;
+      b2b = false;
+      pendingGarbage = 0;
+      charge = 0;
+      pieces = 0;
+      clearingRows = [];
+      pendingSpin = null;
+      floaters = [];
+      lockTimer = 0;
+      lockResets = 0;
+      dropCounter = 0;
+      isPaused = false;
+      gameRunning = true;
+      startedAt = performance.now();
+
+      drawMiniPiece(holdCtx, null);
+      refillQueue();
+      current = takeFromBag();
+      refillQueue();
+      drawQueue();
+      updateHUD();
+      updateCharge();
+
+      document.getElementById("boardOverlay").style.display = "none";
+      document.getElementById("overStats").innerHTML = "";
+      if (currentMode === "bot") botStart(); else botStop();
+      broadcastState(true);
+      lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function statLine(label, value) {
+      return "<span>" + label + " <b>" + value + "</b></span>";
+    }
+
+    function endGame() {
+      gameRunning = false;
+      current = null;
+      const secs = Math.max(1, (performance.now() - startedAt) / 1000);
+      const pps = (pieces / secs).toFixed(2);
+      const lpm = Math.round(lines / secs * 60);
+      playTone(110, "sawtooth", 0.4, 0.08);
+      document.getElementById("overlayTitle").textContent = currentMode === "bot" ? (cpuCfg().label + " WINS") : "GAME OVER";
+      document.getElementById("overlayDesc").textContent =
+        "Score " + score.toLocaleString() + " · " + lines + " lines";
+      document.getElementById("overStats").innerHTML =
+        statLine("Blocks/s", pps) +
+        statLine("Lines/min", lpm) +
+        statLine("Max combo", maxCombo) +
+        statLine("Sent", sentLines);
+      document.getElementById("startBtn").textContent = "Play Again";
+      if (typeof inBattle === "function" && inBattle()) {
+        battleOver = true;
+        document.getElementById("overlayTitle").textContent = currentMode === "1v1" ? "YOU LOSE" : "KNOCKED OUT";
+        document.getElementById("startBtn").textContent = "Rematch";
+        reportBattle(false);
+      }
+      document.getElementById("startBtn").style.display = "inline-block";
+      document.getElementById("boardOverlay").style.display = "flex";
+      broadcastState(false);
+    }
+
+    resizeBoard();
+    drawBoard();
+    updateCharge();
+    /* =========================================================
+       4. ROOMS — four paths at the same time
+          local tabs (BroadcastChannel) + 3 public MQTT relays.
+          No PHP, no server of ours, nothing to upload.
+       ========================================================= */
+    const MAX_PLAYERS = 7;
+    /* deliberately still the v17 topic: every build speaks the same room
+       packets, so an older copy and this one share a lobby instead of
+       splitting the room in half */
+    const RELAY_TOPIC = "pindutan/v17/";
+    const BROKERS = [
+      { name: "EMQX", url: "wss://broker.emqx.io:8084/mqtt", client: null, state: "off" },
+      { name: "HiveMQ", url: "wss://broker.hivemq.com:8884/mqtt", client: null, state: "off" },
+      { name: "Mosquitto", url: "wss://test.mosquitto.org:8081/mqtt", client: null, state: "off" }
+    ];
+
+    const myId = "P-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    let roomCode = "";
+    let localChannel = null;
+    let peers = {};              /* id -> player, never includes me */
+    let battle = null;           /* battle I am hosting */
+    let battlePlayers = {};      /* ids in the battle I am playing */
+    let pendingInvite = null;
+    let subscribedTopic = "";
+    let nonceSeq = 0;
+    let battleId = "";           /* battle I am playing in */
+    let battleSeenAlive = {};    /* id -> true once that opponent was seen playing this battle */
+    let battleOver = false;
+    let battleWon = false;
+    let mqttLoading = false;
+
+    const seen = new Set();
+    const seenOrder = [];
+
+
+    function remember(n) {
+      if (!n || seen.has(n)) return;
+      seen.add(n);
+      seenOrder.push(n);
+      if (seenOrder.length > 900) seenOrder.splice(0, 450).forEach(k => seen.delete(k));
+    }
+
+    function nextNonce() {
+      nonceSeq++;
+      return myId + "-" + nonceSeq + "-" + Math.random().toString(36).slice(2, 5);
+    }
+
+    function getMyName() {
+      /* reading the name must never write one: only the gate and the nickname
+         field save a name, so a refusal at the gate leaves nothing behind */
+      const el = document.getElementById("nicknameInput");
+      return (el.value || "").trim().slice(0, 14) || "Player";
+    }
+
+    function myState(withBoard) {
+      return {
+        name: myDisplayName(),
+        mode: currentMode,
+        alive: gameRunning && !isSpectator,
+        score: score || 0,
+        lines: lines || 0,
+        sent: sentLines || 0,
+        won: battleWon,
+        board: (withBoard !== false && gameRunning) ? getCompactBoard() : null
+      };
+    }
+
+    /* a board travels as 200 characters: "." empty, I O T S Z J L, G garbage */
+    function encodeBoard(b) {
+      let out = "";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const v = b[r] && b[r][c];
+          out += v ? String(v).charAt(0) : ".";
+        }
+      }
+      return out;
+    }
+
+    function decodeBoard(raw) {
+      if (!raw) return null;
+      if (Array.isArray(raw)) return raw;                       /* old array form */
+      if (typeof raw !== "string" || raw.length < ROWS * COLS) return null;
+      const out = [];
+      for (let r = 0; r < ROWS; r++) {
+        const row = [];
+        for (let c = 0; c < COLS; c++) {
+          const ch = raw.charAt(r * COLS + c);
+          row.push(ch === "." ? null : ch);
+        }
+        out.push(row);
+      }
+      return out;
+    }
+
+    function getCompactBoard() {
+      return encodeBoard(getLiveBoard());
+    }
+
+    function getLiveBoard() {
+      const copy = board.map(r => [...r]);
+      if (current && gameRunning) {
+        for (let r = 0; r < current.matrix.length; r++) {
+          for (let c = 0; c < current.matrix[r].length; c++) {
+            if (current.matrix[r][c]) {
+              const by = current.y + r;
+              const bx = current.x + c;
+              if (by >= 0 && by < ROWS && bx >= 0 && bx < COLS) copy[by][bx] = current.type;
+            }
+          }
+        }
+      }
+      return copy;
+    }
+
+    /* ---------- send ---------- */
+    function sendPacket(p, as) {
+      if (!roomCode) return false;
+      p.from = as || myId;
+      p.n = nextNonce();
+      p.ts = Date.now();
+      remember(p.n);
+      if (localChannel) {
+        try { localChannel.postMessage(p); } catch (e) { /* tab gone */ }
+      }
+      const raw = JSON.stringify(p);
+      let sent = false;
+      BROKERS.forEach(b => {
+        if (b.state === "ok" && b.client) {
+          try { b.client.publish(RELAY_TOPIC + roomCode, raw); sent = true; } catch (e) { /* broker hiccup */ }
+        }
+      });
+      return sent || !!localChannel;
+    }
+
+    /* ---------- receive ---------- */
+    function onPacket(p) {
+      if (!p || typeof p !== "object" || !p.t) return;
+      if (p.from === myId) return;
+      if (p.n) {
+        if (seen.has(p.n)) return;
+        remember(p.n);
+      }
+
+      if (p.t === "LB") {
+        if (lbPeerMerge(p.rows)) lbRepaint();
+        return;
+      }
+
+      if (p.t === "HI" || p.t === "SYNC") {
+        const prev = peers[p.from];
+        const incoming = decodeBoard(p.board);
+        peers[p.from] = {
+          id: p.from,
+          name: (p.name || "Player").slice(0, 14),
+          mode: p.mode || "idle",
+          alive: !!p.alive,
+          score: p.score | 0,
+          lines: p.lines | 0,
+          sent: p.sent | 0,
+          won: !!p.won,
+          /* a packet without a board never wipes the last board we drew */
+          board: incoming || (prev ? prev.board : null),
+          lastSeen: Date.now()
+        };
+        if (p.t === "HI") sendPacket(Object.assign({ t: "SYNC" }, myState()));
+        noteBattleAlive(p.from);
+        renderLobby();
+        renderOpponentsGrid();
+        checkBattleWin();
+        return;
+      }
+
+      /* live board frame — several per second while someone is playing */
+      if (p.t === "B") {
+        const prev = peers[p.from];
+        if (!prev) return;            /* their next SYNC introduces them */
+        const b = decodeBoard(p.b);
+        if (b) prev.board = b;
+        prev.alive = p.alive !== false;
+        prev.score = p.score | 0;
+        prev.lines = p.lines | 0;
+        prev.sent = p.sent | 0;
+        if (p.mode) prev.mode = p.mode;
+        prev.lastSeen = Date.now();
+        noteBattleAlive(p.from);
+        renderOpponentsGrid();
+        checkBattleWin();
+        return;
+      }
+
+      if (p.t === "ROSTER") {
+        if (!battleId || p.battleId !== battleId) return;
+        const ids = p.players || [];
+        if (!ids.includes(myId)) return;
+        ids.forEach(id => { battlePlayers[id] = true; });
+        renderOpponentsGrid();
+        return;
+      }
+
+      if (p.t === "BYE") {
+        delete peers[p.from];
+        renderLobby();
+        renderOpponentsGrid();
+        return;
+      }
+
+      if (p.t === "INVITE") {
+        if (p.to !== "all" && p.to !== myId) return;
+        if (p.from === myId) return;
+        pendingInvite = {
+          from: p.from,
+          name: (p.name || "Someone").slice(0, 14),
+          kind: p.kind === "duel" ? "duel" : "group",
+          battleId: p.battleId
+        };
+        showInviteBar(pendingInvite);
+        playTone(880, "triangle", 0.12, 0.07);
+        return;
+      }
+
+      if (p.t === "JOIN") {
+        if (!battle || battle.host !== myId || (p.battleId && p.battleId !== battle.id)) return;
+        if (battle.joiners[p.from]) return;
+        const who = peers[p.from] ? peers[p.from].name : "A player";
+
+        if (battle.started) {
+          /* late arrival: a 1v1 is full; a group battle takes them in without restarting anyone */
+          if (battle.mode !== "group" || battle.players.length >= MAX_PLAYERS) return;
+          battle.joiners[p.from] = true;
+          battle.players.push(p.from);
+          battlePlayers[p.from] = true;
+          sendPacket({ t: "START", to: p.from, battleId: battle.id, mode: battle.mode, players: battle.players });
+          sendPacket({ t: "ROSTER", battleId: battle.id, players: battle.players });
+          renderOpponentsGrid();
+          roomStatusText("⚔ " + who + " joined the battle.");
+          return;
+        }
+
+        battle.joiners[p.from] = true;
+        if (battle.mode === "1v1") {
+          scheduleHostStart(900);
+          roomStatusText("⚔ " + who + " accepted — starting...");
+        } else {
+          /* group: keep the invite window open so everyone gets the chance to tap Join */
+          const left = Math.max(900, battle.startAt - Date.now());
+          scheduleHostStart(left);
+          roomStatusText("⚔ " + who + " joined — " + (Object.keys(battle.joiners).length + 1) + " players, starting soon...");
+        }
+        return;
+      }
+
+      if (p.t === "START") {
+        if (p.to && p.to !== myId) return;
+        const ids = p.players || [];
+        if (!ids.includes(myId)) return;
+        beginBattle({ players: ids, mode: p.mode, battleId: p.battleId });
+        return;
+      }
+
+      if (p.t === "GARBAGE") {
+        if (p.to !== myId) return;
+        if (!gameRunning || isPaused || isSpectator) return;
+        if (!battlePlayers[p.from]) return;
+        pendingGarbage += Math.min(8, p.amount | 0);
+        updateHUD();
+        addFloater("+" + p.amount + " INCOMING", "#ff4d6d");
+        playTone(140, "sawtooth", 0.2, 0.1);
+      }
+    }
+
+    /* ---------- relays ---------- */
+    function loadMqtt(cb) {
+      if (window.mqtt) { cb(true); return; }
+      if (mqttLoading) return;
+      mqttLoading = true;
+      const urls = [
+        "https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js",
+        "https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"
+      ];
+      let i = 0;
+      const next = () => {
+        if (window.mqtt) { mqttLoading = false; cb(true); return; }
+        if (i >= urls.length) { mqttLoading = false; cb(false); return; }
+        const s = document.createElement("script");
+        s.src = urls[i++];
+        s.onload = () => { mqttLoading = false; cb(!!window.mqtt); };
+        s.onerror = next;
+        document.head.appendChild(s);
+      };
+      next();
+    }
+
+    function startRelays() {
+      loadMqtt(ok => {
+        if (!ok) { paintConn(); roomStatusText("Relay library blocked — rooms still work between tabs on this device."); return; }
+        BROKERS.forEach(b => {
+          if (b.state === "ok" || b.state === "wait") return;
+          connectBroker(b);
+        });
+      });
+    }
+
+    function connectBroker(b) {
+      b.state = "wait";
+      paintConn();
+      try {
+        b.client = mqtt.connect(b.url, {
+          clientId: "pin17_" + myId + "_" + b.name.toLowerCase() + "_" + Math.random().toString(36).slice(2, 7),
+          keepalive: 30,
+          reconnectPeriod: 6000,
+          connectTimeout: 9000,
+          clean: true
+        });
+
+        b.client.on("connect", () => {
+          b.state = "ok";
+          paintConn();
+          if (roomCode) subscribeBroker(b);
+          if (roomCode) sendPacket(Object.assign({ t: "HI" }, myState()));
+        });
+        b.client.on("reconnect", () => { b.state = "wait"; paintConn(); });
+        b.client.on("close", () => { b.state = b.state === "ok" ? "wait" : "bad"; paintConn(); });
+        b.client.on("error", () => { b.state = "bad"; paintConn(); });
+        b.client.on("message", (topic, payload) => {
+          let data = null;
+          try { data = JSON.parse(payload.toString()); } catch (e) { return; }
+          if (topic !== RELAY_TOPIC + roomCode) return;
+          onPacket(data);
+        });
+      } catch (e) {
+        b.state = "bad";
+        paintConn();
+      }
+    }
+
+    function subscribeBroker(b) {
+      try { b.client.subscribe(RELAY_TOPIC + roomCode, { qos: 0 }); } catch (e) { /* ignore */ }
+    }
+
+    function unsubscribeRelays() {
+      if (!subscribedTopic) return;
+      const topic = subscribedTopic;
+      BROKERS.forEach(b => {
+        if (!b.client) return;
+        try { b.client.unsubscribe(topic); } catch (e) { /* fine */ }
+      });
+      subscribedTopic = "";
+    }
+
+    function ensureRelaySubs() {
+      if (!roomCode) return;
+      const topic = RELAY_TOPIC + roomCode;
+      if (subscribedTopic === topic) return;
+      subscribedTopic = topic;
+      BROKERS.forEach(b => {
+        if (b.state !== "ok" || !b.client) return;
+        subscribeBroker(b);
+      });
+    }
+
+    /* =========================================================
+       7. HALL OF FAME — human battles only, saved on the host
+          Every 1v1 and group battle you finish is posted to
+          api-leaderboard.php on aidekupal.unaux.com. No internet?
+          it falls back to this phone's own copy and says so.
+       ========================================================= */
+    const LEADERBOARD_URL = "https://aidekupal.unaux.com/api-leaderboard.php";
+    const LB_KEY = atob("a2RsLXBpbmR1dGFuLWxiLTIwMjYtN2YzYQ==");   /* the same shared string as the PHP file */
+    const LB_CACHE = "pindutan_lb_cache";
+    const LB_MINE = "pindutan_lb_mine";
+
+    let lbMode = "all";
+    let lbBusy = false;
+    let battleReported = false;
+
+    const CROWN_COLORS = { gold: "#ffd257", silver: "#cfd8e3", bronze: "#c8814a", wood: "#9a6b3f" };
+
+    /* a five-point crown, tinted: gold for the maker, then the podium */
+    function crownSvg(tier, size) {
+      const color = CROWN_COLORS[tier] || CROWN_COLORS.wood;
+      const w = size || 11;
+      return '<span class="crown ' + tier + '">' +
+        '<svg viewBox="0 0 24 18" width="' + w + '" height="' + Math.round(w * 0.75) + '" aria-hidden="true">' +
+        '<path d="M2 15 L1 5 L6.5 9.5 L12 2 L17.5 9.5 L23 5 L22 15 Z" fill="' + color + '" ' +
+        'stroke="rgba(0,0,0,.45)" stroke-width="1.2" stroke-linejoin="round"/>' +
+        '<rect x="3" y="15.4" width="18" height="2.2" rx="1" fill="' + color + '" stroke="rgba(0,0,0,.45)" stroke-width="1"/>' +
+        '</svg></span>';
+    }
+
+    /* one medal only: the top of the ladder wears silver. Everyone below carries
+       just their number. */
+    function podiumTier(rank) {
+      return rank === 1 ? "silver" : "";
+    }
+
+    /* One digest, computed identically by the page and by the PHP file. It does
+       not use crypto.subtle, because a game served over plain http on a LAN
+       address has no subtle crypto at all — and both sides must agree. */
+    function lbDigest(str) {
+      let h1 = 0x811c9dc5;
+      let h2 = 0;
+      for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i) & 0xFF;
+        h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+        h2 = (Math.imul(h2, 131) + c) >>> 0;
+      }
+      const hex = n => ("0000000" + (n >>> 0).toString(16)).slice(-8);
+      return hex(h1) + hex(h2);
+    }
+
+    function lbSign(payload) {
+      return lbDigest(payload.name + "|" + payload.mode + "|" + payload.win + "|" +
+                      payload.score + "|" + payload.lines + "|" + payload.ts + "|" + LB_KEY);
+    }
+
+    /* what this phone remembers, kept under the name it was played with:
+       two people can share one phone and one ladder */
+    function lbNameKey(name) { return String(name || "").trim().toLowerCase(); }
+
+    function lbMine() {
+      let mine = null;
+      try { mine = JSON.parse(localStorage.getItem(LB_MINE) || "null"); } catch (e) { mine = null; }
+      if (!mine || typeof mine !== "object") mine = {};
+      if (!mine.byName || typeof mine.byName !== "object") {
+        /* older phones kept a single bag of wins: move it under its name */
+        const moved = { byName: {} };
+        const key = lbNameKey(mine.name);
+        if (key && (mine.duel || mine.group)) {
+          moved.byName[key] = {
+            name: String(mine.name).trim(),
+            duel: mine.duel || { wins: 0, losses: 0, best: 0 },
+            group: mine.group || { wins: 0, losses: 0, best: 0 },
+            synced: mine.synced || 0
+          };
+          moved.name = String(mine.name).trim();
+        }
+        mine = moved;
+      }
+      return mine;
+    }
+
+    function lbMineSave(mine) {
+      try { localStorage.setItem(LB_MINE, JSON.stringify(mine)); } catch (e) {}
+    }
+
+    function lbMineRec(mine, name) {
+      const key = lbNameKey(name);
+      if (!key) return null;
+      let rec = mine.byName[key];
+      if (!rec) {
+        rec = mine.byName[key] = {
+          name: String(name).trim(),
+          duel: { wins: 0, losses: 0, best: 0 },
+          group: { wins: 0, losses: 0, best: 0 },
+          synced: 0
+        };
+      }
+      rec.duel = rec.duel || { wins: 0, losses: 0, best: 0 };
+      rec.group = rec.group || { wins: 0, losses: 0, best: 0 };
+      return rec;
+    }
+
+    function lbMineTotal(rec) {
+      const pick = m => rec[m] || { wins: 0, losses: 0, best: 0 };
+      return {
+        wins: pick("duel").wins + pick("group").wins,
+        losses: pick("duel").losses + pick("group").losses,
+        best: Math.max(pick("duel").best || 0, pick("group").best || 0)
+      };
+    }
+
+    function lbKeepMine(payload) {
+      const mine = lbMine();
+      const rec = lbMineRec(mine, payload.name);
+      if (!rec) return;
+      const slot = rec[payload.mode] || (rec[payload.mode] = { wins: 0, losses: 0, best: 0 });
+      if (payload.win) slot.wins += 1; else slot.losses += 1;
+      if (payload.score > slot.best) slot.best = payload.score;
+      rec.stamp = Date.now();              /* a sync in flight must notice this */
+      mine.name = rec.name;
+      mine.updated = Date.now();
+      lbMineSave(mine);
+    }
+
+    function lbLocalRow(mode) {
+      const mine = lbMine();
+      const key = lbNameKey(myDisplayName());
+      const rec = (key && mine.byName[key]) || (mine.name ? mine.byName[lbNameKey(mine.name)] : null);
+      if (!rec) return null;
+      const pick = m => rec[m] || { wins: 0, losses: 0, best: 0 };
+      const slot = mode === "all"
+        ? lbMineTotal(rec)
+        : pick(mode);
+      if (!slot.wins && !slot.losses) return null;
+      return { name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best, me: true, local: true };
+    }
+
+    /* ---------- the ladder carried between phones ----------
+       No host needed: each phone keeps its own wins, and the lobby relay
+       (the same one the room uses) carries them to the other phones. A phone
+       that heard a result passes it on, so a player who leaves is still on
+       the board for the people who are here. Nothing is stored anywhere
+       except on the phones themselves. */
+    const LB_PEERS = "pindutan_lb_peers";
+    const LB_KEEP_MS = 1000 * 60 * 60 * 24;      /* forget a phone not seen in a day */
+
+    function lbPeers() {
+      try { const m = JSON.parse(localStorage.getItem(LB_PEERS) || "{}"); return m && typeof m === "object" ? m : {}; }
+      catch (e) { return {}; }
+    }
+
+    function lbPeersSave(map) {
+      try { localStorage.setItem(LB_PEERS, JSON.stringify(map)); } catch (e) {}
+    }
+
+    function lbPeerMerge(rows) {
+      if (!Array.isArray(rows) || !rows.length) return 0;
+      const map = lbPeers();
+      const now = Date.now();
+      let fresh = 0;
+      rows.slice(0, 24).forEach(r => {
+        if (!r || typeof r !== "object") return;
+        const name = cleanName(String(r.name || ""));
+        const key = lbNameKey(name);
+        if (key.length < 2) return;
+        const mode = r.mode === "group" ? "group" : r.mode === "duel" ? "duel" : "";
+        if (!mode) return;
+        const wins = Math.max(0, Math.min(9999, r.wins | 0));
+        const losses = Math.max(0, Math.min(9999, r.losses | 0));
+        const best = Math.max(0, Math.min(5000000, r.best | 0));
+        if (!wins && !losses) return;
+        const slot = key + "|" + mode;
+        const prev = map[slot];
+        if (!prev || wins > (prev.wins | 0) || best > (prev.best | 0)) fresh++;
+        map[slot] = {
+          name: name,
+          mode: mode,
+          wins: Math.max(prev ? prev.wins | 0 : 0, wins),
+          losses: Math.max(prev ? prev.losses | 0 : 0, losses),
+          best: Math.max(prev ? prev.best | 0 : 0, best),
+          seen: now
+        };
+      });
+      lbPeersSave(map);
+      return fresh;
+    }
+
+    /* one row per name; "all" adds the two columns together */
+    function lbPeerRows(mode) {
+      const map = lbPeers();
+      const cut = Date.now() - LB_KEEP_MS;
+      const want = mode || "all";
+      const out = new Map();
+      Object.keys(map).forEach(k => {
+        const r = map[k];
+        if (!r || (r.seen || 0) <= cut) return;
+        if (want !== "all" && r.mode !== want) return;
+        const key = lbNameKey(r.name);
+        const row = out.get(key) || { name: r.name, wins: 0, losses: 0, best: 0, peer: true };
+        row.wins += r.wins | 0;
+        row.losses += r.losses | 0;
+        row.best = Math.max(row.best, r.best | 0);
+        out.set(key, row);
+      });
+      return Array.from(out.values()).filter(r => r.wins || r.losses);
+    }
+
+    function lbMyRows() {
+      const mine = lbMine();
+      const rows = [];
+      Object.keys(mine.byName).forEach(k => {
+        const rec = mine.byName[k];
+        ["duel", "group"].forEach(mode => {
+          const slot = rec[mode];
+          if (!slot || (!slot.wins && !slot.losses)) return;
+          rows.push({ name: rec.name, mode: mode, wins: slot.wins | 0, losses: slot.losses | 0, best: slot.best | 0 });
+        });
+      });
+      return rows;
+    }
+
+    /* the raw per-mode row for a name, as it came off the wire */
+    function lbPeerSlot(name, mode) {
+      const map = lbPeers();
+      const r = map[lbNameKey(name) + "|" + mode];
+      if (!r || !r.wins && !r.losses) return null;
+      return { name: r.name, mode: r.mode, wins: r.wins | 0, losses: r.losses | 0, best: r.best | 0 };
+    }
+
+    let lbShareAt = 0;
+
+    /* send what this phone knows: my own wins first, then what it heard, so a
+       result keeps travelling to phones I never met */
+    function lbShareLadder(force) {
+      if (!roomCode || typeof sendPacket !== "function") return false;
+      if (!force && Date.now() - lbShareAt < 15000) return false;
+      const mine = lbMyRows();
+      const heard = [];
+      lbPeerRows().forEach(r => {          /* pass on what this phone heard */
+        ["duel", "group"].forEach(mode => {
+          const slot = lbPeerSlot(r.name, mode);
+          if (slot) heard.push(slot);
+        });
+      });
+      if (!mine.length && !heard.length) return false;
+      lbShareAt = Date.now();
+      return sendPacket({ t: "LB", rows: mine.concat(heard).slice(0, 24) });
+    }
+
+    function lbCacheRead() {
+      try { return JSON.parse(localStorage.getItem(LB_CACHE) || "null"); }
+      catch (e) { return null; }
+    }
+
+    function lbCacheWrite(mode, rows) {
+      const cache = lbCacheRead() || {};
+      cache[mode] = rows;
+      cache.fetched = Date.now();
+      try { localStorage.setItem(LB_CACHE, JSON.stringify(cache)); } catch (e) {}
+    }
+
+    function lbShowError() {
+      const note = document.getElementById("lbNote");
+      if (!note || !lbLastError) return;
+      const waiting = lbPending().length;
+      note.textContent = (waiting
+        ? waiting + " result" + (waiting === 1 ? " is" : "s are") + " waiting to go up — " + lbLastError + "."
+        : "The last result did not go up — " + lbLastError + ".");
+      note.className = "lb-note warn";
+    }
+
+    function lbNote(text, cls) {
+      const note = document.getElementById("lbNote");
+      if (!note) return;
+      note.textContent = text;
+      note.className = "lb-note" + (cls ? " " + cls : "");
+    }
+
+    let lbLastRows = null;
+    let lbLastSource = "";
+
+    function lbRepaint() {
+      lbRender(lbLastRows || [], lbLastSource);
+    }
+
+    function lbRender(rows, source) {
+      lbLastRows = rows || [];
+      lbLastSource = source || "";
+      const list = document.getElementById("lbList");
+      const count = document.getElementById("lbCount");
+      if (!list) return;
+      const me = myDisplayName();
+      list.innerHTML = "";
+
+      const local = lbLocalRow(lbMode);
+      const merged = new Map();
+      const put = r => {
+        if (!r || !r.name) return;
+        const key = lbNameKey(cleanName(r.name));
+        if (key.length < 2) return;
+        const prev = merged.get(key);
+        if (!prev) {
+          merged.set(key, {
+            name: cleanName(r.name), wins: r.wins | 0, losses: r.losses | 0, best: r.best | 0,
+            crown: !!r.crown, local: !!r.local, peer: !!r.peer
+          });
+          return;
+        }
+        prev.wins = Math.max(prev.wins, r.wins | 0);
+        prev.losses = Math.max(prev.losses, r.losses | 0);
+        prev.best = Math.max(prev.best, r.best | 0);
+        prev.crown = prev.crown || !!r.crown;
+        prev.local = prev.local || !!r.local;
+      };
+      (rows || []).slice(0, 25).forEach(put);
+      lbPeerRows(lbMode).forEach(put);     /* what the other phones told us */
+      if (local) put(local);
+      let all = Array.from(merged.values())
+        .filter(r => r.wins || r.losses)
+        .sort((a, b) => (b.wins - a.wins) || (b.best - a.best) ||
+          String(a.name).localeCompare(String(b.name)))
+        .slice(0, 25);
+
+      if (!all.length) {
+        list.innerHTML = '<div class="lb-empty">Nobody has won a human battle yet.<br>Challenge someone and take the top spot.</div>';
+        if (count) count.textContent = "0";
+        return;
+      }
+      all.forEach((row, i) => {
+        const el = document.createElement("div");
+        el.className = "lb-row" + (cleanName(row.name).toLowerCase() === me.toLowerCase() ? " me" : "");
+        const crowned = !!row.crown ||
+          (isCreator() && cleanName(row.name).toLowerCase() === me.toLowerCase());
+        el.innerHTML =
+          '<span class="r">' + (i === 0 ? crownSvg("silver", 10) : "") + (i + 1) + '</span>' +
+          '<span class="n"></span>' +
+          '<span class="w">' + row.wins + '<small> W</small></span>' +
+          '<span class="s">' + Number(row.best || 0).toLocaleString() + '<small> PTS</small></span>';
+        const nmCell = el.querySelector(".n");
+        if (crowned) nmCell.insertAdjacentHTML("afterbegin", crownSvg("gold", 12));
+        nmCell.appendChild(document.createTextNode(row.name + (row.local ? " (you, offline)" : "")));
+        list.appendChild(el);
+      });
+      if (count) count.textContent = String(all.length);
+    }
+
+    let lbAgain = false;
+
+    async function lbFetch(mode, quiet) {
+      lbMode = mode || lbMode;
+      if (lbBusy) { lbAgain = true; return; }     /* draw it after this one lands */
+      lbBusy = true;
+      const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 6000) : null;
+      try {
+        const url = LEADERBOARD_URL + "?action=top&mode=" + encodeURIComponent(lbMode) + "&limit=25&t=" + Date.now();
+        const res = await fetch(url, ctrl ? { signal: ctrl.signal, cache: "no-store" } : { cache: "no-store" });
+        if (!res.ok) throw new Error("http " + res.status);
+        const data = await res.json();
+        if (!data || !data.ok) throw new Error("bad payload");
+        lbCacheWrite(lbMode, data.rows || []);
+        lbRender(data.rows || [], "live");
+        lbNote("Live from aidekupal.unaux.com · " + (data.players || 0) + " players on the ladder", "live");
+      } catch (err) {
+        const cache = lbCacheRead();
+        const rows = (cache && cache[lbMode]) || [];
+        lbRender(rows, "cache");
+        const why = lbPlainReason(err);
+        const shared = lbPeerRows(lbMode).length;
+        if (shared) {
+          lbNote("Host not answering (" + why + ") — showing " + shared + " player" + (shared === 1 ? "" : "s") +
+                 " this lobby told us about. Results travel phone to phone here.", "warn");
+        } else if (lbClosedCopy(location.protocol)) {
+          lbNote("This copy came from Downloads or Files, and Chrome gives it no address to send from. " +
+                 "Your wins stay here and travel to the other phones in the lobby.", "warn");
+        } else if (rows.length) {
+          lbNote("Can't reach the host (" + why + ") — showing the last copy, " + new Date(cache.fetched || Date.now()).toLocaleTimeString() + ".", "warn");
+        } else {
+          lbNote("Can't reach the host (" + why + "). Your battles are kept on this phone and sent next time.", "warn");
+        }
+        if (!quiet) lbFlashOffline();
+      } finally {
+        if (timer) clearTimeout(timer);
+        lbBusy = false;
+        if (lbAgain) { lbAgain = false; lbFetch(lbMode, true); }
+      }
+    }
+
+    let lbOfflineFlashAt = 0;
+    function lbFlashOffline() {
+      if (Date.now() - lbOfflineFlashAt < 4000) return;
+      lbOfflineFlashAt = Date.now();
+      const waiting = lbPending().length;
+      roomStatusText(waiting
+        ? waiting + " result" + (waiting === 1 ? " is" : "s are") + " waiting to go up — " +
+          (lbLastError || "no internet right now") + ". It goes up by itself next time."
+        : "Leaderboard is offline — results stay on this phone for now.");
+    }
+
+    let lbLastError = "";
+
+    /* a page opened from Downloads or Files has no address of its own; Chrome
+       then refuses most network calls no matter what the host allows */
+    function lbClosedCopy(proto) { return /^(file|content):$/i.test(String(proto || "")); }
+
+    function lbPlainReason(e) {
+      const ename = (e && e.name) || "";
+      const emsg = (e && e.message) || "";
+      if (ename === "AbortError") return "the host took too long";
+      if (lbClosedCopy(location.protocol)) return "this copy has no address to send from";
+      if (/scheme|not supported/i.test(ename + " " + emsg)) return "the browser will not let this copy send";
+      if (/failed to fetch|networkerror|load failed|network|offline|timeout|err_/i.test(ename + " " + emsg) || !emsg) return "no internet right now";
+      return "the host would not answer";
+    }
+
+    /* returns {ok, rank, of} on success, or {ok:false, why:"..."} so the card
+       can say what actually went wrong instead of shrugging */
+    async function lbSend(payload, blind) {
+      const ctrl = (typeof AbortController === "function" && !blind) ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 7000) : null;
+      try {
+        const res = await fetch(LEADERBOARD_URL + "?action=report", {
+          method: "POST",
+          /* text/plain keeps this a "simple" request. A page opened straight
+             from a file (file://) otherwise needs a pre-flight check that many
+             free hosts never answer, and the result silently never leaves. */
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          body: JSON.stringify(payload),
+          mode: blind ? "no-cors" : "cors",
+          signal: ctrl ? ctrl.signal : undefined
+        });
+        if (timer) clearTimeout(timer);
+        if (blind) return { ok: true, blind: true };   /* the reply is hidden, the write is not */
+        let body = null;
+        try { body = await res.json(); } catch (e) { body = null; }
+        if (!res.ok) {
+          lbLastError = "HTTP " + res.status + (body && body.error ? " — " + body.error : "");
+          return { ok: false, why: lbLastError };
+        }
+        if (!body || !body.ok) {
+          lbLastError = (body && body.error) || "the host refused the result";
+          return { ok: false, why: lbLastError };
+        }
+        lbLastError = "";
+        return body;
+      } catch (e) {
+        /* phones say things like "Failed to fetch" — say it in plain words */
+        lbLastError = lbPlainReason(e);
+        return { ok: false, why: lbLastError, net: true };
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+
+    /* a page opened from a file can be stopped from reading the reply even
+       though the write went through: if the plain attempt fails on the network,
+       send it blind once, then let the id on the host sort out the difference */
+    let lbSending = 0;
+
+    async function lbPost(payload) {
+      lbSending++;
+      try {
+        const answer = await lbSend(payload, false);
+        if (answer && answer.ok) return answer;
+        if (!answer || !answer.net) return answer;   /* the host said no: saying it again won't help */
+        const blind = await lbSend(payload, true);
+        if (blind && blind.ok) return blind;
+        return answer;
+      } finally {
+        lbSending--;
+      }
+    }
+
+    /* ------------ results that never made it, kept until they do ------------ */
+    const LB_PENDING = "pindutan_lb_pending";
+
+    function lbPending() {
+      try { const list = JSON.parse(localStorage.getItem(LB_PENDING) || "[]"); return Array.isArray(list) ? list : []; }
+      catch (e) { return []; }
+    }
+
+    function lbPendingSave(list) {
+      try { localStorage.setItem(LB_PENDING, JSON.stringify(list.slice(-40))); } catch (e) {}
+    }
+
+    function lbQueue(payload) {
+      const list = lbPending();
+      list.push({ id: payload.id, name: payload.name, mode: payload.mode, win: payload.win,
+                  score: payload.score, lines: payload.lines, ts: payload.ts, at: Date.now() });
+      lbPendingSave(list);
+    }
+
+    function lbUnqueue(id) {
+      lbPendingSave(lbPending().filter(p => p.id !== id));
+    }
+
+    async function lbFlush() {
+      const list = lbPending();
+      if (!list.length) return 0;
+      let done = 0;
+      for (const item of list.slice()) {
+        const payload = {
+          id: item.id, name: item.name, mode: item.mode, win: item.win,
+          score: item.score, lines: item.lines,
+          ts: Math.floor(Date.now() / 1000)          /* fresh stamp: the host refuses stale ones */
+        };
+        payload.sig = lbSign(payload);
+        const answer = await lbPost(payload);
+        if (answer && answer.ok) { lbUnqueue(item.id); done++; }
+        else break;
+      }
+      return done;
+    }
+
+    let bridgingLast = false;
+
+    function lbMarkSynced(name) {
+      const mine = lbMine();
+      const rec = mine.byName[lbNameKey(name)];
+      if (!rec) return;
+      rec.synced = Date.now();
+      lbMineSave(mine);
+    }
+
+    /* ---- wins that never reached the host --------------------------------
+       The phone is the only place a battle is written down, so the phone is
+       also the only place that knows one is missing up there. Read what the
+       host has for this name, and send only the difference. */
+    let lbBridgeAt = 0;
+
+    function lbSyncDue() {
+      const mine = lbMine();
+      const cut = Date.now() - 120000;
+      const settle = Date.now() - 10000;      /* let a battle just played land first */
+      const ownDue = Object.keys(mine.byName).some(k => {
+        const rec = mine.byName[k];
+        return (rec.synced || 0) < cut && (rec.stamp || 0) < settle && (rec.duel.wins || rec.group.wins);
+      });
+      if (ownDue) return true;
+      /* anything another phone told us is worth carrying up too */
+      return Date.now() - lbBridgeAt > 120000 && !!(lbPeerRows("duel").length || lbPeerRows("group").length);
+    }
+
+    async function lbTopRows(mode) {
+      try {
+        const res = await fetch(LEADERBOARD_URL + "?action=top&mode=" + encodeURIComponent(mode) +
+          "&limit=100&t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("http " + res.status);
+        const data = await res.json();
+        if (!data || !data.ok) throw new Error("bad payload");
+        return data.rows || [];
+      } catch (e) {
+        return null;                      /* host not answering: change nothing */
+      }
+    }
+
+    async function lbSync() {
+      if (lbSending) return 0;                /* a result is on its way: compare after */
+      let carried = 0;
+      bridgingLast = false;
+      const mine = lbMine();
+      const cut = Date.now() - 120000;
+      const here = lbNameKey(myDisplayName());
+      const settle = Date.now() - 10000;
+      const keys = Object.keys(mine.byName).filter(k => (mine.byName[k].synced || 0) < cut &&
+        (mine.byName[k].stamp || 0) < settle);
+      const peerRows = { duel: lbPeerRows("duel"), group: lbPeerRows("group") };
+      const bridging = !!(peerRows.duel.length || peerRows.group.length);
+      if (!keys.length && !bridging) return 0;
+      keys.sort((a, b) => (b === here ? 1 : 0) - (a === here ? 1 : 0));   /* you first */
+      let added = 0;
+      let room = 20;                      /* the host takes 30 reports a minute */
+      let looked = 0;
+      for (const key of keys) {
+        if (room <= 0 || looked >= 2) break;
+        const rec = mine.byName[key];
+        looked++;
+        rec.synced = Date.now();
+        for (const mode of ["duel", "group"]) {
+          const slot = rec[mode];
+          if (!slot || !slot.wins || room <= 0) continue;
+          const stamp = rec.stamp;
+          const rows = await lbTopRows(mode);
+          if (!rows) { rec.synced = 0; lbMineSave(mine); return added; }
+          if (rec.stamp !== stamp || lbSending) continue;   /* a battle landed meanwhile: it counts itself */
+          const row = rows.find(r => String(r.name).toLowerCase() === key);
+          if (!row && rows.length >= 100) continue;   /* can't see the whole board: leave it */
+          const have = row ? row.wins : 0;
+          const missing = Math.min(slot.wins - have, room);
+          for (let i = 0; i < missing; i++) {
+            const payload = {
+              id: "s" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36) + i,
+              name: rec.name, mode: mode, win: 1,
+              score: Math.max(0, Math.round(slot.best || 0)), lines: 0,
+              ts: Math.floor(Date.now() / 1000)
+            };
+            payload.sig = lbSign(payload);
+            lbQueue(payload);
+            added++;
+            room--;
+          }
+        }
+      }
+      /* a phone Chrome will not let talk to the host (a Downloads copy, say) still
+         gets its wins up: any phone here that can reach the host carries them */
+      if (room > 0 && bridging) {
+        lbBridgeAt = Date.now();
+        for (const mode of ["duel", "group"]) {
+          if (room <= 0) break;
+          const list = peerRows[mode].filter(r => !mine.byName[lbNameKey(r.name)]);
+          if (!list.length) continue;
+          const rows = await lbTopRows(mode);
+          if (!rows) break;
+          if (rows.length >= 100) continue;
+          for (const peer of list) {
+            if (room <= 0) break;
+            const row = rows.find(r => String(r.name).toLowerCase() === lbNameKey(peer.name));
+            const missing = Math.min(peer.wins - (row ? row.wins : 0), room);
+            for (let i = 0; i < missing; i++) {
+              const payload = {
+                id: "b" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36) + i,
+                name: peer.name, mode: mode, win: 1,
+                score: Math.max(0, Math.round(peer.best || 0)), lines: 0,
+                ts: Math.floor(Date.now() / 1000)
+              };
+              payload.sig = lbSign(payload);
+              lbQueue(payload);
+              added++;
+              carried++;
+              room--;
+            }
+          }
+        }
+        bridgingLast = carried > 0;
+      }
+      lbMineSave(mine);                   /* compare again in two minutes at most */
+      return added;
+    }
+
+    async function lbBoot() {
+      const list = document.getElementById("lbList");
+      let sent = await lbFlush();
+      if (lbSyncDue()) {
+        const added = await lbSync();
+        if (added) {
+          sent += await lbFlush();
+          if (!sent) lbShowError();
+        }
+      }
+      if (sent) roomStatusText(sent + " saved result" + (sent === 1 ? "" : "s") + " went up" +
+        (bridgingLast ? " (some were another phone's, carried by this one)." : "."));
+      else if (lbPending().length) lbShowError();
+      lbFetch(lbMode);
+      if (list) list.dataset.loaded = "1";
+    }
+
+    async function reportBattle(win) {
+      if (currentMode !== "1v1" && currentMode !== "group") return;
+      if (battleReported) return;
+      battleReported = true;
+      const raw = getMyName();
+      if (nameHasMark(raw)) setCreator(true);
+      const name = cleanName(stripMark(raw));
+      if (name.length < 2) return;
+      const payload = {
+        id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
+        name: name,
+        mode: currentMode === "1v1" ? "duel" : "group",
+        win: win ? 1 : 0,
+        score: Math.max(0, Math.round(score || 0)),
+        lines: Math.max(0, Math.round(lines || 0)),
+        ts: Math.floor(Date.now() / 1000)
+      };
+      lbKeepMine(payload);
+      if (typeof lbShareLadder === "function") lbShareLadder(true);
+      payload.sig = lbSign(payload);
+      const answer = await lbPost(payload);
+      if (answer && answer.ok && answer.rank) {
+        const line = document.getElementById("overStats");
+        if (line) line.innerHTML += statLine("Leaderboard", "#" + answer.rank + " of " + answer.of);
+        roomStatusText((win ? "Win" : "Loss") + " saved — you are #" + answer.rank + " on the ladder.");
+        lbMarkSynced(name);
+        lbFetch(lbMode, true);            /* redraw so your new row is on it */
+      } else if (answer && answer.ok && answer.blind) {
+        roomStatusText((win ? "Win" : "Loss") + " saved — it went up. This copy can't read the board back.");
+        lbMarkSynced(name);
+        lbFetch(lbMode, true);
+      } else {
+        lbQueue(payload);
+        roomStatusText("Kept on this phone (" + (lbLastError || "host unreachable") + ") — it goes up by itself next time.");
+        lbShowError();
+      }
+    }
+
+    function lbEnsure() {
+      const list = document.getElementById("lbList");
+      if (!list || list.dataset.busy) return;
+      list.dataset.busy = "1";            /* every lobby visit: send, compare, read */
+      lbBoot().catch(() => {}).then(() => { delete list.dataset.busy; });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".lb-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".lb-tab").forEach(t => t.classList.toggle("active", t === tab));
+          lbFetch(tab.dataset.lb);
+        });
+      });
+      const refresh = document.getElementById("lbRefresh");
+      if (refresh) refresh.addEventListener("click", async () => {
+        const list = document.getElementById("lbList");
+        if (list) delete list.dataset.busy;
+        const mine = lbMine();
+        Object.keys(mine.byName).forEach(k => { mine.byName[k].synced = 0; });   /* "check now" */
+        lbMineSave(mine);
+        lbEnsure();
+      });
+    });
+
+    /* ---------- room lifecycle: there is exactly one lobby ---------- */
+    const LOBBY_CODE = "LOBBY";
+
+    function joinLobby() {
+      if (roomCode === LOBBY_CODE && localChannel) return true;
+      if (localChannel) { try { localChannel.close(); } catch (e) {} localChannel = null; }
+
+      roomCode = LOBBY_CODE;
+      peers = {};
+      battle = null;
+      battlePlayers = {};
+      subscribedTopic = "";
+
+      if (typeof BroadcastChannel !== "undefined") {
+        localChannel = new BroadcastChannel("pindutan_v17_lobby");
+        localChannel.onmessage = e => onPacket(e.data);
+      }
+
+      const pill = document.getElementById("roomPill");
+      pill.textContent = "LOBBY";
+      pill.classList.add("live");
+
+      startRelays();
+      ensureRelaySubs();
+      sendPacket(Object.assign({ t: "HI" }, myState()));
+
+      roomStatusText(isSpectator
+        ? "👁 Watching the lobby. You see every board, you do not play."
+        : "✅ You are in the lobby. No code to type — everyone arrives here.");
+      renderLobby();
+      renderOpponentsGrid();
+      paintConn();
+      return true;
+    }
+
+    function roomStatusText(t) {
+      document.getElementById("roomStatus").textContent = t;
+    }
+
+    /* ---------- invites + battles ---------- */
+    let hostStartTimer = null;
+
+    function scheduleHostStart(ms) {
+      if (!battle || battle.host !== myId) return;
+      clearTimeout(hostStartTimer);
+      hostStartTimer = setTimeout(hostStartBattle, ms);
+    }
+
+    function hostStartBattle() {
+      if (!battle || battle.host !== myId) return;
+      const ids = [myId].concat(Object.keys(battle.joiners).slice(0, MAX_PLAYERS - 1));
+      if (ids.length < 2) {
+        roomStatusText("Nobody joined this time. Invite again when more players are in.");
+        battle = null;
+        return;
+      }
+      battle.players = ids;
+      battle.started = true;
+      sendPacket({ t: "START", battleId: battle.id, mode: battle.mode, players: ids });
+      beginBattle({ players: ids, mode: battle.mode, battleId: battle.id });
+    }
+
+    function beginBattle(data) {
+      const ids = data.players || [];
+      if (!ids.includes(myId)) return;
+      battleReported = false;
+      battlePlayers = {};
+      ids.forEach(id => { battlePlayers[id] = true; });
+      battleId = data.battleId || ("B" + Date.now().toString(36));
+      battleSeenAlive = {};
+      battleOver = false;
+      battleWon = false;
+      /* a board left from the lobby must not count as "alive in this battle" */
+      ids.forEach(id => { if (peers[id]) { peers[id].alive = false; peers[id].board = null; } });
+      currentMode = data.mode === "1v1" ? "1v1" : "group";
+      isSpectator = false;
+      toggleSpectatorLayout(false);
+      syncPlayBar();
+      closeLobby();
+      showInviteBar(null);
+      startNewGame();
+      renderOpponentsGrid();
+      roomStatusText("⚔ Battle live — " + ids.length + " players.");
+    }
+
+    function inBattle() {
+      return (currentMode === "1v1" || currentMode === "group") && Object.keys(battlePlayers).length > 1;
+    }
+
+    function battleOpponents() {
+      return Object.keys(battlePlayers).filter(id => id !== myId);
+    }
+
+    function noteBattleAlive(id) {
+      if (!inBattle() || !battlePlayers[id] || !peers[id]) return;
+      if (peers[id].alive && (peers[id].mode === "1v1" || peers[id].mode === "group")) battleSeenAlive[id] = true;
+    }
+
+    /* last one standing wins — only once every rival was seen playing, then topped out or left */
+    function checkBattleWin() {
+      if (!inBattle() || battleOver || !gameRunning || isSpectator) return;
+      const opp = battleOpponents();
+      if (!opp.length) return;
+      const allOut = opp.every(id => {
+        if (!battleSeenAlive[id]) return false;
+        return !peers[id] || !peers[id].alive;
+      });
+      if (allOut) winBattle();
+    }
+
+    function winBattle() {
+      battleOver = true;
+      battleWon = true;
+      gameRunning = false;
+      reportBattle(true);
+      current = null;
+      playTone(980, "square", 0.25, 0.09);
+      const opp = battleOpponents();
+      const oneName = opp.length === 1 && peers[opp[0]] ? peers[opp[0]].name : "";
+      document.getElementById("overlayTitle").textContent = currentMode === "1v1" ? "YOU WIN" : "LAST ONE STANDING";
+      document.getElementById("overlayDesc").textContent = (oneName ? oneName + " topped out. " : "Everyone else topped out. ") +
+        "Score " + score.toLocaleString() + ".";
+      document.getElementById("overStats").innerHTML =
+        statLine("Lines", lines) + statLine("Sent", sentLines) + statLine("Max combo", maxCombo);
+      document.getElementById("startBtn").textContent = "Rematch";
+      document.getElementById("startBtn").style.display = "inline-block";
+      document.getElementById("boardOverlay").style.display = "flex";
+      broadcastState(false);
+      renderOpponentsGrid();
+    }
+
+    function rematch() {
+      if (currentMode === "1v1") {
+        const opp = battleOpponents()[0];
+        if (opp && peers[opp]) {
+          challenge(opp);
+          document.getElementById("overlayDesc").textContent = "Rematch sent to " + peers[opp].name + " — waiting for them.";
+          return;
+        }
+        roomStatusText("Your opponent left the lobby. Pick someone else.");
+        openLobby();
+        return;
+      }
+      inviteAll();
+      document.getElementById("overlayDesc").textContent = "Invite sent to everyone — starting in a few seconds.";
+    }
+
+    function onStartBtn() {
+      if (inBattle() && !gameRunning) { rematch(); return; }
+      startNewGame();
+    }
+
+    function inviteAll() {
+      if (!roomCode) {
+        roomStatusText("Not connected yet — give the relays a second, then try again.");
+        openLobby();
+        return;
+      }
+      const id = "B" + Date.now().toString(36).toUpperCase();
+      battle = { id, mode: "group", host: myId, joiners: {}, started: false, startAt: Date.now() + 4500 };
+      sendPacket({ t: "INVITE", kind: "group", to: "all", battleId: id, name: myDisplayName() });
+      roomStatusText("⚔ Invited everyone in the room. Starting in a few seconds...");
+      scheduleHostStart(4500);
+    }
+
+    function challenge(id) {
+      if (!roomCode) { roomStatusText("Still connecting — try again in a second."); return; }
+      if (!peers[id]) return;
+      const duelId = "D" + Date.now().toString(36).toUpperCase();
+      battle = { id: duelId, mode: "1v1", host: myId, joiners: {}, started: false };
+      sendPacket({ t: "INVITE", kind: "duel", to: id, battleId: duelId, name: myDisplayName() });
+      roomStatusText("⚔ Challenge sent to " + peers[id].name + ". Waiting for them to accept.");
+    }
+
+    function showInviteBar(inv) {
+      const bar = document.getElementById("inviteBar");
+      if (!inv) { bar.style.display = "none"; return; }
+      document.getElementById("inviteText").textContent =
+        inv.name + (inv.kind === "duel" ? " challenges you to a 1v1!" : " invites everyone to a group battle!");
+      bar.style.display = "block";
+      pendingInvite = inv;
+    }
+
+    function acceptInvite() {
+      if (!pendingInvite) return;
+      const inv = pendingInvite;
+      sendPacket({ t: "JOIN", to: inv.from, battleId: inv.battleId });
+      showInviteBar(null);
+      pendingInvite = null;
+      roomStatusText("Joined " + (inv.kind === "duel" ? "the 1v1" : "the group battle") + " — waiting for the start.");
+    }
+
+    /* ---------- state pushes ---------- */
+    let lastSyncAt = 0;
+    let lastBoardAt = 0;
+    let syncTimer = null;
+
+    function broadcastState(alive) {
+      if (!roomCode) return;
+      const now = Date.now();
+      const fire = () => {
+        lastSyncAt = Date.now();
+        syncTimer = null;
+        if (!roomCode) return;
+        const now2 = Date.now();
+        const withBoard = now2 - lastBoardAt > 900;
+        if (withBoard) lastBoardAt = now2;
+        const st = myState(withBoard);
+        st.t = "SYNC";
+        st.alive = alive !== false && st.alive;
+        sendPacket(st);
+      };
+      if (now - lastSyncAt > 450) fire();
+      else if (!syncTimer) syncTimer = setTimeout(fire, 500);
+      renderLobby();
+      renderOpponentsGrid();
+    }
+
+    function sendGarbageAttack(amount) {
+      if (currentMode === "bot") { botIncoming(amount); return; }
+      const all = battleOpponents();
+      const living = all.filter(id => peers[id] && peers[id].alive);
+      const targets = living.length ? living : all;
+      if (!targets.length) return;
+      const target = targets[Math.floor(Math.random() * targets.length)];
+      sendPacket({ t: "GARBAGE", to: target, amount });
+    }
+
+    function onRunEnd() {
+      broadcastState(false);
+    }
+
+    /* live frames: what the opponent sees of your board, falling piece included */
+    let lastFrameAt = 0;
+    let lastFrameBoard = "";
+
+    function pushBoardFrame(force) {
+      if (!roomCode || !gameRunning || isSpectator) return;
+      if (!Object.keys(peers).length) return;
+      const now = Date.now();
+      const gap = inBattle() ? 220 : 1000;   /* fast in a battle, slow for anyone watching a solo run */
+      if (!force && now - lastFrameAt < gap) return;
+      const b = getCompactBoard();
+      if (!force && b === lastFrameBoard && now - lastFrameAt < 2500) return;
+      lastFrameAt = now;
+      lastFrameBoard = b;
+      sendPacket({ t: "B", b, alive: true, mode: currentMode, score: score || 0, lines: lines || 0, sent: sentLines || 0 });
+    }
+
+    /* =========================================================
+       8. SOMEONE ELSE PLAYS FOR YOU (the green pills by the relay)
+          With a pill lit, that brain drives your board — in a 1v1,
+          a group battle, and against the CPU. It picks the column,
+          rotates the piece, drops it. Your name, your score, your
+          ladder row — just not your hands. Solo stays yours, and
+          nobody in the room is told anything.
+       ========================================================= */
+    let kupalLightOn = false;
+    let autoPlan = null;
+    let autoStepT = 0;
+    let autoRotFails = 0;
+    let autoMoveFails = 0;
+
+    function kupalJoinWanted() { return creatorOn && kupalLightOn; }
+
+    /* the two signal pills beside the relay: glyph + K, glyph + I.
+       pressing one hands your board to that brain; pressing the lit one
+       again takes your hands back. */
+    function chooseAutopilot(key) {
+      if (!isCreator() || !CPU_LEVELS[key]) return;
+      const lit = kupalJoinWanted() && cpuLevel === key;
+      kupalLightOn = !lit;
+      autoPlan = null;
+      if (kupalLightOn) setCpuLevel(key, false);   /* repaints; keeps the rival's board */
+      applyCreatorLock();
+      renderLobby();
+    }
+
+    function paintAutopilotButtons() {
+      const maker = isCreator();
+      [["kupalJoinBtn", "kupal"], ["interJoinBtn", "intermediate"]].forEach(pair => {
+        const b = document.getElementById(pair[0]);
+        if (!b) return;
+        const lit = maker && kupalJoinWanted() && cpuLevel === pair[1];
+        b.style.display = maker ? "inline-flex" : "none";
+        b.classList.toggle("on", lit);
+        b.setAttribute("aria-pressed", lit ? "true" : "false");
+      });
+    }
+
+    function toggleKupalJoin() { chooseAutopilot("kupal"); }
+
+    /* how long the pilot waits between its own taps: Beginner is a human pace,
+       Intermediate is brisk, Kupal barely waits at all */
+    function autoHand() { return cpuCfg().hand || 45; }
+
+    /* with the key in, the pilot plays your board in a 1v1, a group battle
+       and against the CPU. Solo is yours alone. */
+    function autopilotOn() {
+      return kupalJoinWanted() && gameRunning && !isPaused && !isSpectator &&
+             (currentMode === "1v1" || currentMode === "group" || currentMode === "bot");
+    }
+
+    /* a rotation index for a shape, so the plan and the live piece can meet */
+    function matrixFor(type, rot) {
+      let m = SHAPES[type].map(r => [...r]);
+      for (let i = 0; i < (rot % 4); i++) m = rotateMatrix(m, 1);
+      return m;
+    }
+
+    /* the planner hands back a matrix, not a rotation number — find which one it is */
+    function rotOfMatrix(type, matrix) {
+      if (!matrix) return 0;
+      const target = JSON.stringify(matrix);
+      for (let r = 0; r < 4; r++) {
+        if (JSON.stringify(matrixFor(type, r)) === target) return r;
+      }
+      return 0;
+    }
+
+    function currentRot() {
+      if (!current) return 0;
+      const live = JSON.stringify(current.matrix);
+      for (let r = 0; r < 4; r++) {
+        if (JSON.stringify(matrixFor(current.type, r)) === live) return r;
+      }
+      return 0;
+    }
+
+    function autoThink() {
+      if (!current) return;
+      /* one plan per piece: two of the same shape in a row must not reuse the
+         old aim, or the second one lands in a spot that no longer exists */
+      if (autoPlan && autoPlan.type === current.type && autoPlan.piece === pieces) return;
+      /* whoever plays for you is the level on the CPU bar: pick Kupal for the
+         full thing, Intermediate for something human, Beginner to be gentle */
+      const cfg = cpuCfg();
+      const nextType = (typeof queue !== "undefined" && queue[0]) || null;
+      let plan = null;
+      try { plan = botPlan(board, current.type, cfg, nextType); } catch (e) { plan = null; }
+      autoPlan = plan
+        ? { type: current.type, piece: pieces, rot: rotOfMatrix(current.type, plan.matrix), x: plan.x }
+        : { type: current.type, piece: pieces, rot: 0, x: current.x };
+      autoRotFails = 0;
+      autoMoveFails = 0;
+    }
+
+    /* one small action per call: rotate, shuffle sideways, or drop */
+    function autoPlayStep() {
+      if (!autopilotOn()) { autoPlan = null; return; }
+      if (!current) { autoPlan = null; return; }
+      autoThink();
+      const plan = autoPlan;
+      if (!plan) return;
+
+      const loud = sfxEnabled;
+      sfxEnabled = false;                 /* the AI works quietly */
+      try {
+        /* rotate to the planned shape — give up after three refusals and take
+           the shape it has, rather than hammering a wall kick that never comes */
+        if (currentRot() !== plan.rot) {
+          if (tryRotate(1)) {
+            autoRotFails = 0;
+          } else if (++autoRotFails >= 3) {
+            plan.rot = currentRot();
+            autoRotFails = 0;
+          }
+          return;
+        }
+
+        const dx = plan.x - current.x;
+        if (dx !== 0) {
+          if (move(dx > 0 ? 1 : -1)) autoMoveFails = 0;
+          else if (++autoMoveFails >= 2) hardDrop();   /* blocked: settle here */
+          return;
+        }
+        hardDrop();
+        autoPlan = null;
+      } finally {
+        sfxEnabled = loud;
+      }
+    }
+
+    /* ---------- presence ---------- */
+    setInterval(() => {
+      if (!roomCode) return;
+      const st = myState();
+      st.t = "SYNC";
+      sendPacket(st);
+
+      if (typeof lbShareLadder === "function") lbShareLadder();   /* at most every 15s */
+
+      sweepPresence();
+      paintConn();
+    }, 4000);
+
+    /* drop players who went quiet */
+    function sweepPresence() {
+      const now = Date.now();
+      let dropped = false;
+      Object.keys(peers).forEach(id => {
+        if (now - peers[id].lastSeen > 13000) { delete peers[id]; dropped = true; }
+      });
+      if (dropped) {
+        renderLobby();
+        renderOpponentsGrid();
+      }
+      return dropped;
+    }
+
+    window.addEventListener("beforeunload", () => { if (roomCode) sendPacket({ t: "BYE" }); });
+
+    /* ---------- opponents grid ----------
+       On during a 1v1 / group battle (only the people in it) and while watching (everyone).
+       Cards are kept per player and only their canvas is repainted, because live frames
+       arrive several times a second. */
+    const oppCards = {};
+    let oppPaintQueued = false;
+
+    function opponentsWanted() {
+      return isSpectator || inBattle();
+    }
+
+    function renderOpponentsGrid() {
+      if (oppPaintQueued) return;
+      oppPaintQueued = true;
+      const run = () => { oppPaintQueued = false; paintOpponentsGrid(); };
+      if (typeof requestAnimationFrame === "function" && !document.hidden) requestAnimationFrame(run);
+      else setTimeout(run, 0);
+    }
+
+    function paintOpponentsGrid() {
+      const panel = document.getElementById("opponentsPanel");
+      const grid = document.getElementById("opponentsGrid");
+      if (!grid || !panel) return;
+
+      const on = opponentsWanted();
+      panel.classList.toggle("on", on);
+      panel.classList.toggle("duel", currentMode === "1v1" && !isSpectator);
+      panel.classList.toggle("watch", isSpectator);
+      document.getElementById("spectatorCount").textContent = "👁 " + (Object.keys(peers).length + 1) + " in lobby";
+      if (!on) return;
+
+      const ids = isSpectator
+        ? Object.keys(peers)
+        : battleOpponents().filter(id => peers[id]);
+      const limit = currentMode === "1v1" && !isSpectator ? 2 : MAX_PLAYERS;
+      const total = isSpectator ? ids.length + 1 : Object.keys(battlePlayers).length;
+      document.getElementById("opponentsTitle").textContent =
+        (isSpectator ? "LIVE ROOM (" : currentMode === "1v1" ? "OPPONENT (" : "OPPONENTS (") + total + "/" + limit + ")";
+
+      /* drop cards of players no longer shown */
+      Object.keys(oppCards).forEach(id => {
+        if (!ids.includes(id)) { oppCards[id].card.remove(); delete oppCards[id]; }
+      });
+
+      let empty = grid.querySelector(".opp-empty");
+      if (!ids.length) {
+        if (!empty) {
+          empty = document.createElement("div");
+          empty.className = "opp-empty";
+          empty.style.cssText = "color:var(--mut);font-size:0.66rem;padding:10px;text-align:center;line-height:1.6;";
+          grid.appendChild(empty);
+        }
+        const missing = battleOpponents().length;
+        empty.textContent = isSpectator
+          ? "Nobody else is in the lobby yet."
+          : missing ? "Waiting for your opponent's board..." : "Waiting for players...";
+        return;
+      }
+      if (empty) empty.remove();
+
+      ids.slice(0, MAX_PLAYERS).forEach(id => {
+        const p = peers[id];
+        let ref = oppCards[id];
+        if (!ref) {
+          const card = document.createElement("div");
+          const title = document.createElement("div");
+          title.className = "opp-name";
+          const mini = document.createElement("canvas");
+          mini.width = 80;
+          mini.height = 160;
+          const ko = document.createElement("div");
+          ko.className = "ko";
+          ko.textContent = "KO";
+          const stats = document.createElement("div");
+          stats.className = "opp-stats";
+          const holder = document.createElement("div");
+          holder.className = "opp-board";
+          holder.appendChild(mini);
+          holder.appendChild(ko);
+          const info = document.createElement("div");
+          info.className = "opp-info";
+          info.appendChild(title);
+          info.appendChild(stats);
+          card.appendChild(holder);
+          card.appendChild(info);
+          grid.appendChild(card);
+          ref = oppCards[id] = { card, title, mini, ko, stats, ctx: mini.getContext("2d") };
+        }
+
+        const inGame = !isSpectator ? !!battleSeenAlive[id] : true;
+        const dead = !p.alive && (isSpectator ? !!p.board : inGame);
+        ref.card.className = "opp-card" + (p.alive ? " live" : "") + (dead ? " dead" : "");
+        ref.title.textContent = p.name + (p.alive ? "" : inGame ? "" : " (joining)");
+        ref.ko.textContent = p.won ? "WIN" : "KO";
+        ref.ko.style.color = p.won ? "var(--lime)" : "";
+        ref.ko.style.display = (dead || p.won) && !isSpectator ? "block" : "none";
+        ref.stats.innerHTML = "Score <b>" + (p.score | 0) + "</b><br>Lines <b>" + (p.lines | 0) + "</b> · Sent <b>" + (p.sent | 0) + "</b>";
+
+        const mCtx = ref.ctx;
+        mCtx.fillStyle = "#070a11";
+        mCtx.fillRect(0, 0, 80, 160);
+        mCtx.strokeStyle = "rgba(255,255,255,0.035)";
+        mCtx.lineWidth = 1;
+        for (let c = 1; c < COLS; c++) { mCtx.beginPath(); mCtx.moveTo(c * 8 + 0.5, 0); mCtx.lineTo(c * 8 + 0.5, 160); mCtx.stroke(); }
+        const cell = 8;
+        if (p.board) {
+          for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+              const v = p.board[r] && p.board[r][c];
+              if (v) drawCell(mCtx, c * cell, r * cell, cell, COLORS[v] || "#94a3b8", { garbage: v === "G" });
+            }
+          }
+        }
+      });
+    }
+
+    /* =========================================================
+       5. LOBBY
+       ========================================================= */
+    function modeLabel(m) {
+      if (m === "solo") return "playing solo";
+      if (m === "bot") return "vs CPU";
+      if (m === "1v1") return "in a 1v1";
+      if (m === "group") return "in a group battle";
+      return "in the lobby";
+    }
+
+    function renderLobby() {
+      const list = document.getElementById("lobbyList");
+      if (!list) return;
+      const ids = Object.keys(peers);
+      const here = ids.length + 1;
+
+      document.getElementById("lobbyCount").textContent = here + " here";
+      const pillCount = document.getElementById("lobbyPillCount");
+      if (pillCount) pillCount.textContent = here + (here === 1 ? " player" : " players") + " in";
+
+      list.innerHTML = "";
+      list.appendChild(playerCard({ id: myId, name: myDisplayName(), mode: currentMode, alive: gameRunning, me: true }));
+
+      if (!ids.length) {
+        const hint = document.createElement("div");
+        hint.style.cssText = "grid-column:1/-1;color:var(--mut);font-size:0.62rem;padding:4px 2px 2px;line-height:1.6;";
+        hint.textContent = "Nobody else is here yet. Anyone who opens the game lands in this same lobby.";
+        list.appendChild(hint);
+        return;
+      }
+
+      ids.sort((a, b) => peers[a].lastSeen - peers[b].lastSeen)
+        .forEach(id => list.appendChild(playerCard(peers[id])));
+    }
+
+    function playerCard(p) {
+      const card = document.createElement("div");
+      card.className = "pg-card" + (p.me ? " me" : "");
+
+      const top = document.createElement("div");
+      top.className = "pg-top";
+
+      const av = document.createElement("canvas");
+      av.className = "pg-av";
+      av.width = 56;
+      av.height = 56;
+      drawGlyph(av, avatarTypeFor(p.id));
+      top.appendChild(av);
+
+      const wrap = document.createElement("div");
+      wrap.style.minWidth = "0";
+
+      const nm = document.createElement("div");
+      nm.className = "pg-name";
+      const crowned = p.me ? isCreator() : !!p.crown;
+      if (crowned) {
+        nm.innerHTML = crownSvg("gold", 13);
+        nm.appendChild(document.createTextNode(p.name + (p.me ? " (you)" : "")));
+        nm.classList.add("crowned");
+      } else {
+        nm.textContent = p.name + (p.me ? " (you)" : "");
+      }
+
+      const sb = document.createElement("div");
+      sb.className = "pg-sub";
+      sb.textContent = modeLabel(p.mode) + (p.alive ? " · live" : "");
+
+      wrap.appendChild(nm);
+      wrap.appendChild(sb);
+      top.appendChild(wrap);
+      card.appendChild(top);
+
+      if (p.me) {
+        const tag = document.createElement("span");
+        tag.className = "pg-you";
+        tag.textContent = "YOU";
+        card.appendChild(tag);
+      } else {
+        const btn = document.createElement("button");
+        btn.className = "pg-btn";
+        btn.textContent = "CHALLENGE";
+        btn.addEventListener("click", () => challenge(p.id));
+        card.appendChild(btn);
+      }
+      return card;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function paintConn() {
+      const local = document.getElementById("dotLocal");
+      if (local) local.className = "dot " + (roomCode ? "ok" : "");
+      BROKERS.forEach((b, i) => {
+        const d = document.getElementById("dotB" + i);
+        if (d) d.className = "dot " + (b.state === "ok" ? "ok" : b.state === "wait" ? "wait" : b.state === "bad" ? "bad" : "");
+      });
+      const on = BROKERS.filter(b => b.state === "ok").length;
+      const pill = document.getElementById("relayPill");
+      pill.textContent = "RELAY " + on + "/3";
+      pill.className = "pill relay " + (on === 0 ? (roomCode ? "bad" : "") : on < 3 ? "warn" : "ok");
+    }
+
+    function openLobby() {
+      if (typeof slideStop === "function") slideStop();
+      if (typeof softHoldStop === "function") softHoldStop();
+      document.getElementById("lobbySheet").style.display = "block";
+      document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
+      renderLobby();
+      paintConn();
+      if (typeof lbEnsure === "function") lbEnsure();
+      if (typeof lbShareLadder === "function") lbShareLadder(true);
+      startRelays();   /* warm the relays up while you are deciding */
+    }
+
+    function closeLobby() {
+      document.getElementById("lobbySheet").style.display = "none";
+      document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
+    }
+
+    function syncPlayBar() {
+      const key = currentMode === "1v1" ? "duel" : currentMode;
+      document.querySelectorAll("[data-play]").forEach(b => {
+        b.classList.toggle("active", b.dataset.play === key);
+      });
+    }
+
+    function setPlay(mode) {
+      if (mode === "solo") {
+        currentMode = "solo";
+        botStop();
+        isSpectator = false;
+        battlePlayers = {};
+        battleId = "";
+        toggleSpectatorLayout(false);
+        syncPlayBar();
+        closeLobby();
+        startNewGame();
+      } else if (mode === "bot") {
+        currentMode = "bot";
+        isSpectator = false;
+        battlePlayers = {};
+        battleId = "";
+        toggleSpectatorLayout(false);
+        syncPlayBar();
+        closeLobby();
+        startNewGame();
+      } else if (mode === "duel") {
+        openLobby();
+        document.getElementById("playHint").textContent = "Tap ⚔ 1v1 on any player above to challenge them.";
+      } else if (mode === "group") {
+        openLobby();
+        document.getElementById("playHint").textContent = "Tap “Invite everyone…” under the player list.";
+      }
+    }
+
+    function toggleSpectatorLayout(spectating) {
+      document.getElementById("playerLeftStats").style.display = spectating ? "none" : "flex";
+      document.getElementById("playerBoardWrapper").style.display = spectating ? "none" : "flex";
+      document.getElementById("playerRightStats").style.display = spectating ? "none" : "flex";
+      document.getElementById("liveBadge").style.display = spectating ? "inline-block" : "none";
+      document.getElementById("opponentsPanel").style.maxWidth = spectating ? "100%" : "640px";
+      renderOpponentsGrid();
+      if (!spectating) setTimeout(resizeBoard, 30);
+    }
+
+    /* =========================================================
+       6. CPU OPPONENT — beginner / intermediate / kupal
+       ========================================================= */
+    const CPU_LEVELS = {
+      beginner: {
+        key: "beginner", label: "BEGINNER",
+        drop: 155, minDrop: 115, move: 48, mistake: 0.2, safeHeight: 3, sloppy: 9,
+        holes: -5, agg: -0.4, bump: -0.18, tall: -0.6, clear: 34,
+        attackBonus: 0, lookahead: false, hand: 180, blurb: "slow hands, settles for a lesser spot"
+      },
+      intermediate: {
+        key: "intermediate", label: "INTERMEDIATE",
+        drop: 88, minDrop: 46, move: 26, mistake: 0.08, safeHeight: 5, sloppy: 6,
+        holes: -13.5, agg: -0.55, bump: -0.42, tall: -1.9, clear: 60,
+        attackBonus: 0, lookahead: false, hand: 120, blurb: "steady, clears when it can"
+      },
+      kupal: {
+        key: "kupal", label: "KUPAL",
+        drop: 46, minDrop: 22, move: 13, mistake: 0.004, safeHeight: 0, sloppy: 1,
+        holes: -24, agg: -0.62, bump: -0.52, tall: -2.7, clear: 70,
+        attackBonus: 1, lookahead: true, hand: 32, blurb: "two pieces ahead, never stops"
+      }
+    };
+
+    let cpuLevel = "intermediate";
+    try {
+      const saved = localStorage.getItem("pindutan_cpu");
+      if (saved && CPU_LEVELS[saved]) cpuLevel = saved;
+    } catch (e) { /* private mode */ }
+
+    function cpuCfg() { return CPU_LEVELS[cpuLevel] || CPU_LEVELS.intermediate; }
+
+    function setCpuLevel(key, restartBot = true) {
+      if (!CPU_LEVELS[key]) return;
+      cpuLevel = key;
+      try { localStorage.setItem("pindutan_cpu", key); } catch (e) {}
+      paintCpuLevels();
+      botMeta();
+      /* a fresh rival board when you pick a level from the bar, but pressing a
+         pill during a VS CPU game only changes who plays YOUR board */
+      if (restartBot && bot.on && currentMode === "bot") botStart();
+    }
+
+    function paintCpuLevels() {
+      document.querySelectorAll("#cpuLevelBar button").forEach(b => {
+        b.classList.toggle("active", b.dataset.lvl === cpuLevel);
+      });
+      const name = document.getElementById("botName");
+      if (name) name.textContent = cpuCfg().label;
+      const blurb = document.getElementById("cpuBlurb");
+      if (blurb) blurb.textContent = cpuCfg().blurb;
+      if (typeof paintAutopilotButtons === "function") paintAutopilotButtons();
+    }
+
+    const bot = {
+      on: false, alive: false, board: null, piece: null, target: null,
+      queue: [], score: 0, lines: 0, level: 1, dropT: 0, moveT: 0, placed: 0
+    };
+
+    const botCanvas = document.getElementById("botCanvas");
+    const botCtx = botCanvas.getContext("2d");
+    const botCell = botCanvas.width / COLS;
+
+    function emptyBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    }
+
+    function botRandType() {
+      const types = ["I", "J", "L", "O", "S", "T", "Z"];
+      return types[Math.floor(Math.random() * types.length)];
+    }
+
+    function botStart() {
+      bot.on = true;
+      bot.alive = true;
+      bot.board = emptyBoard();
+      bot.piece = null;
+      bot.target = null;
+      bot.queue = [botRandType(), botRandType()];
+      bot.score = 0;
+      bot.lines = 0;
+      bot.level = 1;
+      bot.dropT = 0;
+      bot.moveT = 0;
+      bot.placed = 0;
+      document.getElementById("botPanel").classList.add("on");
+      paintCpuLevels();
+      botMeta();
+      botSpawn();
+      botRender();
+    }
+
+    function botStop() {
+      bot.on = false;
+      document.getElementById("botPanel").classList.remove("on");
+    }
+
+    function botMeta() {
+      document.getElementById("botLine").textContent =
+        "Score " + bot.score + " · Lines " + bot.lines + " · Lv " + bot.level;
+      const name = document.getElementById("botName");
+      if (name) name.textContent = cpuCfg().label;
+    }
+
+    function botStackHeight(b) {
+      for (let r = 0; r < ROWS; r++) {
+        if (b[r].some(c => c !== null)) return ROWS - r;
+      }
+      return 0;
+    }
+
+    function botScoreBoard(t, cfg) {
+      const heights = [];
+      let holes = 0, maxH = 0;
+      for (let c = 0; c < COLS; c++) {
+        let h = 0, seenBlock = false;
+        for (let r = 0; r < ROWS; r++) {
+          if (t[r][c]) {
+            if (!seenBlock) { seenBlock = true; h = ROWS - r; }
+          } else if (seenBlock) holes++;
+        }
+        heights.push(h);
+        if (h > maxH) maxH = h;
+      }
+      let bump = 0;
+      for (let c = 0; c < COLS - 1; c++) bump += Math.abs(heights[c] - heights[c + 1]);
+      const agg = heights.reduce((a, b) => a + b, 0);
+      return agg * cfg.agg + holes * cfg.holes + bump * cfg.bump + maxH * cfg.tall;
+    }
+
+    /* every legal rotation + column, scored — boards kept for the lookahead */
+    function botCandidates(b, type, cfg) {
+      const out = [];
+      let mat = SHAPES[type].map(r => [...r]);
+      for (let rot = 0; rot < 4; rot++) {
+        for (let x = -3; x < COLS; x++) {
+          const p = { type, matrix: mat, x, y: 0 };
+          if (collide(b, p)) continue;
+          while (!collide(b, p, 0, 1)) p.y++;
+          if (p.y < 0) continue;
+
+          const t = b.map(r => [...r]);
+          let bad = false;
+          for (let r = 0; r < mat.length && !bad; r++) {
+            for (let c = 0; c < mat[r].length; c++) {
+              if (!mat[r][c]) continue;
+              const yy = p.y + r, xx = p.x + c;
+              if (yy < 0 || yy >= ROWS || xx < 0 || xx >= COLS) { bad = true; break; }
+              t[yy][xx] = type;
+            }
+          }
+          if (bad) continue;
+
+          const cleared = t.filter(row => row.every(c => c !== null)).length;
+          out.push({
+            score: botScoreBoard(t, cfg) + cleared * cfg.clear,
+            x: p.x,
+            matrix: mat.map(r => [...r]),
+            board: t
+          });
+        }
+        mat = rotateMatrix(mat, 1);
+      }
+      return out;
+    }
+
+    function botPlan(b, type, cfg, nextType) {
+      const cands = botCandidates(b, type, cfg);
+      if (!cands.length) return null;
+      cands.sort((a, c) => c.score - a.score);
+
+      let best;
+      if (cfg.lookahead && nextType) {
+        const top = cands.slice(0, 8);
+        top.forEach(c => {
+          const nextCands = botCandidates(c.board, nextType, cfg);
+          const bestNext = nextCands.length ? Math.max(...nextCands.map(n => n.score)) : -400;
+          c.total = c.score + bestNext * 0.4;
+        });
+        best = top.reduce((a, c) => (c.total > a.total ? c : a), top[0]);
+      } else {
+        best = cands.reduce((a, c) => (c.score > a.score ? c : a), cands[0]);
+      }
+
+      /* the easy levels take a lesser spot on purpose: that is what actually
+         shows up on the board as a hole or a short stack. Never an illegal one. */
+      /* no height gate: the old one stopped firing as soon as the stack grew,
+         which made all three levels play the very same best move */
+      const sloppy = Math.max(1, cfg.sloppy || 1);
+      if (best && sloppy > 1 && Math.random() < cfg.mistake) {
+        const reach = Math.min(sloppy, cands.length);
+        if (reach > 1) {
+          const pick = cands[1 + Math.floor(Math.random() * (reach - 1))];
+          if (pick) return pick;
+        }
+      }
+      return best;
+    }
+
+    function botSpawn() {
+      bot.target = null;
+      if (!bot.on || !bot.alive) return;
+      const cfg = cpuCfg();
+      while (bot.queue.length < 2) bot.queue.push(botRandType());
+      const type = bot.queue.shift();
+      const nextType = bot.queue[0];
+
+      const plan = botPlan(bot.board, type, cfg, nextType) || { x: 3, matrix: SHAPES[type].map(r => [...r]) };
+      const piece = { type, matrix: plan.matrix.map(r => [...r]), x: plan.x, y: 0 };
+
+      if (collide(bot.board, piece)) {
+        /* the CPU stacked too high: hunt for any legal column before giving up */
+        let placed = false;
+        for (let x = 0; x < COLS; x++) {
+          piece.x = x;
+          if (!collide(bot.board, piece)) { placed = true; break; }
+        }
+        if (!placed) { botDie(); return; }
+      }
+      bot.target = { score: plan.score, x: piece.x, matrix: piece.matrix };
+      bot.piece = piece;
+      bot.dropT = 0;
+      bot.moveT = 0;
+    }
+
+    function botTick(delta) {
+      if (!bot.on || !bot.alive) return;
+      if (!bot.piece) botSpawn();
+      if (!bot.piece) return;
+
+      const cfg = cpuCfg();
+      bot.moveT += delta;
+      bot.dropT += delta;
+
+      if (bot.moveT >= cfg.move) {
+        bot.moveT = 0;
+        const dx = bot.target ? bot.target.x - bot.piece.x : 0;
+        if (dx !== 0) {
+          const step = dx > 0 ? 1 : -1;
+          if (!collide(bot.board, bot.piece, step, 0)) bot.piece.x += step;
+        }
+      }
+
+      if (bot.dropT >= Math.max(cfg.minDrop, cfg.drop - (bot.level - 1) * 6)) {
+        bot.dropT = 0;
+        if (!collide(bot.board, bot.piece, 0, 1)) bot.piece.y++;
+        else botLock();
+      }
+      botRender();
+    }
+
+    function botLock() {
+      const p = bot.piece;
+      bot.piece = null;
+      bot.placed = (bot.placed || 0) + 1;
+      if (!p) return;
+
+      let above = false;
+      for (let r = 0; r < p.matrix.length; r++) {
+        for (let c = 0; c < p.matrix[r].length; c++) {
+          if (!p.matrix[r][c]) continue;
+          const yy = p.y + r, xx = p.x + c;
+          if (yy < 0) { above = true; continue; }
+          if (yy < ROWS && xx >= 0 && xx < COLS) bot.board[yy][xx] = p.type;
+        }
+      }
+      if (above) { botDie(); return; }
+
+      let cleared = 0;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (bot.board[r].every(c => c !== null)) {
+          bot.board.splice(r, 1);
+          bot.board.unshift(Array(COLS).fill(null));
+          cleared++;
+          r++;
+        }
+      }
+
+      if (cleared) {
+        bot.lines += cleared;
+        bot.level = Math.floor(bot.lines / 10) + 1;
+        bot.score += ([0, 100, 300, 500, 800][cleared] || 800) * bot.level;
+
+        let atk = ([0, 0, 1, 2, 4][cleared] || 0);
+        if (atk > 0) atk += cpuCfg().attackBonus;
+        if (atk > 0 && currentMode === "bot" && gameRunning && !isPaused) {
+          pendingGarbage += atk;
+          updateHUD();
+          addFloater("+" + atk + " INCOMING", "#ff4d6d");
+        }
+        botMeta();
+      }
+
+      botRender();
+    }
+
+    function botIncoming(n) {
+      if (!bot.on || !bot.alive) return;
+      const rows = Math.min(6, n | 0);
+      for (let i = 0; i < rows; i++) {
+        bot.board.shift();
+        const row = Array(COLS).fill("G");
+        row[Math.floor(Math.random() * COLS)] = null;
+        bot.board.push(row);
+      }
+      botRender();
+    }
+
+    function botDie() {
+      bot.alive = false;
+      bot.piece = null;
+      botRender();
+      if (currentMode === "bot" && gameRunning) winRun();
+    }
+
+    function winRun() {
+      gameRunning = false;
+      current = null;
+      playTone(980, "square", 0.25, 0.09);
+      document.getElementById("overlayTitle").textContent = "YOU WIN";
+      document.getElementById("overlayDesc").textContent =
+        "The " + cpuCfg().label.toLowerCase() + " CPU topped out. Score " + score.toLocaleString() + ".";
+      document.getElementById("overStats").innerHTML =
+        "<span>Lines <b>" + lines + "</b></span><span>Sent <b>" + sentLines + "</b></span>" +
+        "<span>CPU lines <b>" + bot.lines + "</b></span>";
+      document.getElementById("startBtn").textContent = "Play again";
+      document.getElementById("startBtn").style.display = "inline-block";
+      document.getElementById("boardOverlay").style.display = "flex";
+      broadcastState(false);
+    }
+
+    function botRender() {
+      if (!botCtx) return;
+      botCtx.fillStyle = "#070a11";
+      botCtx.fillRect(0, 0, botCanvas.width, botCanvas.height);
+      if (!bot.board) return;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (bot.board[r][c]) {
+            drawCell(botCtx, c * botCell, r * botCell, botCell, COLORS[bot.board[r][c]] || "#94a3b8",
+              { garbage: bot.board[r][c] === "G" });
+          }
+        }
+      }
+      if (bot.piece) {
+        for (let r = 0; r < bot.piece.matrix.length; r++) {
+          for (let c = 0; c < bot.piece.matrix[r].length; c++) {
+            if (bot.piece.matrix[r][c] && bot.piece.y + r >= 0) {
+              drawCell(botCtx, (bot.piece.x + c) * botCell, (bot.piece.y + r) * botCell, botCell,
+                COLORS[bot.piece.type], { glow: true });
+            }
+          }
+        }
+      }
+    }
+
+    /* =========================================================
+       7. UI & INPUT
+       ========================================================= */
+    /* =========================================================
+       8. LOOK: block wordmark, piece avatars, play-card icons
+       ========================================================= */
+    const PIXEL_FONT = {
+      P: ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+      I: ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+      N: ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+      D: ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+      U: ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+      T: ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+      A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"]
+    };
+    const LOGO_COLORS = ["#ffb020", "#ff7a18", "#22d3ee", "#ff3ea5", "#4ade80", "#a855f7"];
+
+    /* chunky logo block: tighter padding and a smaller radius than a playfield cell */
+    function logoBlock(c, x, y, size, color) {
+      const pad = size * 0.05;
+      const s = size - pad * 2;
+      rr(c, x + pad, y + pad, s, s, size * 0.16);
+      c.fillStyle = color;
+      c.fill();
+      c.save();
+      c.clip();
+      const g = c.createLinearGradient(0, y, 0, y + size);
+      g.addColorStop(0, "rgba(255,255,255,0.34)");
+      g.addColorStop(0.55, "rgba(255,255,255,0.05)");
+      g.addColorStop(1, "rgba(0,0,0,0.24)");
+      c.fillStyle = g;
+      c.fillRect(x, y, size, size);
+      c.restore();
+    }
+
+    function drawWordmark(canvas, word) {
+      if (!canvas) return;
+      const text = word || "PINDUTAN";
+      const glyphs = text.split("").map(ch => PIXEL_FONT[ch] || PIXEL_FONT.O);
+      const cols = glyphs.reduce((n) => n + 5, 0) + (text.length - 1);
+      const rows = 7;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const cell = 9;
+      const w = cols * cell;
+      const h = rows * cell + cell * 0.5;
+
+      canvas.width = Math.ceil(w * dpr);
+      canvas.height = Math.ceil(h * dpr);
+      const c = canvas.getContext("2d");
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.clearRect(0, 0, w, h);
+
+      /* the chunky drop shadow under every block */
+      c.fillStyle = "rgba(0,0,0,0.55)";
+      let cx = 0;
+      glyphs.forEach(g => {
+        for (let r = 0; r < 7; r++) {
+          for (let col = 0; col < 5; col++) {
+            if (g[r][col] === "1") c.fillRect(cx + col * cell + cell * 0.1, r * cell + cell * 0.5, cell * 0.85, cell * 0.85);
+          }
+        }
+        cx += 5 * cell + cell;
+      });
+
+      cx = 0;
+      glyphs.forEach((g, gi) => {
+        const color = LOGO_COLORS[gi % LOGO_COLORS.length];
+        for (let r = 0; r < 7; r++) {
+          for (let col = 0; col < 5; col++) {
+            if (g[r][col] === "1") logoBlock(c, cx + col * cell, r * cell, cell, color);
+          }
+        }
+        cx += 5 * cell + cell;
+      });
+    }
+
+    function drawGlyph(canvas, type) {
+      if (!canvas) return;
+      const c = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      c.clearRect(0, 0, W, H);
+      const mat = SHAPES[type] || SHAPES.O;
+      let minR = 9, maxR = -1, minC = 9, maxC = -1;
+      for (let r = 0; r < mat.length; r++) {
+        for (let col = 0; col < mat[r].length; col++) {
+          if (!mat[r][col]) continue;
+          if (r < minR) minR = r;
+          if (r > maxR) maxR = r;
+          if (col < minC) minC = col;
+          if (col > maxC) maxC = col;
+        }
+      }
+      const rows = maxR - minR + 1;
+      const cols = maxC - minC + 1;
+      const size = Math.min(W / (cols + 0.3), H / (rows + 0.3));
+      const ox = (W - cols * size) / 2;
+      const oy = (H - rows * size) / 2;
+      for (let r = minR; r <= maxR; r++) {
+        for (let col = minC; col <= maxC; col++) {
+          if (mat[r] && mat[r][col]) drawCell(c, ox + (col - minC) * size, oy + (r - minR) * size, size, COLORS[type]);
+        }
+      }
+    }
+
+    const AVATAR_TYPES = ["I", "J", "L", "O", "S", "T", "Z"];
+
+    function avatarTypeFor(id) {
+      let h = 7;
+      const s = String(id || "x");
+      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      return AVATAR_TYPES[h % AVATAR_TYPES.length];
+    }
+
+    function paintPlayCards() {
+      const map = { solo: "O", bot: "T", duel: "S", group: "I" };
+      document.querySelectorAll(".play-card").forEach(btn => {
+        const cv = btn.querySelector("canvas");
+        if (cv) drawGlyph(cv, map[btn.dataset.play] || "O");
+      });
+    }
+
+    document.querySelectorAll("[data-play]").forEach(btn => {
+      btn.addEventListener("click", () => setPlay(btn.dataset.play));
+    });
+
+    document.getElementById("lobbyBtn").addEventListener("click", openLobby);
+    document.getElementById("lobbyClose").addEventListener("click", closeLobby);
+    document.getElementById("roomPill").addEventListener("click", openLobby);
+
+    document.getElementById("watchToggle").addEventListener("click", () => {
+      isSpectator = !isSpectator;
+      toggleSpectatorLayout(isSpectator);
+      const btn = document.getElementById("watchToggle");
+      btn.textContent = isSpectator ? "▶ Play" : "👁 Watch";
+      btn.className = isSpectator ? "primary" : "";
+      roomStatusText(isSpectator
+        ? "👁 Watching. You see every board, you do not play."
+        : "✅ You are in the lobby. Pick a game below.");
+    });
+
+    document.getElementById("inviteAllBtn").addEventListener("click", inviteAll);
+    document.getElementById("inviteJoin").addEventListener("click", acceptInvite);
+    document.getElementById("inviteNo").addEventListener("click", () => { pendingInvite = null; showInviteBar(null); });
+
+    document.getElementById("nicknameInput").value = localStorage.getItem("pindutan_nick") ||
+      ("Player_" + Math.floor(100 + Math.random() * 900));
+
+    /* the gate hands the chosen name straight to the lobby, and wakes the ladder */
+    applyCreatorLock();
+
+    function afterGateName(name) {
+      const ni = document.getElementById("nicknameInput");
+      if (ni) ni.value = name;
+      if (typeof roomCode !== "undefined" && roomCode) {
+        sendPacket(Object.assign({ t: "SYNC" }, myState()));
+      }
+      renderLobby();
+      if (typeof lbFetch === "function") lbFetch(lbMode, true);
+    }
+    let nickMarkArmed = false;
+    wireMarkField(document.getElementById("nicknameInput"), armed => { nickMarkArmed = !!armed; });
+
+    document.getElementById("nicknameInput").addEventListener("change", () => {
+      const field = document.getElementById("nicknameInput");
+      const typed = field.value;
+      const maker = nameHasMark(typed) || nickMarkArmed;
+      nickMarkArmed = false;
+      const chosen = cleanName(stripMark(typed));
+      if (stripMark(typed) !== typed.trim()) field.value = chosen;   /* the pluses never stay */
+      if (chosen.length >= 2) { field.value = chosen; setCreator(maker); }
+      if (chosen.length >= 2) localStorage.setItem("pindutan_nick", chosen);
+      if (roomCode) sendPacket(Object.assign({ t: "SYNC" }, myState()));
+      renderLobby();
+    });
+
+    document.getElementById("botRestart").addEventListener("click", () => {
+      if (currentMode !== "bot") return;
+      botStart();
+    });
+
+    document.querySelectorAll("#cpuLevelBar button").forEach(btn => {
+      btn.addEventListener("click", () => setCpuLevel(btn.dataset.lvl));
+    });
+
+    /* tap the CPU name on the board screen to cycle levels */
+    document.getElementById("botMetaBox").addEventListener("click", () => {
+      const order = ["beginner", "intermediate", "kupal"];
+      setCpuLevel(order[(order.indexOf(cpuLevel) + 1) % order.length]);
+      if (currentMode === "bot") startNewGame();
+    });
+
+    document.getElementById("startBtn").addEventListener("click", onStartBtn);
+
+    document.getElementById("toggleGhost").addEventListener("click", e => {
+      ghostEnabled = !ghostEnabled;
+      e.target.textContent = "Ghost " + (ghostEnabled ? "ON" : "OFF");
+      e.target.className = ghostEnabled ? "on" : "off";
+      drawBoard();
+    });
+
+    document.getElementById("toggleAutoPause").addEventListener("click", e => {
+      autoPauseEnabled = !autoPauseEnabled;
+      e.target.textContent = "Auto-Pause " + (autoPauseEnabled ? "ON" : "OFF");
+      e.target.className = autoPauseEnabled ? "on" : "off";
+    });
+
+    document.getElementById("toggleSfx").addEventListener("click", e => {
+      sfxEnabled = !sfxEnabled;
+      e.target.textContent = "SFX " + (sfxEnabled ? "ON" : "OFF");
+      e.target.className = sfxEnabled ? "on" : "off";
+    });
+
+    /* ---------- GLIDE: how a held button moves the piece ----------
+       A tap is one square, as always. Hold ◀ ▶ and the piece moves at once,
+       waits the start delay, then moves a column every "glide" ms. Hold ▼ and
+       it drops a row every "soft" ms. The numbers live on this device. */
+    const GLIDE_KEY = "pindutan_glide";
+    const SLIDE_LOOKS = [
+      { id: "off",   label: "off",   ms: 0 },
+      { id: "crisp", label: "crisp", ms: 45 },
+      { id: "soft",  label: "soft",  ms: 90 }
+    ];
+    const GLIDE_PRESETS = [
+      { id: "relaxed", label: "Relaxed", delay: 240, glide: 70, soft: 90, look: 2, blurb: "patient, easy on the thumbs" },
+      { id: "smooth",  label: "Smooth",  delay: 130, glide: 38, soft: 32, look: 2, blurb: "the default — glides, still quick" },
+      { id: "fast",    label: "Fast",    delay: 80,  glide: 22, soft: 22, look: 1, blurb: "quick hands" },
+      { id: "pro",     label: "Pro",     delay: 50,  glide: 12, soft: 12, look: 1, blurb: "barely any wait" },
+      { id: "snap",    label: "Snap",    delay: 0,   glide: 4,  soft: 4,  look: 0, blurb: "instant — no glide at all" }
+    ];
+    const GLIDE_LIMITS = { delay: [0, 400], glide: [4, 200], soft: [4, 200], look: [0, 2] };
+
+    let glide = { preset: "smooth", delay: 130, glide: 38, soft: 32, look: 2 };
+
+    const nowMs = () => (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now());
+    function glidePreset(id) { return GLIDE_PRESETS.find(p => p.id === id) || null; }
+    function glideLook() { return SLIDE_LOOKS[glide.look] || SLIDE_LOOKS[2]; }
+
+    function glideFromPreset(id) {
+      const p = glidePreset(id) || GLIDE_PRESETS[1];
+      return { preset: p.id, delay: p.delay, glide: p.glide, soft: p.soft, look: p.look };
+    }
+
+    function clampGlide(g) {
+      const fix = (v, range, fallback) => {
+        const n = Math.round(Number(v));
+        if (!isFinite(n)) return fallback;
+        return Math.min(range[1], Math.max(range[0], n));
+      };
+      const preset = typeof g.preset === "string" && glidePreset(g.preset) ? g.preset : "custom";
+      return {
+        preset: preset,
+        delay: fix(g.delay, GLIDE_LIMITS.delay, 130),
+        glide: fix(g.glide, GLIDE_LIMITS.glide, 38),
+        soft: fix(g.soft, GLIDE_LIMITS.soft, 32),
+        look: fix(g.look, GLIDE_LIMITS.look, 2)
+      };
+    }
+
+    function saveGlide() {
+      try { localStorage.setItem(GLIDE_KEY, JSON.stringify(glide)); } catch (e) {}
+    }
+
+    function loadGlide() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(GLIDE_KEY) || "null");
+        if (saved && typeof saved === "object") { glide = clampGlide(saved); return glide; }
+      } catch (e) { /* nothing saved, or unreadable: keep the default */ }
+      /* an older copy saved one of three chips: take the matching preset */
+      try {
+        const chips = { slow: "relaxed", normal: "smooth", fast: "fast" };
+        const old = localStorage.getItem("pindutan_move");
+        if (old && chips[old]) { glide = glideFromPreset(chips[old]); saveGlide(); }
+      } catch (e) {}
+      return glide;
+    }
+
+    function paintGlide() {
+      const p = glidePreset(glide.preset);
+      const chip = document.getElementById("glideOpen");
+      if (chip) chip.textContent = (p ? p.label : "Custom") + " · " + glide.glide + " ms";
+      const blurb = document.getElementById("glideBlurb");
+      if (blurb) blurb.textContent = p ? p.blurb : "your own numbers";
+      document.querySelectorAll("#glidePresets button").forEach(b => {
+        b.classList.toggle("active", !!p && b.dataset.preset === p.id);
+      });
+      const put = (id, value, text) => {
+        const input = document.getElementById(id);
+        if (input && String(input.value) !== String(value)) input.value = String(value);
+        const out = document.getElementById(id + "Val");
+        if (out) out.textContent = text;
+      };
+      put("glideDelay", glide.delay, glide.delay + " ms");
+      put("glideSpeed", glide.glide, glide.glide + " ms");
+      put("glideLook", glide.look, glideLook().id);
+      put("glideSoft", glide.soft, glide.soft + " ms");
+    }
+
+    function setGlidePreset(id) {
+      if (!glidePreset(id)) return glide;
+      glide = glideFromPreset(id);
+      saveGlide();
+      paintGlide();
+      return glide;
+    }
+
+    function setGlideValue(key, value) {
+      if (!(key in GLIDE_LIMITS)) return glide;
+      const next = Object.assign({}, glide, { preset: "custom" });
+      next[key] = value;
+      glide = clampGlide(next);
+      saveGlide();
+      paintGlide();
+      return glide;
+    }
+
+    /* ---------- the sheet ---------- */
+    let glidePreviewRaf = 0;
+
+    function drawGlidePreview(now) {
+      const canvas = document.getElementById("glidePreview");
+      if (!canvas || !canvas.getContext) return;
+      const g2 = canvas.getContext("2d");
+      if (!g2) return;
+      const w = canvas.width;
+      const h = canvas.height;
+      g2.clearRect(0, 0, w, h);
+
+      g2.strokeStyle = "rgba(255,255,255,0.05)";
+      g2.lineWidth = 1;
+      for (let c = 1; c < 5; c++) {
+        g2.beginPath();
+        g2.moveTo((c * w) / 5, 0);
+        g2.lineTo((c * w) / 5, h);
+        g2.stroke();
+      }
+      /* one column every `glide` ms, so the setting is felt, not just read */
+      const size = 26;
+      const span = Math.max(1, w - size * 3 - 24);
+      const period = Math.max(240, glide.glide * 26);
+      const phase = (now % (period * 2)) / period;
+      const f = phase < 1 ? phase : 2 - phase;
+      const x = 12 + f * span;
+      const y = (h - size * 2) / 2;
+      const mat = [[0, 1, 0], [1, 1, 1]];
+      for (let r = 0; r < mat.length; r++) {
+        for (let c = 0; c < mat[r].length; c++) {
+          if (mat[r][c]) drawCell(g2, x + c * size, y + r * size, size, "#b980ff", { glow: true });
+        }
+      }
+      if (glideLook().ms) {
+        g2.globalAlpha = 0.18;
+        drawCell(g2, x - size, y + size, size, "#b980ff");
+        g2.globalAlpha = 1;
+      }
+    }
+
+    function startGlidePreview() {
+      stopGlidePreview();
+      const tick = () => {
+        drawGlidePreview(nowMs());
+        if (typeof requestAnimationFrame === "function") glidePreviewRaf = requestAnimationFrame(tick);
+      };
+      tick();
+    }
+
+    function stopGlidePreview() {
+      if (glidePreviewRaf && typeof cancelAnimationFrame === "function") cancelAnimationFrame(glidePreviewRaf);
+      glidePreviewRaf = 0;
+    }
+
+    function openGlide() {
+      slideStop();
+      softHoldStop();
+      const sheet = document.getElementById("glideSheet");
+      if (sheet) sheet.style.display = "block";
+      paintGlide();
+      startGlidePreview();
+    }
+
+    function closeGlide() {
+      const sheet = document.getElementById("glideSheet");
+      if (sheet) sheet.style.display = "none";
+      stopGlidePreview();
+    }
+
+    /* ---------- holding the buttons ---------- */
+    let slideWait = 0;
+    let slideEvery = 0;
+    let softEvery = 0;
+    let slideFx = { dx: 0, t0: 0, ms: 0, soft: true };
+
+    function slideCanPlay() { return gameRunning && !isPaused && !isSpectator; }
+
+    function slideKick(dx) {
+      const look = glideLook();
+      if (!look.ms || !dx) { slideFx = { dx: 0, t0: 0, ms: 0, soft: true }; return; }
+      slideFx = { dx: -dx, t0: nowMs(), ms: look.ms, soft: look.id === "soft" };
+    }
+
+    /* pixels the piece is drawn away from its column while it slides */
+    function slideOffset() {
+      if (!slideFx.ms) return 0;
+      const t = (nowMs() - slideFx.t0) / slideFx.ms;
+      if (t >= 1) { slideFx = { dx: 0, t0: 0, ms: 0, soft: true }; return 0; }
+      const eased = slideFx.soft ? t * t * (3 - 2 * t) : t;
+      return slideFx.dx * BLOCK * (1 - eased);
+    }
+
+    function slideStop() {
+      if (slideWait) { clearTimeout(slideWait); slideWait = 0; }
+      if (slideEvery) { clearInterval(slideEvery); slideEvery = 0; }
+    }
+
+    function softHoldStop() {
+      if (softEvery) { clearInterval(softEvery); softEvery = 0; }
+    }
+
+    function slideStep(dir) {
+      if (!slideCanPlay()) { slideStop(); return false; }
+      if (move(dir)) slideKick(dir);
+      drawBoard();
+      return true;
+    }
+
+    function slideStart(dir) {
+      slideStop();
+      if (!slideCanPlay()) return false;
+      if (move(dir)) slideKick(dir);
+      drawBoard();
+      slideWait = setTimeout(() => {
+        slideWait = 0;
+        const gap = Math.max(4, glide.glide);
+        slideEvery = setInterval(() => slideStep(dir), gap);
+      }, Math.max(0, glide.delay));
+      return true;
+    }
+
+    function softHoldStep() {
+      if (!slideCanPlay()) { softHoldStop(); return false; }
+      softStep();
+      drawBoard();
+      return true;
+    }
+
+    function softHoldStart() {
+      softHoldStop();
+      if (!slideCanPlay()) return false;
+      softStep();
+      drawBoard();
+      softEvery = setInterval(softHoldStep, Math.max(4, glide.soft));
+      return true;
+    }
+
+    function bindHold(btn, onHold, onClick) {
+      if (!btn) return;
+      let pressedAt = 0;
+      btn.addEventListener("pointerdown", e => {
+        if (e.button && e.button !== 0) return;
+        pressedAt = Date.now();
+        try { btn.setPointerCapture(e.pointerId); } catch (err) { /* older browser */ }
+        e.preventDefault();
+        onHold();
+      });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach(evt =>
+        btn.addEventListener(evt, () => { slideStop(); softHoldStop(); }));
+      btn.addEventListener("click", e => {
+        if (Date.now() - pressedAt < 600) { e.preventDefault(); return; }   /* the press did it */
+        if (onClick) onClick();
+        else onHold();                     /* keyboard, or a browser with no pointer events */
+      });
+    }
+
+    loadGlide();
+    paintGlide();
+    document.querySelectorAll("#glidePresets button").forEach(b => {
+      b.addEventListener("click", () => setGlidePreset(b.dataset.preset));
+    });
+    [["glideDelay", "delay"], ["glideSpeed", "glide"], ["glideLook", "look"], ["glideSoft", "soft"]]
+      .forEach(pair => {
+        const input = document.getElementById(pair[0]);
+        if (input) input.addEventListener("input", () => setGlideValue(pair[1], input.value));
+      });
+    document.getElementById("glideOpen").addEventListener("click", openGlide);
+    document.getElementById("glideClose").addEventListener("click", closeGlide);
+    document.getElementById("glideDone").addEventListener("click", closeGlide);
+    document.getElementById("glideReset").addEventListener("click", () => setGlidePreset("smooth"));
+    document.getElementById("glideSheet").addEventListener("click", e => {
+      if (e.target && e.target.id === "glideSheet") closeGlide();
+    });
+
+    bindHold(document.getElementById("btnLeft"), () => slideStart(-1), () => slideStep(-1));
+    bindHold(document.getElementById("btnRight"), () => slideStart(1), () => slideStep(1));
+    bindHold(document.getElementById("btnDown"), () => softHoldStart(), () => { softStep(); drawBoard(); });
+
+    function togglePause() {
+      if (!gameRunning) return;
+      slideStop();
+      softHoldStop();
+      isPaused = !isPaused;
+      document.getElementById("pauseBtn").textContent = isPaused ? "▶ Resume" : "⏸ Pause";
+      if (isPaused) {
+        document.getElementById("overlayTitle").textContent = "PAUSED";
+        document.getElementById("overlayDesc").textContent = "Tap resume (or press P) to keep stacking.";
+        document.getElementById("overStats").innerHTML = "";
+        document.getElementById("startBtn").style.display = "none";
+        document.getElementById("boardOverlay").style.display = "flex";
+      } else {
+        document.getElementById("startBtn").style.display = "inline-block";
+        document.getElementById("boardOverlay").style.display = "none";
+        lastTime = performance.now();
+      }
+    }
+
+    document.getElementById("pauseBtn").addEventListener("click", togglePause);
+    powerBtn.addEventListener("click", tryBurst);
+    /* solo and VS CPU freeze with you; a live room never pauses, the others keep playing */
+    function autoPauseApplies() {
+      return currentMode === "solo" || currentMode === "bot";
+    }
+
+    window.addEventListener("blur", () => {
+      if (autoPauseEnabled && gameRunning && !isPaused && autoPauseApplies()) togglePause();
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && autoPauseEnabled && gameRunning && !isPaused && autoPauseApplies()) togglePause();
+    });
+
+    function mobileAction(action) {
+      if (!gameRunning || isPaused || isSpectator) return;
+      if (action === "left") move(-1);
+      if (action === "right") move(1);
+      if (action === "down") softStep();
+      if (action === "rotCW") tryRotate(1);
+      if (action === "rotCCW") tryRotate(-1);
+      if (action === "drop") hardDrop();
+      if (action === "hold") holdCurrent();
+      if (action === "power") tryBurst();
+      drawBoard();
+    }
+
+    document.addEventListener("keydown", e => {
+      if (lockScreen.style.display !== "none") return;
+      if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+
+      if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", "Space"].includes(e.code)) e.preventDefault();
+      if (e.code === "KeyP" || e.code === "Escape") {
+        const sheet = document.getElementById("lobbySheet");
+        if (sheet.style.display === "block") { closeLobby(); return; }
+        togglePause();
+        return;
+      }
+      if (!gameRunning || isPaused || isSpectator) return;
+
+      switch (e.code) {
+        case "ArrowLeft": move(-1); break;
+        case "ArrowRight": move(1); break;
+        case "ArrowDown": softStep(); break;
+        case "ArrowUp":
+        case "KeyX": tryRotate(1); break;
+        case "KeyZ": tryRotate(-1); break;
+        case "Space": hardDrop(); break;
+        case "KeyC":
+        case "ShiftLeft":
+        case "ShiftRight": holdCurrent(); break;
+        case "KeyE": tryBurst(); break;
+      }
+      drawBoard();
+    });
+
+    document.getElementById("backToGameBtn").addEventListener("click", () => {
+      closeLobby();
+      if (!gameRunning) setPlay("solo");
+    });
+
+    syncPlayBar();
+    paintCpuLevels();
+    paintPlayCards();
+    drawWordmark(document.getElementById("logoCanvas"));
+    drawWordmark(document.getElementById("logoCanvasBig"));
+    paintConn();
+    renderLobby();
+    drawQueue();
+    drawBoard();
+    botRender();
+
+    /* straight into the lobby — no codes, no joining */
+    joinLobby();
+    openLobby();
+
+    /* =========================================================
+       13. SELF-UPDATE
+          Upload this file to the host once. From then on it keeps
+          itself current: it reads a tiny build file on GitHub, and
+          if that says there is something newer it quietly opens
+          that copy — same address, same saved names, same ladder.
+          No signal, no file, or a half download and it simply
+          plays the copy it already has.
+       ========================================================= */
+    const BUILD_TAG = "v20.8";
+    const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
+    const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v20.html";
+    const UPDATE_APPLIED = "pindutan_applied_build";
+
+    /* Navigate to the new copy as a blob: it keeps this exact address and all
+       the saved names, and the browser tears the old page down properly — no
+       leftover timers or relay connections running behind the new one. */
+    function swapDocument(next) {
+      const url = URL.createObjectURL(new Blob([next], { type: "text/html" }));
+      location.replace(url);
+    }
+
+    async function selfUpdateCheck(opts = {}) {
+      const get = opts.fetch || (typeof fetch === "function" ? fetch.bind(window) : null);
+      const swap = opts.swap || swapDocument;
+      if (!get) return { state: "no-fetch" };
+      /* a copy opened from disk updates nothing: it is meant to work offline */
+      const proto = String(location.protocol || "");
+      if (!opts.force && proto !== "http:" && proto !== "https:") return { state: "local" };
+
+      /* a page that was just swapped in must not swap again */
+      let applied = "";
+      try { applied = sessionStorage.getItem(UPDATE_APPLIED) || ""; } catch (e) { }
+      if (applied === BUILD_TAG) return { state: "skipped", build: BUILD_TAG };
+
+      const bust = "?t=" + Date.now();
+      let feed;
+      try {
+        const r = await get((opts.feed || UPDATE_FEED) + bust, { cache: "no-store" });
+        if (!r || !r.ok || typeof r.json !== "function") return { state: "offline" };
+        feed = await r.json();
+      } catch (e) { return { state: "offline" }; }
+
+      const build = feed && String(feed.build || "").trim();
+      if (!build || build === BUILD_TAG) return { state: "same", build: BUILD_TAG };
+
+      let next = "";
+      try {
+        const url = (feed && feed.html) || UPDATE_HTML;
+        const r = await get(url + (url.indexOf("?") < 0 ? bust : "&" + bust.slice(1)), { cache: "no-store" });
+        if (!r || !r.ok || typeof r.text !== "function") return { state: "offline", build };
+        next = await r.text();
+      } catch (e) { return { state: "offline", build }; }
+
+      /* only a whole page that calls itself that build is worth swapping in */
+      if (!next || next.length < 20000 || next.indexOf("</html>") < 0 ||
+          next.indexOf("SELF-UPDATE") < 0 || next.indexOf(build) < 0) {
+        return { state: "bad-page", build };
+      }
+      try { sessionStorage.setItem(UPDATE_APPLIED, build); } catch (e) { }
+      swap(next);
+      return { state: "swapped", build };
+    }
+
+    /* keep the little line under the wordmark honest with the build above */
+    try {
+      const hero = document.querySelector(".hero-sub");
+      if (hero) hero.textContent = "neon block arena · one lobby for everyone · " + BUILD_TAG;
+      document.documentElement.dataset.build = BUILD_TAG;
+    } catch (e) { }
+
+    /* arrived through an update? put the real address back in the bar, so a
+       reload later still finds the hosted page (which updates itself again) */
+    try {
+      if (location.protocol === "blob:") {
+        const ref = document.referrer;
+        if (ref && ref.indexOf(location.origin) === 0) history.replaceState(null, "", ref);
+      }
+    } catch (e) { }
+
+    try { selfUpdateCheck().catch(() => { }); } catch (e) { }
+  </script>
+</body>
+</html>

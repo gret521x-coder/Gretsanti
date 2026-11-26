@@ -23,6 +23,78 @@
       --glow: rgba(255, 176, 32, 0.35);
     }
 
+    /* ---------- five moods, one game ---------- */
+    html[data-theme="sunset"] {
+      --ink: #140a08; --ink2: #1d0f0b; --card: #26130f; --card2: #301913; --line: #46241b;
+      --txt: #fff1e6; --mut: #c69a83; --amber: #ff9f43; --amber2: #ff5f3c; --cyan: #ffd166;
+      --lime: #8ae66e; --red: #ff5c5c; --violet: #ff8fc7; --glow: rgba(255, 159, 67, 0.38);
+    }
+    html[data-theme="forest"] {
+      --ink: #06100b; --ink2: #08170f; --card: #0c2016; --card2: #10291c; --line: #1c3a29;
+      --txt: #e6fff1; --mut: #86ab97; --amber: #7ddc6a; --amber2: #35c98a; --cyan: #5eead4;
+      --lime: #a3e635; --red: #f87171; --violet: #86efac; --glow: rgba(125, 220, 106, 0.32);
+    }
+    html[data-theme="royal"] {
+      --ink: #08040f; --ink2: #0d0718; --card: #150c24; --card2: #1c1030; --line: #2f1d4d;
+      --txt: #f4ecff; --mut: #a48bc4; --amber: #ffd257; --amber2: #c084fc; --cyan: #a78bfa;
+      --lime: #f0abfc; --red: #fb7185; --violet: #e879f9; --glow: rgba(192, 132, 252, 0.4);
+    }
+    html[data-theme="mono"] {
+      --ink: #0a0a0a; --ink2: #101010; --card: #161616; --card2: #1e1e1e; --line: #2e2e2e;
+      --txt: #f5f5f5; --mut: #9a9a9a; --amber: #ffffff; --amber2: #d4d4d4; --cyan: #e5e5e5;
+      --lime: #d9d9d9; --red: #ff8f8f; --violet: #c4c4c4; --glow: rgba(255, 255, 255, 0.22);
+    }
+    .theme-btn {
+      display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 9px;
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+      background: var(--card2); color: var(--txt); border: 1px solid var(--line); cursor: pointer;
+    }
+    .theme-btn.active { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset; }
+    .theme-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* ---------- three seconds before the first block falls ---------- */
+    .countdown {
+      position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+      pointer-events: none; z-index: 30;
+    }
+    .countdown.on { display: flex; }
+    .countdown span {
+      font-size: 4.6rem; font-weight: 900; letter-spacing: 0.04em; color: var(--amber);
+      text-shadow: 0 0 22px var(--glow), 0 0 60px var(--glow);
+      animation: countPop 0.9s ease-out both;
+    }
+    .countdown.go span { color: var(--lime); }
+    @keyframes countPop {
+      0% { transform: scale(0.4); opacity: 0; }
+      35% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.92; }
+    }
+
+    /* ---------- the storm ---------- */
+    .storm-fx {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0;
+      background: radial-gradient(circle at 50% 30%, rgba(190, 225, 255, 0.85), rgba(90, 140, 255, 0.35) 45%, rgba(0, 0, 0, 0) 75%);
+    }
+    .storm-fx.on { animation: stormFlash 2.6s ease-out both; }
+    .storm-fx i {
+      position: absolute; top: 0; bottom: 0; width: 3px;
+      background: linear-gradient(180deg, #ffffff, rgba(160, 210, 255, 0.1));
+      transform-origin: top center; filter: drop-shadow(0 0 10px #cfe6ff); opacity: 0;
+    }
+    .storm-fx.on i { animation: bolt 1.6s ease-out both; }
+    @keyframes stormFlash {
+      0%, 100% { opacity: 0; }
+      6%, 16% { opacity: 0.95; }
+      10%, 26% { opacity: 0.25; }
+      34% { opacity: 0.8; }
+    }
+    @keyframes bolt {
+      0%, 100% { opacity: 0; transform: scaleY(0.2) rotate(6deg); }
+      8%, 22% { opacity: 1; transform: scaleY(1) rotate(3deg); }
+      30% { opacity: 0.2; transform: scaleY(1) rotate(-4deg); }
+      44% { opacity: 0.9; transform: scaleY(1) rotate(2deg); }
+    }
+
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     html, body {
@@ -1058,6 +1130,9 @@
 </head>
 <body>
 
+  <!-- LIGHTNING, FOR EVERYONE -->
+  <div class="storm-fx" id="stormFx" aria-hidden="true"><i></i><i></i><i></i></div>
+
   <!-- ENCRYPTED LOCK SCREEN -->
   <div id="lockScreen">
     <div class="lock-box">
@@ -1103,6 +1178,7 @@
       <span class="pill relay" id="relayPill">RELAY 0/3</span>
       <button class="pill sig-pill" id="kupalJoinBtn" style="display:none;" aria-pressed="false" title="Signal Kupal: let Kupal play your board"><span class="lamp"></span><span class="key">K</span></button>
       <button class="pill sig-pill" id="interJoinBtn" style="display:none;" aria-pressed="false" title="Signal Intermediate: let the Intermediate brain play your board"><span class="lamp"></span><span class="key">I</span></button>
+      <button class="pill" id="stormBtn" style="display:none;" title="Lightning, for everyone in the room">⚡</button>
       <button class="primary" id="lobbyBtn" style="padding:6px 11px;font-size:0.62rem;border-radius:9px;">🌐 Lobby</button>
     </div>
 
@@ -1205,7 +1281,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.2</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.3</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -1230,6 +1306,11 @@
         </div>
       </div>
 
+      <div class="card-box" id="themeCard">
+        <div class="card-title"><span>🎨 Theme</span><span id="themeName" style="color:var(--mut);font-size:0.55rem;">neon</span></div>
+        <div id="themeRow" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+
       <div class="card-box">
         <div class="card-title"><span>Who is here</span><span id="lobbyCount">1 / 7</span></div>
         <div class="player-grid" id="lobbyList">
@@ -1243,7 +1324,7 @@
           <span>💬 Lobby chat</span>
           <span style="color:var(--mut);font-size:0.55rem;">not saved</span>
         </div>
-        <div id="chatList" style="max-height:128px;overflow-y:auto;background:rgba(0,0,0,0.28);border:1px solid rgba(120,180,255,0.16);border-radius:9px;padding:4px;min-height:34px;"></div>
+        <div id="chatList" style="max-height:112px;overflow-y:auto;background:rgba(0,0,0,0.28);border:1px solid rgba(120,180,255,0.16);border-radius:9px;padding:4px;min-height:32px;"></div>
         <div class="room-row" style="margin-top:8px;">
           <input type="text" id="chatInput" maxlength="80" placeholder="Message the lobby" autocomplete="off" />
           <button id="chatSend">Send</button>
@@ -1267,6 +1348,7 @@
         <div class="lb-list" id="lbList">
           <div class="lb-empty">Loading the ladder…</div>
         </div>
+        <div id="lbPlayer" style="display:none;margin-top:6px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--card2);font-size:0.62rem;line-height:1.5;" aria-live="polite"></div>
         <div class="lb-note" id="lbNote">Human battles only — solo runs and VS CPU never count.</div>
       </div>
 
@@ -1317,6 +1399,7 @@
 
     <div class="board-wrapper" id="playerBoardWrapper">
       <canvas id="mainCanvas" width="260" height="520"></canvas>
+      <div class="countdown" id="countdown" aria-live="polite"></div>
       <div class="board-overlay" id="boardOverlay">
         <h2 id="overlayTitle">PINDUTAN</h2>
         <p id="overlayDesc">Tap start. Stack the neon blocks, clear lines, and fire garbage at your rivals.</p>
@@ -1505,6 +1588,8 @@
         sessionStorage.removeItem("pindutan_creator");
         sessionStorage.removeItem("pindutan_kupal_join");
       } catch (e) {}
+      const storm = document.getElementById("stormBtn");
+      if (storm) storm.style.display = creatorOn ? "" : "none";
       applyCreatorLock();
       if (typeof renderLobby === "function" && typeof roomCode !== "undefined" && roomCode) renderLobby();
       if (typeof lbFetch === "function" && typeof lbMode !== "undefined") lbFetch(lbMode, true);
@@ -1782,7 +1867,7 @@
     }
 
     function tryRotate(dir) {
-      if (!current || !gameRunning || isPaused) return false;
+      if (!current || !gameRunning || isPaused || frozen()) return false;
       const rotated = rotateMatrix(current.matrix, dir);
       const kicks = [0, -1, 1, -2, 2];
       for (const kick of kicks) {
@@ -1807,7 +1892,7 @@
     }
 
     function move(dx) {
-      if (!current || !gameRunning || isPaused) return false;
+      if (!current || !gameRunning || isPaused || frozen()) return false;
       if (!collide(board, current, dx, 0)) {
         current.x += dx;
         lastAction = "move";
@@ -1818,7 +1903,7 @@
     }
 
     function softStep() {
-      if (!current || !gameRunning || isPaused) return false;
+      if (!current || !gameRunning || isPaused || frozen()) return false;
       if (!collide(board, current, 0, 1)) {
         current.y++;
         score += 1;
@@ -1830,7 +1915,7 @@
     }
 
     function hardDrop() {
-      if (!current || !gameRunning || isPaused) return;
+      if (!current || !gameRunning || isPaused || frozen()) return;
       let dropped = 0;
       while (!collide(board, current, 0, 1)) {
         current.y++;
@@ -2356,7 +2441,7 @@
         floaters = floaters.filter(f => f.life > 0);
       }
 
-      if (!isPaused) {
+      if (!isPaused && !frozen()) {
         if (shake > 0) shake = Math.max(0, shake - delta * 0.045);
 
         if (clearingRows.length) {
@@ -2410,6 +2495,109 @@
       return ROWS;
     }
 
+    /* ---------- three seconds before the first block falls ----------
+       The board is dealt straight away so nothing else has to wait, but the
+       player is held: no move, no turn, no drop, and gravity is off until the
+       countdown reaches GO. */
+    let COUNTDOWN_MS = 3000;
+    let countdownUntil = 0;
+    let countdownTimers = [];
+
+    function countdownLeft() { return Math.max(0, countdownUntil - performance.now()); }
+    function frozen() { return countdownLeft() > 0; }
+
+    function clearCountdown() {
+      countdownTimers.forEach(t => { try { clearTimeout(t); } catch (e) { } });
+      countdownTimers = [];
+      countdownUntil = 0;
+      const box = document.getElementById("countdown");
+      if (box) { box.classList.remove("on", "go"); box.innerHTML = ""; }
+    }
+
+    function armCountdown() {
+      clearCountdown();
+      const box = document.getElementById("countdown");
+      if (!box || !(COUNTDOWN_MS > 0)) return 0;
+      countdownUntil = performance.now() + COUNTDOWN_MS;
+      box.classList.add("on");
+      const say = (text, go) => {
+        box.innerHTML = "";
+        const span = document.createElement("span");
+        span.textContent = text;
+        box.appendChild(span);
+        box.classList.toggle("go", !!go);
+      };
+      say("3");
+      const step = COUNTDOWN_MS / 3;
+      countdownTimers.push(setTimeout(() => say("2"), step));
+      countdownTimers.push(setTimeout(() => say("1"), step * 2));
+      countdownTimers.push(setTimeout(() => { say("GO", true); countdownUntil = 0; }, step * 3));
+      countdownTimers.push(setTimeout(() => {
+        box.classList.remove("on", "go");
+        box.innerHTML = "";
+      }, step * 3 + 700));
+      return COUNTDOWN_MS;
+    }
+
+    /* ---------- the storm ----------
+       One maker taps ⚡ (or walks in with the key) and every phone in the room
+       gets the lightning. Nothing is stored; it is a moment, not a record. */
+    let stormAt = 0;
+    let royalSent = false;
+
+    function thunderClap() {
+      try {
+        playTone(70, "sine", 0.5, 0.09);
+        setTimeout(() => playTone(110, "triangle", 0.35, 0.06), 120);
+      } catch (e) { }
+    }
+
+    /* a royal fanfare, four seconds of it: da-da-da-DAAA, twice, then a chord */
+    function royalFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.5];          /* C E G C */
+      const strike = (at, len, vol) => {
+        notes.forEach((f, i) => setTimeout(() => {
+          try { playTone(f, "square", len, vol); } catch (e) { }
+        }, at + i * 170));
+      };
+      try {
+        strike(0, 0.22, 0.07);
+        strike(1000, 0.22, 0.07);
+        setTimeout(() => {
+          notes.forEach(f => { try { playTone(f, "square", 0.6, 0.055); } catch (e) { } });
+        }, 2000);
+        strike(3000, 0.28, 0.06);
+      } catch (e) { }
+    }
+
+    function runStorm(kind) {
+      const fx = document.getElementById("stormFx");
+      if (!fx) return false;
+      const now = performance.now();
+      if (now - stormAt < 600) return false;          /* one at a time */
+      stormAt = now;
+      document.querySelectorAll("#stormFx i").forEach((bolt, i) => {
+        bolt.style.left = [18, 46, 74][i] + "%";
+        bolt.style.animationDelay = (i * 0.18) + "s";
+      });
+      fx.classList.remove("on");
+      void fx.offsetWidth;                            /* restart the animation */
+      fx.classList.add("on");
+      setTimeout(() => fx.classList.remove("on"), 2800);
+      if (kind === "royal") royalFanfare();
+      else thunderClap();
+      return true;
+    }
+
+    function sendStorm() {
+      if (!isCreator()) return false;
+      const sent = (typeof sendPacket === "function" && roomCode)
+        ? sendPacket({ t: "FX", kind: "storm", name: myDisplayName() })
+        : false;
+      runStorm("storm");
+      return !!sent;
+    }
+
     function startNewGame() {
       if (isSpectator) return;
       board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -2451,6 +2639,7 @@
       if (currentMode === "bot") botStart(); else botStop();
       broadcastState(true);
       lastTime = performance.now();
+      armCountdown();
       requestAnimationFrame(gameLoop);
     }
 
@@ -2639,6 +2828,11 @@
 
       if (p.t === "CHAT") {
         chatReceive(p);
+        return;
+      }
+
+      if (p.t === "FX") {
+        runStorm(p.kind === "royal" ? "royal" : "storm");
         return;
       }
 
@@ -3238,12 +3432,57 @@
           '<span class="n"></span>' +
           '<span class="w">' + row.wins + '<small> W</small></span>' +
           '<span class="s">' + Number(row.best || 0).toLocaleString() + '<small> PTS</small></span>';
+        el.style.cursor = "pointer";
+        el.addEventListener("click", () => lbShowPlayer(row));
         const nmCell = el.querySelector(".n");
         if (crowned) nmCell.insertAdjacentHTML("afterbegin", crownSvg("gold", 12));
         nmCell.appendChild(document.createTextNode(row.name + (row.local ? " (you, offline)" : "")));
         list.appendChild(el);
       });
       if (count) count.textContent = String(all.length);
+    }
+
+    /* ---------- tap a row: the player behind the number ----------
+       Wins, best, rate, streak, when they were last here. No losses. */
+    function lbShowPlayer(row) {
+      const box = document.getElementById("lbPlayer");
+      if (!box || !row || !row.name) return null;
+      const key = lbNameKey(row.name);
+      if (box.dataset.open === key && box.style.display !== "none") {
+        box.style.display = "none";
+        box.dataset.open = "";
+        return null;
+      }
+      box.dataset.open = key;
+      box.style.display = "block";
+      box.innerHTML = "";
+      const title = document.createElement("div");
+      title.style.cssText = "font-weight:900;color:var(--amber);margin-bottom:3px;";
+      title.textContent = row.name;
+      box.appendChild(title);
+      const bits = [
+        ["Wins", String(row.wins | 0)],
+        ["Best", Number(row.best || 0).toLocaleString() + " pts"],
+        ["Win rate", (row.rate | 0) + "%"],
+        ["Streak", String(row.streak | 0)],
+        ["Last seen", row.last ? new Date(row.last * 1000).toLocaleDateString() : "—"]
+      ];
+      bits.forEach(pair => {
+        const line = document.createElement("div");
+        const key2 = document.createElement("span");
+        key2.style.cssText = "color:var(--mut);display:inline-block;min-width:76px;";
+        key2.textContent = pair[0];
+        const val = document.createElement("b");
+        val.textContent = pair[1];
+        line.appendChild(key2);
+        line.appendChild(val);
+        box.appendChild(line);
+      });
+      const hint = document.createElement("div");
+      hint.style.cssText = "color:var(--mut);font-size:0.55rem;margin-top:3px;";
+      hint.textContent = "tap the row again to close";
+      box.appendChild(hint);
+      return row.name;
     }
 
     let lbAgain = false;
@@ -3706,6 +3945,56 @@
       chatPaint();
     }
 
+    /* ---------- themes: five moods, picked by mood ---------- */
+    const THEMES = [
+      { id: "neon", name: "Neon", dot: "#ffb020" },
+      { id: "sunset", name: "Sunset", dot: "#ff5f3c" },
+      { id: "forest", name: "Forest", dot: "#35c98a" },
+      { id: "royal", name: "Royal", dot: "#c084fc" },
+      { id: "mono", name: "Mono", dot: "#d4d4d4" }
+    ];
+    let currentTheme = "neon";
+
+    function themeKnown(id) {
+      return THEMES.some(t => t.id === id) ? id : "neon";
+    }
+
+    function applyTheme(id) {
+      const known = themeKnown(String(id || ""));
+      currentTheme = known;
+      document.documentElement.dataset.theme = known;
+      try { localStorage.setItem("pindutan_theme", known); } catch (e) { }
+      const label = document.getElementById("themeName");
+      if (label) label.textContent = known;
+      document.querySelectorAll("#themeRow .theme-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.theme === known);
+        b.setAttribute("aria-pressed", b.dataset.theme === known ? "true" : "false");
+      });
+      return known;
+    }
+
+    function wireThemes() {
+      const row = document.getElementById("themeRow");
+      if (!row) return false;
+      row.innerHTML = "";
+      THEMES.forEach(t => {
+        const btn = document.createElement("button");
+        btn.className = "theme-btn";
+        btn.dataset.theme = t.id;
+        const dot = document.createElement("span");
+        dot.className = "theme-dot";
+        dot.style.background = t.dot;
+        btn.appendChild(dot);
+        btn.appendChild(document.createTextNode(t.name));
+        btn.addEventListener("click", () => applyTheme(t.id));
+        row.appendChild(btn);
+      });
+      let saved = "neon";
+      try { saved = localStorage.getItem("pindutan_theme") || "neon"; } catch (e) { }
+      applyTheme(saved);
+      return true;
+    }
+
     function lbEnsure() {
       const list = document.getElementById("lbList");
       if (!list || list.dataset.busy) return;
@@ -3721,6 +4010,7 @@
         });
       });
       chatWire();
+      wireThemes();
       const refresh = document.getElementById("lbRefresh");
       if (refresh) refresh.addEventListener("click", async () => {
         const list = document.getElementById("lbList");
@@ -3757,6 +4047,13 @@
       startRelays();
       ensureRelaySubs();
       sendPacket(Object.assign({ t: "HI" }, myState()));
+
+      /* the maker arriving is an entrance: lightning, and a fanfare */
+      if (isCreator() && !royalSent) {
+        royalSent = true;
+        sendPacket({ t: "FX", kind: "royal", name: myDisplayName() });
+        runStorm("royal");
+      }
 
       roomStatusText(isSpectator
         ? "👁 Watching the lobby. You see every board, you do not play."
@@ -4912,6 +5209,8 @@
     document.getElementById("lobbyBtn").addEventListener("click", openLobby);
     document.getElementById("lobbyClose").addEventListener("click", closeLobby);
     document.getElementById("roomPill").addEventListener("click", openLobby);
+    const stormBtnEl = document.getElementById("stormBtn");
+    if (stormBtnEl) stormBtnEl.addEventListener("click", sendStorm);
 
     document.getElementById("watchToggle").addEventListener("click", () => {
       isSpectator = !isSpectator;
@@ -5382,7 +5681,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.2";
+    const BUILD_TAG = "v21.3";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

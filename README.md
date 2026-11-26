@@ -98,12 +98,15 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v21** — 171: engine, glance rules, rooms over four paths, the lobby, the lobby chat (words
+- **Pindutan v21** — 188: engine, glance rules, rooms over four paths, the lobby, the lobby chat (words
   ride the relay, never stored, markup shown as words, 80 characters, one message a second, floods turned
-  away), the CPU rival and its three levels, the name gate, the hall of fame (the note names whatever host
-  the feed points at), the GLIDE panel, hold-to-slide, the pills, and the self-update (nothing newer leaves
-  it alone, a newer build comes over whole, a broken download refused, a swap lets go of the relays first,
-  the feed tag must match the game's own)
+  away, five lines tall), the three-second countdown (a frozen board and a frozen CPU until GO), the storm
+  (lightning for the whole room, a four-second fanfare when the maker arrives, a maker-only ⚡ that
+  broadcasts, a second bolt inside 600 ms held back), five themes that stick, the player card behind a row
+  tap (wins, best, rate, streak, last seen — no losses), the CPU rival and its three levels, the name gate,
+  the hall of fame (the note names whatever host the feed points at), the GLIDE panel, hold-to-slide, the
+  pills, and the self-update (nothing newer leaves it alone, a newer build comes over whole, a broken
+  download refused, a swap lets go of the relays first, the feed tag must match the game's own)
 - **Pindutan v17** — 48 · **labs pages** — 20 · **leaderboard PHP** — 23 · **leaderboard worker** — 19
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request

@@ -1205,7 +1205,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.1</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.2</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -1236,6 +1236,19 @@
           <div style="color:var(--mut);font-size:0.62rem;padding:6px;">Nobody here yet.</div>
         </div>
         <button class="primary invite-wide" id="inviteAllBtn">⚔ INVITE EVERYONE TO A GROUP BATTLE</button>
+      </div>
+
+      <div class="card-box" id="chatCard">
+        <div class="card-title">
+          <span>💬 Lobby chat</span>
+          <span style="color:var(--mut);font-size:0.55rem;">not saved</span>
+        </div>
+        <div id="chatList" style="max-height:128px;overflow-y:auto;background:rgba(0,0,0,0.28);border:1px solid rgba(120,180,255,0.16);border-radius:9px;padding:4px;min-height:34px;"></div>
+        <div class="room-row" style="margin-top:8px;">
+          <input type="text" id="chatInput" maxlength="80" placeholder="Message the lobby" autocomplete="off" />
+          <button id="chatSend">Send</button>
+        </div>
+        <div class="lb-note" id="chatHint">Everyone in this lobby sees it. Nothing is saved.</div>
       </div>
 
       <div class="card-box" id="lbCard">
@@ -2624,6 +2637,11 @@
         return;
       }
 
+      if (p.t === "CHAT") {
+        chatReceive(p);
+        return;
+      }
+
       if (p.t === "HI" || p.t === "SYNC") {
         const prev = peers[p.from];
         const incoming = decodeBoard(p.board);
@@ -2850,6 +2868,12 @@
        address is remembered, so a phone with no signal still reads and posts to
        the right place. */
     let lbUrl = LEADERBOARD_URL;
+
+    /* which host the board is really on — the note under the list says this,
+       so moving the ladder never leaves a stale name behind */
+    function lbHostName() {
+      try { return String(new URL(lbUrl).host); } catch (e) { return "the host"; }
+    }
 
     function ladderUrlFrom(feed) {
       const url = String((feed && feed.ladder) || "").trim();
@@ -3238,7 +3262,7 @@
         if (!data || !data.ok) throw new Error("bad payload");
         lbCacheWrite(lbMode, data.rows || []);
         lbRender(data.rows || [], "live");
-        lbNote("Live from aidekupal.unaux.com · " + (data.players || 0) + " players on the ladder", "live");
+        lbNote("Live from " + lbHostName() + " · " + (data.players || 0) + " players on the ladder", "live");
       } catch (err) {
         const cache = lbCacheRead();
         const rows = (cache && cache[lbMode]) || [];
@@ -3570,6 +3594,118 @@
       }
     }
 
+    /* ---------- lobby chat ------------------------------------------------
+       Words ride the same relay the lobby already keeps open. Nothing is
+       stored anywhere: no file, no ladder, no history after a reload. Only
+       the people in this lobby right now can see it. */
+    const CHAT_MAX = 80;          /* characters in one message */
+    const CHAT_KEEP = 60;         /* how many lines stay on screen */
+    const CHAT_GAP = 1200;        /* your own messages: one per 1.2 s */
+    const CHAT_FLOOD = 300;       /* one sender can't outrun this */
+    let chatLog = [];
+    let chatLastMine = 0;
+    const chatLastFrom = {};
+
+    function chatClean(raw) {
+      return String(raw == null ? "" : raw)
+        .replace(/[\u0000-\u001F\u007F]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, CHAT_MAX);
+    }
+
+    function chatClock(ts) {
+      const d = new Date(ts || Date.now());
+      return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    }
+
+    function chatPaint() {
+      const list = document.getElementById("chatList");
+      if (!list) return;
+      list.innerHTML = "";
+      if (!chatLog.length) {
+        const hint = document.createElement("div");
+        hint.style.cssText = "color:var(--mut);font-size:0.6rem;padding:4px;";
+        hint.textContent = "Say hi — this lobby sees it straight away.";
+        list.appendChild(hint);
+        return;
+      }
+      chatLog.forEach(m => {
+        const row = document.createElement("div");
+        row.style.cssText = "padding:2px 4px;font-size:0.66rem;line-height:1.35;word-break:break-word;";
+        const when = document.createElement("span");
+        when.style.cssText = "color:var(--mut);font-size:0.55rem;margin-right:4px;";
+        when.textContent = chatClock(m.ts);
+        const who = document.createElement("span");
+        who.style.cssText = "color:" + (m.mine ? "#ffd257" : "#7fe3ff") + ";font-weight:800;margin-right:4px;";
+        who.textContent = m.name;
+        const body = document.createElement("span");
+        body.style.color = "#e9eef7";
+        body.textContent = m.text;          /* text, never html */
+        row.appendChild(when); row.appendChild(who); row.appendChild(body);
+        list.appendChild(row);
+      });
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function chatPush(name, text, mine, ts) {
+      chatLog.push({ name: String(name || "Player").slice(0, 14), text: text, mine: !!mine, ts: ts || Date.now() });
+      if (chatLog.length > CHAT_KEEP) chatLog = chatLog.slice(-CHAT_KEEP);
+      chatPaint();
+      return chatLog[chatLog.length - 1];
+    }
+
+    function chatHint(text) {
+      const el = document.getElementById("chatHint");
+      if (!el) return;
+      el.textContent = text || "Everyone in this lobby sees it. Nothing is saved.";
+    }
+
+    function chatSend() {
+      const box = document.getElementById("chatInput");
+      if (!box) return false;
+      const text = chatClean(box.value);
+      if (!text) return false;
+      if (!roomCode) { chatHint("Chat needs the lobby relay — you are not in a room yet."); return false; }
+      if (Date.now() - chatLastMine < CHAT_GAP) { chatHint("Easy — one message every second."); return false; }
+      chatLastMine = Date.now();
+      if (!sendPacket({ t: "CHAT", m: text, name: myDisplayName() })) {
+        chatHint("Chat needs the lobby relay — no broker answered. Try again when the dot is green.");
+        return false;
+      }
+      chatHint("");
+      box.value = "";
+      chatPush(myDisplayName(), text, true, Date.now());
+      return true;
+    }
+
+    function chatReceive(p) {
+      const text = chatClean(p && p.m);
+      if (!text) return false;
+      const known = peers[p.from] && peers[p.from].name;
+      const name = cleanName(stripMark(p.name || known || "Player")).slice(0, 14) || "Player";
+      const now = Date.now();
+      if (chatLastFrom[p.from] && now - chatLastFrom[p.from] < CHAT_FLOOD) return false;
+      chatLastFrom[p.from] = now;
+      chatPush(name, text, false, now);
+      return true;
+    }
+
+    function chatWire() {
+      const box = document.getElementById("chatInput");
+      const btn = document.getElementById("chatSend");
+      if (btn) btn.addEventListener("click", () => { chatSend(); if (box) box.focus(); });
+      if (box) {
+        box.addEventListener("keydown", e => {
+          if (e.key === "Enter") { e.preventDefault(); chatSend(); }
+          e.stopPropagation();      /* typing must never move a block */
+        });
+        /* the maker's key never shows here either */
+        if (typeof wireMarkField === "function") wireMarkField(box, null);
+      }
+      chatPaint();
+    }
+
     function lbEnsure() {
       const list = document.getElementById("lbList");
       if (!list || list.dataset.busy) return;
@@ -3584,6 +3720,7 @@
           lbFetch(tab.dataset.lb);
         });
       });
+      chatWire();
       const refresh = document.getElementById("lbRefresh");
       if (refresh) refresh.addEventListener("click", async () => {
         const list = document.getElementById("lbList");
@@ -5245,7 +5382,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.1";
+    const BUILD_TAG = "v21.2";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

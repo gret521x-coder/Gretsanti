@@ -329,7 +329,8 @@ async function handle(request, env) {
 
   /* ------------------------------------------------------------- wipe it */
   if (action === "reset") {
-    if (request.method !== "POST") return fail("reset must be POST", 405);
+    /* POST {key} from a script, or ?action=reset&key=… from a browser tab */
+    if (request.method !== "POST" && request.method !== "GET") return fail("reset must be POST or GET", 405);
     let body = null;
     try { body = await request.json(); } catch (e) { body = null; }
     const key = String((body && body.key) || url.searchParams.get("key") || "");

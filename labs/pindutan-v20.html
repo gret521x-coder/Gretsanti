@@ -1205,7 +1205,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v20.6</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.7</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -1485,7 +1485,7 @@
     }
 
     /* everybody gets Kupal in VS CPU; the maker just also gets the crown and
-       the option to drop Kupal into a human battle */
+       the two pills that hand their own board to a brain */
     function applyCreatorLock() {
       const maker = isCreator();
       paintAutopilotButtons();
@@ -3791,11 +3791,11 @@
     }
 
     /* =========================================================
-       8. KUPAL PLAYS FOR YOU (the maker's green button)
-          With the light on, Kupal's own brain drives your board
-          during a human battle: it picks the column, rotates the
-          piece, drops it. Your name, your score, your ladder row —
-          just not your hands. Solo and VS CPU are left alone, and
+       8. SOMEONE ELSE PLAYS FOR YOU (the green pills by the relay)
+          With a pill lit, that brain drives your board — in a 1v1,
+          a group battle, and against the CPU. It picks the column,
+          rotates the piece, drops it. Your name, your score, your
+          ladder row — just not your hands. Solo stays yours, and
           nobody in the room is told anything.
        ========================================================= */
     let kupalLightOn = false;
@@ -3814,7 +3814,7 @@
       const lit = kupalJoinWanted() && cpuLevel === key;
       kupalLightOn = !lit;
       autoPlan = null;
-      if (kupalLightOn) setCpuLevel(key);      /* repaints the bar and both pills */
+      if (kupalLightOn) setCpuLevel(key, false);   /* repaints; keeps the rival's board */
       applyCreatorLock();
       renderLobby();
     }
@@ -3837,9 +3837,11 @@
        Intermediate is brisk, Kupal barely waits at all */
     function autoHand() { return cpuCfg().hand || 45; }
 
+    /* with the key in, the pilot plays your board in a 1v1, a group battle
+       and against the CPU. Solo is yours alone. */
     function autopilotOn() {
       return kupalJoinWanted() && gameRunning && !isPaused && !isSpectator &&
-             (currentMode === "1v1" || currentMode === "group");
+             (currentMode === "1v1" || currentMode === "group" || currentMode === "bot");
     }
 
     /* a rotation index for a shape, so the plan and the live piece can meet */
@@ -4267,13 +4269,15 @@
 
     function cpuCfg() { return CPU_LEVELS[cpuLevel] || CPU_LEVELS.intermediate; }
 
-    function setCpuLevel(key) {
+    function setCpuLevel(key, restartBot = true) {
       if (!CPU_LEVELS[key]) return;
       cpuLevel = key;
       try { localStorage.setItem("pindutan_cpu", key); } catch (e) {}
       paintCpuLevels();
       botMeta();
-      if (bot.on && currentMode === "bot") botStart();   /* fresh board on the new level */
+      /* a fresh rival board when you pick a level from the bar, but pressing a
+         pill during a VS CPU game only changes who plays YOUR board */
+      if (restartBot && bot.on && currentMode === "bot") botStart();
     }
 
     function paintCpuLevels() {

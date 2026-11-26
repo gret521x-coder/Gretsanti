@@ -1,5 +1,5 @@
 {
-  "build": "v20.8",
+  "build": "v20.9",
   "html": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v20.html",
   "note": "The game reads this file when it opens. To publish a new build: put it on main as labs/pindutan-v20.html, then bump build here to the same tag. Hosted copies update themselves from it."
 }

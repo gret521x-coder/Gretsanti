@@ -1205,7 +1205,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v20.8</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v20.9</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -1365,6 +1365,19 @@
   </footer>
 
 <script>
+    /* the few long-lived timers this page sets. An update that writes a newer
+       copy over this one stops them first, so the old page cannot keep talking
+       to the lobby behind the new one. */
+    const pageTimers = [];
+    (function trackIntervals() {
+      const si = window.setInterval;
+      window.setInterval = function () {
+        const id = si.apply(window, arguments);
+        pageTimers.push(id);
+        return id;
+      };
+    })();
+
     /* =========================================================
        1. ENCRYPTED PASSWORD VERIFICATION ("kupal" via SHA-256)
        ========================================================= */
@@ -2318,6 +2331,7 @@
     }
 
     function gameLoop(time = 0) {
+      if (window.__pindlSwapping) return;
       if (!gameRunning) { lastTime = time; return; }
 
       const delta = Math.min(120, time - (lastTime || time));
@@ -5191,26 +5205,50 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v20.8";
+    const BUILD_TAG = "v20.9";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v20.html";
     const UPDATE_APPLIED = "pindutan_applied_build";
 
-    /* Navigate to the new copy as a blob: it keeps this exact address and all
-       the saved names, and the browser tears the old page down properly — no
-       leftover timers or relay connections running behind the new one. */
+    /* Hosted copy: navigate to the new one as a blob. Same address, same saved
+       names, and the browser tears the old page down properly.
+       Copy opened from storage (file:, content:): the browser will not let a
+       page like that jump to a blob, so the newer page is written over this
+       one instead — after the relays, the channel and the timers are let go. */
+    function swapModeFor(proto) {
+      return (proto === "http:" || proto === "https:") ? "navigate" : "in-page";
+    }
+
+    function quietForSwap() {
+      window.__pindlSwapping = true;
+      try { gameRunning = false; } catch (e) { }
+      try { pageTimers.forEach(id => clearInterval(id)); } catch (e) { }
+      try {
+        BROKERS.forEach(b => {
+          try { if (b.client) b.client.end(true); } catch (e) { }
+          b.client = null;
+          b.state = "off";
+        });
+      } catch (e) { }
+      try { if (localChannel && localChannel.close) localChannel.close(); } catch (e) { }
+      try { if (audioCtx && audioCtx.close) audioCtx.close(); } catch (e) { }
+    }
+
     function swapDocument(next) {
-      const url = URL.createObjectURL(new Blob([next], { type: "text/html" }));
-      location.replace(url);
+      if (swapModeFor(String(location.protocol || "")) === "navigate") {
+        location.replace(URL.createObjectURL(new Blob([next], { type: "text/html" })));
+        return;
+      }
+      quietForSwap();
+      document.open();
+      document.write(next);
+      document.close();
     }
 
     async function selfUpdateCheck(opts = {}) {
       const get = opts.fetch || (typeof fetch === "function" ? fetch.bind(window) : null);
       const swap = opts.swap || swapDocument;
       if (!get) return { state: "no-fetch" };
-      /* a copy opened from disk updates nothing: it is meant to work offline */
-      const proto = String(location.protocol || "");
-      if (!opts.force && proto !== "http:" && proto !== "https:") return { state: "local" };
 
       /* a page that was just swapped in must not swap again */
       let applied = "";

@@ -12,6 +12,30 @@ the game is unchanged: the same engine, the same one-lobby network, the same tou
 
 ---
 
+## A second host, just for the board
+
+The ladder does not have to live on the same host as the game — which is useful when the host with the game is
+busy or returns a 503. The board is one PHP file and one JSON file, nothing else.
+
+1. Upload `api-leaderboard.php` to the new host, in a folder it can write to. Under PHP 7.4+ that folder is
+   created by the file itself (`data/`).
+2. Open the new address with `?action=top&mode=all` in a browser. You should get the empty table as JSON.
+3. **Keep the old results:** on the old host, in the file manager, copy `data/pindutan-leaderboard.json` into the
+   same place on the new host. That file *is* the table — names, wins, best scores, streaks.
+4. Point the game at it: in `labs/pindutan-build.json` on `main`, set
+
+   ```json
+   "ladder": "https://your-new-host.example/api-leaderboard.php"
+   ```
+
+   Leave the field empty (`""`) to keep the default, `aidekupal.unaux.com`.
+
+Every copy switches on its next open — hosted, from storage, or through the runner — and remembers the address,
+so it keeps posting to the right place even with no signal. No new build is needed for this: the field is read
+from the same small file the updater uses.
+
+The game accepts only a plain `https://` address there; anything else is ignored and the default is kept.
+
 ## What you have to upload, once
 
 Two files, same folder as the pages you already host there (`gc.html`, `api-v2.php`, `save.php`):

@@ -1205,7 +1205,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.1</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
@@ -2843,6 +2843,46 @@
           it falls back to this phone's own copy and says so.
        ========================================================= */
     const LEADERBOARD_URL = "https://aidekupal.unaux.com/api-leaderboard.php";
+
+    /* The board can live on a host of its own. labs/pindutan-build.json on main
+       carries an optional "ladder" address; when it is set, every copy talks to
+       that host instead of the default one — no new build needed. The chosen
+       address is remembered, so a phone with no signal still reads and posts to
+       the right place. */
+    let lbUrl = LEADERBOARD_URL;
+
+    function ladderUrlFrom(feed) {
+      const url = String((feed && feed.ladder) || "").trim();
+      if (!/^https:\/\/[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(\/[^\s]*)?$/i.test(url)) return "";
+      return url;
+    }
+
+    function lbSetLadder(url) {
+      const clean = ladderUrlFrom({ ladder: url });
+      if (!clean || clean === lbUrl) return false;
+      lbUrl = clean;
+      try { localStorage.setItem("pindutan_ladder_url", clean); } catch (e) { }
+      return true;
+    }
+
+    /* read the feed once, for the board address only — the update check does
+       its own reading, and either can fail without harming the other */
+    async function lbPickLadder(feedUrl) {
+      try {
+        const get = String(feedUrl || "") + (String(feedUrl || "").indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
+        const r = await fetch(get, { cache: "no-store" });
+        if (!r || !r.ok || typeof r.json !== "function") return false;
+        const feed = await r.json();
+        if (!lbSetLadder(feed && feed.ladder)) return false;
+        if (typeof lbFetch === "function") lbFetch(lbMode, true);   /* read the new board now */
+        return lbUrl;
+      } catch (e) { return false; }
+    }
+
+    try {
+      const kept = localStorage.getItem("pindutan_ladder_url");
+      if (kept && ladderUrlFrom({ ladder: kept })) lbUrl = kept;
+    } catch (e) { /* private mode: keep the default */ }
     const LB_KEY = atob("a2RsLXBpbmR1dGFuLWxiLTIwMjYtN2YzYQ==");   /* the same shared string as the PHP file */
     const LB_CACHE = "pindutan_lb_cache";
     const LB_MINE = "pindutan_lb_mine";
@@ -3191,7 +3231,7 @@
       const ctrl = typeof AbortController === "function" ? new AbortController() : null;
       const timer = ctrl ? setTimeout(() => ctrl.abort(), 6000) : null;
       try {
-        const url = LEADERBOARD_URL + "?action=top&mode=" + encodeURIComponent(lbMode) + "&limit=25&t=" + Date.now();
+        const url = lbUrl + "?action=top&mode=" + encodeURIComponent(lbMode) + "&limit=25&t=" + Date.now();
         const res = await fetch(url, ctrl ? { signal: ctrl.signal, cache: "no-store" } : { cache: "no-store" });
         if (!res.ok) throw new Error("http " + res.status);
         const data = await res.json();
@@ -3257,7 +3297,7 @@
       const ctrl = (typeof AbortController === "function" && !blind) ? new AbortController() : null;
       const timer = ctrl ? setTimeout(() => ctrl.abort(), 7000) : null;
       try {
-        const res = await fetch(LEADERBOARD_URL + "?action=report", {
+        const res = await fetch(lbUrl + "?action=report", {
           method: "POST",
           /* text/plain keeps this a "simple" request. A page opened straight
              from a file (file://) otherwise needs a pre-flight check that many
@@ -3381,7 +3421,7 @@
 
     async function lbTopRows(mode) {
       try {
-        const res = await fetch(LEADERBOARD_URL + "?action=top&mode=" + encodeURIComponent(mode) +
+        const res = await fetch(lbUrl + "?action=top&mode=" + encodeURIComponent(mode) +
           "&limit=100&t=" + Date.now(), { cache: "no-store" });
         if (!res.ok) throw new Error("http " + res.status);
         const data = await res.json();
@@ -5205,7 +5245,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21";
+    const BUILD_TAG = "v21.1";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";
@@ -5301,6 +5341,7 @@
     } catch (e) { }
 
     try { selfUpdateCheck().catch(() => { }); } catch (e) { }
+    try { lbPickLadder(UPDATE_FEED).catch(() => { }); } catch (e) { }
   </script>
 </body>
 </html>

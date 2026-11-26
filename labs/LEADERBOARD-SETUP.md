@@ -26,8 +26,9 @@ reads a small file from this repo — `labs/pindutan-build.json` on the `main` b
 names a newer build it quietly opens that copy instead: same address, same saved nickname, same
 crown, same ladder. Offline, or a half download, and it just plays the copy it already has.
 
-That also means a copy opened from your own phone's storage never updates itself — that is what you
-want when you are playing with no signal.
+A copy kept on your own phone's storage does the same thing: opened, it checks the repo, and if
+there is something newer it writes that page over itself. With no signal it just plays the copy it
+has, so the file still works offline.
 
 To publish a new build (this is for whoever edits the repo):
 

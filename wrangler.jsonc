@@ -1,0 +1,17 @@
+// Cloudflare build config — the ladder worker is built straight from this repo.
+//
+// Cloudflare Workers & Pages → "Connect to Git" → this repository → the build
+// below deploys the board from labs/worker-leaderboard.js. Changing that file
+// and pushing to main redeploys the board by itself; nobody has to paste code.
+//
+// The KV namespace below is the "pindutan-ladder" box on the account. The
+// binding name LADDER is what the worker code reads as env.LADDER.
+{
+  "name": "pindutan-ladder",
+  "main": "labs/worker-leaderboard.js",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true },
+  "kv_namespaces": [
+    { "binding": "LADDER", "id": "75f3129033514356950aafacf39aeb86" }
+  ]
+}

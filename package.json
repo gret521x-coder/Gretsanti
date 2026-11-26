@@ -1,0 +1,8 @@
+{
+  "name": "pindutan-ladder-build",
+  "private": true,
+  "description": "Build file for the Cloudflare ladder worker. Nothing else in this repo needs npm.",
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

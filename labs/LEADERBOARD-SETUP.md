@@ -57,6 +57,19 @@ Notes: the Cloudflare board starts empty — the rows on the old host stay on th
 write per second to the same key, so the worker retries a refused write once; that is plenty for a board of
 friends. The secret and the crown name live at the top of the worker file, exactly as they do in the PHP.
 
+### The no-paste way: let Cloudflare build it from GitHub
+
+`wrangler.jsonc` in the repo root already says everything the dashboard's editor and Bindings screen would:
+the worker name, the entry file (`labs/worker-leaderboard.js`), and the KV namespace bound as `LADDER`.
+
+1. **Workers & Pages → Create application → Connect to Git →** pick `Gretsanti`.
+2. Project name `pindutan-ladder`; leave the build command empty; deploy command stays `npx wrangler deploy`.
+3. **Deploy.** The worker comes up at `pindutan-ladder.<your-subdomain>.workers.dev` with the box already attached.
+4. Put that address in `labs/pindutan-build.json` as `"ladder"`.
+
+After that, pushing to `main` redeploys the board — no dashboard, no pasting. If the KV namespace is ever
+recreated, change its `id` in `wrangler.jsonc` and push.
+
 ## What you have to upload, once
 
 Two files, same folder as the pages you already host there (`gc.html`, `api-v2.php`, `save.php`):

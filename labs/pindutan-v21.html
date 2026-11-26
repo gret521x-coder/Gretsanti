@@ -1280,7 +1280,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.4</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.5</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -4601,50 +4601,6 @@
         .forEach(id => list.appendChild(playerCard(peers[id])));
     }
 
-    /* wins and losses for a name, from the best thing this phone knows:
-       its own book of results, then the last ladder it read, then the gossip.
-       Read once every couple of seconds — the lobby redraws on every packet,
-       and storage is the slow part. */
-    let lobbyRecAt = 0;
-    let lobbyRecMap = null;
-
-    function lobbyRecords() {
-      if (lobbyRecMap && Date.now() - lobbyRecAt < 2000) return lobbyRecMap;
-      const map = new Map();
-      const put = (name, w, l) => {
-        const key = lbNameKey(cleanName(name));
-        if (key && !map.has(key)) map.set(key, { w: w | 0, l: l | 0, known: true });
-      };
-      try {
-        const mine = lbMine();
-        Object.keys(mine.byName || {}).forEach(key => {
-          const rec = mine.byName[key] || {};
-          const d = rec.duel || {}, g = rec.group || {};
-          put(rec.name || key, (d.wins | 0) + (g.wins | 0), (d.losses | 0) + (g.losses | 0));
-        });
-      } catch (e) { }
-      try {
-        const cache = lbCacheRead() || {};
-        ["all", "duel", "group"].forEach(mode => {
-          (Array.isArray(cache[mode]) ? cache[mode] : []).forEach(r => {
-            if (r && r.name) put(r.name, r.wins, r.losses);
-          });
-        });
-      } catch (e) { }
-      try {
-        lbPeerRows("duel").concat(lbPeerRows("group")).forEach(r => put(r.name, r.wins, r.losses));
-      } catch (e) { }
-      lobbyRecMap = map;
-      lobbyRecAt = Date.now();
-      return map;
-    }
-
-    function lobbyRecord(p) {
-      const key = lbNameKey(cleanName(stripMark(p && p.name)));
-      const hit = key ? lobbyRecords().get(key) : null;
-      return hit || { w: 0, l: 0, known: false };
-    }
-
     function playerCard(p) {
       const card = document.createElement("div");
       card.className = "pg-card" + (p.me ? " me" : "");
@@ -4673,28 +4629,11 @@
         nm.textContent = p.name;
       }
 
-      /* W and L under the name: what the ladder knows, else what this phone knows */
-      const wl = document.createElement("div");
-      wl.className = "pg-wl";
-      wl.style.cssText = "font-size:0.55rem;color:var(--mut);letter-spacing:0.02em;margin-top:1px;";
-      const rec = lobbyRecord(p);
-      const strong = (label, value) => {
-        const b = document.createElement("b");
-        b.style.color = "var(--txt)";
-        b.textContent = String(value);
-        wl.appendChild(document.createTextNode(label + " "));
-        wl.appendChild(b);
-      };
-      strong("W", rec.known ? rec.w : "—");
-      wl.appendChild(document.createTextNode("  ·  "));
-      strong("L", rec.known ? rec.l : "—");
-
       const sb = document.createElement("div");
       sb.className = "pg-sub";
       sb.textContent = p.alive ? "Playing" : "Available";
 
       wrap.appendChild(nm);
-      wrap.appendChild(wl);
       wrap.appendChild(sb);
       top.appendChild(wrap);
       card.appendChild(top);
@@ -5750,7 +5689,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.4";
+    const BUILD_TAG = "v21.5";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

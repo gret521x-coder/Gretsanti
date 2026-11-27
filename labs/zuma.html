@@ -3,257 +3,404 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#070c14" />
-<title>KDL Marble — the third chair</title>
+<meta name="theme-color" content="#15181d" />
+<title>Zumang — the third chair</title>
 <style>
   :root {
-    --bg: #070c14;
-    --card: rgba(10, 20, 34, 0.92);
-    --line: rgba(120, 170, 220, 0.18);
-    --ink: #e8f3ff;
-    --mut: #7f93ad;
-    --cyan: #3dd6f5;
-    --lime: #7ef29b;
-    --amber: #ffb020;
-    --red: #ff4d6d;
-    --gold: #ffd45e;
+    --stone-0: #6b7078;
+    --stone-1: #4a4f57;
+    --stone-2: #2f343a;
+    --stone-3: #1b1f24;
+    --stone-4: #0d1013;
+    --gold-1: #ffe9b8;
+    --gold-2: #d9a441;
+    --gold-3: #8f6f2e;
+    --plate: #7d2b2b;
+    --ink: #efe7d6;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; }
   body {
     background:
-      radial-gradient(120% 60% at 50% 0%, rgba(61, 214, 245, 0.10), transparent 62%),
-      radial-gradient(90% 50% at 50% 100%, rgba(126, 242, 155, 0.06), transparent 60%),
-      var(--bg);
+      radial-gradient(120% 70% at 50% -10%, #2a2f36, #080a0d 70%),
+      #080a0d;
     color: var(--ink);
-    font: 500 15px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font: 600 14px/1.4 "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     display: flex; justify-content: center;
     overflow: hidden;
+    user-select: none; -webkit-user-select: none;
   }
-  .app { position: relative; width: min(620px, 100%); height: 100%; display: flex; flex-direction: column; }
 
-  header { display: flex; align-items: center; gap: 8px; padding: 8px 10px 2px; }
-  .mark {
-    font-size: 0.92rem; font-weight: 900; letter-spacing: 0.3em; color: var(--cyan);
-    text-shadow: 0 0 14px rgba(61, 214, 245, 0.4); padding-left: 0.3em; flex: 1 1 auto;
+  .shell {
+    width: min(820px, 100%); height: 100%;
+    display: flex; flex-direction: column;
+    padding: 6px 6px 8px;
   }
-  .build {
-    font: inherit; font-size: 0.48rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mut);
-    background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 3px 6px; cursor: pointer;
-  }
-  .build b { color: var(--cyan); }
-  .build:active { border-color: var(--line); }
 
-  .hud { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 10px 6px; }
-  .stat {
-    flex: 1 1 0; min-width: 64px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px;
-    background: rgba(8, 16, 28, 0.6); text-align: center;
+  /* ---------------- the bar over the board ---------------- */
+  .hud {
+    display: flex; align-items: center; gap: 7px;
+    padding: 5px 7px;
+    border-radius: 9px 9px 0 0;
+    border: 1px solid #0b0d10;
+    border-bottom: 2px solid var(--gold-2);
+    background:
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, rgba(0, 0, 0, .10) 1px 4px),
+      linear-gradient(180deg, #767b83 0%, #4e535b 16%, #34383f 56%, #22262b 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .3),
+      inset 0 -7px 12px rgba(0, 0, 0, .45),
+      0 3px 12px rgba(0, 0, 0, .65);
   }
-  .stat .k { display: block; font-size: 0.44rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mut); }
-  .stat .v { display: block; font-size: 0.82rem; font-weight: 800; }
-  .stat.combo .v { color: var(--gold); }
-  .stat.lives .v { color: var(--red); letter-spacing: 0.1em; }
+  .gems {
+    display: flex; gap: 4px; padding: 3px 6px; border-radius: 6px;
+    background: linear-gradient(180deg, #121519, #090b0e);
+    border: 1px solid #000;
+    box-shadow: inset 0 0 7px rgba(0, 0, 0, .95), 0 1px 0 rgba(255, 255, 255, .07);
+  }
+  .gem {
+    width: 12px; height: 12px; display: block; border-radius: 3px;
+    transform: rotate(45deg);
+    background: linear-gradient(140deg, #c8ffbc, #4ad35f 38%, #1a7a2f 74%, #0a3f18);
+    border: 1px solid #0a2a12;
+    box-shadow: 0 0 8px rgba(90, 235, 120, .6), inset 0 1px 1px rgba(255, 255, 255, .85);
+    transition: background .2s, box-shadow .2s;
+  }
+  .gem.off {
+    background: linear-gradient(140deg, #3b4046, #1a1d21);
+    border-color: #0b0d10;
+    box-shadow: inset 0 0 6px #000;
+  }
 
-  .quota { padding: 0 10px 4px; }
-  .quota-top {
-    display: flex; justify-content: space-between; align-items: baseline;
-    font-size: 0.46rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mut);
+  .plate {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 11.5px; letter-spacing: .13em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 5px; white-space: nowrap;
+    color: var(--gold-1);
+    border: 1px solid var(--gold-2);
+    background: linear-gradient(180deg, #8b3030, #5a1c1c 58%, #3a1010);
+    text-shadow: 0 1px 0 #000, 0 0 7px rgba(255, 200, 90, .35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .28),
+      inset 0 -3px 7px rgba(0, 0, 0, .5),
+      0 1px 2px rgba(0, 0, 0, .7);
   }
-  .quota-top b { color: var(--ink); font-size: 0.52rem; }
-  .bar { height: 7px; margin-top: 4px; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; background: rgba(255,255,255,0.03); }
-  .bar i {
+  .plate b { color: #fff; font-weight: 700; }
+  .scoreplate {
+    min-width: 84px; text-align: center;
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 14px; letter-spacing: .08em;
+    padding: 2px 10px;
+    color: #fff;
+    border-color: var(--gold-3);
+    background: linear-gradient(180deg, #0e1013, #04060a);
+    text-shadow: 0 0 8px rgba(255, 255, 255, .35);
+    box-shadow: inset 0 2px 9px #000, 0 1px 0 rgba(255, 255, 255, .09);
+  }
+
+  .gauge {
+    position: relative; flex: 1 1 auto; height: 18px; min-width: 74px;
+    border-radius: 4px; overflow: hidden;
+    border: 1px solid var(--gold-2);
+    background: linear-gradient(180deg, #090b0e, #181b20);
+    box-shadow: inset 0 2px 7px #000, 0 1px 0 rgba(255, 255, 255, .12);
+  }
+  .gauge i {
     display: block; height: 100%; width: 0%;
-    background: linear-gradient(90deg, var(--cyan), var(--lime));
-    box-shadow: 0 0 12px rgba(61, 214, 245, 0.55); transition: width 0.18s linear;
+    background: linear-gradient(180deg, #fff0c0, #f2b73e 42%, #a5701a);
+    box-shadow: 0 0 12px rgba(255, 195, 80, .75);
+    transition: width .18s linear;
   }
-  .bar.full i { background: linear-gradient(90deg, var(--gold), var(--amber)); box-shadow: 0 0 14px rgba(255, 176, 32, 0.6); }
+  .gauge.full i { background: linear-gradient(180deg, #e2ffd8, #5ce070 42%, #1d7c31); }
+  .gauge span {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font: 700 9px/1 "Courier New", monospace; letter-spacing: .06em;
+    color: #ffecc2; text-shadow: 0 1px 2px #000, 0 0 4px #000;
+    pointer-events: none;
+  }
 
-  .stagewrap { position: relative; flex: 1 1 auto; margin: 2px 8px 6px; min-height: 0; }
-  canvas { display: block; width: 100%; height: 100%; border-radius: 16px; touch-action: none; }
-  .stagewrap.shake { animation: shake 0.34s linear; }
+  .hbtn {
+    font-family: Georgia, serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 5px; cursor: pointer;
+    color: var(--gold-1); border: 1px solid var(--gold-2);
+    background: linear-gradient(180deg, #6a5a2e, #3e3418 60%, #241d0c);
+    text-shadow: 0 1px 0 #000;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 -3px 6px rgba(0, 0, 0, .5), 0 1px 2px rgba(0, 0, 0, .7);
+  }
+  .hbtn:active { transform: translateY(1px); }
+  .hbtn.icon { padding: 3px 7px; font-size: 12px; letter-spacing: 0; }
+  .hbtn.on { color: #fff6dc; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 0 10px rgba(255, 200, 90, .5); }
+
+  /* ---------------- the board ---------------- */
+  .stagewrap {
+    position: relative;
+    flex: 1 1 auto; min-height: 0;
+    border: 1px solid #0b0d10;
+    border-top: 0;
+    border-radius: 0 0 9px 9px;
+    overflow: hidden;
+    background: #12151a;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, .85), 0 8px 24px rgba(0, 0, 0, .6);
+  }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  .stagewrap.shake { animation: shake .3s linear; }
   @keyframes shake {
     0%, 100% { transform: translate(0, 0); }
-    20% { transform: translate(-5px, 3px); }
-    40% { transform: translate(4px, -4px); }
-    60% { transform: translate(-3px, -2px); }
-    80% { transform: translate(3px, 3px); }
+    25% { transform: translate(-5px, 3px); }
+    50% { transform: translate(4px, -4px); }
+    75% { transform: translate(-3px, -2px); }
   }
 
-  footer { display: flex; gap: 6px; padding: 0 10px calc(8px + env(safe-area-inset-bottom)); }
-  footer button { flex: 1 1 0; }
-
-  button {
-    font: inherit; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--ink); background: rgba(12, 24, 40, 0.9); border: 1px solid var(--line);
-    border-radius: 10px; padding: 9px 8px; cursor: pointer;
+  .combo {
+    position: absolute; left: 12px; top: 10px;
+    font: 800 14px Georgia, serif; letter-spacing: .08em;
+    color: #ffd75e; text-shadow: 0 0 12px rgba(255, 180, 60, .7), 0 1px 0 #000;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity .18s, transform .18s;
+    pointer-events: none;
   }
-  button:active { transform: translateY(1px); }
-  button.on { border-color: rgba(61, 214, 245, 0.55); color: var(--cyan); }
-  button.primary { background: linear-gradient(180deg, rgba(61,214,245,0.22), rgba(61,214,245,0.08)); border-color: rgba(61, 214, 245, 0.5); color: #eafaff; }
-  button.ghost { background: transparent; }
+  .combo.on { opacity: 1; transform: translateY(0); }
 
+  /* ---------------- sheets: the door, the menu, the pauses ---------------- */
   .overlay {
-    position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
-    padding: 18px; background: rgba(3, 6, 12, 0.78); backdrop-filter: blur(6px);
+    position: fixed; inset: 0; z-index: 60;
+    display: none; align-items: center; justify-content: center;
+    padding: 16px;
+    background: radial-gradient(120% 80% at 50% 0%, rgba(70, 50, 12, .35), rgba(0, 0, 0, .84));
+    backdrop-filter: blur(3px);
   }
   .overlay.open { display: flex; }
-  .sheet { width: min(420px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
-  .sheet h2 { margin: 0 0 4px; font-size: 0.9rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); }
-  .sheet p { margin: 6px 0 12px; font-size: 0.6rem; color: var(--mut); line-height: 1.6; }
-  .sheet .row { display: flex; gap: 6px; margin-top: 8px; }
+
+  .sheet {
+    width: min(430px, 100%);
+    border-radius: 12px;
+    padding: 16px;
+    border: 2px solid var(--gold-2);
+    background:
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, .02) 0 1px, rgba(0, 0, 0, .05) 1px 5px),
+      linear-gradient(180deg, #565b64, #2b3037 42%, #1a1e23);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, .85),
+      inset 0 1px 0 rgba(255, 255, 255, .18),
+      inset 0 -24px 46px rgba(0, 0, 0, .45);
+  }
+  .sheet h2 {
+    margin: 0 0 8px; text-align: center;
+    font: 700 15px Georgia, serif; letter-spacing: .2em; text-transform: uppercase;
+    color: #ffe7b2; text-shadow: 0 1px 0 #000, 0 0 12px rgba(255, 190, 80, .35);
+  }
+  .sheet p { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #cfc7b4; text-align: center; }
+  .sheet .row { display: flex; gap: 7px; }
   .sheet .row button { flex: 1 1 0; }
 
-  .gate { position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center; padding: 18px;
-    background: radial-gradient(120% 60% at 50% 0%, rgba(61, 214, 245, 0.12), transparent 62%), var(--bg); }
-  .gate.open { display: flex; }
-  .gate-box { width: min(360px, 100%); text-align: center; }
-  .gate-mark { font-size: 1.5rem; font-weight: 900; letter-spacing: 0.3em; color: var(--cyan); text-shadow: 0 0 18px rgba(61, 214, 245, 0.4); padding-left: 0.3em; }
-  .gate-sub { margin-top: 6px; font-size: 0.55rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mut); }
-  .gate input {
-    width: 100%; margin-top: 18px; padding: 13px 12px; text-align: center; font: inherit; font-size: 1rem;
-    letter-spacing: 0.14em; color: var(--ink); background: rgba(8, 16, 28, 0.92);
-    border: 1px solid var(--line); border-radius: 12px;
+  button.gold {
+    font-family: Georgia, serif; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 9px 8px; border-radius: 6px; cursor: pointer;
+    color: #2a1c05;
+    border: 1px solid #f3d99a;
+    background: linear-gradient(180deg, #ffe9a8, #e0aa3c 55%, #a5701a);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 2px 0 #6e4a10, 0 4px 12px rgba(0, 0, 0, .5);
   }
-  .gate input:focus { outline: none; border-color: rgba(61, 214, 245, 0.6); }
-  .gate-go {
-    width: 100%; margin-top: 10px; padding: 13px 10px; font-size: 0.74rem; letter-spacing: 0.12em;
-    color: #04121a; background: var(--cyan); border: 0; border-radius: 12px;
+  button.gold:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), 0 1px 0 #6e4a10; }
+  button.stone {
+    font-family: Georgia, serif; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 9px 8px; border-radius: 6px; cursor: pointer;
+    color: #efe6d0;
+    border: 1px solid #7a808a;
+    background: linear-gradient(180deg, #565c65, #33383f 55%, #22262b);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 2px 0 #111417, 0 4px 12px rgba(0, 0, 0, .5);
   }
-  .gate-err { margin-top: 10px; min-height: 1.2em; font-size: 0.56rem; letter-spacing: 0.06em; color: var(--amber); }
-  .gate-note { margin-top: 12px; font-size: 0.52rem; line-height: 1.6; color: var(--mut); }
-  .gate-build { margin-top: 14px; font-size: 0.48rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mut); }
-  .gate-build b { color: var(--cyan); }
+  button.stone:active { transform: translateY(2px); }
 
-  .menu { position: fixed; inset: 0; z-index: 60; display: none; justify-content: center; align-items: flex-start;
-    overflow-y: auto; padding: 20px 14px 26px;
-    background: radial-gradient(120% 60% at 50% 0%, rgba(61, 214, 245, 0.12), transparent 62%), var(--bg); }
+  /* the door */
+  .gate { position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center; padding: 18px;
+    background: radial-gradient(120% 70% at 50% 0%, rgba(90, 60, 15, .3), #07090b 72%); }
+  .gate.open { display: flex; }
+  .gate-box { width: min(370px, 100%); text-align: center; }
+  .wordmark {
+    font: 700 clamp(30px, 9vw, 44px)/1 Georgia, "Times New Roman", serif;
+    letter-spacing: .18em; padding-left: .18em;
+    color: #ffe6ab;
+    text-shadow: 0 2px 0 #6a4a12, 0 6px 18px rgba(255, 170, 40, .35), 0 0 40px rgba(255, 150, 30, .25);
+  }
+  .wordmark small { display: block; margin-top: 8px; font: 600 10px/1 "Trebuchet MS", sans-serif;
+    letter-spacing: .4em; color: #b9ab8c; text-shadow: none; }
+  .gate input {
+    width: 100%; margin-top: 22px; padding: 13px 12px; text-align: center;
+    font: 700 17px/1 Georgia, serif; letter-spacing: .16em;
+    color: #ffecc2; background: linear-gradient(180deg, #0d1013, #191d22);
+    border: 1px solid var(--gold-2); border-radius: 8px;
+    box-shadow: inset 0 3px 10px #000;
+  }
+  .gate input:focus { outline: none; border-color: #ffe0a0; box-shadow: inset 0 3px 10px #000, 0 0 0 2px rgba(255, 200, 90, .2); }
+  .gate .gold { width: 100%; margin-top: 10px; padding: 13px 10px; font-size: 14px; }
+  .gate-err { margin-top: 10px; min-height: 1.3em; font-size: 11px; letter-spacing: .04em; color: #ffcc7a; }
+  .gate-note { margin-top: 12px; font-size: 10.5px; line-height: 1.7; color: #9a927f; }
+  .gate-build { cursor: pointer; margin-top: 14px; font: 700 9px/1 "Trebuchet MS", sans-serif; letter-spacing: .22em;
+    text-transform: uppercase; color: #7d7666; }
+  .gate-build b { color: var(--gold-1); }
+
+  /* the menu */
+  .menu {
+    position: fixed; inset: 0; z-index: 55; display: none;
+    justify-content: center; align-items: flex-start;
+    overflow-y: auto; padding: 14px 12px 26px;
+    background: radial-gradient(120% 70% at 50% 0%, rgba(70, 50, 15, .3), rgba(0, 0, 0, .9));
+    backdrop-filter: blur(4px);
+  }
   .menu.open { display: flex; }
-  .menu-box { width: min(460px, 100%); }
-  .menu-mark { text-align: center; font-size: 1.5rem; font-weight: 900; letter-spacing: 0.3em; color: var(--cyan); text-shadow: 0 0 18px rgba(61, 214, 245, 0.4); padding-left: 0.3em; }
-  .menu-sub { text-align: center; margin-top: 4px; font-size: 0.52rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mut); }
-  .menu-me { text-align: center; margin-top: 10px; font-size: 0.56rem; color: var(--mut); }
-  .menu-me b { color: var(--ink); }
-  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 6px; }
+  .menu-box { width: min(660px, 100%); }
+  .menu-head { text-align: center; margin-bottom: 12px; }
+  .menu-head .wordmark { font-size: clamp(24px, 7vw, 34px); }
+  .menu-me { margin-top: 10px; font-size: 11px; color: #b0a894; letter-spacing: .06em; }
+  .menu-me b { color: #ffe7b2; }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 4px; }
   .cards .wide { grid-column: 1 / -1; }
-  .card {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left;
-    padding: 12px; border-radius: 13px; background: rgba(10, 20, 34, 0.88); border: 1px solid var(--line);
-    color: var(--ink); cursor: pointer; font: inherit;
+  .cardbtn {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    padding: 11px 12px; border-radius: 9px; cursor: pointer; text-align: left;
+    border: 1px solid #767c86;
+    background: linear-gradient(180deg, #545a63, #31363d 60%, #20242a);
+    color: #f2ead6;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 3px 10px rgba(0, 0, 0, .5);
   }
-  .card .ico { font-size: 1.1rem; }
-  .card .t { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-  .card .d { font-size: 0.52rem; color: var(--mut); line-height: 1.4; }
-  .levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; }
-  .levels button { padding: 12px 0; font-size: 0.7rem; }
-  .levels button.locked { opacity: 0.35; cursor: not-allowed; }
-  h4 { margin: 16px 0 6px; font-size: 0.5rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mut); display: flex; justify-content: space-between; }
-  .board { border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
-  .board .row {
-    display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 0.6rem;
-    border-bottom: 1px solid var(--line);
+  .cardbtn .t { font: 700 12px Georgia, serif; letter-spacing: .12em; text-transform: uppercase; color: #ffe7b2; }
+  .cardbtn .d { font-size: 10.5px; color: #b6ae9b; line-height: 1.4; }
+  .cardbtn:active { transform: translateY(1px); }
+
+  h4 {
+    margin: 16px 0 7px; display: flex; justify-content: space-between; align-items: baseline;
+    font: 700 10px/1 Georgia, serif; letter-spacing: .2em; text-transform: uppercase; color: #d8ccb0;
   }
-  .board .row:last-child { border-bottom: 0; }
-  .board .row.me { background: rgba(61, 214, 245, 0.07); }
-  .board .rk { width: 20px; color: var(--mut); }
-  .board .nm { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .board .sc { font-weight: 800; }
-  .board .lv { color: var(--mut); font-size: 0.5rem; }
-  .board .empty { padding: 14px 10px; font-size: 0.56rem; color: var(--mut); text-align: center; }
-  .menu-note { margin-top: 10px; font-size: 0.48rem; line-height: 1.6; color: var(--mut); text-align: center; }
+  h4 span { font: 600 9px/1 "Trebuchet MS", sans-serif; letter-spacing: .1em; text-transform: none; color: #8d8574; }
+
+  .temple { margin-bottom: 8px; }
+  .temple .tname {
+    font: 700 9px/1 Georgia, serif; letter-spacing: .22em; text-transform: uppercase;
+    color: #b9a877; margin: 8px 0 4px;
+  }
+  .temple .tname b { color: #ffe7b2; }
+  .lgrid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .lgrid button {
+    padding: 7px 0; border-radius: 4px; cursor: pointer;
+    font: 700 10.5px Georgia, serif;
+    color: #efe6d2; border: 1px solid #4d535b;
+    background: linear-gradient(180deg, #2f343a, #14171b);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
+  }
+  .lgrid button.open { border-color: var(--gold-2); background: linear-gradient(180deg, #7a2c2c, #3e1414); color: #ffe9b8; }
+  .lgrid button.here { border-color: #ffe9b8; box-shadow: 0 0 9px rgba(255, 200, 90, .55); }
+  .lgrid button.locked { color: #6c7078; cursor: not-allowed; opacity: .7; }
+
+  .boardbox { border: 1px solid #555b64; border-radius: 8px; overflow: hidden; background: rgba(0, 0, 0, .35); }
+  .boardbox .row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 11.5px; border-bottom: 1px solid #3a3f46; }
+  .boardbox .row:last-child { border-bottom: 0; }
+  .boardbox .row.me { background: rgba(255, 200, 90, .08); }
+  .boardbox .rk { width: 18px; color: #a79c82; font-family: Georgia, serif; }
+  .boardbox .nm { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .boardbox .lv { font-size: 9.5px; color: #9d9483; letter-spacing: .04em; }
+  .boardbox .sc { font-family: "Courier New", monospace; font-weight: 700; }
+  .boardbox .empty { padding: 14px 10px; text-align: center; font-size: 11px; color: #9d9483; }
+  .menu-note { margin-top: 12px; text-align: center; font-size: 10px; line-height: 1.7; color: #8d8574; }
 
   .toast {
-    position: fixed; left: 50%; bottom: 74px; transform: translateX(-50%) translateY(14px);
-    padding: 8px 14px; border-radius: 99px; background: rgba(8, 18, 30, 0.94);
-    border: 1px solid rgba(61, 214, 245, 0.4); color: var(--ink);
-    font-size: 0.6rem; letter-spacing: 0.06em; opacity: 0; pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease; z-index: 70; white-space: nowrap;
+    position: fixed; left: 50%; bottom: 22px; z-index: 70;
+    transform: translateX(-50%) translateY(12px);
+    padding: 8px 16px; border-radius: 99px;
+    border: 1px solid var(--gold-2);
+    background: linear-gradient(180deg, rgba(70, 52, 18, .96), rgba(28, 22, 10, .96));
+    color: #ffe9b8; font-size: 11.5px; letter-spacing: .04em;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .7);
+    opacity: 0; pointer-events: none; white-space: nowrap;
+    transition: opacity .2s, transform .2s;
   }
   .toast.open { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .tiny { font-size: 0.48rem; color: var(--mut); text-align: center; margin: 0 10px 6px; line-height: 1.6; }
+
+  @media (max-width: 520px) {
+    .hud { gap: 4px; padding: 4px 5px; }
+    .plate { font-size: 10px; padding: 2px 6px; letter-spacing: .08em; }
+    .scoreplate { min-width: 62px; font-size: 12px; }
+    .hbtn { font-size: 9.5px; padding: 3px 6px; }
+    .gem { width: 10px; height: 10px; }
+    .lgrid { grid-template-columns: repeat(5, 1fr); }
+  }
 </style>
 </head>
-<body data-game="marble">
-<!-- MARBLE-APP -->
-<div class="app">
-  <header>
-    <div class="mark">KDL MARBLE</div>
-    <button class="build" id="buildBtn" title="This build — tap to look for a newer one">marble <b>m1</b></button>
-  </header>
-
+<body data-game="zumang">
+<!-- ZUMANG-APP -->
+<!-- MARBLE-APP: the marker hubs already on main look for; kept so an older hub still opens the game -->
+<div class="shell">
   <div class="hud">
-    <div class="stat"><span class="k">score</span><span class="v" id="hudScore">0</span></div>
-    <div class="stat combo"><span class="k">combo</span><span class="v" id="hudCombo">×1</span></div>
-    <div class="stat"><span class="k">level</span><span class="v" id="hudLevel">1</span></div>
-    <div class="stat lives"><span class="k">lives</span><span class="v" id="hudLives">♥♥♥</span></div>
+    <div class="gems" id="hudLives" title="lives"><i class="gem"></i><i class="gem"></i><i class="gem"></i></div>
+    <div class="plate nameplate" title="level"><span id="hudTemple">JAG</span> <b id="hudLevel">1</b></div>
+    <div class="plate scoreplate" id="hudScore" title="score">0</div>
+    <div class="gauge" id="quotaBar" title="quota"><i id="quotaFill"></i><span id="quotaText">0 / 0</span></div>
+    <button class="hbtn icon on" id="btnSound" title="Sound (M)">♪</button>
+    <button class="hbtn icon" id="btnPause" title="Pause (P)">❚❚</button>
+    <button class="hbtn" id="btnMenu" title="Menu (Esc)">MENU</button>
   </div>
-
-  <div class="quota">
-    <div class="quota-top"><span id="quotaLabel">quota</span><b id="quotaText">0 / 0</b></div>
-    <div class="bar" id="quotaBar"><i id="quotaFill"></i></div>
-  </div>
-
   <div class="stagewrap" id="stagewrap">
-    <canvas id="stage" aria-label="the marble board" role="img"></canvas>
+    <canvas id="stage" aria-label="the zumang board" role="img"></canvas>
+    <div class="combo" id="hudCombo">×1</div>
   </div>
-
-  <footer>
-    <button id="btnSound" class="on" title="Sound on or off">🔊 Sound</button>
-    <button id="btnPause" title="Pause (P)">⏸ Pause</button>
-    <button id="btnRestart" title="Start this level again">↻ Restart</button>
-    <button id="btnMenu" title="Back to the menu">⌂ Menu</button>
-  </footer>
-  <p class="tiny">Aim with the mouse or your finger, tap or press Space to shoot. Click surrounds the shot —
-    match three or more of the same colour. The odd ball is a power-up: 🌀 reverse, 🐌 slow, 💣 bomb.</p>
 </div>
 
 <!-- the door -->
 <div class="gate" id="gate">
   <div class="gate-box">
-    <div class="gate-mark">KDL MARBLE</div>
-    <div class="gate-sub">your name</div>
-    <input id="gateName" maxlength="14" placeholder="nickname" autocomplete="off" spellcheck="false" />
-    <button class="gate-go" id="gateGo">Play</button>
+    <div class="wordmark">ZUMANG<small>the third chair</small></div>
+    <input id="gateName" maxlength="14" placeholder="NICKNAME" autocomplete="off" spellcheck="false" />
+    <button class="gold" id="gateGo">PLAY</button>
     <div class="gate-err" id="gateErr"></div>
     <div class="gate-note">Two characters or more. Your best score and the levels you have opened are kept
       under this name — on this device, and on the ladder when there is a signal.</div>
-    <div class="gate-build" id="gateBuild">marble <b>m1</b></div>
+    <div class="gate-build" id="gateBuild">zumang <b>m2</b></div>
   </div>
 </div>
 
 <!-- the menu -->
 <div class="menu" id="menu">
   <div class="menu-box">
-    <div class="menu-mark">KDL MARBLE</div>
-    <div class="menu-sub" id="menuSub">the third chair · a marble shooter — match three, clear the snake</div>
-    <div class="menu-me" id="menuMe">playing as <b>—</b></div>
+    <div class="menu-head">
+      <div class="wordmark">ZUMANG<small>100 levels · a track of its own for every one</small></div>
+      <div class="menu-me" id="menuMe">playing as <b>—</b></div>
+    </div>
 
     <div class="cards">
-      <button class="card" id="cardPlay">
-        <span class="ico">▶</span>
-        <span class="t">Play</span>
+      <button class="cardbtn" id="cardPlay">
+        <span class="t">▶ Play</span>
         <span class="d" id="cardPlayD">level 1</span>
       </button>
-      <button class="card" id="cardLevels">
-        <span class="ico">🗺️</span>
-        <span class="t">Levels</span>
+      <button class="cardbtn" id="cardLevels">
+        <span class="t">🗺 Levels</span>
         <span class="d" id="cardLevelsD">1 opened</span>
       </button>
-      <button class="card wide" id="cardScores">
-        <span class="ico">🏆</span>
-        <span class="t">Scores</span>
-        <span class="d">best runs, kept by name — and the ladder when online</span>
+      <button class="cardbtn wide" id="cardScores">
+        <span class="t">🏆 Scores</span>
+        <span class="d">the best runs, kept by name — and the ladder when online</span>
       </button>
     </div>
 
-    <h4 id="levelHead">Level select <span id="levelHint">every map is its own</span></h4>
-    <div class="levels" id="levelGrid"></div>
+    <h4 id="levelHead">The temples <span id="levelHint">every level has its own map</span></h4>
+    <div id="levelGrid"></div>
 
     <h4 id="boardHead">Best runs <span id="boardHint">this device</span></h4>
-    <div class="board" id="board"></div>
+    <div class="boardbox" id="board"></div>
 
-    <div class="menu-note">A ball at the skull costs a life. Clear the quota, then clear the track — the map
-      changes every level, the colours grow, and the snake moves faster.</div>
+    <h4>Sound and pausing</h4>
+    <div class="cards" style="grid-template-columns:1fr 1fr 1fr;">
+      <button class="cardbtn" id="cardSound"><span class="t">♪ Sound</span><span class="d" id="cardSoundD">on</span></button>
+      <button class="cardbtn" id="cardPause"><span class="t">❚❚ Pause</span><span class="d">while a level runs</span></button>
+      <button class="cardbtn" id="cardRestart"><span class="t">↻ Restart</span><span class="d">this level again</span></button>
+    </div>
+
+    <div class="menu-note">Match three or more of a colour. Cut the snake in two and the back half is pulled up to
+      the front — if the ends match, the whole run goes and the combo climbs. Reach the quota, then clear the track.
+      A marble at the skull costs a life.</div>
   </div>
 </div>
 
@@ -263,9 +410,9 @@
     <h2>Paused</h2>
     <p>The snake waits. Take your time.</p>
     <div class="row">
-      <button id="pauseResume" class="primary">Resume</button>
-      <button id="pauseRestart">Restart level</button>
-      <button id="pauseMenu">Menu</button>
+      <button class="gold" id="pauseResume">Resume</button>
+      <button class="stone" id="pauseRestart">Restart</button>
+      <button class="stone" id="pauseMenu">Menu</button>
     </div>
   </div>
 </div>
@@ -275,9 +422,9 @@
     <h2 id="levelTitle">Level cleared</h2>
     <p id="levelText">—</p>
     <div class="row">
-      <button id="levelNext" class="primary">Next level</button>
-      <button id="levelReplay">Play it again</button>
-      <button id="levelMenu">Menu</button>
+      <button class="gold" id="levelNext">Next level</button>
+      <button class="stone" id="levelReplay">Again</button>
+      <button class="stone" id="levelMenu">Menu</button>
     </div>
   </div>
 </div>
@@ -287,26 +434,23 @@
     <h2>Game over</h2>
     <p id="overText">—</p>
     <div class="row">
-      <button id="overRetry" class="primary">Try again</button>
-      <button id="overMenu">Menu</button>
+      <button class="gold" id="overRetry">Try again</button>
+      <button class="stone" id="overMenu">Menu</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script>
 (function () {
   "use strict";
 
   /* ==========================================================================
-     1. THE ENGINE — no DOM in here, so it can be tested on its own
+     1. THE ENGINE — curves, matches, and the hundred maps
      ========================================================================== */
 
   var TAU = Math.PI * 2;
-
-  /* a smooth curve through the waypoints, sampled with Catmull-Rom */
-  var SAMPLES = 18;
+  var SAMPLES = 14;        /* how finely a spline segment is sampled */
 
   function crPoint(p0, p1, p2, p3, t) {
     var t2 = t * t, t3 = t2 * t;
@@ -318,6 +462,7 @@
     };
   }
 
+  /* a smooth curve through the waypoints, with the length of every step kept */
   function buildTrack(points) {
     var w = points.map(function (p) {
       return Array.isArray(p) ? { x: p[0], y: p[1] } : { x: p.x, y: p.y };
@@ -338,7 +483,7 @@
     return { pts: pts, acc: acc, len: acc[acc.length - 1] || 1 };
   }
 
-  /* where the track is at distance s, and which way it is pointing */
+  /* where the track is at distance s, and which way it points */
   function trackAt(track, s) {
     var acc = track.acc, lo = 0, hi = acc.length - 1;
     if (s <= 0) s = 0;
@@ -348,7 +493,7 @@
       if (acc[mid] <= s) lo = mid; else hi = mid;
     }
     var a = track.pts[lo], b = track.pts[Math.min(lo + 1, track.pts.length - 1)];
-    var seg = (acc[lo + 1] || acc[lo]) - acc[lo] || 1;
+    var seg = (acc[lo + 1] || acc[lo]) + 0 - acc[lo] || 1;
     var t = Math.max(0, Math.min(1, (s - acc[lo]) / seg));
     return {
       x: a.x + (b.x - a.x) * t,
@@ -357,13 +502,12 @@
     };
   }
 
-  /* The shooter needs a pocket clear of the track. Rather than eyeball one for
-     every map, find the roomiest point near the middle of the board. */
+  /* the roomiest pocket near the middle of the board, for the frog */
   function pickShooter(track, w, h, ballR) {
     var roomy = null, fallback = null;
-    var step = Math.max(6, Math.round(Math.min(w, h) / 42));
-    for (var y = Math.round(h * 0.24); y <= h * 0.76; y += step) {
-      for (var x = Math.round(w * 0.24); x <= w * 0.76; x += step) {
+    var step = Math.max(6, Math.round(Math.min(w, h) / 44));
+    for (var y = Math.round(h * 0.26); y <= h * 0.74; y += step) {
+      for (var x = Math.round(w * 0.26); x <= w * 0.74; x += step) {
         var near = Infinity;
         for (var i = 0; i < track.pts.length; i += 2) {
           var dx = track.pts[i].x - x, dy = track.pts[i].y - y;
@@ -371,99 +515,16 @@
           if (d < near) near = d;
         }
         near = Math.sqrt(near);
-        var central = 1 - (Math.abs(x - w / 2) / (w * 0.26) + Math.abs(y - h / 2) / (h * 0.26)) / 2;
+        var central = 1 - (Math.abs(x - w / 2) / (w * 0.24) + Math.abs(y - h / 2) / (h * 0.24)) / 2;
         var cand = { x: x, y: y, clear: near, central: central };
         if (!fallback || near > fallback.clear) fallback = cand;
-        if (near >= ballR * 2.6 && (!roomy || central > roomy.central)) roomy = cand;
+        if (near >= ballR * 2.55 && (!roomy || central > roomy.central)) roomy = cand;
       }
     }
     return roomy || fallback;
   }
 
-  /* --- the maps: each one is its own shape, the levels cycle through them --- */
-  /* inward, one and three-quarter turns, the frog in the eye of it */
-  function mapSpiral() {
-    var out = [[-0.14, 0.86], [0.04, 0.9]];
-    for (var i = 0; i <= 56; i++) {
-      var t = i / 56;
-      var ang = Math.PI * 0.36 + t * 1.75 * Math.PI;
-      var rad = 0.4 - 0.13 * t;
-      out.push([0.5 + Math.cos(ang) * rad, 0.5 + Math.sin(ang) * rad * 0.97]);
-    }
-    return out;
-  }
-
-  function mapSerpent() {
-    return [
-      [-0.12, 0.16], [0.18, 0.14], [0.5, 0.15], [0.78, 0.18], [0.88, 0.26],
-      [0.86, 0.36], [0.7, 0.42], [0.44, 0.43], [0.2, 0.46], [0.1, 0.55],
-      [0.13, 0.66], [0.32, 0.74], [0.58, 0.75], [0.8, 0.78], [0.87, 0.87]
-    ];
-  }
-
-  /* a horseshoe around the board that curls back in on itself */
-  function mapCoil() {
-    var out = [[-0.12, 0.52], [0.06, 0.4], [0.2, 0.26], [0.44, 0.16], [0.72, 0.2],
-      [0.9, 0.34], [0.94, 0.56], [0.82, 0.76], [0.6, 0.86], [0.36, 0.82], [0.22, 0.68]];
-    for (var i = 0; i <= 22; i++) {
-      var t = i / 22;
-      var ang = Math.PI * 0.62 + t * 0.95 * Math.PI;
-      var rad = 0.23 - 0.035 * t;
-      out.push([0.46 + Math.cos(ang) * rad, 0.5 + Math.sin(ang) * rad * 0.95]);
-    }
-    return out;
-  }
-
-  /* one wide loop, almost closed, with the skull at the top of it */
-  function mapRing() {
-    var out = [[-0.1, 0.8], [0.06, 0.88]];
-    for (var i = 0; i <= 58; i++) {
-      var t = i / 58;
-      var ang = Math.PI * 0.6 + t * 1.86 * Math.PI;
-      var rad = 0.37 - 0.02 * t;
-      out.push([0.5 + Math.cos(ang) * rad, 0.5 + Math.sin(ang) * rad * 0.95]);
-    }
-    return out;
-  }
-
-  var MAPS = [
-    { name: "Spiral", points: mapSpiral, tint: "#12324a" },
-    { name: "Serpent", points: mapSerpent, tint: "#123a32" },
-    { name: "Coil", points: mapCoil, tint: "#2a2340" },
-    { name: "Ring", points: mapRing, tint: "#3a2318" }
-  ];
-
-  var COLORS = [
-    { name: "red", a: "#ff5b6e", b: "#b3182f" },
-    { name: "blue", a: "#4da6ff", b: "#123f8a" },
-    { name: "green", a: "#5ee08a", b: "#166b41" },
-    { name: "yellow", a: "#ffd75e", b: "#a86f00" },
-    { name: "purple", a: "#c58bff", b: "#5b258f" }
-  ];
-
-  var POWER = {
-    rev: { glyph: "🌀", label: "reverse" },
-    slow: { glyph: "🐌", label: "slow" },
-    bomb: { glyph: "💣", label: "bomb" }
-  };
-
-  function levelConfig(n) {
-    n = Math.max(1, n | 0);
-    return {
-      n: n,
-      map: (n - 1) % MAPS.length,
-      /* how long the head would take to cross the whole track, untouched */
-      seconds: Math.max(19, 52 - (n - 1) * 4),
-      /* how much of the track the stage quota fills up */
-      fill: Math.min(0.88, 0.6 + (n - 1) * 0.04),
-      colors: Math.min(COLORS.length, 4 + Math.floor((n - 1) / 2)),
-      powerEvery: Math.max(6, 12 - Math.floor(n / 2)),
-      speed: 0,      /* px per second, worked out from the track in buildGeometry */
-      quota: 0       /* likewise: a quota belongs to the board it is played on */
-    };
-  }
-
-  /* --- matching: how many of the same colour sit around index i --- */
+  /* ---- matching: how many of one colour sit around a marble ---- */
   function matchRun(balls, i) {
     if (!balls || i < 0 || i >= balls.length) return null;
     var c = balls[i].c;
@@ -474,7 +535,7 @@
     return count >= 3 ? { from: from, to: to, c: c, count: count } : null;
   }
 
-  /* --- the shared signature the ladder uses --- */
+  /* the signature the ladder checks (the same digest the worker and the PHP use) */
   function digest(str) {
     var h1 = 0x811c9dc5, h2 = 0;
     for (var i = 0; i < str.length; i++) {
@@ -486,38 +547,399 @@
     return hex(h1) + hex(h2);
   }
 
-  /* ---- the engine's own namespace, for the page and for the tests ---- */
+  /* ==========================================================================
+     2. THE HUNDRED MAPS — one for every level, made from its number
+     ========================================================================== */
+
+  var TEMPLES = ["JAG", "SUNSTONE", "COBRA", "MOONSTONE", "JADE",
+    "OBSIDIAN", "SERPENT", "TEMPLE", "SPIRIT", "ZUMANG"];
+  var LEVELS = 100;
+
+  function levelName(n) {
+    var i = Math.max(0, Math.min(LEVELS - 1, (n | 0) - 1));
+    return { temple: TEMPLES[Math.floor(i / 10)], n: (i % 10) + 1, index: i };
+  }
+  function levelLabel(n) {
+    var l = levelName(n);
+    return l.temple + " " + l.n;
+  }
+
+  /* a small, fast, repeatable random on a seed */
+  function rngFrom(seed) {
+    var s = seed >>> 0;
+    return function () {
+      s = (s + 0x6D2B79F5) >>> 0;
+      var t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  /* ---- the shapes ----
+     Each one keeps to a length a stage can fill (about 50–70 marbles) and stays
+     inside the board, so the hundred boards are all playable. */
+
+  /* nested rings, one turn after another inward: the classic board */
+  function genSpiral(r) {
+    var turns = 1.4 + r() * 0.6;
+    var r0 = 0.41 + r() * 0.03;
+    var r1 = Math.max(0.17, r0 - turns * 0.118);
+    var phase = r() * TAU;
+    var squash = 0.9 + r() * 0.08;
+    var spin = r() < 0.5 ? 1 : -1;
+    var n = Math.round(80 + turns * 50);
+    var out = [];
+    for (var i = 0; i <= n; i++) {
+      var t = i / n;
+      var ang = phase + spin * t * turns * TAU;
+      var rad = lerp(r0, r1, t);
+      out.push([0.5 + Math.cos(ang) * rad, 0.5 + Math.sin(ang) * rad * squash]);
+    }
+    return out;
+  }
+
+  /* rows across the board, joined at the ends */
+  function genSerpent(r) {
+    var rows = 3 + Math.floor(r() * 2);
+    var top = 0.14 + r() * 0.03;
+    var bottom = 0.86 - r() * 0.03;
+    var step = (bottom - top) / (rows - 1);
+    var wob = 0.008 + r() * 0.012;
+    var out = [];
+    for (var row = 0; row < rows; row++) {
+      var y = top + step * row;
+      var left = row % 2 === 0;
+      var n = 22;
+      for (var i = 0; i <= n; i++) {
+        var t = i / n;
+        var x = left ? lerp(0.12, 0.88, t) : lerp(0.88, 0.12, t);
+        out.push([x, y + Math.sin(t * Math.PI * 2 + row) * wob]);
+      }
+      if (row < rows - 1) {
+        var cornerX = left ? 0.88 : 0.12;
+        var dir = left ? 1 : -1;
+        for (var k = 1; k <= 8; k++) {
+          var a = k / 9;
+          out.push([cornerX + dir * Math.sin(a * Math.PI) * 0.045, y + step * a]);
+        }
+      }
+    }
+    return out;
+  }
+
+  /* a temple corridor: a spiral bent towards a rounded square */
+  function genCorridor(r) {
+    var turns = 1.25 + r() * 0.45;
+    var r0 = 0.37 + r() * 0.03;
+    var r1 = Math.max(0.17, r0 - turns * 0.12);
+    var phase = r() * TAU;
+    var spin = r() < 0.5 ? 1 : -1;
+    var round = 0.78 + r() * 0.1;
+    var n = Math.round(90 + turns * 50);
+    var out = [];
+    function sq(v) { return (v < 0 ? -1 : 1) * Math.pow(Math.abs(v), round); }
+    for (var i = 0; i <= n; i++) {
+      var t = i / n;
+      var ang = phase + spin * t * turns * TAU;
+      var rad = lerp(r0, r1, t);
+      out.push([0.5 + sq(Math.cos(ang)) * rad, 0.5 + sq(Math.sin(ang)) * rad]);
+    }
+    return out;
+  }
+
+  /* a flower: rings with lobes */
+  function genRosette(r) {
+    var lobes = 3 + Math.floor(r() * 3);
+    var amp = 0.03 + r() * 0.025;
+    var turns = 1.3 + r() * 0.55;
+    var r0 = 0.36 + r() * 0.03;
+    var r1 = Math.max(0.17, r0 - turns * 0.118);
+    var phase = r() * TAU;
+    var n = Math.round(100 + turns * 50);
+    var out = [];
+    for (var i = 0; i <= n; i++) {
+      var t = i / n;
+      var ang = phase + t * turns * TAU;
+      var rad = lerp(r0, r1, t) * (1 + amp * Math.cos(lobes * ang));
+      out.push([0.5 + Math.cos(ang) * rad, 0.5 + Math.sin(ang) * rad * 0.95]);
+    }
+    return out;
+  }
+
+  /* two loops: a wide one outside, a tight one inside, joined by a step in */
+  function genRing(r) {
+    var r0 = 0.39 + r() * 0.025;
+    var r1 = r0 - 0.145;
+    var phase = r() * TAU;
+    var spin = r() < 0.5 ? 1 : -1;
+    var outer = 0.7 + r() * 0.1;
+    var inner = 0.68 + r() * 0.1;
+    var n = 170;
+    var out = [];
+    for (var i = 0; i <= n; i++) {
+      var t = i / n;
+      var ang, rad;
+      if (t < 0.48) {
+        ang = phase + spin * (t / 0.48) * outer * TAU;
+        rad = r0;
+      } else if (t < 0.56) {
+        var f = (t - 0.48) / 0.08;
+        ang = phase + spin * (outer + f * 0.12) * TAU;
+        rad = lerp(r0, r1, f);
+      } else {
+        ang = phase + spin * (outer + 0.12 + (t - 0.56) / 0.44 * inner) * TAU;
+        rad = r1;
+      }
+      out.push([0.5 + Math.cos(ang) * rad, 0.5 + Math.sin(ang) * rad * 0.95]);
+    }
+    return out;
+  }
+
+  var SHAPES = {
+    spiral: genSpiral,
+    serpent: genSerpent,
+    corridor: genCorridor,
+    rosette: genRosette,
+    ring: genRing
+  };
+  var SHAPE_NAMES = Object.keys(SHAPES);
+
+  /* ---- is this a board worth playing? ---- */
+  function resample(points, count) {
+    var segs = [], total = 0, i;
+    for (i = 1; i < points.length; i++) {
+      var dx = points[i][0] - points[i - 1][0], dy = points[i][1] - points[i - 1][1];
+      var d = Math.sqrt(dx * dx + dy * dy);
+      segs.push({ x: points[i - 1][0], y: points[i - 1][1], dx: dx, dy: dy, d: d });
+      total += d;
+    }
+    if (!total) return [];
+    var out = [], step = total / count, acc = 0, si = 0, walked = 0;
+    for (var k = 0; k <= count; k++) {
+      var target = k * step;
+      while (si < segs.length - 1 && walked + segs[si].d < target) { walked += segs[si].d; si++; }
+      var s = segs[si] || { x: 0, y: 0, dx: 0, dy: 0, d: 1 };
+      var f = s.d > 0 ? (target - walked) / s.d : 0;
+      out.push([s.x + s.dx * Math.min(1, Math.max(0, f)), s.y + s.dy * Math.min(1, Math.max(0, f))]);
+    }
+    return out;
+  }
+
+  /* the gap between marbles, in board units (the board is 1 wide) */
+  var GAP_UNITS = 2 * 0.032 * 0.93;
+
+  function checkMap(points, entryLen) {
+    var line = resample(points, 260);
+    if (line.length < 60) return null;
+    var i, j, dx, dy;
+    /* long enough to hold a stage, short enough to play in a minute or two */
+    var len = 0;
+    for (i = 1; i < line.length; i++) {
+      dx = line[i][0] - line[i - 1][0];
+      dy = line[i][1] - line[i - 1][1];
+      len += Math.sqrt(dx * dx + dy * dy);
+    }
+    var slots = len / GAP_UNITS;
+    if (slots < 30 || slots > 80) return null;
+
+    /* inside the board (the first stretch is the entry, which comes from off it) */
+    var skip = Math.ceil(line.length * ((entryLen || 0) / len));
+    var body = Math.max(Math.floor(line.length * 0.04), Math.min(line.length - 24, skip));
+    for (i = body; i < line.length; i++) {
+      if (line[i][0] < 0.05 || line[i][0] > 0.95 || line[i][1] < 0.05 || line[i][1] > 0.95) return null;
+    }
+
+    /* no two turns of the track closer than a marble and a half */
+    var need = GAP_UNITS * 1.5;
+    for (i = 0; i < line.length; i += 2) {
+      for (j = i + 26; j < line.length; j += 2) {
+        dx = line[i][0] - line[j][0];
+        dy = line[i][1] - line[j][1];
+        if (dx * dx + dy * dy < need * need) return null;
+      }
+    }
+
+    /* somewhere for the frog to sit */
+    var best = 0;
+    for (var y = 0.28; y <= 0.72; y += 0.04) {
+      for (var x = 0.28; x <= 0.72; x += 0.04) {
+        var near = 9;
+        for (i = 0; i < line.length; i += 2) {
+          dx = line[i][0] - x;
+          dy = line[i][1] - y;
+          near = Math.min(near, Math.sqrt(dx * dx + dy * dy));
+        }
+        if (near > best) best = near;
+      }
+    }
+    if (best < 0.032 * 2.55) return null;
+
+    return { slots: slots, len: len };
+  }
+
+  /* a short straight run in from outside the board, so the snake is seen arriving */
+  function entryFor(points) {
+    var p0 = points[0], p1 = points[1] || points[0];
+    var along = Math.atan2(p0[1] - p1[1], p0[0] - p1[0]);
+    var outward = Math.atan2(p0[1] - 0.5, p0[0] - 0.5);
+    var tries = [outward, along, (outward + along) / 2, along + 0.55, along - 0.55, outward + 0.35, outward - 0.35];
+    var best = null;
+    for (var c = 0; c < tries.length; c++) {
+      var ang = tries[c];
+      var line = [];
+      var reach = 0.05;
+      while (reach < 0.9) {
+        var x = p0[0] + Math.cos(ang) * reach, y = p0[1] + Math.sin(ang) * reach;
+        if (x < -0.05 || x > 1.05 || y < -0.05 || y > 1.05) break;
+        line.push([x, y]);
+        reach += 0.04;
+      }
+      if (line.length < 2) continue;
+      /* how close does this way in come to the rest of the track? */
+      var clear = 9;
+      for (var i = 0; i < line.length; i++) {
+        for (var j = 10; j < points.length; j += 2) {
+          var dx = line[i][0] - points[j][0], dy = line[i][1] - points[j][1];
+          clear = Math.min(clear, Math.sqrt(dx * dx + dy * dy));
+        }
+      }
+      var score = clear + line.length * 0.004;
+      if (!best || score > best.score) best = { score: score, line: line };
+    }
+    if (!best) return points;
+    return best.line.slice().reverse().concat(points);
+  }
+
+  /* the map of a level, made from its number: the same board every time */
+  var mapCache = {};
+  function mapForLevel(level) {
+    var n = Math.max(1, Math.min(LEVELS, level | 0));
+    if (mapCache[n]) return mapCache[n];
+    var found = null;
+    for (var attempt = 0; attempt < 48 && !found; attempt++) {
+      var seed = (n * 7919 + attempt * 104729 + 13) >>> 0;
+      var r = rngFrom(seed);
+      /* the shapes take turns, so the hundred boards are not all one kind */
+      var kind = SHAPE_NAMES[(n + attempt) % SHAPE_NAMES.length];
+      var pts = SHAPES[kind](r);
+      var full = entryFor(pts);
+      var entryLen = (full.length - pts.length) * 0.05;
+      var verdict = checkMap(full, entryLen);
+      if (verdict) found = { points: pts, kind: kind, slots: verdict.slots, entry: full, entryLen: entryLen };
+    }
+    if (!found) {
+      /* nothing random passed: a sure board, still its own */
+      var r2 = rngFrom(n * 31 + 7);
+      var pts2 = genSpiral(r2);
+      var entry2 = entryFor(pts2);
+      found = { points: pts2, kind: "spiral", slots: 40, entry: entry2, entryLen: (entry2.length - pts2.length) * 0.05 };
+    }
+    var entry = found.entry;
+    var name = levelName(n);
+    mapCache[n] = {
+      n: n,
+      points: entry,
+      kind: found.kind,
+      slots: found.slots,
+      entryLen: found.entryLen,
+      temple: name.temple,
+      label: name.temple + " " + name.n,
+      shape: found.kind.charAt(0).toUpperCase() + found.kind.slice(1)
+    };
+    return mapCache[n];
+  }
+
+  /* ---- how a level plays ---- */
+  var COLORS = [
+    { name: "gold", a: "#ffe07a", b: "#a8681a", c: "#ffd75e" },
+    { name: "red", a: "#ff7a86", b: "#8f1226", c: "#ff5b6e" },
+    { name: "blue", a: "#7cc2ff", b: "#0f3a80", c: "#4da6ff" },
+    { name: "green", a: "#86f0a6", b: "#12682f", c: "#5ee08a" },
+    { name: "violet", a: "#d3a8ff", b: "#4c1c80", c: "#c58bff" },
+    { name: "cyan", a: "#a6f4ff", b: "#0d6070", c: "#5ee7f0" },
+    { name: "rose", a: "#ffabd8", b: "#8d1450", c: "#ff6ec7" }
+  ];
+
+  /* lighten or darken a #rrggbb colour */
+  function shade(hex, amt) {
+    var n = parseInt(String(hex).replace("#", ""), 16);
+    if (isNaN(n)) return hex;
+    var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    function mix(v) {
+      var out = amt >= 0 ? v + (255 - v) * amt : v * (1 + amt);
+      return Math.max(0, Math.min(255, Math.round(out)));
+    }
+    return "rgb(" + mix(r) + "," + mix(g) + "," + mix(b) + ")";
+  }
+
+  var POWER = {
+    rev: { label: "reverse", tone: "#7fe0ff" },
+    slow: { label: "slow", tone: "#b6ff8a" },
+    bomb: { label: "bomb", tone: "#ffa040" }
+  };
+
+  function levelConfig(n) {
+    n = Math.max(1, Math.min(LEVELS, Math.round(n || 1)));
+    var t = (n - 1) / (LEVELS - 1);
+    var seconds = 56 - t * 22;                 /* crossing the whole track, untouched */
+    var fill = 0.6 + t * 0.16;                 /* how much of the track the quota fills */
+    return {
+      n: n,
+      seconds: Math.round(seconds * 10) / 10,
+      window: Math.round(seconds * (1 - fill) * 10) / 10,
+      fill: fill,
+      colors: Math.min(6, 4 + Math.floor((n - 1) / 18)),
+      powerEvery: Math.max(5, 12 - Math.floor(n / 9)),
+      speed: 0,
+      quota: 0
+    };
+  }
+
   var Engine = {
     buildTrack: buildTrack,
     trackAt: trackAt,
     pickShooter: pickShooter,
     matchRun: matchRun,
-    levelConfig: levelConfig,
     digest: digest,
-    maps: MAPS,
+    levelConfig: levelConfig,
+    levelName: levelName,
+    levelLabel: levelLabel,
+    mapForLevel: mapForLevel,
+    checkMap: checkMap,
+    shapes: SHAPES,
+    entryFor: entryFor,
+    rngFrom: rngFrom,
+    shapeNames: SHAPE_NAMES,
+    resample: resample,
+    levels: LEVELS,
+    temples: TEMPLES,
     colors: COLORS,
-    powers: POWER
+    powers: POWER,
+    gapUnits: GAP_UNITS
   };
 
   /* ==========================================================================
-     2. THE GAME — the snake, the frog, the quota
+     3. THE GAME — the snake, the frog, the quota
      ========================================================================== */
 
-  var SAVE_KEY = "kdl_zuma_v1";
+  var SAVE_KEY = "zumang_v1";
+  var OLD_SAVE = "kdl_zuma_v1";           /* the first build's saves, carried over */
   var NICK_KEY = "pindutan_nick";
   var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var LADDER_FALLBACK = "https://pindutan-ladder.pindutan-ladder1x.workers.dev/";
   var LB_KEY = atob("a2RsLXBpbmR1dGFuLWxiLTIwMjYtN2YzYQ==");
-  var BUILD = "m1";
+  var BUILD = "m2";
 
   var canvas = document.getElementById("stage");
   var ctx = canvas.getContext ? canvas.getContext("2d") : null;
-  var view = { w: 520, h: 560, dpr: 1 };
+  var view = { w: 620, h: 660, dpr: 1 };
 
   var S = {
     name: "Player",
     level: 1,
     cfg: levelConfig(1),
+    map: null,
     track: null,
     shooter: { x: 0, y: 0, ang: 0 },
     ballR: 15,
@@ -525,9 +947,9 @@
     chains: [],
     shots: [],
     fx: [],
+    pops: [],
     score: 0,
     combo: 1,
-    comboT: 0,
     lives: 3,
     spawned: 0,
     dir: 1,
@@ -544,9 +966,10 @@
     time: 0,
     lastPop: -99,
     shotsFired: 0,
-    pops: 0,
+    popped: 0,
     ladder: "",
-    best: 0
+    best: 0,
+    mapName: ""
   };
 
   function backS(ch) { return ch.front - (ch.balls.length - 1) * S.gap; }
@@ -554,7 +977,7 @@
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
   function newBall(color, type) {
-    return { c: color | 0, type: type || "", slide: 0, dead: false };
+    return { c: color | 0, type: type || "", dead: false, born: S.time };
   }
 
   function pickColor() {
@@ -570,20 +993,21 @@
     return "";
   }
 
-  /* ---------- setting a level up ---------- */
+  /* ---------- geometry ---------- */
   function buildGeometry() {
     var w = view.w, h = view.h;
-    S.ballR = Math.max(9, Math.min(w, h) * 0.032);
+    S.ballR = Math.max(8, Math.min(w, h) * 0.032);
     S.gap = S.ballR * 2 * 0.93;
-    var map = MAPS[S.cfg.map % MAPS.length];
-    var raw = map.points();
-    var pts = raw.map(function (p) { return [p[0] * w, p[1] * h]; });
+    S.map = mapForLevel(S.level);
+    S.mapName = S.map.label;
+    var pts = S.map.points.map(function (p) { return [p[0] * w, p[1] * h]; });
     S.track = buildTrack(pts);
     var pocket = pickShooter(S.track, w, h, S.ballR);
     S.shooter = { x: pocket.x, y: pocket.y, ang: S.aim };
-    S.mapName = map.name;
     S.cfg.speed = S.track.len / Math.max(14, S.cfg.seconds);
-    S.cfg.quota = Math.max(16, Math.round(S.track.len / S.gap * S.cfg.fill));
+    var slots = S.track.len / S.gap;
+    S.cfg.quota = Math.round(clamp(slots * S.cfg.fill, 16, 52));
+    bake();
   }
 
   function buildWorld() {
@@ -591,6 +1015,7 @@
     S.chains = [];
     S.shots = [];
     S.fx = [];
+    S.pops = [];
     S.spawned = 0;
     S.dir = 1;
     S.slowT = 0;
@@ -602,15 +1027,15 @@
   }
 
   function startLevel(n, keepScore) {
-    S.level = Math.max(1, n | 0);
+    S.level = clamp(Math.round(n || 1), 1, LEVELS);
     S.cfg = levelConfig(S.level);
-    if (!keepScore) { S.score = 0; }
+    if (!keepScore) S.score = 0;
     S.lives = 3;
     S.over = false;
     S.levelDone = false;
     S.paused = false;
     S.running = true;
-    S.pops = 0;
+    S.popped = 0;
     S.shotsFired = 0;
     buildWorld();
     hideOverlays();
@@ -632,7 +1057,7 @@
     if (!S.chains.length) S.chains.push({ front: 0, balls: [] });
     var last = S.chains[S.chains.length - 1];
     var nextS = last.front - last.balls.length * S.gap;
-    if (nextS >= -0.01 && last.balls.length < 200) {
+    if (nextS >= -0.01 && last.balls.length < 220) {
       var b = newBall(pickColor(), pickType());
       last.balls.push(b);
       S.spawned++;
@@ -651,12 +1076,11 @@
         var limit = k > 0 ? backS(S.chains[k - 1]) - S.gap : S.track.len;
         var step = v;
         if (k > 0) {
-          /* a segment cut free by a pop is pulled back to the one in front */
+          /* a piece cut free by a pop is pulled up to the one in front */
           var room = limit - ch.front;
-          if (room > 0.5) step += 760;
+          if (room > 0.5) step += 780;
         }
-        var want = ch.front + step * dt;
-        ch.front = Math.min(want, Math.max(ch.front, limit));
+        ch.front = Math.min(ch.front + step * dt, Math.max(ch.front, limit));
       } else {
         ch.front = Math.max(ch.front + v * dt, (ch.balls.length - 1) * S.gap);
       }
@@ -672,8 +1096,7 @@
       var ahead = S.chains[k - 1], behind = S.chains[k];
       if (!behind.balls.length) { S.chains.splice(k, 1); k--; continue; }
       if (!ahead.balls.length) { S.chains.splice(k - 1, 1); k -= 2; continue; }
-      var gapNow = backS(ahead) - behind.front;
-      if (gapNow <= S.gap + 0.75) {
+      if (backS(ahead) - behind.front <= S.gap + 0.75) {
         var junction = ahead.balls.length;
         ahead.balls = ahead.balls.concat(behind.balls);
         S.chains.splice(k, 1);
@@ -684,14 +1107,13 @@
     }
   }
 
-  /* ---------- putting a shot in the snake ---------- */
+  /* ---------- a shot landing ---------- */
   function insertBall(chainIdx, idx, color, type) {
     var ch = S.chains[chainIdx];
     if (!ch) return null;
     idx = clamp(idx | 0, 0, ch.balls.length);
-    if (idx === 0) ch.front += S.gap;          /* pushed in at the very front */
+    if (idx === 0) ch.front += S.gap;
     var b = newBall(color, type);
-    b.slide = 1;
     ch.balls.splice(idx, 0, b);
     var m = matchRun(ch.balls, idx);
     if (m) popAt(chainIdx, m, false);
@@ -715,28 +1137,27 @@
       S.chains.splice(ch.balls.length ? chainIdx + 1 : chainIdx, 0, { front: backFront, balls: behind });
     }
 
-    /* the combo: a pop that follows another quickly is worth more */
     var combo = 1;
-    if (chained && S.time - S.lastPop <= 1.6) combo = Math.min(9, S.combo + 1);
-    else if (chained) combo = 2;
+    if (chained) combo = S.time - S.lastPop <= 1.6 ? Math.min(9, S.combo + 1) : 2;
     S.combo = combo;
     S.lastPop = S.time;
-    var pts = Math.round(removed.length * 100 * combo * (1 + (S.level - 1) * 0.12));
-    S.score += pts;
-    S.pops += removed.length;
+    var points = Math.round(removed.length * 90 * combo * (1 + (S.level - 1) * 0.05));
+    S.score += points;
+    S.popped += removed.length;
 
-    /* sparks where they were */
+    var mid = spots[Math.floor(spots.length / 2)] || spots[0];
+    if (mid) addPopup(mid.x, mid.y, "+" + points, combo > 1 ? "#ffd75e" : "#fff3d0", combo > 1 ? 1.25 : 1);
+
     spots.forEach(function (p) {
-      for (var i = 0; i < 5; i++) {
+      for (var i = 0; i < 6; i++) {
         S.fx.push({
-          x: p.x, y: p.y, vx: (Math.random() - 0.5) * 190, vy: (Math.random() - 0.5) * 190,
-          life: 0.5, max: 0.5, c: p.c, r: S.ballR * (0.24 + Math.random() * 0.2)
+          x: p.x, y: p.y, vx: (Math.random() - 0.5) * 210, vy: (Math.random() - 0.5) * 210,
+          life: 0.45 + Math.random() * 0.2, max: 0.65, c: p.c, r: S.ballR * (0.16 + Math.random() * 0.16)
         });
       }
     });
     sfx(combo > 1 ? "combo" : "pop");
 
-    /* whatever the popped balls were carrying */
     spots.forEach(function (p) {
       if (p.type === "rev") {
         S.dir = -1;
@@ -746,11 +1167,11 @@
         S.slowT = 6;
         toast("🐌 slow — the snake crawls");
       } else if (p.type === "bomb") {
-        bombBlast(p.x, p.y, S.gap * 3.1);
+        bombBlast(p.x, p.y, S.gap * 3.2);
       }
     });
     updateHud();
-    return { count: removed.length, points: pts };
+    return { count: removed.length, points: points };
   }
 
   function bombBlast(x, y, radius) {
@@ -764,13 +1185,14 @@
     });
     if (!marked) return 0;
     for (var k = S.chains.length - 1; k >= 0; k--) sweepDead(k);
-    S.score += marked * 150;
-    S.pops += marked;
+    S.score += marked * 140;
+    S.popped += marked;
+    addPopup(x, y, "+" + marked * 140, "#ffb45e", 1.1);
     sfx("bomb");
-    for (var i = 0; i < 26; i++) {
+    for (var i = 0; i < 30; i++) {
       S.fx.push({
-        x: x, y: y, vx: (Math.random() - 0.5) * 340, vy: (Math.random() - 0.5) * 340,
-        life: 0.6, max: 0.6, c: 3, r: S.ballR * (0.2 + Math.random() * 0.3), spark: true
+        x: x, y: y, vx: (Math.random() - 0.5) * 380, vy: (Math.random() - 0.5) * 380,
+        life: 0.55 + Math.random() * 0.25, max: 0.8, c: 0, r: S.ballR * (0.14 + Math.random() * 0.24), spark: true
       });
     }
     mergeChains();
@@ -790,16 +1212,16 @@
     Array.prototype.splice.apply(S.chains, [chainIdx, 1].concat(out));
   }
 
-  /* ---------- the shots ---------- */
+  /* ---------- firing ---------- */
   function shoot() {
     if (!S.running || S.paused || S.over || S.levelDone) return null;
-    var speed = 980;
+    var speed = 1020;
     var r = S.ballR * 0.9;
     var shot = {
       x: S.shooter.x + Math.cos(S.aim) * r,
       y: S.shooter.y + Math.sin(S.aim) * r,
       vx: Math.cos(S.aim) * speed, vy: Math.sin(S.aim) * speed,
-      c: S.loaded, type: "", bounces: 0
+      c: S.loaded, bounces: 0
     };
     S.shots.push(shot);
     S.loaded = S.next;
@@ -824,10 +1246,9 @@
   }
 
   function landShot(hit, sh) {
-    var tan = { x: Math.cos(hit.p.ang), y: Math.sin(hit.p.ang) };
-    var along = (sh.x - hit.p.x) * tan.x + (sh.y - hit.p.y) * tan.y;
-    var idx = along > 0 ? hit.index : hit.index + 1;
-    return insertBall(hit.chain, idx, sh.c, "");
+    var tx = Math.cos(hit.p.ang), ty = Math.sin(hit.p.ang);
+    var along = (sh.x - hit.p.x) * tx + (sh.y - hit.p.y) * ty;
+    return insertBall(hit.chain, along > 0 ? hit.index : hit.index + 1, sh.c, "");
   }
 
   function stepShots(dt) {
@@ -845,11 +1266,14 @@
     }
   }
 
-  /* ---------- lives, winning, losing ---------- */
+  /* ---------- lives, levels, the end ---------- */
   function loseLife() {
     S.lives--;
     S.chains = [];
     S.shots = [];
+    /* the snake comes again from the start: the quota starts over with it, so a
+       life lost can never leave an empty track that counts as a cleared level */
+    S.spawned = 0;
     S.dir = 1;
     S.slowT = 0;
     S.revT = 0;
@@ -857,8 +1281,9 @@
     sfx("lose");
     shake();
     S.fx.length = 0;
-    toast(S.lives > 0 ? "💀 the snake reached the skull — " + S.lives + (S.lives === 1 ? " life left" : " lives left")
-      : "💀 the skull got it — game over");
+    toast(S.lives > 0
+      ? "💀 the snake reached the skull — " + S.lives + (S.lives === 1 ? " life left" : " lives left")
+      : "💀 the skull has it — game over");
     if (S.lives <= 0) endGame();
     updateHud(true);
   }
@@ -868,17 +1293,19 @@
     S.levelDone = true;
     S.running = false;
     S.chains = [];
-    var bonus = S.lives * 500 + S.level * 250;
+    var bonus = S.lives * 500 + S.level * 120;
     S.score += bonus;
     rememberRun(S.score, S.level + 1);
     reportOnline(S.score, S.level + 1);
     sfx("win");
-    var nextLevel = S.level + 1;
-    document.getElementById("levelTitle").textContent = "Level " + S.level + " cleared";
-    document.getElementById("levelText").textContent =
-      "Score " + S.score + " — a clear bonus of " + bonus + " for " + S.lives + " lives left. " +
-      "Level " + nextLevel + " is " + MAPS[nextLevel % MAPS.length].name.toLowerCase() + ".";
-    document.getElementById("levelNext").textContent = "Level " + nextLevel;
+    var last = S.level >= LEVELS;
+    document.getElementById("levelTitle").textContent = last ? "Zumang is finished" : S.mapName + " cleared";
+    document.getElementById("levelText").textContent = last
+      ? "All " + LEVELS + " temples cleared. Score " + S.score + " — the last board paid " + bonus + " for " + S.lives + " lives left."
+      : "Score " + S.score + " — a clear bonus of " + bonus + " for " + S.lives + " lives left. Next is " +
+        levelLabel(S.level + 1) + ", a " + mapForLevel(S.level + 1).shape.toLowerCase() + ".";
+    document.getElementById("levelNext").textContent = last ? "Play it again" : "Next · " + levelLabel(S.level + 1);
+    document.getElementById("levelNext").disabled = false;
     openOverlay("levelOv");
     updateHud(true);
   }
@@ -889,8 +1316,7 @@
     rememberRun(S.score, S.level);
     reportOnline(S.score, S.level);
     document.getElementById("overText").textContent =
-      "Score " + S.score + " · level " + S.level + " as " + S.name +
-      " · your best is " + myBestScore() + ".";
+      "Score " + S.score + " · " + S.mapName + " · as " + S.name + ". Your best is " + myBestScore() + ".";
     openOverlay("overOv");
   }
 
@@ -899,7 +1325,11 @@
     if (S.spawned >= S.cfg.quota && S.chains.length === 0) levelComplete();
   }
 
-  /* ---------- one frame, however it is driven ---------- */
+  function addPopup(x, y, text, tone, size) {
+    S.pops.push({ x: x, y: y, text: text, tone: tone || "#fff3d0", size: size || 1, life: 1.05, max: 1.05 });
+  }
+
+  /* ---------- a frame ---------- */
   function tick(dt) {
     if (!S.running || S.paused || S.over || S.levelDone) return;
     dt = Math.min(0.05, Math.max(0, dt || 0));
@@ -918,274 +1348,139 @@
   }
 
   function stepFx(dt) {
-    for (var i = S.fx.length - 1; i >= 0; i--) {
+    var i;
+    for (i = S.fx.length - 1; i >= 0; i--) {
       var f = S.fx[i];
       f.life -= dt;
       if (f.life <= 0) { S.fx.splice(i, 1); continue; }
       f.x += f.vx * dt;
       f.y += f.vy * dt;
-      f.vx *= 0.98;
-      f.vy *= 0.98;
+      f.vx *= 0.97;
+      f.vy *= 0.97;
+    }
+    for (i = S.pops.length - 1; i >= 0; i--) {
+      var p = S.pops[i];
+      p.life -= dt;
+      p.y -= 42 * dt;
+      if (p.life <= 0) S.pops.splice(i, 1);
     }
   }
 
   /* ==========================================================================
-     3. DRAWING
+     4. THE SCORE, KEPT BY NAME — and the ladder when there is a signal
      ========================================================================== */
 
-  function resize() {
-    var wrap = document.getElementById("stagewrap");
-    var w = Math.max(280, wrap.clientWidth || 520);
-    var h = Math.max(280, wrap.clientHeight || 560);
-    var dpr = Math.min(2, window.devicePixelRatio || 1);
-    view.w = w;
-    view.h = h;
-    view.dpr = dpr;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var oldLen = S.track ? S.track.len : 0;
-    var keep = S.chains.map(function (ch) { return { front: ch.front, balls: ch.balls }; });
-    buildGeometry();
-    if (oldLen > 0 && keep.length) {
-      /* keep whatever the snake was up to when the window changed size */
-      S.chains = keep.map(function (ch) {
-        return { front: ch.front / oldLen * S.track.len, balls: ch.balls };
+  function loadSave() {
+    var raw = null;
+    try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
+    if (!raw) {
+      /* the first build saved under another key; take those runs with us */
+      try {
+        var old = localStorage.getItem(OLD_SAVE);
+        if (old) { localStorage.setItem(SAVE_KEY, old); raw = old; }
+      } catch (e2) {}
+    }
+    try { return JSON.parse(raw || "{}") || {}; } catch (e) { return {}; }
+  }
+
+  function writeSave(obj) {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(obj)); } catch (e) {}
+  }
+
+  function myEntry() {
+    var save = loadSave();
+    return (save.names || {})[String(S.name).toLowerCase()] || null;
+  }
+
+  function myBestScore() {
+    var e = myEntry();
+    return e ? (e.best || 0) : 0;
+  }
+
+  function openedLevels() {
+    var e = myEntry();
+    return Math.max(1, Math.min(LEVELS, (e && e.level) || 1));
+  }
+
+  function rememberRun(score, level) {
+    var save = loadSave();
+    save.names = save.names || {};
+    var key = String(S.name).toLowerCase();
+    var e = save.names[key] || { best: 0, level: 1, plays: 0 };
+    e.name = S.name;
+    e.plays = (e.plays || 0) + 1;
+    e.best = Math.max(e.best || 0, score | 0);
+    e.level = Math.max(e.level || 1, Math.min(LEVELS, level | 0));
+    e.sound = S.sound !== false;
+    e.at = Date.now();
+    save.names[key] = e;
+    save.board = (save.board || []).filter(function (r) { return String(r.name).toLowerCase() !== key; });
+    save.board.push({ name: S.name, score: e.best, level: e.level, at: Date.now() });
+    save.board.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
+    save.board = save.board.slice(0, 10);
+    writeSave(save);
+    S.best = e.best;
+    return e;
+  }
+
+  function localBoard() {
+    var save = loadSave();
+    var rows = (save.board || []).slice();
+    var me = String(S.name).toLowerCase();
+    rows.forEach(function (r) { r.mine = String(r.name).toLowerCase() === me; });
+    return rows;
+  }
+
+  function ladderUrl() { return S.ladder || LADDER_FALLBACK; }
+
+  function signPayload(p) {
+    return digest([p.name, p.mode, p.win, p.score, p.lines, p.ts, LB_KEY].join("|"));
+  }
+
+  function reportOnline(score, level) {
+    var url = ladderUrl();
+    if (!url || typeof fetch !== "function" || !gatePassed) return Promise.resolve({ state: "offline" });
+    var p = {
+      name: S.name,
+      mode: "solo",
+      win: true,
+      score: Math.max(0, score | 0),
+      lines: clamp(level | 0, 1, LEVELS),
+      ts: Math.floor(Date.now() / 1000)
+    };
+    p.sig = signPayload(p);
+    p.id = S.name + "-" + p.ts + "-" + p.score;
+    return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "action=report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(p),
+      cache: "no-store"
+    }).then(function (r) {
+      if (!r.ok) return { state: "refused" };
+      return r.json().then(function (d) { return { state: d && d.ok ? "saved" : "refused", body: d }; })
+        .catch(function () { return { state: "refused" }; });
+    }).catch(function () { return { state: "offline" }; });
+  }
+
+  function fetchOnline() {
+    var url = ladderUrl();
+    if (!url || typeof fetch !== "function") return Promise.resolve({ state: "offline", rows: [] });
+    return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "action=top&mode=solo&limit=10", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var rows = (d && d.rows) || [];
+        if (!Array.isArray(rows)) rows = [];
+        S.online = { state: "saved", rows: rows };
+        return { state: "saved", rows: rows };
+      })
+      .catch(function () {
+        S.online = { state: "offline", rows: [] };
+        return { state: "offline", rows: [] };
       });
-    }
-  }
-
-  function roundRect(c, x, y, w, h, r) {
-    c.beginPath();
-    c.moveTo(x + r, y);
-    c.arcTo(x + w, y, x + w, y + h, r);
-    c.arcTo(x + w, y + h, x, y + h, r);
-    c.arcTo(x, y + h, x, y, r);
-    c.arcTo(x, y, x + w, y, r);
-    c.closePath();
-  }
-
-  function drawTrack() {
-    var t = S.track;
-    if (!t) return;
-    var map = MAPS[S.cfg.map % MAPS.length];
-    ctx.save();
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(t.pts[0].x, t.pts[0].y);
-    for (var i = 1; i < t.pts.length; i++) ctx.lineTo(t.pts[i].x, t.pts[i].y);
-    ctx.strokeStyle = "rgba(4, 10, 18, 0.85)";
-    ctx.lineWidth = S.gap * 2 + 10;
-    ctx.stroke();
-    ctx.strokeStyle = map.tint;
-    ctx.lineWidth = S.gap * 2 + 2;
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(120, 190, 240, 0.10)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 9]);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawSkull() {
-    var t = S.track;
-    if (!t) return;
-    var end = trackAt(t, t.len);
-    var r = S.ballR * 1.12;
-    var pulse = 1 + Math.sin(S.time * 4) * 0.05;
-    ctx.save();
-    ctx.translate(end.x, end.y);
-    ctx.scale(pulse, pulse);
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, TAU);
-    ctx.fillStyle = "rgba(255, 70, 100, 0.16)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255, 90, 120, 0.55)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.font = (r * 1.5 | 0) + "px serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("💀", 0, 1);
-    ctx.restore();
-  }
-
-  function ballColor(c) { return COLORS[((c % COLORS.length) + COLORS.length) % COLORS.length]; }
-
-  function drawBall(x, y, r, c, type, scale) {
-    var col = ballColor(c);
-    var rad = r * (scale === undefined ? 1 : scale);
-    var g = ctx.createRadialGradient(x - rad * 0.34, y - rad * 0.4, rad * 0.16, x, y, rad);
-    g.addColorStop(0, col.a);
-    g.addColorStop(0.62, col.a);
-    g.addColorStop(1, col.b);
-    ctx.beginPath();
-    ctx.arc(x, y, rad, 0, TAU);
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.35)";
-    ctx.lineWidth = Math.max(1, rad * 0.09);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(x - rad * 0.3, y - rad * 0.36, rad * 0.24, 0, TAU);
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
-    ctx.fill();
-    if (type && POWER[type]) {
-      ctx.font = (rad * 1.15 | 0) + "px serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(POWER[type].glyph, x, y + rad * 0.06);
-    }
-  }
-
-  function drawBalls() {
-    for (var k = 0; k < S.chains.length; k++) {
-      var ch = S.chains[k];
-      for (var i = 0; i < ch.balls.length; i++) {
-        var b = ch.balls[i];
-        var p = ballAt(ch, i);
-        if (p.x < -S.gap || p.y < -S.gap) continue;
-        drawBall(p.x, p.y, S.ballR, b.c, b.type, 1);
-      }
-    }
-  }
-
-  function drawShots() {
-    for (var i = 0; i < S.shots.length; i++) {
-      var sh = S.shots[i];
-      drawBall(sh.x, sh.y, S.ballR * 0.94, sh.c, "", 1);
-    }
-  }
-
-  function drawFx() {
-    for (var i = 0; i < S.fx.length; i++) {
-      var f = S.fx[i];
-      var a = Math.max(0, f.life / f.max);
-      var col = ballColor(f.c);
-      ctx.globalAlpha = a;
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.r * (f.spark ? a : 1), 0, TAU);
-      ctx.fillStyle = f.spark ? "#ffd45e" : col.a;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  function drawFrog() {
-    var s = S.shooter, r = S.ballR * 1.22;
-    ctx.save();
-    ctx.translate(s.x, s.y);
-
-    /* the base */
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 1.5, 0, TAU);
-    ctx.fillStyle = "rgba(10, 22, 36, 0.92)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(61, 214, 245, 0.32)";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-
-    /* the two eyes, following the aim */
-    var ex = Math.cos(S.aim) * r * 0.55, ey = Math.sin(S.aim) * r * 0.55;
-    [-1, 1].forEach(function (side) {
-      var px = -Math.sin(S.aim) * r * 0.66 * side + ex * 0.35;
-      var py = Math.cos(S.aim) * r * 0.66 * side + ey * 0.35;
-      ctx.beginPath();
-      ctx.arc(px, py, r * 0.26, 0, TAU);
-      ctx.fillStyle = "#0b2b3a";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(61, 214, 245, 0.5)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    });
-
-    /* the loaded ball sits in the mouth, the next one waits behind */
-    ctx.beginPath();
-    ctx.arc(ex, ey, r * 0.92, 0, TAU);
-    ctx.fillStyle = "rgba(6, 14, 24, 0.9)";
-    ctx.fill();
-    drawBall(ex, ey, S.ballR * 0.92, S.loaded, "", 1);
-    drawBall(-Math.cos(S.aim) * r * 1.85, -Math.sin(S.aim) * r * 1.85, S.ballR * 0.58, S.next, "", 1);
-    ctx.restore();
-  }
-
-  function drawAim() {
-    if (!S.running || S.paused || S.over) return;
-    var s = S.shooter;
-    var dx = Math.cos(S.aim), dy = Math.sin(S.aim);
-    var x = s.x, y = s.y, dist = 0, bounces = 0;
-    var maxLen = Math.hypot(view.w, view.h);
-    var pts = [{ x: x, y: y }];
-    while (dist < maxLen && bounces < 2) {
-      var tx = dx > 0 ? (view.w - S.ballR - x) / dx : dx < 0 ? (S.ballR - x) / dx : Infinity;
-      var ty = dy > 0 ? (view.h - S.ballR - y) / dy : dy < 0 ? (S.ballR - y) / dy : Infinity;
-      var step = Math.min(tx, ty);
-      if (!isFinite(step) || step <= 0) break;
-      x += dx * step;
-      y += dy * step;
-      dist += step;
-      pts.push({ x: x, y: y });
-      if (tx < ty) dx = -dx; else dy = -dy;
-      bounces++;
-    }
-    ctx.save();
-    ctx.setLineDash([2, 7]);
-    ctx.lineWidth = 1.6;
-    ctx.strokeStyle = "rgba(61, 214, 245, 0.34)";
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawBackdrop() {
-    var g = ctx.createRadialGradient(view.w / 2, view.h * 0.42, 20, view.w / 2, view.h * 0.5, Math.max(view.w, view.h) * 0.78);
-    g.addColorStop(0, "#0d1c2c");
-    g.addColorStop(1, "#050a12");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, view.w, view.h);
-    ctx.strokeStyle = "rgba(90, 150, 200, 0.06)";
-    ctx.lineWidth = 1;
-    for (var x = 0; x < view.w; x += 34) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, view.h);
-      ctx.stroke();
-    }
-    for (var y = 0; y < view.h; y += 34) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(view.w, y);
-      ctx.stroke();
-    }
-  }
-
-  function render() {
-    if (!ctx) return;
-    drawBackdrop();
-    drawTrack();
-    drawSkull();
-    drawBalls();
-    drawShots();
-    drawFx();
-    drawFrog();
-    drawAim();
-    if (S.slowT > 0 || S.revT > 0) {
-      ctx.save();
-      ctx.font = "600 10px ui-monospace, monospace";
-      ctx.textAlign = "center";
-      var label = (S.revT > 0 ? "🌀 reverse " + Math.ceil(S.revT) + "s " : "") +
-                  (S.slowT > 0 ? "🐌 slow " + Math.ceil(S.slowT) + "s" : "");
-      ctx.fillStyle = "rgba(255, 212, 94, 0.9)";
-      ctx.fillText(label, view.w / 2, 16);
-      ctx.restore();
-    }
   }
 
   /* ==========================================================================
-     4. SOUND — built from oscillators, nothing to download
+     5. SOUND — struck stone, made from oscillators
      ========================================================================== */
 
   var actx = null;
@@ -1226,7 +1521,7 @@
     var g = a.createGain();
     var f = a.createBiquadFilter();
     f.type = "lowpass";
-    f.frequency.value = 900;
+    f.frequency.value = 820;
     g.gain.value = gain || 0.2;
     src.buffer = buf;
     src.connect(f);
@@ -1239,52 +1534,1025 @@
     var a = audio();
     if (!a) return;
     switch (kind) {
-      case "shoot": tone(a, 340, 620, 0.07, "triangle", 0.08); break;
+      case "shoot": tone(a, 300, 700, 0.07, "triangle", 0.07); break;
       case "pop":
-        tone(a, 560, 900, 0.1, "sine", 0.13);
-        tone(a, 840, 1260, 0.09, "sine", 0.06, 0.03);
+        tone(a, 620, 980, 0.1, "sine", 0.12);
+        tone(a, 930, 1320, 0.09, "sine", 0.05, 0.03);
         break;
       case "combo":
-        tone(a, 700, 1100, 0.1, "square", 0.09);
-        tone(a, 1050, 1600, 0.12, "sine", 0.08, 0.06);
-        tone(a, 1400, 2100, 0.12, "sine", 0.05, 0.12);
+        tone(a, 780, 1180, 0.1, "square", 0.08);
+        tone(a, 1180, 1680, 0.12, "sine", 0.07, 0.06);
+        tone(a, 1560, 2200, 0.12, "sine", 0.05, 0.12);
         break;
       case "bomb":
-        noise(a, 0.35, 0.3);
-        tone(a, 180, 50, 0.3, "sawtooth", 0.14);
+        noise(a, 0.38, 0.32);
+        tone(a, 170, 48, 0.32, "sawtooth", 0.13);
         break;
       case "lose":
-        tone(a, 320, 90, 0.5, "sawtooth", 0.14);
-        tone(a, 240, 70, 0.5, "triangle", 0.1, 0.06);
+        tone(a, 300, 80, 0.55, "sawtooth", 0.13);
+        tone(a, 220, 64, 0.55, "triangle", 0.09, 0.06);
         break;
       case "win":
-        [523, 659, 784, 1046].forEach(function (f, i) { tone(a, f, f, 0.22, "triangle", 0.1, i * 0.1); });
+        [523, 659, 784, 1046].forEach(function (f, i) { tone(a, f, f, 0.24, "triangle", 0.1, i * 0.11); });
         break;
-      case "click": tone(a, 660, 660, 0.045, "square", 0.06); break;
+      case "click": tone(a, 640, 640, 0.045, "square", 0.05); break;
     }
   }
 
   /* ==========================================================================
-     5. THE SCREEN — hud, overlays, toast
+     6. THE LOOK — carved stone, a sunken channel, stone marbles, a jade frog in the middle
+     ========================================================================== */
+
+  var bakeCanvas = null;
+  var baked = false;
+  var sprites = {};
+  var frogSprite = null;
+  var stoneSeed = 0x51ce;
+
+  function art(g) { return g || null; }
+
+  function resize() {
+    var wrap = document.getElementById("stagewrap");
+    var w = Math.max(300, wrap.clientWidth || 620);
+    var h = Math.max(300, wrap.clientHeight || 660);
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    view.w = w;
+    view.h = h;
+    view.dpr = dpr;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var oldLen = S.track ? S.track.len : 0;
+    var keep = S.chains.map(function (ch) { return { front: ch.front, balls: ch.balls }; });
+    sprites = {};
+    frogSprite = null;
+    buildGeometry();
+    if (oldLen > 0 && keep.length) {
+      S.chains = keep.map(function (ch) {
+        return { front: ch.front / oldLen * S.track.len, balls: ch.balls };
+      });
+    }
+  }
+
+  /* ---------- the stone ---------- */
+  function paintStone(g, w, h) {
+    var r = rngFrom(stoneSeed);
+    var base = g.createLinearGradient(w * 0.1, 0, w * 0.9, h);
+    base.addColorStop(0, "#a9aba1");
+    base.addColorStop(0.35, "#96998f");
+    base.addColorStop(0.7, "#83877e");
+    base.addColorStop(1, "#6a6f68");
+    g.fillStyle = base;
+    g.fillRect(0, 0, w, h);
+
+    /* mottling: soft blotches, light and dark, the way cut stone looks */
+    for (var i = 0; i < 700; i++) {
+      var x = r() * w, y = r() * h;
+      var rad = (0.012 + r() * 0.07) * Math.min(w, h);
+      var light = r() > 0.46;
+      var blob = g.createRadialGradient(x, y, 0, x, y, rad);
+      blob.addColorStop(0, light ? "rgba(255,255,255,0.09)" : "rgba(40,44,40,0.08)");
+      blob.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = blob;
+      g.beginPath();
+      g.arc(x, y, rad, 0, TAU);
+      g.fill();
+    }
+
+    /* grit */
+    for (var d = 0; d < 2600; d++) {
+      var px = r() * w, py = r() * h;
+      g.fillStyle = r() > 0.5 ? "rgba(255,255,255,0.16)" : "rgba(30,34,30,0.16)";
+      g.fillRect(px, py, 1, 1);
+    }
+
+    /* the veins running through the slab */
+    for (var v = 0; v < 7; v++) {
+      var y0 = r() * h;
+      g.beginPath();
+      g.moveTo(-10, y0);
+      for (var k = 1; k <= 12; k++) {
+        g.lineTo(w * k / 12, y0 + Math.sin(k * 1.7 + v) * (8 + r() * 16));
+      }
+      g.strokeStyle = "rgba(255,255,255,0.10)";
+      g.lineWidth = 1.2;
+      g.stroke();
+      g.strokeStyle = "rgba(40,44,40,0.06)";
+      g.lineWidth = 3;
+      g.stroke();
+    }
+
+    /* carved whorls sunk into the floor */
+    var cx = w * 0.5, cy = h * 0.5;
+    g.save();
+    g.translate(cx, cy);
+    for (var sk = 0; sk < 10; sk++) {
+      var a0 = r() * TAU;
+      var span = 2.2 + r() * 3.2;
+      var rad0 = (0.14 + r() * 0.34) * Math.min(w, h);
+      g.beginPath();
+      for (var q = 0; q <= 64; q++) {
+        var t = q / 64;
+        var ang = a0 + t * span;
+        var rad = rad0 * (1 - 0.4 * t) + Math.sin(t * 8) * 2.5;
+        var ax = Math.cos(ang) * rad, ay = Math.sin(ang) * rad * 0.94;
+        if (q === 0) g.moveTo(ax, ay); else g.lineTo(ax, ay);
+      }
+      g.lineWidth = 3.4;
+      g.strokeStyle = "rgba(72,78,72,0.20)";
+      g.stroke();
+      g.save();
+      g.translate(1.6, -1.6);
+      g.lineWidth = 1.2;
+      g.strokeStyle = "rgba(255,255,255,0.22)";
+      g.stroke();
+      g.restore();
+    }
+    g.restore();
+
+    /* the rings carved around the idol */
+    for (var ring = 1; ring <= 14; ring++) {
+      var rr = ring * Math.min(w, h) * 0.062;
+      if (rr > Math.max(w, h) * 0.78) break;
+      g.beginPath();
+      g.arc(cx, cy, rr, 0, TAU);
+      g.lineWidth = 3;
+      g.strokeStyle = "rgba(64,70,64,0.16)";
+      g.stroke();
+      g.beginPath();
+      g.arc(cx, cy - 1.6, rr, 0, TAU);
+      g.lineWidth = 1.2;
+      g.strokeStyle = "rgba(255,255,255,0.20)";
+      g.stroke();
+    }
+
+    /* the board sits back in its frame */
+    var vig = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.76);
+    vig.addColorStop(0, "rgba(0,0,0,0)");
+    vig.addColorStop(0.72, "rgba(20,24,20,0.18)");
+    vig.addColorStop(1, "rgba(10,12,10,0.5)");
+    g.fillStyle = vig;
+    g.fillRect(0, 0, w, h);
+  }
+
+  /* ---------- the channel the snake runs in ---------- */
+  function traceTrack(g) {
+    var t = S.track;
+    g.beginPath();
+    g.moveTo(t.pts[0].x, t.pts[0].y);
+    for (var i = 1; i < t.pts.length; i++) g.lineTo(t.pts[i].x, t.pts[i].y);
+  }
+
+  function paintTrack(g) {
+    var t = S.track;
+    if (!t) return;
+    var band = S.gap * 2;
+    g.save();
+    g.lineJoin = "round";
+    g.lineCap = "round";
+
+    /* the groove's cast shadow on the stone beside it */
+    g.save();
+    g.translate(0, 3.2);
+    traceTrack(g);
+    g.lineWidth = band + 22;
+    g.strokeStyle = "rgba(30,34,30,0.30)";
+    g.stroke();
+    g.restore();
+
+    /* a dark cut between the stone and the raised lip */
+    traceTrack(g);
+    g.lineWidth = band + 17;
+    g.strokeStyle = "rgba(40,46,40,0.34)";
+    g.stroke();
+
+    /* the raised lip */
+    traceTrack(g);
+    g.lineWidth = band + 14;
+    g.strokeStyle = "#5f655d";
+    g.stroke();
+    traceTrack(g);
+    g.lineWidth = band + 11;
+    g.strokeStyle = "#b9bdb2";
+    g.stroke();
+    traceTrack(g);
+    g.lineWidth = band + 6;
+    g.strokeStyle = "#7c8179";
+    g.stroke();
+
+    /* the floor of the channel */
+    traceTrack(g);
+    g.lineWidth = band + 2;
+    g.strokeStyle = "#3b423c";
+    g.stroke();
+    traceTrack(g);
+    g.lineWidth = band - 3;
+    g.strokeStyle = "#4e564f";
+    g.stroke();
+
+    /* dark under the upper lip, light under the lower one */
+    g.save();
+    g.translate(-1.5, -2.2);
+    traceTrack(g);
+    g.lineWidth = band - 1;
+    g.strokeStyle = "rgba(24,30,24,0.42)";
+    g.stroke();
+    g.restore();
+    g.save();
+    g.translate(1.5, 2.2);
+    traceTrack(g);
+    g.lineWidth = band - 3;
+    g.strokeStyle = "rgba(255,255,255,0.16)";
+    g.stroke();
+    g.restore();
+
+    /* a soft sheen down the middle of the floor */
+    traceTrack(g);
+    g.lineWidth = band * 0.4;
+    g.strokeStyle = "rgba(210,225,215,0.05)";
+    g.stroke();
+
+    g.restore();
+  }
+
+  /* ---------- the skull at the end ---------- */
+  function paintSkull(g) {
+    var p = trackAt(S.track, S.track.len);
+    var r = S.ballR * 1.15;
+    g.save();
+    g.translate(p.x, p.y);
+
+    /* the pit it stands in */
+    var pit = g.createRadialGradient(0, 0, r * 0.2, 0, 0, r * 2.5);
+    pit.addColorStop(0, "rgba(18,22,18,0.9)");
+    pit.addColorStop(0.55, "rgba(24,28,24,0.45)");
+    pit.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = pit;
+    g.beginPath();
+    g.arc(0, 0, r * 2.5, 0, TAU);
+    g.fill();
+
+    /* a bone ring set into the stone */
+    g.beginPath();
+    g.arc(0, 0, r * 1.2, 0, TAU);
+    g.strokeStyle = "rgba(232,214,170,0.35)";
+    g.lineWidth = Math.max(1, r * 0.09);
+    g.stroke();
+
+    /* the gold skull */
+    var gold = g.createLinearGradient(-r, -r, r, r);
+    gold.addColorStop(0, "#fff4d2");
+    gold.addColorStop(0.4, "#e8bb5c");
+    gold.addColorStop(0.72, "#a5751f");
+    gold.addColorStop(1, "#67470f");
+    g.fillStyle = gold;
+    g.strokeStyle = "rgba(30,18,4,0.8)";
+    g.lineWidth = 1.4;
+
+    g.beginPath();
+    g.arc(0, -r * 0.16, r * 0.94, Math.PI * 0.98, Math.PI * 2.02);
+    g.lineTo(r * 0.66, r * 0.5);
+    g.quadraticCurveTo(r * 0.4, r * 0.92, 0, r * 0.95);
+    g.quadraticCurveTo(-r * 0.4, r * 0.92, -r * 0.66, r * 0.5);
+    g.closePath();
+    g.fill();
+    g.stroke();
+
+    /* sockets, nose, teeth */
+    g.fillStyle = "rgba(16,10,4,0.94)";
+    g.beginPath();
+    g.ellipse(-r * 0.36, -r * 0.2, r * 0.27, r * 0.31, 0.22, 0, TAU);
+    g.fill();
+    g.beginPath();
+    g.ellipse(r * 0.36, -r * 0.2, r * 0.27, r * 0.31, -0.22, 0, TAU);
+    g.fill();
+    g.beginPath();
+    g.moveTo(0, r * 0.04);
+    g.lineTo(r * 0.14, r * 0.28);
+    g.lineTo(-r * 0.14, r * 0.28);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = "rgba(16,10,4,0.9)";
+    g.lineWidth = Math.max(1, r * 0.1);
+    for (var i = -2; i <= 2; i++) {
+      g.beginPath();
+      g.moveTo(i * r * 0.19, r * 0.46);
+      g.lineTo(i * r * 0.19, r * 0.84);
+      g.stroke();
+    }
+    /* glint */
+    g.beginPath();
+    g.arc(-r * 0.3, -r * 0.58, r * 0.16, 0, TAU);
+    g.fillStyle = "rgba(255,255,255,0.5)";
+    g.fill();
+    g.restore();
+  }
+
+  /* ---------- the frame around the board ---------- */
+  function paintFrame(g, w, h) {
+    var edge = Math.max(9, Math.min(w, h) * 0.036);
+    g.save();
+
+    /* the carved border: a lit bevel outside, a shadow inside */
+    var bevel = g.createLinearGradient(0, 0, 0, h);
+    bevel.addColorStop(0, "#c9cdc2");
+    bevel.addColorStop(0.5, "#8d928a");
+    bevel.addColorStop(1, "#565c55");
+    g.lineWidth = edge;
+    g.strokeStyle = bevel;
+    g.strokeRect(edge / 2, edge / 2, w - edge, h - edge);
+
+    g.lineWidth = 2;
+    g.strokeStyle = "rgba(255,255,255,0.4)";
+    g.strokeRect(edge * 0.35, edge * 0.35, w - edge * 0.7, h - edge * 0.7);
+    g.lineWidth = 3;
+    g.strokeStyle = "rgba(24,28,24,0.55)";
+    g.strokeRect(edge, edge, w - edge * 2, h - edge * 2);
+
+    /* the gold line set into the stone */
+    g.lineWidth = 2;
+    g.strokeStyle = "rgba(233,190,90,0.55)";
+    g.strokeRect(edge + 5, edge + 5, w - edge * 2 - 10, h - edge * 2 - 10);
+    g.lineWidth = 1;
+    g.strokeStyle = "rgba(60,40,10,0.5)";
+    g.strokeRect(edge + 7, edge + 7, w - edge * 2 - 14, h - edge * 2 - 14);
+
+    /* notches cut along the border */
+    var step = Math.min(w, h) * 0.11;
+    g.fillStyle = "rgba(52,58,52,0.4)";
+    for (var x = step; x < w - step * 0.5; x += step) {
+      g.fillRect(x - 2, edge * 0.5 - 3, 4, 6);
+      g.fillRect(x - 2, h - edge * 0.5 - 3, 4, 6);
+    }
+    for (var y = step; y < h - step * 0.5; y += step) {
+      g.fillRect(edge * 0.5 - 3, y - 2, 6, 4);
+      g.fillRect(w - edge * 0.5 - 3, y - 2, 6, 4);
+    }
+
+    /* gold corner bosses */
+    var bs = Math.min(w, h) * 0.052;
+    [[edge, edge], [w - edge, edge], [edge, h - edge], [w - edge, h - edge]].forEach(function (p) {
+      var stud = g.createRadialGradient(p[0] - bs * 0.3, p[1] - bs * 0.35, bs * 0.1, p[0], p[1], bs);
+      stud.addColorStop(0, "#fff3cf");
+      stud.addColorStop(0.42, "#e0b45c");
+      stud.addColorStop(0.78, "#9c7326");
+      stud.addColorStop(1, "#4e370d");
+      g.beginPath();
+      g.arc(p[0], p[1], bs * 0.72, 0, TAU);
+      g.fillStyle = stud;
+      g.fill();
+      g.strokeStyle = "rgba(28,20,4,0.65)";
+      g.lineWidth = 1.4;
+      g.stroke();
+      g.beginPath();
+      g.arc(p[0], p[1], bs * 0.44, 0, TAU);
+      g.strokeStyle = "rgba(255,240,200,0.45)";
+      g.lineWidth = 1.2;
+      g.stroke();
+    });
+    g.restore();
+  }
+
+  function bake() {
+    if (typeof document === "undefined" || !document.createElement) return;
+    if (!bakeCanvas) bakeCanvas = document.createElement("canvas");
+    if (!bakeCanvas || !bakeCanvas.getContext) return;
+    var dpr = view.dpr;
+    bakeCanvas.width = Math.round(view.w * dpr);
+    bakeCanvas.height = Math.round(view.h * dpr);
+    var g = bakeCanvas.getContext ? bakeCanvas.getContext("2d") : null;
+    if (!g) { baked = false; return; }
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, view.w, view.h);
+    paintStone(g, view.w, view.h);
+    paintTrack(g);
+    paintSkull(g);
+    paintFrame(g, view.w, view.h);
+    baked = true;
+  }
+
+  /* ---------- a marble, drawn once into a sprite ---------- */
+  var SPRITE_PAD = 6;
+
+  function marbleSprite(colorIdx, type) {
+    var r = S.ballR;
+    var key = (type ? "p" + type : "c" + colorIdx) + "|" + Math.round(r * 2);
+    if (sprites[key]) return sprites[key];
+    var size = Math.ceil(r * 2) + SPRITE_PAD * 2;
+    var c = document.createElement("canvas");
+    c.width = size;
+    c.height = size;
+    var g = c.getContext ? c.getContext("2d") : null;
+    if (!g) return null;
+    var cx = size / 2, cy = size / 2;
+
+    /* the shadow it sits in */
+    var sh = g.createRadialGradient(cx + r * 0.1, cy + r * 0.48, r * 0.1, cx + r * 0.1, cy + r * 0.48, r * 1.02);
+    sh.addColorStop(0, "rgba(20,26,20,0.55)");
+    sh.addColorStop(1, "rgba(20,26,20,0)");
+    g.fillStyle = sh;
+    g.beginPath();
+    g.ellipse(cx + r * 0.12, cy + r * 0.44, r * 1.0, r * 0.86, 0, 0, TAU);
+    g.fill();
+
+    var col = COLORS[((colorIdx % COLORS.length) + COLORS.length) % COLORS.length];
+    /* a carved stone ball: lit from the upper left, a dark underside */
+    var body = g.createRadialGradient(cx - r * 0.34, cy - r * 0.4, r * 0.06, cx + r * 0.1, cy + r * 0.12, r * 1.12);
+    if (type) {
+      body.addColorStop(0, "#fdfefe");
+      body.addColorStop(0.3, "#cfd6da");
+      body.addColorStop(0.58, "#98a1a7");
+      body.addColorStop(0.84, "#5c6469");
+      body.addColorStop(1, "#2b3034");
+    } else {
+      body.addColorStop(0, col.a);
+      body.addColorStop(0.26, col.c);
+      body.addColorStop(0.6, col.b);
+      body.addColorStop(0.88, shade(col.b, -0.45));
+      body.addColorStop(1, shade(col.b, -0.7));
+    }
+    g.beginPath();
+    g.arc(cx, cy, r * 0.98, 0, TAU);
+    g.fillStyle = body;
+    g.fill();
+
+    /* the ball is carved: a groove round it and chisel marks under the light */
+    g.save();
+    g.beginPath();
+    g.arc(cx, cy, r * 0.96, 0, TAU);
+    g.clip();
+
+    g.beginPath();
+    g.arc(cx, cy, r * 0.66, 0, TAU);
+    g.strokeStyle = type ? "rgba(60,68,74,0.22)" : "rgba(0,0,0,0.10)";
+    g.lineWidth = Math.max(1.2, r * 0.12);
+    g.stroke();
+    g.beginPath();
+    g.arc(cx, cy, r * 0.72, 0, TAU);
+    g.strokeStyle = "rgba(255,255,255,0.22)";
+    g.lineWidth = Math.max(1, r * 0.07);
+    g.stroke();
+
+    /* the fan of cuts a lapidary leaves on a stone ball */
+    g.strokeStyle = "rgba(255,255,255,0.16)";
+    g.lineWidth = Math.max(1, r * 0.07);
+    for (var f = -1; f <= 1; f++) {
+      g.beginPath();
+      g.arc(cx - r * 0.1, cy - r * 0.14, r * (0.78 + f * 0.14), Math.PI * 1.08, Math.PI * 1.42);
+      g.stroke();
+    }
+    g.strokeStyle = "rgba(0,0,0,0.10)";
+    for (var f2 = -1; f2 <= 1; f2++) {
+      g.beginPath();
+      g.arc(cx - r * 0.1, cy - r * 0.1, r * (0.8 + f2 * 0.14), Math.PI * 1.12, Math.PI * 1.38);
+      g.stroke();
+    }
+
+    /* the light falls off towards the underside */
+    var shade2 = g.createLinearGradient(cx, cy - r * 0.4, cx, cy + r);
+    shade2.addColorStop(0, "rgba(255,255,255,0.10)");
+    shade2.addColorStop(0.5, "rgba(0,0,0,0)");
+    shade2.addColorStop(1, "rgba(0,0,0,0.42)");
+    g.fillStyle = shade2;
+    g.fillRect(cx - r, cy - r, r * 2, r * 2);
+    g.restore();
+
+    /* a bounce of light along the bottom edge */
+    g.beginPath();
+    g.arc(cx, cy, r * 0.88, Math.PI * 0.18, Math.PI * 0.82);
+    g.strokeStyle = "rgba(255,255,255,0.30)";
+    g.lineWidth = Math.max(1.2, r * 0.1);
+    g.stroke();
+
+    /* the rim */
+    g.beginPath();
+    g.arc(cx, cy, r * 0.97, 0, TAU);
+    g.strokeStyle = "rgba(12,16,12,0.5)";
+    g.lineWidth = Math.max(1, r * 0.07);
+    g.stroke();
+
+    if (type) {
+      /* the power stones keep a lit gem at the middle, so they read at a glance */
+      var tone = POWER[type] ? POWER[type].tone : "#fff";
+      var gem = g.createRadialGradient(cx - r * 0.12, cy - r * 0.14, r * 0.04, cx, cy, r * 0.58);
+      gem.addColorStop(0, "#ffffff");
+      gem.addColorStop(0.42, tone);
+      gem.addColorStop(1, "rgba(0,0,0,0.55)");
+      g.beginPath();
+      g.arc(cx, cy, r * 0.54, 0, TAU);
+      g.fillStyle = gem;
+      g.fill();
+      g.strokeStyle = "rgba(16,20,16,0.55)";
+      g.lineWidth = Math.max(1, r * 0.06);
+      g.stroke();
+      drawGlyph(g, cx, cy, r * 0.4, type);
+    }
+
+    /* the specular the polished stone throws back */
+    var spec = g.createRadialGradient(cx - r * 0.34, cy - r * 0.4, 0, cx - r * 0.34, cy - r * 0.4, r * 0.34);
+    spec.addColorStop(0, "rgba(255,255,255,1)");
+    spec.addColorStop(0.4, "rgba(255,255,255,0.55)");
+    spec.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = spec;
+    g.beginPath();
+    g.ellipse(cx - r * 0.34, cy - r * 0.4, r * 0.28, r * 0.21, -0.5, 0, TAU);
+    g.fill();
+    g.beginPath();
+    g.ellipse(cx - r * 0.36, cy - r * 0.42, r * 0.13, r * 0.1, -0.5, 0, TAU);
+    g.fillStyle = "rgba(255,255,255,0.95)";
+    g.fill();
+    g.beginPath();
+    g.arc(cx + r * 0.22, cy - r * 0.05, r * 0.075, 0, TAU);
+    g.fillStyle = "rgba(255,255,255,0.55)";
+    g.fill();
+
+    sprites[key] = c;
+    return c;
+  }
+
+  function drawGlyph(g, cx, cy, r, type) {
+    g.save();
+    g.strokeStyle = "rgba(18,22,26,0.85)";
+    g.fillStyle = "rgba(18,22,26,0.85)";
+    g.lineWidth = Math.max(1.2, r * 0.2);
+    g.lineCap = "round";
+    if (type === "rev") {
+      g.beginPath();
+      g.arc(cx, cy, r * 0.66, -0.4, 4.2);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(cx + r * 0.52, cy - r * 0.62);
+      g.lineTo(cx + r * 0.92, cy - r * 0.3);
+      g.lineTo(cx + r * 0.42, cy - r * 0.06);
+      g.closePath();
+      g.fill();
+    } else if (type === "slow") {
+      g.beginPath();
+      g.moveTo(cx - r * 0.6, cy - r * 0.6);
+      g.lineTo(cx + r * 0.6, cy - r * 0.6);
+      g.lineTo(cx, cy);
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(cx - r * 0.6, cy + r * 0.6);
+      g.lineTo(cx + r * 0.6, cy + r * 0.6);
+      g.lineTo(cx, cy);
+      g.closePath();
+      g.fill();
+    } else if (type === "bomb") {
+      g.beginPath();
+      g.arc(cx, cy + r * 0.12, r * 0.6, 0, TAU);
+      g.fill();
+      g.beginPath();
+      g.moveTo(cx + r * 0.2, cy - r * 0.45);
+      g.quadraticCurveTo(cx + r * 0.62, cy - r * 0.95, cx + r * 0.95, cy - r * 0.55);
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  /* ---------- the frog idol ---------- */
+  function buildFrog() {
+    if (frogSprite) return frogSprite;
+    var R = S.ballR * 3.1;
+    var size = Math.ceil(R * 2.4);
+    var c = document.createElement("canvas");
+    c.width = size;
+    c.height = size;
+    var g = c.getContext ? c.getContext("2d") : null;
+    if (!g) return null;
+    var cx = size / 2, cy = size / 2;
+
+    /* the plinth: dark stone, gold band round it */
+    g.beginPath();
+    g.arc(cx, cy, R * 0.99, 0, TAU);
+    var plinth = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+    plinth.addColorStop(0, "#cfd3c8");
+    plinth.addColorStop(0.35, "#9aa096");
+    plinth.addColorStop(0.7, "#646a62");
+    plinth.addColorStop(1, "#2e332c");
+    g.fillStyle = plinth;
+    g.fill();
+    g.strokeStyle = "rgba(16,20,16,0.85)";
+    g.lineWidth = Math.max(1.6, R * 0.05);
+    g.stroke();
+
+    /* the sunken bed the idol sits in */
+    g.beginPath();
+    g.arc(cx, cy, R * 0.86, 0, TAU);
+    var bed = g.createRadialGradient(cx, cy - R * 0.2, R * 0.06, cx, cy, R * 0.88);
+    bed.addColorStop(0, "#3d443c");
+    bed.addColorStop(0.7, "#272c25");
+    bed.addColorStop(1, "#151812");
+    g.fillStyle = bed;
+    g.fill();
+
+    /* gold rim + studs */
+    g.beginPath();
+    g.arc(cx, cy, R * 0.9, 0, TAU);
+    g.strokeStyle = "#d8ac54";
+    g.lineWidth = Math.max(1.6, R * 0.055);
+    g.stroke();
+    g.beginPath();
+    g.arc(cx, cy, R * 0.9, Math.PI * 0.15, Math.PI * 0.85);
+    g.strokeStyle = "rgba(255,242,205,0.6)";
+    g.lineWidth = Math.max(1, R * 0.025);
+    g.stroke();
+    for (var n = 0; n < 12; n++) {
+      var na = n / 12 * TAU;
+      g.beginPath();
+      g.arc(cx + Math.cos(na) * R * 0.9, cy + Math.sin(na) * R * 0.9, R * 0.035, 0, TAU);
+      g.fillStyle = "rgba(20,24,18,0.7)";
+      g.fill();
+    }
+
+    /* the frog, carved in jade */
+    var jade = g.createRadialGradient(cx - R * 0.3, cy - R * 0.42, R * 0.06, cx, cy + R * 0.1, R * 0.86);
+    jade.addColorStop(0, "#c6f6bd");
+    jade.addColorStop(0.26, "#7ad186");
+    jade.addColorStop(0.58, "#3f9152");
+    jade.addColorStop(0.85, "#1f562b");
+    jade.addColorStop(1, "#11331a");
+
+    /* the shadow it casts in the bed */
+    g.beginPath();
+    g.ellipse(cx, cy + R * 0.52, R * 0.6, R * 0.14, 0, 0, TAU);
+    g.fillStyle = "rgba(0,0,0,0.4)";
+    g.fill();
+
+    /* haunches first, so the body sits over them */
+    [-1, 1].forEach(function (side) {
+      g.beginPath();
+      g.ellipse(cx + side * R * 0.6, cy + R * 0.3, R * 0.24, R * 0.17, side * 0.45, 0, TAU);
+      g.fillStyle = jade;
+      g.fill();
+      g.strokeStyle = "rgba(10,30,14,0.5)";
+      g.lineWidth = Math.max(1, R * 0.022);
+      g.stroke();
+    });
+
+    /* the squat body */
+    g.beginPath();
+    g.ellipse(cx, cy + R * 0.15, R * 0.73, R * 0.5, 0, 0, TAU);
+    g.fillStyle = jade;
+    g.fill();
+    g.strokeStyle = "rgba(10,30,14,0.55)";
+    g.lineWidth = Math.max(1.2, R * 0.028);
+    g.stroke();
+
+    /* eye bumps on top of the head */
+    [-1, 1].forEach(function (side) {
+      var ex = cx + side * R * 0.34, ey = cy - R * 0.26;
+      g.beginPath();
+      g.arc(ex, ey, R * 0.29, 0, TAU);
+      g.fillStyle = jade;
+      g.fill();
+      g.stroke();
+
+      /* the eye */
+      g.beginPath();
+      g.arc(ex, ey, R * 0.2, 0, TAU);
+      var eye = g.createRadialGradient(ex - R * 0.05, ey - R * 0.06, R * 0.02, ex, ey, R * 0.18);
+      eye.addColorStop(0, "#ffffff");
+      eye.addColorStop(0.62, "#f2e9cd");
+      eye.addColorStop(1, "#bfae7c");
+      g.fillStyle = eye;
+      g.fill();
+      g.strokeStyle = "rgba(10,26,14,0.5)";
+      g.lineWidth = Math.max(1, R * 0.016);
+      g.stroke();
+
+      g.beginPath();
+      g.ellipse(ex + side * R * 0.01, ey + R * 0.02, R * 0.072, R * 0.098, 0, 0, TAU);
+      g.fillStyle = "#11150f";
+      g.fill();
+      g.beginPath();
+      g.arc(ex - R * 0.045, ey - R * 0.045, R * 0.03, 0, TAU);
+      g.fillStyle = "rgba(255,255,255,0.92)";
+      g.fill();
+    });
+
+    /* the wide mouth */
+    g.beginPath();
+    g.moveTo(cx - R * 0.54, cy + R * 0.16);
+    g.quadraticCurveTo(cx, cy + R * 0.58, cx + R * 0.54, cy + R * 0.16);
+    g.strokeStyle = "rgba(8,26,12,0.7)";
+    g.lineWidth = Math.max(1.6, R * 0.045);
+    g.lineCap = "round";
+    g.stroke();
+
+    /* the gold mouth it spits through */
+    g.beginPath();
+    g.arc(cx, cy + R * 0.33, R * 0.16, 0, TAU);
+    var mouth = g.createRadialGradient(cx, cy + R * 0.29, R * 0.02, cx, cy + R * 0.33, R * 0.17);
+    mouth.addColorStop(0, "#0a0f0a");
+    mouth.addColorStop(0.75, "#121a12");
+    mouth.addColorStop(1, "#2f3a2c");
+    g.fillStyle = mouth;
+    g.fill();
+    g.strokeStyle = "#e0b45e";
+    g.lineWidth = Math.max(1.4, R * 0.04);
+    g.stroke();
+
+    /* the light along the top of the skull */
+    g.beginPath();
+    g.ellipse(cx - R * 0.18, cy - R * 0.08, R * 0.24, R * 0.1, -0.35, 0, TAU);
+    g.fillStyle = "rgba(255,255,255,0.2)";
+    g.fill();
+
+    frogSprite = c;
+    return c;
+  }
+
+  /* the sunburst medallions either side of the frog */
+  function drawMedallion(g, x, y, r, colorIdx) {
+    g.save();
+    g.translate(x, y);
+
+    /* rays: a gold star with 12 points */
+    var sun = g.createLinearGradient(-r, -r, r, r);
+    sun.addColorStop(0, "#fff4cf");
+    sun.addColorStop(0.4, "#e7bb5f");
+    sun.addColorStop(0.78, "#a2761f");
+    sun.addColorStop(1, "#553c10");
+    g.beginPath();
+    for (var i = 0; i < 24; i++) {
+      var a = i / 24 * TAU - Math.PI / 2;
+      var rr = i % 2 ? r * 0.72 : r;
+      if (i === 0) g.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+      else g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    g.closePath();
+    g.fillStyle = sun;
+    g.fill();
+    g.strokeStyle = "rgba(24,16,2,0.6)";
+    g.lineWidth = 1;
+    g.stroke();
+
+    /* the bezel */
+    g.beginPath();
+    g.arc(0, 0, r * 0.6, 0, TAU);
+    var bez = g.createLinearGradient(-r * 0.5, -r * 0.5, r * 0.5, r * 0.5);
+    bez.addColorStop(0, "#ffe9b4");
+    bez.addColorStop(0.5, "#c79a3c");
+    bez.addColorStop(1, "#6b4a12");
+    g.fillStyle = bez;
+    g.fill();
+    g.strokeStyle = "rgba(30,20,4,0.55)";
+    g.lineWidth = 1;
+    g.stroke();
+
+    /* the dark setting */
+    g.beginPath();
+    g.arc(0, 0, r * 0.5, 0, TAU);
+    var inset = g.createRadialGradient(-r * 0.15, -r * 0.15, r * 0.04, 0, 0, r * 0.5);
+    inset.addColorStop(0, "#2c3330");
+    inset.addColorStop(1, "#06090a");
+    g.fillStyle = inset;
+    g.fill();
+
+    if (colorIdx != null) {
+      var col = COLORS[colorIdx % COLORS.length];
+      var ball = g.createRadialGradient(-r * 0.16, -r * 0.18, r * 0.03, 0, 0, r * 0.42);
+      ball.addColorStop(0, col.a);
+      ball.addColorStop(0.45, col.c);
+      ball.addColorStop(1, shade(col.b, -0.4));
+      g.beginPath();
+      g.arc(0, 0, r * 0.4, 0, TAU);
+      g.fillStyle = ball;
+      g.fill();
+      g.beginPath();
+      g.ellipse(-r * 0.12, -r * 0.15, r * 0.1, r * 0.07, -0.5, 0, TAU);
+      g.fillStyle = "rgba(255,255,255,0.85)";
+      g.fill();
+    }
+    g.restore();
+  }
+
+  /* ---------- drawing a frame ---------- */
+  function drawChains() {
+    for (var k = 0; k < S.chains.length; k++) {
+      var ch = S.chains[k];
+      for (var i = ch.balls.length - 1; i >= 0; i--) {
+        var b = ch.balls[i];
+        var p = ballAt(ch, i);
+        if (p.x < -S.gap * 2 || p.y < -S.gap * 2) continue;
+        var spr = marbleSprite(b.c, b.type);
+        if (!spr) continue;
+        var pad = SPRITE_PAD;
+        var w = S.ballR * 2 + pad * 2;
+        ctx.drawImage(spr, p.x - w / 2, p.y - w / 2, w, w);
+      }
+    }
+  }
+
+  function drawShots() {
+    for (var i = 0; i < S.shots.length; i++) {
+      var sh = S.shots[i];
+      var spr = marbleSprite(sh.c, "");
+      if (!spr) continue;
+      var w = S.ballR * 2 + SPRITE_PAD * 2;
+      ctx.globalAlpha = 0.25;
+      ctx.drawImage(spr, sh.x - sh.vx * 0.012 - w / 2, sh.y - sh.vy * 0.012 - w / 2, w, w);
+      ctx.globalAlpha = 1;
+      ctx.drawImage(spr, sh.x - w / 2, sh.y - w / 2, w, w);
+    }
+  }
+
+  function drawFx() {
+    for (var i = 0; i < S.fx.length; i++) {
+      var f = S.fx[i];
+      var a = Math.max(0, f.life / f.max);
+      var col = COLORS[((f.c % COLORS.length) + COLORS.length) % COLORS.length];
+      ctx.globalAlpha = a;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r * (f.spark ? a : 1), 0, TAU);
+      ctx.fillStyle = f.spark ? "#ffd07a" : col.c;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawFrog() {
+    var spr = buildFrog();
+    var s = S.shooter;
+    var R = S.ballR * 3.1;
+    var size = R * 2.4;
+
+    /* the sunbursts: what is loaded on the left, what comes next on the right */
+    var mr = S.ballR * 1.7;
+    drawMedallion(ctx, s.x - R * 1.62, s.y, mr, S.loaded);
+    drawMedallion(ctx, s.x + R * 1.62, s.y, mr, S.next);
+
+    if (spr) {
+      ctx.drawImage(spr, s.x - size / 2, s.y - size / 2, size, size);
+    } else {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, R * 0.9, 0, TAU);
+      ctx.fillStyle = "#6cc47a";
+      ctx.fill();
+    }
+
+    /* the loaded marble, waiting at the mouth */
+    var mouthR = R * 1.12;
+    var mx = s.x + Math.cos(S.aim) * mouthR;
+    var my = s.y + Math.sin(S.aim) * mouthR;
+    var spr2 = marbleSprite(S.loaded, "");
+    if (spr2) {
+      var w = S.ballR * 2 + SPRITE_PAD * 2;
+      ctx.drawImage(spr2, mx - w / 2, my - w / 2, w, w);
+    }
+  }
+
+  function drawAim() {
+    if (!S.running || S.paused || S.over) return;
+    var s = S.shooter;
+    var dx = Math.cos(S.aim), dy = Math.sin(S.aim);
+    var x = s.x + dx * S.ballR * 3.4, y = s.y + dy * S.ballR * 3.4;
+    var inset = Math.max(10, Math.min(view.w, view.h) * 0.042);
+    var pts = [{ x: x, y: y }];
+    var stepLen = Math.max(6, S.ballR * 0.5);
+    var bounces = 0;
+
+    /* walk the shot forward until it would hit something, the way the real aim line does */
+    var guard = 0;
+    while (guard++ < 900) {
+      x += dx * stepLen;
+      y += dy * stepLen;
+      if (x < inset || x > view.w - inset) { dx = -dx; bounces++; }
+      if (y < inset || y > view.h - inset) { dy = -dy; bounces++; }
+      if (x < inset) x = inset;
+      if (x > view.w - inset) x = view.w - inset;
+      if (y < inset) y = inset;
+      if (y > view.h - inset) y = view.h - inset;
+      var hit = false;
+      for (var k = 0; k < S.chains.length && !hit; k++) {
+        var ch = S.chains[k];
+        for (var i = 0; i < ch.balls.length; i++) {
+          var p = ballAt(ch, i);
+          var ddx = p.x - x, ddy = p.y - y;
+          if (ddx * ddx + ddy * ddy < S.ballR * S.ballR * 2.4) { hit = true; break; }
+        }
+      }
+      if (hit) break;
+      if (bounces > 2) break;
+    }
+    pts.push({ x: x, y: y });
+
+    ctx.save();
+    ctx.setLineDash([3, 7]);
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = "rgba(255,236,176,0.42)";
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (var q = 1; q < pts.length; q++) ctx.lineTo(pts[q].x, pts[q].y);
+    ctx.stroke();
+
+    /* a small ring where it would land */
+    if (pts.length > 1) {
+      var end = pts[pts.length - 1];
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(end.x, end.y, S.ballR * 0.6, 0, TAU);
+      ctx.strokeStyle = "rgba(255,236,176,0.5)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawPops() {
+    for (var i = 0; i < S.pops.length; i++) {
+      var p = S.pops[i];
+      var a = Math.min(1, p.life / p.max * 2.2);
+      var size = Math.round(S.ballR * 1.15 * p.size * (1 + (1 - p.life / p.max) * 0.25));
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.font = "700 " + size + "px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = Math.max(2, size * 0.22);
+      ctx.strokeStyle = "rgba(40,22,4,0.85)";
+      ctx.strokeText(p.text, p.x, p.y);
+      ctx.fillStyle = p.tone;
+      ctx.fillText(p.text, p.x, p.y);
+      ctx.restore();
+    }
+  }
+
+  function render() {
+    if (!ctx) return;
+    ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+    if (baked && bakeCanvas) {
+      ctx.drawImage(bakeCanvas, 0, 0, view.w, view.h);
+    } else {
+      var flat = ctx.createLinearGradient(0, 0, 0, view.h);
+      flat.addColorStop(0, "#3a4149");
+      flat.addColorStop(1, "#10141a");
+      ctx.fillStyle = flat;
+      ctx.fillRect(0, 0, view.w, view.h);
+    }
+    /* the board is a pit: nothing spills over the carved border */
+    var edge = Math.max(9, Math.min(view.w, view.h) * 0.036);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(edge, edge, view.w - edge * 2, view.h - edge * 2);
+    ctx.clip();
+    drawChains();
+    drawShots();
+    drawFx();
+    ctx.restore();
+
+    drawFrog();
+    drawAim();
+    drawPops();
+
+    if (S.slowT > 0 || S.revT > 0) {
+      ctx.save();
+      ctx.font = "600 10px 'Trebuchet MS', sans-serif";
+      ctx.textAlign = "center";
+      var label = (S.revT > 0 ? "🌀 reverse " + Math.ceil(S.revT) + "s  " : "") +
+                  (S.slowT > 0 ? "🐌 slow " + Math.ceil(S.slowT) + "s" : "");
+      ctx.fillStyle = "rgba(255, 224, 150, 0.9)";
+      ctx.fillText(label, view.w / 2, 18);
+      ctx.restore();
+    }
+  }
+
+  /* ==========================================================================
+     7. THE SCREEN — the plates, the door, the temples, the menu
      ========================================================================== */
 
   var lastHud = "";
 
   function updateHud(force) {
-    var quotaPct = S.cfg.quota ? Math.min(100, Math.round(S.spawned / S.cfg.quota * 100)) : 0;
-    var sig = [S.score, S.combo, S.level, S.lives, S.spawned, S.cfg.quota, S.paused].join("|");
+    var quota = S.cfg.quota || 0;
+    var pct = quota ? Math.min(100, Math.round(S.spawned / quota * 100)) : 0;
+    var met = S.spawned >= quota && quota > 0;
+    var sig = [S.score, S.combo, S.level, S.lives, S.spawned, quota, S.paused].join("|");
     if (!force && sig === lastHud) return;
     lastHud = sig;
+
     document.getElementById("hudScore").textContent = String(S.score);
-    document.getElementById("hudCombo").textContent = "×" + S.combo;
-    document.getElementById("hudLevel").textContent = String(S.level);
-    document.getElementById("hudLives").textContent = S.lives > 0 ? "♥".repeat(S.lives) : "—";
-    var met = S.spawned >= S.cfg.quota;
-    document.getElementById("quotaText").textContent = S.spawned + " / " + S.cfg.quota + (met ? " — clear the track" : "");
-    document.getElementById("quotaFill").style.width = quotaPct + "%";
-    document.getElementById("quotaBar").className = "bar" + (met ? " full" : "");
-    document.getElementById("btnPause").textContent = S.paused ? "▶ Resume" : "⏸ Pause";
-    document.getElementById("btnPause").className = S.paused ? "on" : "";
+    document.getElementById("hudLevel").textContent = String(levelName(S.level).n);
+    document.getElementById("hudTemple").textContent = levelName(S.level).temple;
+
+    var gems = document.getElementById("hudLives").children;
+    for (var i = 0; i < gems.length; i++) {
+      gems[i].className = "gem" + (i < S.lives ? "" : " off");
+    }
+
+    document.getElementById("quotaText").textContent = S.spawned + " / " + quota;
+    document.getElementById("quotaFill").style.width = pct + "%";
+    document.getElementById("quotaBar").className = "gauge" + (met ? " full" : "");
+
+    var combo = document.getElementById("hudCombo");
+    combo.textContent = "×" + S.combo + (S.combo > 1 ? " chain" : "");
+    combo.className = "combo" + (S.combo > 1 ? " on" : "");
+
+    var pauseBtn = document.getElementById("btnPause");
+    pauseBtn.className = "hbtn icon" + (S.paused ? " on" : "");
+    paintSound();
   }
 
   var toastTimer = null;
@@ -1293,7 +2561,7 @@
     el.textContent = text;
     el.className = "toast open";
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.className = "toast"; }, 1900);
+    toastTimer = setTimeout(function () { el.className = "toast"; }, 2000);
   }
 
   function shake() {
@@ -1301,7 +2569,7 @@
     wrap.classList.remove("shake");
     void wrap.offsetWidth;
     wrap.classList.add("shake");
-    setTimeout(function () { wrap.classList.remove("shake"); }, 400);
+    setTimeout(function () { wrap.classList.remove("shake"); }, 380);
   }
 
   function openOverlay(id) {
@@ -1309,17 +2577,23 @@
       document.getElementById(o).classList.toggle("open", o === id);
     });
   }
-
   function hideOverlays() {
     ["pauseOv", "levelOv", "overOv"].forEach(function (o) {
       document.getElementById(o).classList.remove("open");
     });
   }
 
-  /* ==========================================================================
-     6. THE DOOR — a name, once, before the game
-     ========================================================================== */
+  function paintSound() {
+    var b = document.getElementById("btnSound");
+    if (b) {
+      b.textContent = S.sound ? "♪" : "✕";
+      b.className = "hbtn icon" + (S.sound ? " on" : "");
+    }
+    var d = document.getElementById("cardSoundD");
+    if (d) d.textContent = S.sound ? "on — tap to mute" : "muted — tap for sound";
+  }
 
+  /* ---------- the door ---------- */
   var gatePassed = false;
 
   function cleanName(v) {
@@ -1343,24 +2617,21 @@
 
   function showGate(prefill) {
     gatePassed = false;
-    var g = document.getElementById("gate");
-    var input = document.getElementById("gateName");
-    var err = document.getElementById("gateErr");
     var name = cleanName(prefill != null ? prefill : storedNick());
-    input.value = name;
-    err.textContent = name ? "Welcome back, " + name + " — tap Play to go in." : "";
-    g.classList.add("open");
+    gateType(name);
+    document.getElementById("gateErr").textContent = name ? "Welcome back, " + name + " — tap PLAY to go in." : "";
+    document.getElementById("gate").classList.add("open");
     document.getElementById("menu").classList.remove("open");
     hideOverlays();
-    setTimeout(function () { try { input.focus(); } catch (e) {} }, 40);
+    var input = document.getElementById("gateName");
+    setTimeout(function () { try { input.focus(); } catch (e) {} }, 60);
     return name;
   }
 
   function passGate(raw) {
-    var name = cleanName(raw != null ? raw : document.getElementById("gateName").value);
-    var err = document.getElementById("gateErr");
+    var name = cleanName(raw != null ? raw : gateType());
     if (name.length < 2) {
-      err.textContent = "Two characters at least — your scores are kept under this name.";
+      document.getElementById("gateErr").textContent = "Two characters at least — your scores are kept under this name.";
       sfx("lose");
       return false;
     }
@@ -1368,8 +2639,7 @@
     gatePassed = true;
     try { localStorage.setItem(NICK_KEY, name); } catch (e) {}
     document.getElementById("gate").classList.remove("open");
-    var save = loadSave();
-    var mine = (save.names || {})[name.toLowerCase()];
+    var mine = (loadSave().names || {})[name.toLowerCase()];
     if (mine) {
       S.best = mine.best || 0;
       if (mine.sound === false) S.sound = false;
@@ -1380,198 +2650,92 @@
     return true;
   }
 
-  /* ==========================================================================
-     7. THE MENU AND THE BOARD — saved by name, online when it can
-     ========================================================================== */
-
-  function loadSave() {
-    try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "{}") || {}; } catch (e) { return {}; }
-  }
-
-  function writeSave(obj) {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(obj)); } catch (e) {}
-  }
-
-  function myEntry() {
-    var save = loadSave();
-    return (save.names || {})[String(S.name).toLowerCase()] || null;
-  }
-
-  function myBestScore() {
-    var e = myEntry();
-    return e ? (e.best || 0) : 0;
-  }
-
-  function openedLevels() {
-    var e = myEntry();
-    return Math.max(1, Math.min(99, (e && e.level) || 1));
-  }
-
-  function rememberRun(score, level) {
-    var save = loadSave();
-    save.names = save.names || {};
-    var key = String(S.name).toLowerCase();
-    var e = save.names[key] || { best: 0, level: 1, plays: 0 };
-    e.name = S.name;
-    e.plays = (e.plays || 0) + 1;
-    e.best = Math.max(e.best || 0, score | 0);
-    e.level = Math.max(e.level || 1, Math.min(99, level | 0));
-    e.sound = S.sound !== false;
-    e.at = Date.now();
-    save.names[key] = e;
-    save.board = (save.board || []).filter(function (r) { return String(r.name).toLowerCase() !== key; });
-    save.board.push({ name: S.name, score: e.best, level: e.level, at: Date.now() });
-    save.board.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
-    save.board = save.board.slice(0, 10);
-    writeSave(save);
-    S.best = e.best;
-    return e;
-  }
-
-  function localBoard() {
-    var save = loadSave();
-    var rows = (save.board || []).slice();
-    var me = String(S.name).toLowerCase();
-    rows.forEach(function (r) { r.mine = String(r.name).toLowerCase() === me; });
-    return rows;
-  }
-
-  /* ---------- the ladder: best effort, never in the way ---------- */
-  function ladderUrl() {
-    return S.ladder || LADDER_FALLBACK;
-  }
-
-  function signPayload(p) {
-    return digest([p.name, p.mode, p.win, p.score, p.lines, p.ts, LB_KEY].join("|"));
-  }
-
-  function reportOnline(score, level) {
-    var url = ladderUrl();
-    if (!url || typeof fetch !== "function" || !gatePassed) return Promise.resolve({ state: "offline" });
-    var p = {
-      name: S.name,
-      mode: "solo",
-      win: true,
-      score: Math.max(0, score | 0),
-      lines: Math.max(1, level | 0),
-      ts: Math.floor(Date.now() / 1000)
-    };
-    p.sig = signPayload(p);
-    p.id = S.name + "-" + p.ts + "-" + p.score;
-    return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "action=report", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
-      cache: "no-store"
-    }).then(function (r) {
-      if (!r.ok) return { state: "refused" };
-      return r.json().then(function (d) { return { state: d && d.ok ? "saved" : "refused", body: d }; })
-        .catch(function () { return { state: "refused" }; });
-    }).catch(function () { return { state: "offline" }; });
-  }
-
-  function fetchOnline() {
-    var url = ladderUrl();
-    if (!url || typeof fetch !== "function") return Promise.resolve({ state: "offline", rows: [] });
-    return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "action=top&mode=solo&limit=10", { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        var rows = (d && d.rows) || (d && d.top) || [];
-        if (!Array.isArray(rows)) rows = [];
-        S.online = { state: "saved", rows: rows };
-        return { state: "saved", rows: rows };
-      })
-      .catch(function () {
-        S.online = { state: "offline", rows: [] };
-        return { state: "offline", rows: [] };
-      });
-  }
-
-  function paintSound() {
-    var b = document.getElementById("btnSound");
-    if (!b) return;
-    b.textContent = S.sound ? "🔊 Sound" : "🔇 Muted";
-    b.className = S.sound ? "on" : "";
-  }
-
-  function showMenu() {
-    var el = document.getElementById("menu");
-    el.classList.add("open");
-    hideOverlays();
-    document.getElementById("menuMe").innerHTML = "playing as <b>" + escapeHtml(S.name) + "</b>";
-    var opened = openedLevels();
-    var best = myBestScore();
-    var level = Math.min(opened, 99);
-    document.getElementById("cardPlayD").textContent = "level " + level + (best ? " · best " + best : "");
-    document.getElementById("cardLevelsD").textContent = opened + (opened === 1 ? " opened" : " opened");
-    paintLevels(opened);
-    paintBoard();
-    fetchOnline().then(paintBoard);
-  }
-
+  /* ---------- the menu ---------- */
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 
+  function showMenu() {
+    document.getElementById("menu").classList.add("open");
+    hideOverlays();
+    document.getElementById("menuMe").innerHTML = "playing as <b>" + escapeHtml(S.name) + "</b>";
+    var opened = openedLevels();
+    var best = myBestScore();
+    document.getElementById("cardPlayD").textContent =
+      "level " + opened + " · " + levelLabel(opened) + (best ? " · best " + best : "");
+    document.getElementById("cardLevelsD").textContent = opened + " of " + LEVELS + " opened";
+    paintLevels(opened);
+    paintBoard();
+    paintSound();
+    fetchOnline().then(paintBoard);
+  }
+
+  function hideMenu() {
+    document.getElementById("menu").classList.remove("open");
+  }
+
   function paintLevels(opened) {
-    var grid = document.getElementById("levelGrid");
-    grid.innerHTML = "";
-    for (var i = 1; i <= 10; i++) {
-      var b = document.createElement("button");
-      var locked = i > opened;
-      b.textContent = locked ? "🔒" : String(i);
-      b.className = locked ? "locked" : "";
-      b.setAttribute("data-level", String(i));
-      b.disabled = locked;
-      b.title = locked ? "clear level " + (i - 1) + " first" : "level " + i + " — " + MAPS[(i - 1) % MAPS.length].name.toLowerCase();
-      grid.appendChild(b);
+    var host = document.getElementById("levelGrid");
+    var here = opened;
+    var html = "";
+    for (var t = 0; t < TEMPLES.length; t++) {
+      html += '<div class="temple"><div class="tname"><b>' + TEMPLES[t] + "</b> · levels " +
+        (t * 10 + 1) + "–" + (t * 10 + 10) + "</div><div class=\"lgrid\">";
+      for (var i = 1; i <= 10; i++) {
+        var n = t * 10 + i;
+        var open = n <= opened;
+        var cls = open ? (n === here ? "open here" : "open") : "locked";
+        html += '<button data-level="' + n + '" class="' + cls + '"' + (open ? "" : " disabled") +
+          ' title="' + (open ? "level " + n + " — " + mapForLevel(n).shape : "clear level " + (n - 1) + " first") +
+          '">' + n + "</button>";
+      }
+      html += "</div></div>";
     }
-    document.getElementById("levelHint").textContent = "maps: " + MAPS.map(function (m) { return m.name; }).join(" · ");
+    host.innerHTML = html;
+    document.getElementById("levelHint").textContent = LEVELS + " levels · every one a different track";
   }
 
   function paintBoard() {
     var box = document.getElementById("board");
     var local = localBoard();
     var online = (S.online && S.online.rows) || [];
-    var rows = local.slice(0, 10);
     var onlineState = S.online ? S.online.state : "offline";
     document.getElementById("boardHint").textContent =
       onlineState === "saved" ? "this device + ladder" : "this device · ladder offline";
 
     var html = "";
-    if (!rows.length && !online.length) {
+    if (!local.length && !online.length) {
       html = '<div class="empty">No runs yet. Play one and your name lands here.</div>';
     } else {
-      rows.forEach(function (r, i) {
-        html += '<div class="row' + (r.mine ? " me" : "") + '"><span class="rk">' + (i + 1) + '</span>' +
-          '<span class="nm">' + escapeHtml(r.name) + '</span>' +
-          '<span class="lv">lv ' + (r.level || 1) + '</span>' +
-          '<span class="sc">' + (r.score || 0) + '</span></div>';
+      local.forEach(function (r, i) {
+        html += '<div class="row' + (r.mine ? " me" : "") + '"><span class="rk">' + (i + 1) + "</span>" +
+          '<span class="nm">' + escapeHtml(r.name) + "</span>" +
+          '<span class="lv">' + levelLabel(r.level || 1) + "</span>" +
+          '<span class="sc">' + (r.score || 0) + "</span></div>";
       });
-      if (online.length) {
-        online.slice(0, 5).forEach(function (r, i) {
-          var nm = r.name || r.n || "—";
-          var sc = r.score != null ? r.score : r.s || 0;
-          var lv = r.lines != null ? r.lines : r.level || 1;
-          html += '<div class="row"><span class="rk">★</span><span class="nm">' + escapeHtml(nm) +
-            '</span><span class="lv">lv ' + lv + '</span><span class="sc">' + sc + '</span></div>';
-        });
-      }
+      online.slice(0, 5).forEach(function (r) {
+        var nm = r.name || r.n || "—";
+        var sc = r.score != null ? r.score : r.s || 0;
+        var lv = r.lines != null ? r.lines : 1;
+        html += '<div class="row"><span class="rk">★</span><span class="nm">' + escapeHtml(nm) +
+          '</span><span class="lv">' + levelLabel(lv) + '</span><span class="sc">' + sc + "</span></div>";
+      });
     }
     box.innerHTML = html;
   }
 
   /* ==========================================================================
-     8. THE HANDS — aim, shoot, pause
+     8. THE HANDS
      ========================================================================== */
 
   function pointToView(ev) {
     var r = canvas.getBoundingClientRect();
-    var x = (ev.clientX - r.left) / (r.width || 1) * view.w;
-    var y = (ev.clientY - r.top) / (r.height || 1) * view.h;
-    return { x: x, y: y };
+    return {
+      x: (ev.clientX - r.left) / (r.width || 1) * view.w,
+      y: (ev.clientY - r.top) / (r.height || 1) * view.h
+    };
   }
 
   function aimAt(x, y) {
@@ -1588,8 +2752,19 @@
     return S.paused;
   }
 
-  function hideMenu() {
-    document.getElementById("menu").classList.remove("open");
+  function toggleSound() {
+    S.sound = !S.sound;
+    try { localStorage.setItem("zumang_sound", S.sound ? "1" : "0"); } catch (e) {}
+    paintSound();
+    if (S.sound) sfx("click");
+    var e = myEntry();
+    if (e) {
+      var save = loadSave();
+      e.sound = S.sound;
+      save.names[String(S.name).toLowerCase()] = e;
+      writeSave(save);
+    }
+    return S.sound;
   }
 
   function wire() {
@@ -1599,7 +2774,9 @@
       aimAt(p.x, p.y);
     });
     canvas.addEventListener("pointerdown", function (ev) {
-      if (!S.running || S.paused) return;
+      if (!gatePassed) return;
+      if (!S.running) { startLevel(openedLevels(), false); return; }
+      if (S.paused) { setPaused(false); return; }
       var p = pointToView(ev);
       aimAt(p.x, p.y);
       shoot();
@@ -1607,21 +2784,8 @@
     });
     canvas.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
 
-    document.getElementById("btnSound").addEventListener("click", function () {
-      S.sound = !S.sound;
-      try { localStorage.setItem("kdl_zuma_sound", S.sound ? "1" : "0"); } catch (e) {}
-      paintSound();
-      if (S.sound) sfx("click");
-      var e = myEntry();
-      if (e) { e.sound = S.sound; var save = loadSave(); save.names[String(S.name).toLowerCase()] = e; writeSave(save); }
-    });
+    document.getElementById("btnSound").addEventListener("click", toggleSound);
     document.getElementById("btnPause").addEventListener("click", function () { setPaused(!S.paused); });
-    document.getElementById("btnRestart").addEventListener("click", function () {
-      if (!gatePassed) return;
-      hideOverlays();
-      restartLevel();
-      toast("level " + S.level + " — again");
-    });
     document.getElementById("btnMenu").addEventListener("click", function () {
       S.running = false;
       S.paused = false;
@@ -1630,12 +2794,13 @@
 
     document.getElementById("pauseResume").addEventListener("click", function () { setPaused(false); });
     document.getElementById("pauseRestart").addEventListener("click", function () { hideOverlays(); restartLevel(); });
-    document.getElementById("pauseMenu").addEventListener("click", function () { S.running = false; S.paused = false; showMenu(); });
+    document.getElementById("pauseMenu").addEventListener("click", function () { S.running = false; showMenu(); });
 
     document.getElementById("levelNext").addEventListener("click", function () {
       hideOverlays();
-      startLevel(S.level + 1, true);
-      toast("level " + S.level + " · " + (S.mapName || "new map"));
+      var next = S.level >= LEVELS ? LEVELS : S.level + 1;
+      startLevel(next, true);
+      toast(levelLabel(S.level) + " · " + mapForLevel(S.level).shape.toLowerCase());
     });
     document.getElementById("levelReplay").addEventListener("click", function () { hideOverlays(); startLevel(S.level, false); });
     document.getElementById("levelMenu").addEventListener("click", function () { showMenu(); });
@@ -1649,12 +2814,12 @@
     document.getElementById("overMenu").addEventListener("click", function () { showMenu(); });
 
     document.getElementById("cardPlay").addEventListener("click", function () {
-      startLevel(Math.min(openedLevels(), 99), false);
-      toast("level " + S.level + " · " + (S.mapName || ""));
+      startLevel(openedLevels(), false);
+      toast(levelLabel(S.level) + " · " + mapForLevel(S.level).shape.toLowerCase());
     });
     document.getElementById("cardLevels").addEventListener("click", function () {
-      var head = document.getElementById("levelGrid");
-      if (head && head.scrollIntoView) head.scrollIntoView({ behavior: "smooth", block: "center" });
+      var host = document.getElementById("levelGrid");
+      if (host && host.scrollIntoView) host.scrollIntoView({ behavior: "smooth", block: "center" });
       sfx("click");
     });
     document.getElementById("cardScores").addEventListener("click", function () {
@@ -1663,12 +2828,19 @@
       fetchOnline().then(paintBoard);
       sfx("click");
     });
+    document.getElementById("cardSound").addEventListener("click", toggleSound);
+    document.getElementById("cardPause").addEventListener("click", function () { setPaused(!S.paused); });
+    document.getElementById("cardRestart").addEventListener("click", function () {
+      hideMenu();
+      restartLevel();
+    });
+
     document.getElementById("levelGrid").addEventListener("click", function (ev) {
       var b = ev.target.closest ? ev.target.closest("button[data-level]") : null;
       if (!b || b.disabled) return;
       var n = parseInt(b.getAttribute("data-level"), 10) || 1;
       startLevel(n, false);
-      toast("level " + n + " · " + (S.mapName || ""));
+      toast(levelLabel(n) + " · " + mapForLevel(n).shape.toLowerCase());
     });
 
     document.getElementById("gateGo").addEventListener("click", function () { passGate(); });
@@ -1681,57 +2853,51 @@
       if (tag === "input" || tag === "textarea") return;
       if (ev.code === "Space" || ev.key === " ") {
         if (!gatePassed) return;
-        if (!S.running) { startLevel(Math.min(openedLevels(), 99), false); }
+        if (!S.running) startLevel(openedLevels(), false);
         else if (S.paused) setPaused(false);
         else shoot();
         ev.preventDefault();
       } else if (ev.key === "p" || ev.key === "P" || ev.key === "Escape") {
         setPaused(!S.paused);
+      } else if (ev.key === "m" || ev.key === "M") {
+        toggleSound();
       } else if (ev.key === "r" || ev.key === "R") {
         if (gatePassed) { hideOverlays(); restartLevel(); }
       }
     });
 
     var resizeTimer = null;
-    function relayout() {
-      resize();
-      updateHud(true);
-    }
+    function relayout() { resize(); updateHud(true); }
     window.addEventListener("resize", function () {
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(relayout, 90);
     });
-    /* the board is a flex child, so the first real size can arrive after boot */
     if (typeof ResizeObserver === "function") {
       try {
         var ro = new ResizeObserver(function () {
           if (resizeTimer) clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(relayout, 120);
+          resizeTimer = setTimeout(relayout, 130);
         });
         ro.observe(document.getElementById("stagewrap"));
-      } catch (e) { /* older browser: the window resize above is enough */ }
+      } catch (e) {}
     }
-    /* nobody loses a life because they looked away */
     document.addEventListener("visibilitychange", function () {
       if (document.hidden && S.running && !S.paused) setPaused(true);
     });
-
-    document.getElementById("buildBtn").addEventListener("click", checkBuild);
   }
 
-  /* a friendly look at the feed: is there a newer marble on main? */
   function checkBuild() {
-    toast("you are on marble " + BUILD + " — checking the feed…");
+    toast("you are on zumang " + BUILD + " — checking the feed…");
     if (typeof fetch !== "function") return;
     fetch(FEED, { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
-        if (!d) { toast("no feed right now — marble " + BUILD + " is what you have"); return; }
+        if (!d) { toast("no feed right now — zumang " + BUILD + " is what you have"); return; }
         S.ladder = d.ladder || S.ladder;
-        var latest = d.threeBuild || d.zumaBuild || "";
-        if (latest && latest !== BUILD) toast("marble " + latest + " is on main — pull it from the hub");
-        else toast("marble " + BUILD + " is the newest in the feed");
+        var latest = d.threeBuild || "";
+        if (latest && latest !== BUILD) toast("zumang " + latest + " is on main — pull it from the hub");
+        else toast("zumang " + BUILD + " is the newest in the feed");
       })
-      .catch(function () { toast("offline — marble " + BUILD + " is what you have"); });
+      .catch(function () { toast("offline — zumang " + BUILD + " is what you have"); });
   }
 
   /* ==========================================================================
@@ -1745,7 +2911,7 @@
     var dt = lastFrame ? (now - lastFrame) / 1000 : 1 / 60;
     lastFrame = now;
     if (dt > 0.25) dt = 0.25;
-    try { tick(dt); } catch (e) { /* never let one bad frame stop the game */ }
+    try { tick(dt); } catch (e) {}
     render();
     rafId = requestAnimationFrame(frame);
   }
@@ -1753,7 +2919,7 @@
   function seedPreview() {
     S.cfg = levelConfig(1);
     buildWorld();
-    var palette = [0, 1, 2, 3, 0, 1, 2, 3, 0];
+    var palette = [0, 1, 2, 3, 4, 0, 2, 1, 3];
     S.chains = [{
       front: S.gap * palette.length,
       balls: palette.map(function (c) { return newBall(c, ""); })
@@ -1768,20 +2934,22 @@
   function boot() {
     wire();
     resize();
-    try { S.sound = localStorage.getItem("kdl_zuma_sound") !== "0"; } catch (e) { S.sound = true; }
+    try { S.sound = localStorage.getItem("zumang_sound") !== "0"; } catch (e) { S.sound = true; }
     paintSound();
     seedPreview();
     showGate(storedNick());
     if (!rafId && typeof requestAnimationFrame === "function") rafId = requestAnimationFrame(frame);
-    document.getElementById("gateBuild").innerHTML = "marble <b>" + BUILD + "</b>";
-    document.getElementById("buildBtn").innerHTML = "marble <b>" + BUILD + "</b>";
+    var buildTag = document.getElementById("gateBuild");
+    buildTag.innerHTML = "zumang <b>" + BUILD + "</b>";
+    buildTag.title = "tap to check the feed for a newer build";
+    buildTag.addEventListener("click", checkBuild);
   }
 
   /* ==========================================================================
-     10. THE DOOR FOR TESTS — same page, no browser needed
+     10. THE DOOR FOR THE TESTS
      ========================================================================== */
 
-  window.__zuma = {
+  var door = {
     BUILD: BUILD,
     engine: Engine,
     state: S,
@@ -1790,6 +2958,7 @@
     tick: tick,
     render: render,
     resize: resize,
+    levels: LEVELS,
     gate: function () {
       return {
         open: document.getElementById("gate").classList.contains("open"),
@@ -1815,7 +2984,7 @@
     addBall: function (color, type) {
       if (!S.chains.length) S.chains.push({ front: 0, balls: [] });
       var ch = S.chains[S.chains.length - 1];
-      if (!ch.balls.length && ch.front < 1) ch.front = S.gap * 1;
+      if (!ch.balls.length && ch.front < 1) ch.front = S.gap;
       ch.balls.push(newBall(color, type));
       S.spawned++;
       return ch.balls.length;
@@ -1827,10 +2996,10 @@
       }];
       return S.chains[0].balls.length;
     },
-    colors: function () { return S.chains.map(function (ch) { return ch.balls.map(function (b) { return b.c; }); }); },
-    types: function () { return S.chains.map(function (ch) { return ch.balls.map(function (b) { return b.type; }); }); },
     pos: function (k, i) { return ballAt(S.chains[k], i); },
     front: function (k) { return S.chains[k].front; },
+    colors: function () { return S.chains.map(function (ch) { return ch.balls.map(function (b) { return b.c; }); }); },
+    types: function () { return S.chains.map(function (ch) { return ch.balls.map(function (b) { return b.type; }); }); },
     insertAt: insertBall,
     popAt: popAt,
     matchRun: matchRun,
@@ -1856,10 +3025,25 @@
       return p;
     },
     sign: signPayload,
-    maps: MAPS.length,
+    mapFor: mapForLevel,
+    LEVELS: LEVELS,
     mapName: function () { return S.mapName; },
-    checkBuild: checkBuild
+    checkBuild: checkBuild,
+    hud: function () {
+      return {
+        score: document.getElementById("hudScore").textContent,
+        temple: document.getElementById("hudTemple").textContent,
+        level: document.getElementById("hudLevel").textContent,
+        lives: [].filter.call(document.getElementById("hudLives").children, function (g) {
+          return g.className.indexOf("off") < 0;
+        }).length,
+        quota: document.getElementById("quotaText").textContent
+      };
+    }
   };
+
+  window.__zumang = door;
+  window.__zuma = door;          /* the name the first build answered to */
 
   boot();
 })();

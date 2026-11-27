@@ -191,7 +191,7 @@
     <div class="mark">KDL</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m8</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m9</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -246,27 +246,37 @@
         </svg>
       </span>
       <span class="body">
-        <span class="name">Marble</span>
+        <span class="name">Zumang</span>
         <span class="desc">a zuma-style marble shooter — match three, clear the snake before it reaches the skull,
-            and a new track for every level</span>
-        <span class="meta"><span>3+ TO POP</span><span>POWER-UPS</span><span>A MAP A LEVEL</span></span>
+            and a track of its own for every one of a hundred levels</span>
+        <span class="meta"><span>3+ TO POP</span><span>POWER-UPS</span><span>100 MAPS</span></span>
       </span>
       <span class="go" id="threeGo">▶ Play</span>
     </button>
 
     <section class="panelbox">
       <h2>What changed</h2>
+      <h3><span class="day">NOV 28</span></h3>
+      <ul>
+        <li><b>Marble is now Zumang</b> — the third chair has its own name, its own wordmark and its own tag.
+            Same game underneath: a marble shooter on a carved stone track that runs from the frog to a skull.</li>
+        <li><b>A hundred levels, a hundred maps</b> — ten temples of ten, and every level draws a board of its
+            own: spiral, serpent, corridor, rosette or ring, fixed by the level number so a board is the same
+            board every time you come back to it.</li>
+        <li><b>The board looks like the game it comes from</b> — carved grey stone, a sunken channel, marbles
+            cut from coloured stone, a gold skull at the end of the track, a jade frog flanked by two gold
+            sunbursts, and the quota and lives on a gold-trimmed bar over the board.</li>
+        <li><b>Zumang keeps its own score by name</b> — the name you give at the door, saved on this device and
+            posted to the ladder as a <b>solo</b> run: a score, never a battle, so nobody's win column moves.</li>
+      </ul>
+
       <h3><span class="day">NOV 27</span></h3>
       <ul>
-        <li><b>Marble</b> — the third chair, and it is a game: a marble shooter on a smooth track that runs
-            from the spawn to a skull. Match three or more of a colour and they pop; cut the snake in two and
-            the back half slides up to meet the front, which is how a chain reaction starts.</li>
-        <li><b>A map of its own for every level</b> — spiral, serpent, coil, ring, then round again — with the
-            colours growing, the snake quicker and the quota taking more of the track each time.</li>
+        <li><b>The third chair opened</b> with a marble shooter: match three or more of a colour and they pop;
+            cut the snake in two and the back half slides up to meet the front, which is how a chain reaction
+            starts.</li>
         <li><b>Power-ups</b> ride on the odd ball: 🌀 reverse, 🐌 slow and 💣 bomb. They fire when their ball is
             popped.</li>
-        <li><b>Marble keeps its own score by name</b> — the name you give at the door, saved on this device and
-            posted to the ladder as a <b>solo</b> run: a score, never a battle, so nobody's win column moves.</li>
         <li><b>Chess</b> — the second chair, and a whole game: castling, en passant, promotion, mate,
             stalemate, the fifty-move rule and repetition, against the CPU at three levels or a friend.
             Six page themes, eight board palettes you can tint, three piece styles.</li>
@@ -342,7 +352,7 @@
       <div class="rule"></div>
       <p style="margin-top:10px;">One thing worth saying plainly: all three chairs are games now, in one file
          each — <b>labs/pindutan-v21.html</b> for the arena, <b>labs/chess.html</b> for chess and
-         <b>labs/zuma.html</b> for marble. Each one carries its own tag (<b>v24</b>, <b>c6</b>, <b>m1</b>),
+         <b>labs/zuma.html</b> for Zumang. Each one carries its own tag (<b>v24</b>, <b>c6</b>, <b>m2</b>),
          and the file above is the only place those tags are compared. Rename a chair here and you rename it
          everywhere.</p>
     </section>
@@ -362,10 +372,10 @@
   var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
   var CHESS = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
-  var MARBLE = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/zuma.html";
+  var ZUMANG = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/zuma.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m8";                 /* this copy of the hub */
+  var DECK = "m9";                 /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 
@@ -529,8 +539,8 @@
       fallback: CHESS, marker: "CHESS-APP" });
   }
   function openThree() {
-    openGame({ tile: threeTile, go: threeGo, label: "marble", buildField: "threeBuild", urlField: "three",
-      fallback: MARBLE, marker: "MARBLE-APP" });
+    openGame({ tile: threeTile, go: threeGo, label: "zumang", buildField: "threeBuild", urlField: "three",
+      fallback: ZUMANG, marker: "ZUMANG-APP" });
   }
 
   tile.addEventListener("click", openArena);
@@ -568,6 +578,13 @@
         strip.classList.remove("off");
       }
       if (!want || want === DECK) { deckSays("newest", ""); return { state: "same" }; }
+      /* only ever move forwards: a feed still carrying an older tag must not pull this hub back */
+      var wantN = parseInt(String(want).replace(/[^0-9]/g, ""), 10);
+      var deckN = parseInt(String(DECK).replace(/[^0-9]/g, ""), 10);
+      if (!isNaN(wantN) && !isNaN(deckN) && wantN <= deckN) {
+        deckSays("newest", "");
+        return { state: "same" };
+      }
 
       /* a newer hub is out: fetch it, check it, and hand the page over */
       deckSays(want + " is out · opening…", "busy");

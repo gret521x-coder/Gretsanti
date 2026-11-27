@@ -234,7 +234,7 @@
   <div class="shell">
     <header>
       <div class="mark">KDL CHESS</div>
-      <button class="strip" id="strip" title="This build">chess <b>c3</b> · complete rules · <b id="modeTag">vs CPU</b></button>
+      <button class="strip" id="strip" title="This build">chess <b>c4</b> · complete rules · <b id="modeTag">vs CPU</b></button>
     </header>
 
     <div class="boardwrap">
@@ -246,6 +246,7 @@
         <span class="clock" id="clockW">–:––</span><span class="clock dim" id="clockB">–:––</span>
       </div>
       <div class="subline" id="statusLine"></div>
+      <div class="subline dim" id="buildLine">chess <b>c4</b> · checking for a newer build…</div>
 
       <div class="row" id="modeRow">
         <button data-mode="cpu" class="on">VS CPU</button>
@@ -2207,22 +2208,120 @@
     paintBoardColors();
   });
 
-  $("strip").addEventListener("click", function () {
-    $("strip").innerHTML = "chess <b>c3</b> · " + S.hist.length + " moves played · <b id=\"modeTag\">" +
-      (S.mode === "room" ? "the room" : S.mode === "two" ? "2 players" : "vs " + S.level) + "</b>";
-  });
+  $("strip").addEventListener("click", function () { checkBuild(); });
+
+  /* ---------- keeping itself current ----------
+     Same idea as the arena and the hub: this page reads one small file from the
+     repo, and if the feed names a newer chess it opens that copy instead. No
+     signal, no file, or half a download and it plays the copy it has. */
+  var CHESS_BUILD = "c4";
+  var UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
+  var UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
+  var UPDATE_APPLIED = "kdl_chess_applied";
+
+  function buildLine(text, tone) {
+    var el = $("buildLine");
+    if (!el) return;
+    el.innerHTML = "chess <b>" + CHESS_BUILD + "</b> · " + text;
+    el.className = "subline" + (tone ? " " + tone : " dim");
+  }
+
+  function swapModeFor(proto) { return (proto === "http:" || proto === "https:") ? "navigate" : "in-page"; }
+
+  function quietForSwap() {
+    window.__chessSwapping = true;
+    try { if (S.clock.tick) clearInterval(S.clock.tick); } catch (e) { }
+    try { if (S.match && S.match.tick) clearInterval(S.match.tick); } catch (e) { }
+    try { if (lobby.beatTimer) clearInterval(lobby.beatTimer); } catch (e) { }
+    try {
+      BROKERS.forEach(function (b) {
+        try { if (b.client) b.client.end(true); } catch (e) { }
+        b.client = null; b.state = "off";
+      });
+    } catch (e) { }
+    try { if (localChannel && localChannel.close) localChannel.close(); } catch (e) { }
+  }
+
+  function swapDocument(next) {
+    if (swapModeFor(String(location.protocol || "")) === "navigate") {
+      location.replace(URL.createObjectURL(new Blob([next], { type: "text/html" })));
+      return;
+    }
+    quietForSwap();
+    document.open();
+    document.write(next);
+    document.close();
+  }
+
+  function getBuildSelf() { return CHESS_BUILD; }
+
+  async function selfUpdateCheck(opts) {
+    opts = opts || {};
+    var get = opts.fetch || (typeof fetch === "function" ? fetch.bind(window) : null);
+    var swap = opts.swap || swapDocument;
+    if (!get) { buildLine("this browser cannot check", "bad"); return { state: "no-fetch" }; }
+
+    /* a copy that was just swapped in must not swap again */
+    var applied = "";
+    try { applied = sessionStorage.getItem(UPDATE_APPLIED) || ""; } catch (e) { }
+    if (applied === CHESS_BUILD) { buildLine("just updated · the newest build", "good"); return { state: "skipped", build: CHESS_BUILD }; }
+
+    buildLine("checking for a newer build…");
+    var bust = "?t=" + Date.now();
+    var feed;
+    try {
+      var r = await get((opts.feed || UPDATE_FEED) + bust, { cache: "no-store" });
+      if (!r || !r.ok || typeof r.json !== "function") { buildLine("no signal · playing this copy", "bad"); return { state: "offline" }; }
+      feed = await r.json();
+    } catch (e) { buildLine("no signal · playing this copy", "bad"); return { state: "offline" }; }
+
+    var build = feed && String(feed.chessBuild || "").trim();
+    if (!build || build === CHESS_BUILD) { buildLine("the newest build", "good"); return { state: "same", build: CHESS_BUILD }; }
+
+    var next = "";
+    try {
+      var url = String((feed && feed.chess) || "").trim() || UPDATE_HTML;
+      var r2 = await get(url + (url.indexOf("?") < 0 ? bust : "&" + bust.slice(1)), { cache: "no-store" });
+      if (!r2 || !r2.ok || typeof r2.text !== "function") { buildLine(build + " is out · could not fetch it", "bad"); return { state: "offline", build: build }; }
+      next = await r2.text();
+    } catch (e) { buildLine(build + " is out · could not fetch it", "bad"); return { state: "offline", build: build }; }
+
+    /* only a whole chess page that calls itself that build is worth opening */
+    if (!next || next.length < 20000 || next.indexOf("</html>") < 0 ||
+        next.indexOf("CHESS-APP") < 0 || next.indexOf(build) < 0) {
+      buildLine(build + " is out · that page did not check out", "bad");
+      return { state: "bad-page", build: build };
+    }
+    try { sessionStorage.setItem(UPDATE_APPLIED, build); } catch (e) { }
+    buildLine("opening " + build + "…", "good");
+    swap(next);
+    return { state: "swapped", build: build };
+  }
+
+  function checkBuild() { return selfUpdateCheck(); }
 
   /* ---------- boot ---------- */
   paintTheme();
   paintBoardColors();
   document.body.setAttribute("data-pieces", S.pieces);
   syncModeButtons();
+  $("strip").innerHTML = "chess <b>" + CHESS_BUILD + "</b> · complete rules · <b id=\"modeTag\">" +
+    (S.mode === "two" ? "2 players" : S.mode === "room" ? "the room" : "vs " + S.level) + "</b>";
+  document.documentElement.dataset.build = CHESS_BUILD;
   document.body.setAttribute("data-coords", S.coords ? "1" : "0");
   $("coordsBtn").classList.toggle("on", S.coords);
   setTimeControl(0, 0);
   paintMatchBar();
   paintLobby();
   paintRelays();
+  /* the address bar keeps the real page after a swap, so a reload finds it again */
+  try {
+    if (location.protocol === "blob:") {
+      var ref = document.referrer;
+      if (ref && ref.indexOf(location.origin) === 0) history.replaceState(null, "", ref);
+    }
+  } catch (e) { }
+  if (!window.__chessNoUpdate) selfUpdateCheck();
   render();
   afterMove();          /* if you chose Black against the CPU, it opens */
 
@@ -2240,6 +2339,9 @@
     tick: clockTick,
     tossWinner: tossWinner,
     pgn: pgnText,
+    build: getBuildSelf,
+    selfUpdate: selfUpdateCheck,
+    checkBuild: checkBuild,
     review: reviewTo,
     showToss: showToss,
     fmtClock: fmtClock,

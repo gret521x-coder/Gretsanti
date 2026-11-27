@@ -26,13 +26,13 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
 | `pindutan.html` | 25 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then three chairs (Pindutan, Chess, one still waiting), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena` and `feed.chess` |
-| `labs/chess.html` | 91 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge, a coin toss for colours, chess clocks, rematch, PGN/FEN and a scoresheet you can tap back through**, six page themes, eight board palettes with a tint slider, three piece styles |
+| `labs/chess.html` | 96 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge, a coin toss for colours, chess clocks, rematch, PGN/FEN and a scoresheet you can tap back through**, keeps itself current from `chessBuild`, six page themes, eight board palettes with a tint slider, three piece styles |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `pindutan-run.html` | 7 KB | **The first runner, frozen at the Nov 26 file** — no game code and no menu; reads the feed and opens `feed.html`, the hub. Left alone on purpose: every change since lives in the hub and the game |
-| `labs/pindutan-v21.html` | 259 KB | Pindutan v23 — the game: the arena, its three chairs behind ☰ Games, and the build that keeps itself current. The gate opens straight on the nickname now |
+| `labs/pindutan-v21.html` | 260 KB | Pindutan v24 — the game: the arena, its three chairs behind ☰ Games, a hall of fame with a **new season** button, and the build that keeps itself current. The gate opens straight on the nickname now |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, where the deck lives (`menu` / `menuBuild`), and the ladder's address |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
@@ -77,12 +77,14 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    build the feed calls `arena`, **Chess** opens `chess`, and the third is wired and says it is not written
    yet. Under the chairs: **what changed** and a short **about this page**. The hub keeps *itself* current
    from `menuBuild`/`menu`, and it checks the feed on every open and on every tap of its strip.
-3. `labs/pindutan-v21.html` — the **arena** (v23): the game. It carries the same three chairs behind a
+3. `labs/pindutan-v21.html` — the **arena** (v24): the game. It carries the same three chairs behind a
    **☰ Games** pill in its header, and it updates itself from `arena` in the feed. Its gate opens **straight on
    the nickname**: the password step is gone, because it is asked one page earlier, in the hub.
 
-`labs/chess.html` is game two: a complete chess app of its own, 91 KB, with its own build tag (`c3`) and its
-own feed field, so it updates itself the same way the arena does.
+`labs/chess.html` is game two: a complete chess app of its own, 96 KB, with its own build tag (`c4`) and its
+own feed field, so it updates itself the same way the arena does. It reads `chessBuild`/`chess` from the same
+small build file, checks that the page it finds is whole and really calls itself that build, and opens it —
+`sessionStorage` stops a copy that was just swapped in from swapping again.
 
 **Chess — the whole game, not a demo.** The rules are the real ones: castling on both sides with every
 restriction (rights, empty squares, no castling out of, through or into check), en passant, all four promotion
@@ -120,13 +122,18 @@ Moves travel as squares and are re-checked with the local rules before they are 
 packet cannot put an illegal piece on your board; resign, draw offers and rematches travel the same way, and a
 player who goes quiet is named on the match bar rather than left hanging.
 
+**A new season, when the board needs one.** The hall of fame carries a quiet **↺ New season** button. It asks
+once, then posts `?action=reset` with the shared key to whichever host the ladder lives on, throws away the local
+copy, and redraws an empty board for everyone. A refused key and an unreachable host both say so on the note
+under the list instead of pretending the wipe happened.
+
 The feed names three addresses, one per link: `html` (the hub the runner opens), `arena` (the game the hub
 opens, and the file the game updates itself from) and `menu`/`menuBuild` (the hub's own address and tag).
 Pointing `html` at the game instead takes the runner straight to Pindutan and skips the hub — one field, no
 upload.
 
 **And the hub keeps itself current too.** On opening — and on a tap of its strip — the hub compares its own
-tag with `menuBuild` in the feed (currently `m7`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+tag with `menuBuild` in the feed (currently `m8`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
 size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a hub that
 was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m4 · newest ·
 arena v22.9` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
@@ -218,7 +225,7 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
-- **Pindutan v17** — 48 · **Chess** — 65 · **hub and runner** — 25 · **labs pages** — 20 · **leaderboard PHP** — 23 · **leaderboard worker** — 19
+- **Pindutan v17** — 48 · **Pindutan v18** — 243 · **Chess** — 72 · **hub and runner** — 25 · **labs pages** — 20 · **leaderboard PHP** — 23 · **leaderboard worker** — 19
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

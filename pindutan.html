@@ -51,8 +51,14 @@
   }
   .sub { margin-top: 6px; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mut); }
   .strip {
-    margin: 14px 0 20px; font-size: 0.54rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mut);
+    display: block; width: 100%; margin: 14px 0 20px; padding: 6px 8px; cursor: pointer;
+    font: inherit; font-size: 0.54rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mut);
+    background: transparent; border: 1px solid transparent; border-radius: 8px;
   }
+  .strip:active { border-color: var(--line); }
+  .strip #deckState { color: var(--lime); font-weight: 800; }
+  .strip.warn #deckState { color: var(--amber); }
+  .strip.busy #deckState { color: var(--cyan); }
   .strip b { color: var(--lime); font-weight: 800; }
   .strip.off b { color: var(--amber); }
 
@@ -110,7 +116,9 @@
   <main>
     <div class="mark">PINDUTAN</div>
     <div class="sub">pick a game</div>
-    <div class="strip" id="strip"><span id="deckBuild">deck m1</span> · arena <b id="arenaBuild">—</b></div>
+    <button class="strip" id="strip" title="Tap to look for a newer deck">
+      <span id="deckBuild">deck m2</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+    </button>
 
     <div class="bar"><i id="bar"></i></div>
     <p class="note" id="note" hidden></p>
@@ -158,10 +166,13 @@
   var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
   var MIN_BYTES = 20000;
-  var DECK = "m1";
+  var DECK = "m2";                 /* this copy of the deck */
+  var DECK_APPLIED = "pindutan_deck_applied";   /* a deck that was just swapped in must not swap again */
+  var MIN_DECK_BYTES = 3000;
 
   var strip = document.getElementById("strip");
   var deckBuild = document.getElementById("deckBuild");
+  var deckState = document.getElementById("deckState");
   var arenaBuild = document.getElementById("arenaBuild");
   var note = document.getElementById("note");
   var bar = document.getElementById("bar");
@@ -263,20 +274,60 @@
     });
   });
 
-  /* say which arena is waiting, before anyone taps */
+  /* ---------- the deck keeps itself current, like the game does ---------- */
+  function deckSays(text, mood) {
+    deckState.textContent = text;
+    strip.classList.remove("warn", "busy");
+    if (mood) strip.classList.add(mood);
+  }
+
+  function deckCheck() {
+    var applied = "";
+    try { applied = sessionStorage.getItem(DECK_APPLIED) || ""; } catch (e) { }
+    if (applied === DECK) { deckSays("just updated", ""); return Promise.resolve({ state: "skipped" }); }
+
+    deckSays("checking…", "busy");
+    return fetchText(FEED).then(function (raw) {
+      var feed = {};
+      try { feed = JSON.parse(raw) || {}; } catch (e) { feed = {}; }
+      var arena = String(feed.build || "").trim();
+      var want = String(feed.menuBuild || "").trim();
+      if (arena) {
+        arenaBuild.textContent = arena;
+        strip.classList.remove("off");
+      }
+      if (!want || want === DECK) { deckSays("newest", ""); return { state: "same" }; }
+
+      /* a newer deck is out: fetch it, check it, and hand the page over */
+      deckSays(want + " is out · opening…", "busy");
+      var url = feed.menu || "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
+      return fetchText(url).then(function (html) {
+        if (!html || html.length < MIN_DECK_BYTES ||
+            html.indexOf("</html>") < 0 ||
+            html.indexOf("HUB-MENU") < 0 ||
+            html.indexOf(want) < 0) {
+          deckSays(want + " came through broken · tap to retry", "warn");
+          return { state: "bad-page" };
+        }
+        try { sessionStorage.setItem(DECK_APPLIED, want); } catch (e) { }
+        deckSays("starting deck " + want + "…", "busy");
+        document.open();
+        document.write(html);
+        document.close();
+        return { state: "swapped", build: want };
+      });
+    }).catch(function (e) {
+      strip.classList.add("off");
+      arenaBuild.textContent = "offline";
+      deckSays("no line to GitHub · this deck still works", "warn");
+      return { state: "offline", error: String((e && e.message) || e) };
+    });
+  }
+
+  /* say which deck and which arena you are on, before anyone taps */
   deckBuild.textContent = "deck " + DECK;
-  fetchText(FEED).then(function (raw) {
-    var feed = {};
-    try { feed = JSON.parse(raw) || {}; } catch (e) { feed = {}; }
-    var build = String(feed.build || "").trim();
-    if (build) {
-      arenaBuild.textContent = build;
-      strip.classList.remove("off");
-    }
-  }).catch(function () {
-    strip.classList.add("off");
-    arenaBuild.textContent = "offline";
-  });
+  deckCheck();
+  strip.addEventListener("click", deckCheck);
 })();
 </script>
 </body>

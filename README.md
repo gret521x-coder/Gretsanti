@@ -25,7 +25,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `pindutan.html` | 12 KB | **The deck** — the second runner: three chairs, Pindutan plus two still waiting for their games. Holds no game code; the Pindutan chair loads the newest build from the feed |
+| `pindutan.html` | 13 KB | **The deck** — the second runner: three chairs, Pindutan plus two still waiting for their games. Holds no game code, keeps itself current from `menuBuild`, and its Pindutan chair loads the newest arena from the feed |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
@@ -75,9 +75,15 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    built and wired, each saying it is not written yet when tapped). No game code: 12 KB.
 3. `labs/pindutan-v21.html` — the arena itself, which also keeps itself current.
 
-The feed grew two fields: `menu` (where the deck lives) and `menuBuild` (`m1`), so the first runner can check
+The feed grew two fields: `menu` (where the deck lives) and `menuBuild` (`m2`), so the first runner can check
 the deck without knowing this repository's layout. Upload both small files beside `index.html` and the chain
 works from the host even when GitHub is blocked.
+
+**And the deck keeps itself current too.** On opening — and on a tap of its strip — the deck compares its own
+tag with `menuBuild` in the feed. If a newer deck is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a deck that
+was just swapped in from swapping again. The strip says which copy you are on in one line — `deck m2 · newest ·
+arena v22.7` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
 
 **Pindutan v22 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
 `labs/pindutan-build.json`; if that names something newer, it runs that instead. A hosted copy moves to the

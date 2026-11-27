@@ -111,6 +111,33 @@
   .tile .go { color: #04120a; background: var(--lime); }
   .tile .chip { color: #cfc4ff; background: rgba(168, 85, 247, 0.14); border: 1px solid rgba(168, 85, 247, 0.3); }
 
+  /* the way in */
+  .gate {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    align-items: center; justify-content: center; padding: 22px;
+    background: radial-gradient(120% 70% at 50% 0%, rgba(61, 214, 245, 0.10), transparent 60%), #03060b;
+  }
+  .gate.open { display: flex; }
+  .gate-box {
+    width: min(360px, 100%); padding: 22px 18px 18px; text-align: center;
+    border: 1px solid var(--line); border-radius: 15px;
+    background: linear-gradient(180deg, #0a1421, #050a11);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  }
+  .gate-box .mark { font-size: 1.5rem; }
+  .gate-box p { margin: 12px 0 10px; font-size: 0.62rem; line-height: 1.5; color: var(--mut); }
+  .gate-box p b { color: #cfe3f5; }
+  .gate-box input {
+    width: 100%; padding: 11px 12px; font: inherit; font-size: 0.8rem; color: var(--ink);
+    background: rgba(8, 16, 28, 0.9); border: 1px solid var(--line); border-radius: 10px;
+    letter-spacing: 0.2em; text-align: center;
+  }
+  .gate-box input:focus { outline: none; border-color: rgba(61, 214, 245, 0.5); }
+  .gate-row { display: flex; gap: 7px; margin-top: 10px; }
+  .gate-row button { flex: 1 1 auto; padding: 11px 8px; font-size: 0.66rem; font-weight: 800; }
+  .gate-hint { margin-top: 10px; font-size: 0.56rem; color: var(--amber); }
+  .gate-err { margin-top: 8px; min-height: 1.2em; font-size: 0.58rem; color: var(--red); }
+
   /* what changed, and what this page is */
   .panelbox {
     margin-top: 20px; padding: 15px 15px 4px; text-align: left;
@@ -145,11 +172,26 @@
   <div class="grid" aria-hidden="true"></div>
   <div class="horizon" aria-hidden="true"></div>
 
+  <!-- the way in: the password lives here now, before any game is opened -->
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <div class="mark">KDL</div>
+      <p>Enter the secret password to open the hub.</p>
+      <input type="password" id="pwInput" placeholder="password" autocomplete="off" />
+      <div class="gate-row">
+        <button id="pwBtn" class="primary">Unlock</button>
+        <button id="pwHintBtn">Hint?</button>
+      </div>
+      <div class="gate-hint" id="pwHint" hidden>Hint: Ikaw ay isang?" 😉</div>
+      <div class="gate-err" id="pwError"></div>
+    </div>
+  </div>
+
   <main>
     <div class="mark">KDL</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m4</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m5</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -175,16 +217,22 @@
       <span class="go" id="arenaGo">▶ Play</span>
     </button>
 
-    <button class="tile tbd" id="tile-two">
+    <button class="tile live" id="tile-chess">
       <span class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 24 24" role="presentation"><text class="q" x="12" y="18" text-anchor="middle">?</text></svg>
+        <svg viewBox="0 0 24 24" role="presentation">
+          <rect class="b1" x="3" y="3" width="6" height="6" />
+          <rect class="b2" x="15" y="3" width="6" height="6" />
+          <rect class="b2" x="3" y="15" width="6" height="6" />
+          <rect class="b1" x="15" y="15" width="6" height="6" />
+          <rect class="b3" x="9" y="9" width="6" height="6" />
+        </svg>
       </span>
       <span class="body">
-        <span class="name">Game two</span>
-        <span class="desc">the chair is built and wired — the game itself is not written yet</span>
-        <span class="meta"><span>one tile</span><span>one file</span></span>
+        <span class="name">Chess</span>
+        <span class="desc">the whole game — castling, en passant, promotion, mate, draws — against the CPU or a friend</span>
+        <span class="meta"><span>VS CPU</span><span>2 PLAYERS</span><span>THE ROOM</span></span>
       </span>
-      <span class="chip">TBD</span>
+      <span class="go" id="chessGo">▶ Play</span>
     </button>
 
     <button class="tile tbd" id="tile-three">
@@ -203,8 +251,12 @@
       <h2>What changed</h2>
       <h3><span class="day">NOV 27</span></h3>
       <ul>
-        <li><b>The hub</b> — this page. Three chairs, one of them playing, and the games behind them
-            keep themselves current.</li>
+        <li><b>Chess</b> — the second chair, and a whole game: castling, en passant, promotion, mate,
+            stalemate, the fifty-move rule and repetition, against the CPU at three levels or a friend in the
+            same room. Six page themes, eight board palettes you can tint, three piece styles.</li>
+        <li><b>The password moved here.</b> This page asks for it before anything opens, so the games get on
+            with it: Pindutan opens straight on the nickname.</li>
+        <li><b>The hub</b> — this page. Three chairs, and the games behind them keep themselves current.</li>
         <li><b>Ranks</b> — Bronze, Silver, Gold, Diamond, three tiers each, three stars a tier and a fourth
             that steps you up. Earned in <b>1v1</b> only, so a group win lifts nothing.</li>
         <li>The tap card tells the truth: win rate worked out from what was played, the run of wins you are
@@ -274,9 +326,10 @@
 
   var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
+  var CHESS = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m4";                 /* this copy of the hub */
+  var DECK = "m5";                 /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 
@@ -288,6 +341,60 @@
   var bar = document.getElementById("bar");
   var tile = document.getElementById("tile-pindutan");
   var go = document.getElementById("arenaGo");
+  var chessTile = document.getElementById("tile-chess");
+  var chessGo = document.getElementById("chessGo");
+
+  /* ---------- the way in: the password moved here from the game ----------
+     crypto.subtle only exists on https:// and localhost — over a plain-http LAN
+     address it is undefined and the lock could never open. Both sides use this
+     same function, so the fallback still matches. */
+  function fallbackHash(str) {
+    var h1 = 0x811c9dc5, h2 = 0xc2b2ae35;
+    for (var i = 0; i < str.length; i++) {
+      var c = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+      h2 = Math.imul(h2 ^ c, 2654435761) >>> 0;
+    }
+    return (h1.toString(16) + h2.toString(16)).padStart(16, "0");
+  }
+
+  function sha256(str) {
+    if (!(window.crypto && crypto.subtle && crypto.subtle.digest)) return Promise.resolve(fallbackHash(str));
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return b.toString(16).padStart(2, "0");
+      }).join("");
+    });
+  }
+
+  var UNLOCKED = "kdl_hub_open";
+  var gate = document.getElementById("gate");
+  var pwInput = document.getElementById("pwInput");
+  var pwError = document.getElementById("pwError");
+  var pwBtn = document.getElementById("pwBtn");
+  var pwHintBtn = document.getElementById("pwHintBtn");
+  var pwHint = document.getElementById("pwHint");
+  var targetHash = "";
+
+  function openGate() { gate.classList.add("open"); pwError.textContent = ""; setTimeout(function () { pwInput.focus(); }, 40); }
+  function closeGate() { gate.classList.remove("open"); }
+
+  function attemptUnlock() {
+    var val = String(pwInput.value || "").trim().toLowerCase();
+    if (!val) return Promise.resolve(false);
+    return sha256(val).then(function (hashed) {
+      if (hashed === targetHash) {
+        pwInput.value = "";
+        pwError.textContent = "";
+        try { sessionStorage.setItem(UNLOCKED, "1"); } catch (e) { }
+        closeGate();
+        deckCheck();
+        return true;
+      }
+      pwError.textContent = "Wrong password! Try again.";
+      return false;
+    });
+  }
 
   function bust(url) {
     return url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
@@ -330,51 +437,62 @@
     go.textContent = on ? "…" : "▶ Play";
   }
 
-  /* the newest arena the feed names, then hand the whole page over to it */
-  function openArena() {
-    busy(true);
+  /* both chairs work the same way: ask the feed for the address, check the file, hand the page over */
+  function openGame(opts) {
+    if (opts.tile.classList.contains("busy")) return;
+    opts.tile.classList.add("busy");
+    opts.go.textContent = "…";
     bar.classList.remove("bad");
     percent(18);
-    say("Looking for the newest arena…", false);
+    say("Looking for " + opts.label + "…", false);
+
     var wanted = "";
     fetchText(FEED).then(function (raw) {
       var feed = {};
       try { feed = JSON.parse(raw) || {}; } catch (e) { feed = {}; }
-      wanted = String(feed.build || "").trim();
-      var url = String(feed.arena || "").trim() || ARENA;
+      wanted = String(feed[opts.buildField] || "").trim();
+      var url = String(feed[opts.urlField] || "").trim() || opts.fallback;
       if (wanted) {
         arenaBuild.textContent = wanted;
         strip.classList.remove("off");
       }
       percent(56);
-      say("Arena " + (wanted || "newest") + " — opening…", false);
-      return fetchText(url).then(function (html) { return { html: html, build: wanted }; });
+      say(opts.label + " " + (wanted || "newest") + " — opening…", false);
+      return fetchText(url).then(function (text) { return { text: text, build: wanted }; });
     }).then(function (got) {
-      var html = got.html || "";
-      if (html.length < MIN_BYTES ||
-          html.indexOf("</html>") < 0 ||
-          html.indexOf("SELF-UPDATE") < 0) {
+      var text = got.text || "";
+      if (text.length < MIN_BYTES ||
+          text.indexOf("</html>") < 0 ||
+          text.indexOf(opts.marker) < 0) {
         throw new Error("the file that came back is not a whole game");
       }
       percent(100);
       document.title = "KDL " + (got.build || "");
       document.open();
-      document.write(html);
+      document.write(text);
       document.close();
     }).catch(function (e) {
-      busy(false);
+      opts.tile.classList.remove("busy");
+      opts.go.textContent = "▶ Play";
       bar.classList.add("bad");
       percent(100);
       strip.classList.add("off");
-      say("Could not open the arena (" + String((e && e.message) || e) +
-        "). Check your signal and tap Pindutan again — nothing is lost.", true);
+      say("Could not open " + opts.label.toLowerCase() + " (" + String((e && e.message) || e) +
+        "). Check your signal and tap it again — nothing is lost.", true);
     });
   }
 
-  tile.addEventListener("click", function () {
-    if (tile.classList.contains("busy")) return;
-    openArena();
-  });
+  function openArena() {
+    openGame({ tile: tile, go: go, label: "the arena", buildField: "build", urlField: "arena",
+      fallback: ARENA, marker: "SELF-UPDATE" });
+  }
+  function openChess() {
+    openGame({ tile: chessTile, go: chessGo, label: "chess", buildField: "chessBuild", urlField: "chess",
+      fallback: CHESS, marker: "CHESS-APP" });
+  }
+
+  tile.addEventListener("click", openArena);
+  chessTile.addEventListener("click", openChess);
 
   /* the two empty chairs */
   Array.prototype.forEach.call(document.querySelectorAll(".tile.tbd"), function (el) {
@@ -436,8 +554,21 @@
 
   /* say which hub and which arena you are on, before anyone taps */
   deckBuild.textContent = "hub " + DECK;
-  deckCheck();
+  deckCheck();                       /* it keeps itself current whether or not the gate is open */
   strip.addEventListener("click", deckCheck);
+
+  /* the password first, then the chairs */
+  sha256(atob("a3VwYWw=")).then(function (h) {
+    targetHash = h;
+    var already = "";
+    try { already = sessionStorage.getItem(UNLOCKED) || ""; } catch (e) { }
+    if (already === "1") closeGate();
+    else openGate();
+  });
+
+  pwBtn.addEventListener("click", attemptUnlock);
+  pwInput.addEventListener("keydown", function (e) { if (e.key === "Enter") attemptUnlock(); });
+  pwHintBtn.addEventListener("click", function () { pwHint.hidden = !pwHint.hidden; });
 })();
 </script>
 </body>

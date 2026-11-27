@@ -181,6 +181,17 @@
   .seat.me { border-color: rgba(61, 214, 245, 0.4); }
   .promo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .promo button { font-size: 1.3rem; padding: 10px 0; font-family: "Segoe UI Symbol", "DejaVu Sans", sans-serif; }
+  .invitebar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: none;
+    align-items: center; gap: 8px; padding: 11px 13px calc(11px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(10, 20, 34, 0.96), rgba(6, 11, 19, 0.98));
+    border-top: 1px solid rgba(61, 214, 245, 0.35);
+    font-size: 0.62rem; color: var(--ink);
+  }
+  .invitebar.open { display: flex; }
+  .invitebar span { flex: 1 1 auto; }
+  .invitebar button { flex: 0 0 auto; }
+
   .tiny { margin-top: 12px; font-size: 0.55rem; line-height: 1.5; color: rgba(127, 147, 173, 0.8); }
 </style>
 </head>
@@ -191,7 +202,7 @@
   <div class="shell">
     <header>
       <div class="mark">KDL CHESS</div>
-      <button class="strip" id="strip" title="This build">chess <b>c1</b> · complete rules · <b id="modeTag">vs CPU</b></button>
+      <button class="strip" id="strip" title="This build">chess <b>c2</b> · complete rules · <b id="modeTag">vs CPU</b></button>
     </header>
 
     <div class="boardwrap">
@@ -205,7 +216,7 @@
       <div class="row" id="modeRow">
         <button data-mode="cpu" class="on">VS CPU</button>
         <button data-mode="two">2 PLAYERS</button>
-        <button data-mode="room">LOBBY</button>
+        <button data-mode="online">LOBBY</button>
       </div>
 
       <div class="row" id="cpuRow">
@@ -213,6 +224,11 @@
         <button data-level="intermediate">INTERMEDIATE</button>
         <button data-level="advanced">ADVANCED</button>
         <button id="sideBtn">You: White</button>
+      </div>
+
+      <div class="row" id="matchBar" style="display:none;">
+        <span id="matchText" style="flex:1 1 auto; font-size:0.6rem; color:#cfe3f5; align-self:center;"></span>
+        <button id="matchLeave" class="warn">Leave</button>
       </div>
 
       <div class="row">
@@ -231,7 +247,7 @@
       <button id="themeBtn" class="grow">🎨 Theme</button>
       <button id="boardBtn" class="grow">🟦 Board</button>
       <button id="pieceBtn" class="grow">♟ Pieces</button>
-      <button id="roomBtn" class="grow">📋 Room</button>
+      <button id="lobbyBtn" class="grow">💬 Lobby</button>
     </div>
 
     <p class="tiny">Complete rules: castling, en passant, promotion, check, checkmate, stalemate, the
@@ -267,17 +283,32 @@
     </div>
   </div>
 
-  <div class="sheet" id="roomSheet">
+  <div class="sheet" id="lobbySheet">
     <div class="sheet-box">
-      <div class="sheet-head"><span class="sheet-title">The room</span><button data-close>✕</button></div>
-      <div id="seatList"></div>
+      <div class="sheet-head"><span class="sheet-title">The lobby</span><button data-close>✕</button></div>
+      <div class="seat"><span>You</span><span id="lobbyMe">—</span><span class="chip" id="lobbyMeSeat">—</span></div>
       <div class="row">
-        <button id="joinBtn" class="primary grow">Join the room</button>
-        <button id="leaveBtn" class="grow">Leave</button>
+        <input id="nameInput" maxlength="14" placeholder="your name" autocomplete="off"
+               style="flex:1 1 auto; padding:9px 10px; font:inherit; font-size:0.72rem; color:var(--ink);
+                      background:rgba(8,16,28,0.9); border:1px solid var(--line); border-radius:9px;" />
+        <button id="nameSave">Save</button>
       </div>
-      <p id="roomNote">One fixed room, no codes to type. Two tabs on this device can play each other through
-        it — the tab that joins first is White.</p>
+      <h4>Players here</h4>
+      <div id="lobbyList"></div>
+      <div class="row">
+        <button id="lobbyIn" class="primary grow">Enter the lobby</button>
+        <button id="lobbyOut" class="grow">Leave</button>
+      </div>
+      <div id="relayLine" style="margin-top:10px; font-size:0.52rem; letter-spacing:0.08em; color:var(--mut);"></div>
+      <p id="lobbyNote">One lobby, no room codes. Tap ⚔ beside a name to challenge — that opens a temporary
+        room for the two of you and closes when the game ends.</p>
     </div>
+  </div>
+
+  <div class="invitebar" id="inviteBar">
+    <span id="inviteText">…</span>
+    <button id="inviteYes" class="primary">Accept</button>
+    <button id="inviteNo">Decline</button>
   </div>
 
   <div class="sheet" id="promoSheet">
@@ -769,7 +800,7 @@
     palette: store.get("kdl_chess_palette", "neon"),
     tint: parseInt(store.get("kdl_chess_tint", "0"), 10) || 0,
     pieces: store.get("kdl_chess_pieces", "classic"),
-    room: { on: false, seat: "", name: "", seq: 0 }
+    match: null
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -856,8 +887,9 @@
       return;
     }
     if (chInCheck(S.pos, S.pos.turn)) { sub.textContent = "Check!"; sub.classList.add("bad"); }
-    else if (S.mode === "room" && S.room.on) {
-      sub.textContent = S.room.seat === S.pos.turn ? "your move" : "waiting for the other tab…";
+    else if (S.mode === "online" && S.match) {
+      sub.textContent = S.match.seat === S.pos.turn ? "your move — " + S.match.oppName + " is waiting"
+        : "waiting for " + S.match.oppName + "…";
     } else if (S.mode === "cpu") {
       sub.textContent = S.pos.turn === S.human ? "your move" : "the CPU is thinking…";
     } else {
@@ -909,7 +941,12 @@
     S.sel = -1;
     var res = chResult(S.pos);
     S.over = res.over ? res : null;      /* chResult always answers — "" is not "over" */
-    if (!quiet && S.mode === "room" && S.room.on) roomPush();
+    if (!quiet && S.mode === "online" && S.match) {
+      S.match.seq++;
+      relaySend({ t: "MOVE", matchId: S.match.id, seq: S.match.seq, from: mv.from, to: mv.to,
+        promo: mv.promo || "", san: san, name: myName() });
+      paintMatchBar();
+    }
     render();
     afterMove();
   }
@@ -939,7 +976,7 @@
   function tapSquare(i) {
     if (S.over || S.busy || S.pending) return;
     if (S.mode === "cpu" && S.pos.turn !== S.human) return;
-    if (S.mode === "room" && S.room.on && S.room.seat && S.room.seat !== S.pos.turn) return;
+    if (S.mode === "online" && S.match && S.match.seat !== S.pos.turn) return;
 
     var piece = S.pos.board[i];
     if (S.sel >= 0) {
@@ -1089,154 +1126,481 @@
     });
   });
 
-  /* ---------- the fixed room (two tabs on this device) ---------- */
-  var ROOM_KEY = "kdl_chess_room_v1";
-  var HEARTBEAT = 1500, STALE = 6000;
+  /* =====================================================================
+     the relays — the same idea as Pindutan's brokers, for chess.
+     Three public MQTT brokers, a BroadcastChannel for the tabs on this
+     device, and a localStorage bus for a browser that has neither. Every
+     packet goes out on all of them at once; duplicates are dropped by nonce.
+     ===================================================================== */
+  var RELAY_TOPIC = "kdl/chess/v1/";
+  var BUS_KEY = "kdl_chess_bus";
+  var BROKERS = [
+    { name: "EMQX", url: "wss://broker.emqx.io:8084/mqtt", client: null, state: "off" },
+    { name: "HiveMQ", url: "wss://broker.hivemq.com:8884/mqtt", client: null, state: "off" },
+    { name: "Mosquitto", url: "wss://test.mosquitto.org:8081/mqtt", client: null, state: "off" }
+  ];
+  var MY_ID = "C-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  var seen = {}, seenOrder = [], nonceSeq = 0;
+  var localChannel = null, localName = "";
+  var subscribed = "", mqttLoading = false, busSeen = 0;
 
-  function roomRead() {
-    try { return JSON.parse(localStorage.getItem(ROOM_KEY) || "null"); } catch (e) { return null; }
-  }
-  function roomWrite(data) { try { localStorage.setItem(ROOM_KEY, JSON.stringify(data)); } catch (e) { } }
-  function freshSeat() { return { name: "", ts: 0, seq: 0 }; }
+  var lobby = { on: false, peers: {}, hiTimer: null, beatTimer: null, pruneTimer: null };
+  var pendingChallenge = null;      /* my outgoing invite, waiting for a yes */
+  var pendingInvite = null;         /* their invite, waiting for my yes */
 
   function myName() {
     var n = "";
-    try { n = localStorage.getItem("pindutan_nick") || ""; } catch (e) { }
-    return n || "Player";
+    try { n = localStorage.getItem("pinduntan_nick") || localStorage.getItem("pindutan_nick") || ""; } catch (e) { }
+    return (n || "Player").slice(0, 14);
   }
 
-  function roomJoin() {
-    var data = roomRead() || { w: freshSeat(), b: freshSeat(), fen: chFen(chStart()), seq: 1, moves: [] };
-    var now = Date.now();
-    var free = function (s) { return !s.name || now - s.ts > STALE; };
-    var seat = "";
-    if (data.w.name === S.room.name && !free(data.w)) seat = "w";
-    else if (data.b.name === S.room.name && !free(data.b)) seat = "b";
-    else if (free(data.w)) seat = "w";
-    else if (free(data.b)) seat = "b";
-    if (!seat) return { error: "the room is full — two seats, two tabs" };
+  function nextNonce() { nonceSeq++; return MY_ID + "-" + nonceSeq + "-" + Math.random().toString(36).slice(2, 5); }
+  function remember(n) {
+    if (!n || seen[n]) return false;
+    seen[n] = 1; seenOrder.push(n);
+    if (seenOrder.length > 1200) seenOrder.splice(0, 600).forEach(function (k) { delete seen[k]; });
+    return true;
+  }
 
-    var me = { name: S.room.name, ts: now, seq: data.seq || 1 };
-    data[seat] = me;
-    if (seat === "w" && (!data.moves || !data.moves.length)) {
-      data.fen = chFen(chStart());
-      data.moves = [];
-      data.seq = (data.seq || 0) + 1;
+  function relayLoading(cb) {
+    if (window.mqtt) { cb(true); return; }
+    if (mqttLoading) return;
+    mqttLoading = true;
+    var urls = [
+      "https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js",
+      "https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"
+    ];
+    var i = 0;
+    function next() {
+      if (window.mqtt) { mqttLoading = false; cb(true); return; }
+      if (i >= urls.length) { mqttLoading = false; cb(false); return; }
+      var sc = document.createElement("script");
+      sc.src = urls[i++];
+      sc.onload = function () { mqttLoading = false; cb(!!window.mqtt); };
+      sc.onerror = next;
+      document.head.appendChild(sc);
     }
-    roomWrite(data);
-    S.room = { on: true, seat: seat, name: S.room.name, seq: data.seq || 1 };
-    S.mode = "room";
-    S.pos = chFromFen(data.fen || chFen(chStart()));
-    S.hist = (data.moves || []).slice();
-    var joined = chResult(S.pos);
-    S.over = joined.over ? joined : null;
-    S.last = null;
-    S.sel = -1;
-    syncRoomButtons();
-    render();
-    return { seat: seat };
+    next();
   }
 
-  function roomPush() {
-    var data = roomRead() || { w: freshSeat(), b: freshSeat(), seq: 0, moves: [] };
-    data.seq = (data.seq || 0) + 1;
-    data.fen = chFen(S.pos);
-    data.moves = S.hist.slice();
-    if (!data[S.room.seat] || data[S.room.seat].name !== S.room.name) data[S.room.seat] = freshSeat();
-    data[S.room.seat].name = S.room.name;
-    data[S.room.seat].ts = Date.now();
-    data[S.room.seat].seq = data.seq;
-    roomWrite(data);
-    S.room.seq = data.seq;
+  function relayStart() {
+    relayLoading(function (ok) {
+      if (!ok) { paintRelays("relay library blocked — tabs on this device still see each other"); return; }
+      BROKERS.forEach(function (b) {
+        if (b.state === "ok" || b.state === "wait") return;
+        relayConnect(b);
+      });
+    });
   }
 
-  function roomBeat() {
-    if (!S.room.on) return;
-    var data = roomRead();
-    if (!data) return;
-    var seat = data[S.room.seat];
-    if (seat && seat.name === S.room.name) {
-      seat.ts = Date.now();
-      roomWrite(data);
-    } else {
-      /* someone took our seat after we went quiet: step out rather than fight over it */
-      S.room.on = false;
-      syncRoomButtons();
-      paintRoom();
+  function relayConnect(b) {
+    b.state = "wait";
+    paintRelays();
+    try {
+      b.client = window.mqtt.connect(b.url, {
+        clientId: "kdlchess_" + MY_ID + "_" + b.name.toLowerCase() + "_" + Math.random().toString(36).slice(2, 7),
+        keepalive: 30, reconnectPeriod: 6000, connectTimeout: 9000, clean: true
+      });
+      b.client.on("connect", function () {
+        b.state = "ok";
+        paintRelays();
+        if (subscribed) relaySubscribeChannel(subscribed);
+        if (subscribed) relaySend({ t: "HI", name: myName(), inMatch: !!S.match }, true);
+      });
+      b.client.on("reconnect", function () { b.state = "wait"; paintRelays(); });
+      b.client.on("close", function () { b.state = b.state === "ok" ? "wait" : b.state; paintRelays(); });
+      b.client.on("error", function () { b.state = "bad"; paintRelays(); });
+      b.client.on("message", function (topic, payload) {
+        if (topic !== RELAY_TOPIC + subscribed) return;
+        var data = null;
+        try { data = JSON.parse(payload.toString()); } catch (e) { return; }
+        onPacket(data);
+      });
+    } catch (e) { b.state = "bad"; paintRelays(); }
+  }
+
+  function relaySubscribeChannel(channel) {
+    BROKERS.forEach(function (b) {
+      if (b.state !== "ok" || !b.client) return;
+      try { b.client.subscribe(RELAY_TOPIC + channel, { qos: 0 }); } catch (e) { }
+    });
+  }
+
+  /* one channel at a time: the lobby, or the temporary room of a match */
+  function relayJoin(channel) {
+    if (subscribed === channel) return;
+    if (subscribed) {
+      BROKERS.forEach(function (b) {
+        if (b.client) { try { b.client.unsubscribe(RELAY_TOPIC + subscribed); } catch (e) { } }
+      });
     }
-  }
-
-  function roomPull() {
-    if (!S.room.on) return;
-    var data = roomRead();
-    if (!data) return;
-    if ((data.seq || 0) > S.room.seq) {
-      S.room.seq = data.seq;
-      var remote = chFromFen(data.fen);
-      if (chKey(remote) !== chKey(S.pos)) {
-        S.pos = remote;
-        S.hist = (data.moves || []).slice();
-        var pulled = chResult(S.pos);
-        S.over = pulled.over ? pulled : null;
-        var lastMove = S.hist[S.hist.length - 1];
-        S.last = lastMove ? { from: lastMove.from, to: lastMove.to } : null;
-        S.sel = -1;
-        render();
-        if (S.over) showOver();
+    subscribed = channel;
+    if (typeof BroadcastChannel !== "undefined") {
+      if (localChannel && localName !== channel) { try { localChannel.close(); } catch (e) { } localChannel = null; }
+      if (!localChannel) {
+        try {
+          localChannel = new BroadcastChannel("kdl_chess_" + channel);
+          localChannel.onmessage = function (e) { onPacket(e.data); };
+          localName = channel;
+        } catch (e) { localChannel = null; }
       }
     }
-    paintRoom();
+    relaySubscribeChannel(channel);
   }
 
-  function syncRoomButtons() {
-    $("joinBtn").classList.toggle("on", S.room.on);
-    $("joinBtn").textContent = S.room.on ? "In the room (" + S.room.seat.toUpperCase() + ")" : "Join the room";
-    $("leaveBtn").style.display = S.room.on ? "" : "none";
-  }
-
-  function paintRoom() {
-    var data = roomRead() || { w: freshSeat(), b: freshSeat() };
-    var now = Date.now();
-    var rows = [["w", "White"], ["b", "Black"]].map(function (pair) {
-      var key = pair[0], label = pair[1];
-      var seat = data[key] || freshSeat();
-      var here = seat.name && now - seat.ts < STALE;
-      var mine = S.room.on && S.room.seat === key;
-      return '<div class="seat' + (mine ? " me" : "") + '"><span>' + label + "</span><span>" +
-        (here ? seat.name : "empty") + '</span><span class="chip">' +
-        (mine ? "YOU" : here ? "HERE" : "WAITING") + "</span></div>";
+  function relaySend(p, quiet) {
+    if (!subscribed) return false;
+    p.by = MY_ID;                 /* the sender — a move's own from/to are squares */
+    p.n = nextNonce();
+    p.ts = Date.now();
+    p.ch = subscribed;
+    remember(p.n);
+    var sent = false;
+    if (localChannel) { try { localChannel.postMessage(p); sent = true; } catch (e) { } }
+    try {
+      localStorage.setItem(BUS_KEY, JSON.stringify({ n: p.n, p: p }));
+      sent = true;
+    } catch (e) { }
+    var raw = JSON.stringify(p);
+    BROKERS.forEach(function (b) {
+      if (b.state === "ok" && b.client) {
+        try { b.client.publish(RELAY_TOPIC + subscribed, raw); sent = true; } catch (e) { }
+      }
     });
-    $("seatList").innerHTML = rows.join("");
-    $("roomNote").textContent = S.room.on
-      ? "You are " + (S.room.seat === "w" ? "White" : "Black") + " in the fixed room. The other tab plays the other colour; moves come through as they are played."
-      : "One fixed room, no codes to type. Two tabs on this device can play each other through it — the tab that joins first is White.";
+    return sent;
   }
 
-  $("joinBtn").addEventListener("click", function () {
-    if (S.room.on) { openSheet("roomSheet"); return; }
-    S.room.name = myName();
-    var got = roomJoin();
-    if (got.error) { $("roomNote").textContent = got.error; return; }
-    roomPush();
-    paintRoom();
-    closeSheet("roomSheet");
-  });
-  $("leaveBtn").addEventListener("click", function () {
-    var data = roomRead();
-    if (data && S.room.seat) {
-      if (data[S.room.seat] && data[S.room.seat].name === S.room.name) data[S.room.seat] = freshSeat();
-      roomWrite(data);
+  /* the localStorage bus: whatever the local channel cannot reach, this can */
+  function relayBusPoll() {
+    var raw = null;
+    try { raw = localStorage.getItem(BUS_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var got = null;
+    try { got = JSON.parse(raw); } catch (e) { return; }
+    if (!got || !got.n || got.n === busSeen) return;
+    busSeen = got.n;
+    if (got.p) onPacket(got.p);
+  }
+
+  function paintRelays(text) {
+    var line = document.getElementById("relayLine");
+    if (!line) return;
+    if (text) { line.textContent = text; return; }
+    var live = BROKERS.filter(function (b) { return b.state === "ok"; }).length;
+    var dots = BROKERS.map(function (b) {
+      var colour = b.state === "ok" ? "#4ade80" : b.state === "wait" ? "#ffb020" : b.state === "bad" ? "#ff4d6d" : "rgba(127,147,173,0.5)";
+      return '<span style="color:' + colour + '">●</span> ' + b.name;
+    }).join("  ");
+    line.innerHTML = dots + '<br>' + (live ? live + " relay" + (live === 1 ? "" : "s") + " connected · tabs on this device too"
+      : "looking for a relay… tabs on this device always work");
+  }
+
+  /* ---------- lobby presence ---------- */
+  var PEER_TTL = 12000;
+
+  function lobbyEnter() {
+    if (lobby.on) { paintLobby(); return { on: true }; }
+    lobby.on = true;
+    lobby.peers = {};
+    relayJoin("lobby");
+    relayStart();
+    relaySend({ t: "HI", name: myName(), inMatch: false });
+    if (!lobby.beatTimer) lobby.beatTimer = setInterval(lobbyBeat, 2500);
+    if (!lobby.pruneTimer) lobby.pruneTimer = setInterval(function () { paintLobby(); }, 1500);
+    paintLobby();
+    return { on: true };
+  }
+
+  function lobbyBeat() {
+    if (!lobby.on) return;
+    relaySend({ t: "SYNC", name: myName(), inMatch: !!S.match });
+  }
+
+  function lobbyLeave() {
+    if (!lobby.on) return;
+    relaySend({ t: "BYE" });
+    lobby.on = false;
+    lobby.peers = {};
+    if (lobby.beatTimer) { clearInterval(lobby.beatTimer); lobby.beatTimer = null; }
+    if (lobby.pruneTimer) { clearInterval(lobby.pruneTimer); lobby.pruneTimer = null; }
+    if (!S.match) relayJoin("lobby");
+    paintLobby();
+  }
+
+  function lobbyPeers() {
+    var now = Date.now(), out = [];
+    Object.keys(lobby.peers).forEach(function (id) {
+      var p = lobby.peers[id];
+      if (now - p.ts > PEER_TTL) { delete lobby.peers[id]; return; }
+      out.push(p);
+    });
+    out.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    return out;
+  }
+
+  function paintLobby() {
+    var list = document.getElementById("lobbyList");
+    if (!list) return;
+    var me = document.getElementById("lobbyMe");
+    var seat = document.getElementById("lobbyMeSeat");
+    if (me) me.textContent = myName();
+    if (seat) seat.textContent = S.match ? (S.match.seat === "w" ? "WHITE" : "BLACK") : lobby.on ? "IN THE LOBBY" : "NOT IN YET";
+
+    var peers = lobbyPeers();
+    if (!lobby.on) {
+      list.innerHTML = '<p style="color:#7f93ad;">You are not in the lobby yet. Tap <b>Enter the lobby</b> and your name joins the list for everyone else who is there.</p>';
+    } else if (!peers.length) {
+      list.innerHTML = '<p style="color:#7f93ad;">Nobody else here yet. Leave this sheet open — names appear as they arrive.</p>';
+    } else {
+      list.innerHTML = peers.map(function (p) {
+        return '<div class="seat"><span>' + p.name + '</span><span class="chip">' +
+          (p.inMatch ? "PLAYING" : "HERE") + '</span><button data-challenge="' + p.id + '"' +
+          (p.inMatch ? " disabled" : "") + '>⚔</button></div>';
+      }).join("");
     }
-    S.room.on = false;
-    S.mode = "cpu";
-    syncRoomButtons();
-    paintRoom();
+    var enter = document.getElementById("lobbyIn");
+    if (enter) enter.textContent = lobby.on ? "In the lobby" : "Enter the lobby";
+    if (enter) enter.classList.toggle("on", lobby.on);
+    var out = document.getElementById("lobbyOut");
+    if (out) out.style.display = lobby.on ? "" : "none";
+    paintRelays();
+  }
+
+  /* ---------- challenges: a temporary room, like a 1v1 in Pindutan ---------- */
+  function challengePeer(id) {
+    var peer = lobby.peers[id];
+    if (!peer) return;
+    if (!lobby.on) { lobbyNote("Enter the lobby first."); return; }
+    if (S.match) { lobbyNote("Finish the game you are in first."); return; }
+    var matchId = "M" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 4).toUpperCase();
+    pendingChallenge = { id: matchId, to: id, name: peer.name, at: Date.now() };
+    relaySend({ t: "INVITE", kind: "duel", to: id, matchId: matchId, name: myName() });
+    lobbyNote("⚔ Challenge sent to " + peer.name + " — White. Waiting for them to accept.");
+  }
+
+  function showInvite(inv) {
+    pendingInvite = inv;
+    var bar = document.getElementById("inviteBar");
+    document.getElementById("inviteText").textContent = inv.name + " challenges you to a game.";
+    bar.classList.add("open");
+  }
+
+  function hideInvite() {
+    pendingInvite = null;
+    var bar = document.getElementById("inviteBar");
+    if (bar) bar.classList.remove("open");
+  }
+
+  function beginMatch(matchId, seat, oppId, oppName, myTurnMoves) {
+    S.match = { id: matchId, seat: seat, oppId: oppId, oppName: oppName || "Opponent", seq: myTurnMoves || 0, seen: Date.now() };
+    S.mode = "online";
+    pendingChallenge = null;
+    hideInvite();
+    closeSheet("lobbySheet");
+    lobbyNote("");
+    relayJoin("m/" + matchId);
+    relaySend({ t: "PING", matchId: matchId });
+    S.pos = chStart();
+    S.hist = [];
+    S.sel = -1;
+    S.over = null;
+    S.last = null;
+    S.pending = null;
+    S.busy = false;
+    S.flip = seat === "b";
+    syncModeButtons();
+    paintMatchBar();
+    render();
+    lobbyBeat();
+    if (!lobby.beatTimer) lobby.beatTimer = setInterval(lobbyBeat, 2500);
+    if (!S.match.tick) S.match.tick = setInterval(matchTick, 2500);
+    return S.match;
+  }
+
+  function paintMatchBar() {
+    var bar = document.getElementById("matchBar");
+    if (!bar) return;
+    if (!S.match) { bar.style.display = "none"; return; }
+    bar.style.display = "flex";
+    var quiet = Date.now() - S.match.seen > 9000;
+    document.getElementById("matchText").textContent = (S.match.seat === "w" ? "White" : "Black") +
+      " against " + S.match.oppName + (quiet ? " · no word from them…" : "");
+  }
+
+  function matchTick() {
+    if (!S.match) return;
+    relaySend({ t: "PING", matchId: S.match.id });
+    paintMatchBar();
+  }
+
+  function endMatch(why, winner) {
+    if (!S.match) return;
+    relaySend({ t: "OVER", matchId: S.match.id, why: why, winner: winner || "" });
+    if (S.match.tick) clearInterval(S.match.tick);
+    S.match = null;
+    S.mode = lobby.on ? "online" : "cpu";
+    paintMatchBar();
+    syncModeButtons();
+    relayJoin("lobby");
+  }
+
+  function lobbyNote(text) {
+    var note = document.getElementById("lobbyNote");
+    if (note && text) note.textContent = text;
+  }
+
+  /* ---------- what arrives ---------- */
+  function onPacket(p) {
+    if (!p || typeof p !== "object" || !p.t || !p.by) return;
+    if (p.by === MY_ID) return;
+    if (p.n && !remember(p.n)) return;
+
+    if (p.t === "HI" || p.t === "SYNC") {
+      if (!lobby.on) return;
+      lobby.peers[p.by] = { id: p.by, name: String(p.name || "Player").slice(0, 14), ts: Date.now(), inMatch: !!p.inMatch };
+      if (p.t === "HI") relaySend({ t: "SYNC", name: myName(), inMatch: !!S.match });
+      paintLobby();
+      if (S.match) paintMatchBar();
+      return;
+    }
+
+    if (p.t === "BYE") { delete lobby.peers[p.by]; paintLobby(); return; }
+
+    if (p.t === "INVITE") {
+      if (p.to && p.to !== MY_ID) return;
+      if (S.match) { relaySend({ t: "BUSY", to: p.by, name: myName() }); return; }
+      showInvite({ by: p.by, name: String(p.name || "Player").slice(0, 14), matchId: p.matchId });
+      return;
+    }
+
+    if (p.t === "BUSY") {
+      if (pendingChallenge && pendingChallenge.to === p.by) {
+        lobbyNote("They are in a game already.");
+        pendingChallenge = null;
+      }
+      return;
+    }
+
+    if (p.t === "ACCEPT") {
+      if (p.to && p.to !== MY_ID) return;
+      if (!pendingChallenge || pendingChallenge.id !== p.matchId) return;
+      var seat = "w";
+      beginMatch(p.matchId, seat, p.by, p.name);
+      relaySend({ t: "START", matchId: p.matchId, white: MY_ID, black: p.by, name: myName() });
+      return;
+    }
+
+    if (p.t === "START") {
+      if (p.matchId !== (pendingInvite && pendingInvite.matchId)) return;
+      var mySeat = p.white === MY_ID ? "w" : p.black === MY_ID ? "b" : "";
+      if (!mySeat) return;
+      beginMatch(p.matchId, mySeat, p.by, p.name);
+      return;
+    }
+
+    if (p.t === "MOVE") {
+      if (!S.match || p.matchId !== S.match.id) return;
+      S.match.seen = Date.now();
+      var mv = chFindMove(S.pos, p.from, p.to, p.promo || "");
+      if (!mv) return;                          /* not a legal move here: nothing to do */
+      applyMove(mv, true);
+      S.match.seen = Date.now();
+      paintMatchBar();
+      return;
+    }
+
+    if (p.t === "NEWGAME" && S.match && p.matchId === S.match.id) {
+      newGame();
+      return;
+    }
+
+    if (p.t === "PING") {
+      if (S.match && p.matchId === S.match.id) { S.match.seen = Date.now(); paintMatchBar(); }
+      return;
+    }
+
+    if (p.t === "RESIGN" && S.match && p.matchId === S.match.id) {
+      S.over = { over: true, reason: "resign", winner: S.match.seat };
+      render();
+      showOver();
+      endMatch("resign", S.match.seat);
+      return;
+    }
+
+    if (p.t === "DRAW" && S.match && p.matchId === S.match.id) {
+      S.match.offer = Date.now();
+      $("statusLine").textContent = S.match.oppName + " offers a draw — tap Draw to agree";
+      $("statusLine").className = "subline bad";
+      return;
+    }
+
+    if (p.t === "DRAWOK" && S.match && p.matchId === S.match.id) {
+      S.over = { over: true, reason: "agreed", winner: "" };
+      render();
+      showOver();
+      endMatch("agreed", "");
+      return;
+    }
+
+    if (p.t === "OVER" && S.match && p.matchId === S.match.id) {
+      if (!S.over) {
+        S.over = p.why === "resign"
+          ? { over: true, reason: "resign", winner: p.winner || "" }
+          : { over: true, reason: "agreed", winner: "" };
+        render();
+        showOver();
+      }
+      endMatch(p.why, p.winner);
+      return;
+    }
+  }
+
+  /* ---------- the lobby's buttons ---------- */
+  $("lobbyIn").addEventListener("click", function () {
+    lobbyEnter();
+    relayStart();
+  });
+  $("lobbyOut").addEventListener("click", function () {
+    if (S.match) { if (!window.confirm("Leave the game you are in?")) return; }
+    lobbyLeave();
+    if (S.match) endMatch("left", "");
     syncModeButtons();
     render();
   });
+  $("lobbyList").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("button[data-challenge]") : null;
+    if (!b) return;
+    challengePeer(b.getAttribute("data-challenge"));
+  });
+  $("inviteYes").addEventListener("click", function () {
+    if (!pendingInvite) return;
+    var inv = pendingInvite;
+    relaySend({ t: "ACCEPT", to: inv.by, matchId: inv.matchId, name: myName() });
+    beginMatch(inv.matchId, "b", inv.by, inv.name);
+    hideInvite();
+    $("lobbyNote").textContent = "You are Black against " + inv.name + ". Good luck.";
+  });
+  $("inviteNo").addEventListener("click", function () {
+    if (!pendingInvite) return;
+    relaySend({ t: "DECLINE", to: pendingInvite.by });
+    hideInvite();
+  });
+  $("matchLeave").addEventListener("click", function () {
+    if (!S.match) return;
+    relaySend({ t: "OVER", matchId: S.match.id, why: "left", winner: S.match.seat === "w" ? "b" : "w" });
+    endMatch("left", "");
+    render();
+  });
+  $("nameSave").addEventListener("click", function () {
+    var v = String($("nameInput").value || "").replace(/[^\w .\-]/g, "").trim().slice(0, 14);
+    if (v.length < 2) { lobbyNote("A name needs two characters."); return; }
+    try { localStorage.setItem("pindutan_nick", v); } catch (e) { }
+    lobbyNote("You are " + v + " in the lobby.");
+    paintLobby();
+    if (lobby.on) relaySend({ t: "HI", name: v, inMatch: !!S.match });
+  });
 
-  setInterval(roomBeat, HEARTBEAT);
-  setInterval(roomPull, 700);
+  setInterval(relayBusPoll, 700);
 
   /* ---------- controls ---------- */
   function syncModeButtons() {
@@ -1253,14 +1617,15 @@
     var b = e.target.closest ? e.target.closest("button[data-mode]") : null;
     if (!b) return;
     var mode = b.getAttribute("data-mode");
-    if (mode === "room") {
-      S.room.name = myName();
-      openSheet("roomSheet");
-      paintRoom();
+    if (mode === "online") {
+      if (S.match) { openSheet("lobbySheet"); paintLobby(); return; }
+      openSheet("lobbySheet");
+      paintLobby();
+      if (!lobby.on) lobbyEnter();
       return;
     }
+    if (S.match) { if (!window.confirm("Leave the game you are in?")) return; endMatch("left", ""); }
     S.mode = mode;
-    if (mode !== "room") { S.room.on = false; syncRoomButtons(); }
     syncModeButtons();
     newGame();
   });
@@ -1290,7 +1655,9 @@
     S.pending = null;
     S.busy = false;
     closeSheet("overSheet");
-    if (S.mode === "room" && S.room.on && S.room.seat === "w") roomPush();
+    if (S.mode === "online" && S.match) {
+      S.match.seat === "w" ? relaySend({ t: "NEWGAME", matchId: S.match.id }) : null;
+    }
     render();
     if (S.mode === "cpu" && S.human === "b") afterMove();
   }
@@ -1312,13 +1679,21 @@
     S.sel = -1;
     closeSheet("overSheet");
     render();
-    if (S.mode === "room" && S.room.on) roomPush();
+
   });
 
   $("flipBtn").addEventListener("click", function () { S.flip = !S.flip; render(); });
 
   $("resignBtn").addEventListener("click", function () {
     if (S.over) return;
+    if (S.mode === "online" && S.match) {
+      relaySend({ t: "RESIGN", matchId: S.match.id });
+      S.over = { over: true, reason: "resign", winner: S.match.seat === "w" ? "b" : "w" };
+      render();
+      showOver();
+      endMatch("resign", S.match.seat === "w" ? "b" : "w");
+      return;
+    }
     var loser = S.mode === "cpu" ? S.human : S.pos.turn;
     S.over = { over: true, reason: "resign", winner: chOther(loser) };
     S.sel = -1;
@@ -1328,6 +1703,20 @@
 
   $("drawBtn").addEventListener("click", function () {
     if (S.over) return;
+    if (S.mode === "online" && S.match) {
+      if (S.match.offer) {
+        relaySend({ t: "DRAWOK", matchId: S.match.id });
+        S.over = { over: true, reason: "agreed", winner: "" };
+        render();
+        showOver();
+        endMatch("agreed", "");
+        return;
+      }
+      relaySend({ t: "DRAW", matchId: S.match.id });
+      $("statusLine").textContent = "draw offered — waiting for " + S.match.oppName;
+      $("statusLine").className = "subline bad";
+      return;
+    }
     if (S.mode === "two") {
       if (window.confirm("Both players agree to a draw?")) {
         S.over = { over: true, reason: "agreed", winner: "" };
@@ -1424,7 +1813,7 @@
     openSheet("boardSheet");
   });
   $("pieceBtn").addEventListener("click", function () { paintPieceGrid(); openSheet("pieceSheet"); });
-  $("roomBtn").addEventListener("click", function () { paintRoom(); openSheet("roomSheet"); });
+  $("lobbyBtn").addEventListener("click", function () { paintLobby(); openSheet("lobbySheet"); paintRelays(); });
 
   $("tintRange").addEventListener("input", function () {
     S.tint = parseInt(this.value, 10) || 0;
@@ -1434,7 +1823,7 @@
   });
 
   $("strip").addEventListener("click", function () {
-    $("strip").innerHTML = "chess <b>c1</b> · " + S.hist.length + " moves played · <b id=\"modeTag\">" +
+    $("strip").innerHTML = "chess <b>c2</b> · " + S.hist.length + " moves played · <b id=\"modeTag\">" +
       (S.mode === "room" ? "the room" : S.mode === "two" ? "2 players" : "vs " + S.level) + "</b>";
   });
 
@@ -1443,8 +1832,9 @@
   paintBoardColors();
   document.body.setAttribute("data-pieces", S.pieces);
   syncModeButtons();
-  syncRoomButtons();
-  paintRoom();
+  paintMatchBar();
+  paintLobby();
+  paintRelays();
   render();
   afterMove();          /* if you chose Black against the CPU, it opens */
 
@@ -1458,7 +1848,23 @@
     tap: tapSquare,
     newGame: newGame,
     setMode: function (m) { S.mode = m; syncModeButtons(); },
-    room: { join: roomJoin, push: roomPush, pull: roomPull, read: roomRead, write: roomWrite }
+    net: {
+      id: MY_ID,
+      send: relaySend,
+      receive: onPacket,
+      enter: lobbyEnter,
+      leave: lobbyLeave,
+      peers: lobbyPeers,
+      paint: paintLobby,
+      challenge: challengePeer,
+      accept: function () { var b = document.getElementById("inviteYes"); if (b) b.click(); },
+      decline: function () { var b = document.getElementById("inviteNo"); if (b) b.click(); },
+      match: function () { return S.match; },
+      relays: function () { return BROKERS.map(function (b) { return { name: b.name, state: b.state }; }); },
+      note: function () { return document.getElementById("lobbyNote").textContent; },
+      invite: function () { return pendingInvite; },
+      age: function (id, ms) { if (lobby.peers[id]) lobby.peers[id].ts = Date.now() - ms; }
+    }
   };
 })();
 </script>

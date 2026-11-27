@@ -899,6 +899,22 @@
     .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0; }
     .sheet-head h2 { margin: 0; font-size: 0.9rem; letter-spacing: 0.24em; color: var(--amber); font-weight: 900; }
     .hero-sub { font-size: 0.55rem; letter-spacing: 0.16em; color: var(--mut); margin-top: 3px; text-transform: uppercase; }
+    /* the little line that says which copy this is, and whether a newer one is out */
+    .build-row { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+    .build-line {
+      font-size: 0.5rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 7px; cursor: pointer;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); color: var(--mut);
+      font-family: inherit;
+    }
+    .build-line.ok { color: var(--lime); border-color: rgba(74, 222, 128, 0.45); }
+    .build-line.busy { color: var(--cyan); border-color: rgba(61, 214, 245, 0.5); }
+    .build-line.warn { color: var(--amber); border-color: rgba(255, 176, 32, 0.55); }
+    .build-runner {
+      font-size: 0.5rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--cyan); text-decoration: none; border-bottom: 1px dotted rgba(61, 214, 245, 0.5);
+    }
+    .build-runner[hidden] { display: none; }
     .room-item { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border-radius: 11px; background: #0b111b; border: 1px solid var(--line); }
     .room-item + .room-item { margin-top: 6px; }
     .room-tag {
@@ -1596,7 +1612,11 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.6</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.7</div>
+          <div class="build-row">
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v22.7 · checking…</button>
+            <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
+          </div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1823,7 +1843,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v22.6";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v22.7";     /* first, because the update log reads it on the way in */
     const pageTimers = [];
     (function trackIntervals() {
       const si = window.setInterval;
@@ -6654,7 +6674,75 @@
       }
     } catch (e) { }
 
-    try { selfUpdateCheck().catch(() => { }); } catch (e) { }
+    /* =========================================================
+       v22.7 — the page is its own runner.
+       It says which copy it is, looks for a newer one every time it opens and
+       every time it comes back to the front, and if GitHub cannot be reached
+       it says so and offers the runner page, which knocks on the same door
+       from outside. None of this is needed to play: the copy it already has
+       always works.
+       ========================================================= */
+    const RUNNER_STATE = { last: null, at: 0 };
+
+    function runnerHref() {
+      try {
+        if (location.protocol === "http:" || location.protocol === "https:") {
+          return new URL("../pindutan-run.html", location.href).href;
+        }
+      } catch (e) { }
+      return "";               /* a copy on a phone has no runner beside it */
+    }
+
+    function buildNote(text, kind) {
+      const el = document.getElementById("buildLine");
+      if (!el) return false;
+      el.textContent = BUILD_TAG + " · " + text;
+      el.className = "build-line" + (kind ? " " + kind : "");
+      el.dataset.state = kind || "";
+      const runner = document.getElementById("runnerLink");
+      const offline = kind === "warn" && RUNNER_STATE.last && RUNNER_STATE.last.state === "offline";
+      if (runner) {
+        const href = runnerHref();
+        runner.hidden = !(offline && href);
+        if (href) runner.href = href;
+      }
+      return true;
+    }
+
+    async function updateWatch(why, opts) {
+      const now = Date.now();
+      if (why === "focus" && now - RUNNER_STATE.at < 30000) return RUNNER_STATE.last;   /* not on every glance */
+      RUNNER_STATE.at = now;
+      buildNote("checking…", "busy");
+      let res;
+      try { res = await selfUpdateCheck(opts || {}); }
+      catch (e) { res = { state: "offline" }; }
+      RUNNER_STATE.last = res;
+      const state = res && res.state;
+      if (state === "same") buildNote("newest", "ok");
+      else if (state === "swapped") buildNote("newer copy · opening", "busy");
+      else if (state === "skipped") buildNote("just updated", "ok");
+      else if (state === "bad-page") buildNote("a new build is out but it came through broken · tap to try again", "warn");
+      else if (state === "no-fetch") buildNote("no way to check from here", "warn");
+      else buildNote("no line to GitHub · playing this copy · tap to try again", "warn");
+      return res;
+    }
+
+    try {
+      const buildBtn = document.getElementById("buildLine");
+      if (buildBtn) buildBtn.addEventListener("click", () => { updateWatch("tap"); });
+      const runnerLink = document.getElementById("runnerLink");
+      if (runnerLink) runnerLink.addEventListener("click", () => {
+        const href = runnerHref();
+        if (href) location.href = href; else buildNote("no runner beside this copy", "warn");
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) updateWatch("focus");
+      });
+      window.addEventListener("online", () => updateWatch("online"));
+    } catch (e) { }
+
+    try { updateWatch("boot"); } catch (e) { }
     try { lbPickLadder(UPDATE_FEED).catch(() => { }); } catch (e) { }
   </script>
 </body>

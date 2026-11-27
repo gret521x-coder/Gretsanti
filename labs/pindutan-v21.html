@@ -3472,7 +3472,8 @@
         name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best,
         me: true, local: true,
         streak: rec.streak | 0, streakKnown: rec.streak != null,
-        last: rec.seen ? Math.floor(rec.seen / 1000) : 0
+        /* when this record last took a battle — records written before v22.3 only have stamp */
+        last: (rec.seen || rec.stamp) ? Math.floor((rec.seen || rec.stamp) / 1000) : 0
       };
     }
 

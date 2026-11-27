@@ -653,12 +653,25 @@
     // Clean payload definitions without visible .html filenames, Luh removed
     const DEFAULT_APPS = [
         { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
-        { code: "PLD-02", icon: "🎮", title: "Pindutan v21", desc: "Neon block arena · opens on unaux", url: "https://aidekupal.unaux.com/pindutan.html", newTab: true },
+        { code: "PLD-02", icon: "🎮", title: "Pindutan", desc: "Always the newest build · from the repo", url: "https://aidekupal.unaux.com/pindutan-run.html", newTab: true },
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
         { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v4.html", newTab: true }
     ];
+
+    // Pindutan now opens the runner (pindutan-run.html), which reads the build feed
+    // and plays whatever is newest, so every old game link moves to it.
+    const PINDUTAN_RUN_URL = "https://aidekupal.unaux.com/pindutan-run.html";
+
+    /* the wording the launcher shows for the game, kept in one place — no version
+       number, because the runner is always the newest build */
+    const PINDUTAN_NAME = "Pindutan";
+    const PINDUTAN_DESC = "Always the newest build · from the repo";
+
+    // Saved grids keep whatever filenames they were stored with — move the pages
+    // that were renamed so an existing localStorage still opens the live ones.
+    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html", "pindutan.html": PINDUTAN_RUN_URL, "https://aidekupal.unaux.com/pindutan.html": PINDUTAN_RUN_URL, "labs/pindutan-v21.html": PINDUTAN_RUN_URL, "labs/pindutan-v20.html": PINDUTAN_RUN_URL, "labs/pindutan-v18.html": PINDUTAN_RUN_URL, "pindutan-v21.html": PINDUTAN_RUN_URL, "pindutan-v20.html": PINDUTAN_RUN_URL, "pindutan-v18.html": PINDUTAN_RUN_URL };
 
     let missionStart = Date.now();
     let pendingBardagulanUrl = null;
@@ -796,14 +809,8 @@
     // =========================================================================
     // PAYLOAD LAUNCHER GRID
     // =========================================================================
-    // Saved grids keep whatever filenames they were stored with — move the two
-    // that were renamed so an existing localStorage still opens the live pages.
-    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html", "labs/pindutan-v21.html": "https://aidekupal.unaux.com/pindutan.html", "labs/pindutan-v20.html": "https://aidekupal.unaux.com/pindutan.html", "labs/pindutan-v18.html": "https://aidekupal.unaux.com/pindutan.html", "pindutan-v21.html": "https://aidekupal.unaux.com/pindutan.html", "pindutan-v20.html": "https://aidekupal.unaux.com/pindutan.html", "pindutan-v18.html": "https://aidekupal.unaux.com/pindutan.html" };
-
-    /* the wording the game asks for, kept in one place */
-    const PINDUTAN_NAME = "Pindutan v20";
-    const PINDUTAN_DESC = "Neon block arena · opens on unaux";
-
+    // Saved grids keep whatever filenames they were stored with — the tables above
+    // move them, so an existing localStorage still opens the live pages.
     function upgradeAppLinks(apps) {
         let touched = false;
         apps.forEach(app => {

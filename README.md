@@ -98,14 +98,14 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v21** — 193: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+- **Pindutan v21** — 194: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
   wordmark, the room line beside the word Lobby, a card that is a name and Playing/Available and nothing
   else — the ladder is the only place that keeps score), the lobby chat (words
   ride the relay, never stored, markup shown as words, 80 characters, one message a second, floods turned
   away, five lines tall), the three-second countdown (a frozen board and a frozen CPU until GO), the storm
   (lightning for the whole room — three jagged vector bolts, each eight points of zig-zag, drawn as SVG so
-  they stay sharp on any screen — a four-second fanfare when the maker arrives, a maker-only ⚡ beside the
-  relays that broadcasts, a second bolt inside 600 ms held back), five themes that stick, the player card
+  they stay sharp on any screen — a four-second fanfare the moment the maker's key is taken, a maker-only
+  ⚡ beside the relays that broadcasts, a second bolt inside 600 ms held back), five themes that stick, the player card
   behind a row tap (wins, best, rate, streak, last seen — no losses), the ladder note that speaks of
   Cloudflare when the board lives there, the CPU rival and its three levels, the name gate,
   the hall of fame (the note names whatever host the feed points at), the GLIDE panel, hold-to-slide, the

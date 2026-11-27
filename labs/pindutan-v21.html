@@ -1296,7 +1296,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.6</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.7</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1599,7 +1599,7 @@
 
     function setCreator(on) {
       creatorOn = !!on;
-      if (!creatorOn) { kupalLightOn = false; autoPlan = null; }
+      if (!creatorOn) { kupalLightOn = false; autoPlan = null; royalSent = false; }
       /* older builds left the crown in the browser for good — clear it */
       try {
         localStorage.removeItem("pindutan_creator");
@@ -1608,6 +1608,20 @@
       } catch (e) {}
       const storm = document.getElementById("stormBtn");
       if (storm) storm.style.display = creatorOn ? "" : "none";
+
+      /* the entrance: the moment the key is taken, not at boot — the lobby is
+         already joined by then, so this is the only place it can fire, and it
+         happens on a real tap, which is also what lets the fanfare be heard */
+      if (creatorOn && !royalSent) {
+        royalSent = true;
+        try {
+          if (typeof sendPacket === "function" && roomCode) {
+            sendPacket({ t: "FX", kind: "royal", name: myDisplayName() });
+          }
+          runStorm("royal");
+        } catch (e) { }
+      }
+
       applyCreatorLock();
       if (typeof renderLobby === "function" && typeof roomCode !== "undefined" && roomCode) renderLobby();
       if (typeof lbFetch === "function" && typeof lbMode !== "undefined") lbFetch(lbMode, true);
@@ -5706,7 +5720,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.6";
+    const BUILD_TAG = "v21.7";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

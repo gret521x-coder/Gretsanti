@@ -26,7 +26,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
 | `pindutan.html` | 25 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then three chairs (Pindutan, Chess, one still waiting), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena` and `feed.chess` |
-| `labs/chess.html` | 73 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge**, six page themes, eight board palettes with a tint slider, three piece styles |
+| `labs/chess.html` | 91 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge, a coin toss for colours, chess clocks, rematch, PGN/FEN and a scoresheet you can tap back through**, six page themes, eight board palettes with a tint slider, three piece styles |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
@@ -81,7 +81,7 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    **☰ Games** pill in its header, and it updates itself from `arena` in the feed. Its gate opens **straight on
    the nickname**: the password step is gone, because it is asked one page earlier, in the hub.
 
-`labs/chess.html` is game two: a complete chess app of its own, 73 KB, with its own build tag (`c2`) and its
+`labs/chess.html` is game two: a complete chess app of its own, 91 KB, with its own build tag (`c3`) and its
 own feed field, so it updates itself the same way the arena does.
 
 **Chess — the whole game, not a demo.** The rules are the real ones: castling on both sides with every
@@ -89,8 +89,13 @@ restriction (rights, empty squares, no castling out of, through or into check), 
 pieces, check, checkmate, stalemate, the fifty-move rule, threefold repetition and dead positions (K vs K, K+B,
 K+N, bishops on one colour). The move generator is proved by perft — 20 / 400 / 8902 from the start position,
 48 / 2039 from Kiwipete, 6 / 264 from the promotion position, 44 / 1486 from the tricky middle game — and the
-scoresheet is written in real SAN, with disambiguation and `+` / `#`. Play the CPU (Beginner, Intermediate,
-Advanced — alpha-beta with a quiescence pass and piece-square tables) or two players on one page. The look is
+scoresheet is written in real SAN, with disambiguation and `+` / `#`. Play the CPU or two players on one page.
+
+**The three CPU levels are three different players.** Beginner looks one move ahead, does not follow captures
+through and throws a move away one time in five; Intermediate looks two moves ahead, takes anything left
+hanging, and still slips once in twelve; Advanced looks three moves ahead, follows every capture to the end and
+never slips. The search is a White-positive alpha-beta with a quiescence pass, and the evaluation knows about
+material, piece-square tables, a bishop pair and doubled pawns. The look is
 yours: six page themes, eight board palettes with a tint slider that recolours both squares, and three piece
 styles (classic, outline, neon). Everything you pick is remembered.
 
@@ -98,11 +103,22 @@ styles (classic, outline, neon). Everything you pick is remembered.
 Mosquitto) carry one lobby channel (`kdl/chess/v1/lobby`); a BroadcastChannel and a storage bus cover the tabs
 on one device for a browser that blocks WebSockets or the relay library. Names appear in the lobby as players
 arrive and drop off after twelve silent seconds. Tap **⚔** beside a name and a temporary room
-(`kdl/chess/v1/m/<id>`) is opened for the two of you — the challenger is White, the invitee gets an
-**Accept / Decline** bar, and the room closes when the game does. Moves travel as squares and are re-checked
-with the local rules before they are played, so a stale or bogus packet cannot put an illegal piece on your
-board; resign, draw offers and rematches travel the same way, and a player who goes quiet is named on the match
-bar rather than left hanging.
+(`kdl/chess/v1/m/<id>`) is opened for the two of you, with an **Accept / Decline** bar at the other end.
+
+**The colours are tossed, not handed out.** Both players put a coin in; if the two coins agree the inviter has
+White, if they disagree the other player does. Each side works the answer out from the same two numbers, so both
+of you agree, and neither can steer it. A toss bar slides in and names the colours, and the board turns round
+for whoever gets Black. A rematch tosses again, so the colours change hands.
+
+**Clocks, if you want them.** 3+2, 5+0, 10+0, 15+10, or none at all. The increment is added as you move, the
+clocks travel with every move so both sides agree on the time, and a flag that falls ends the game for both of
+you — sent as a `FLAG` packet, not left to the loser to admit. The room stays open when a game ends so a
+**rematch** is one tap away, and **PGN / FEN** are one more (both copyable). Tap any move on the scoresheet to
+look at that position; the live game never moves while you look.
+
+Moves travel as squares and are re-checked with the local rules before they are played, so a stale or bogus
+packet cannot put an illegal piece on your board; resign, draw offers and rematches travel the same way, and a
+player who goes quiet is named on the match bar rather than left hanging.
 
 The feed names three addresses, one per link: `html` (the hub the runner opens), `arena` (the game the hub
 opens, and the file the game updates itself from) and `menu`/`menuBuild` (the hub's own address and tag).
@@ -110,7 +126,7 @@ Pointing `html` at the game instead takes the runner straight to Pindutan and sk
 upload.
 
 **And the hub keeps itself current too.** On opening — and on a tap of its strip — the hub compares its own
-tag with `menuBuild` in the feed (currently `m4`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+tag with `menuBuild` in the feed (currently `m7`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
 size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a hub that
 was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m4 · newest ·
 arena v22.9` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
@@ -202,7 +218,7 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
-- **Pindutan v17** — 48 · **Chess** — 45 · **hub and runner** — 25 · **labs pages** — 20 · **leaderboard PHP** — 23 · **leaderboard worker** — 19
+- **Pindutan v17** — 48 · **Chess** — 65 · **hub and runner** — 25 · **labs pages** — 20 · **leaderboard PHP** — 23 · **leaderboard worker** — 19
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

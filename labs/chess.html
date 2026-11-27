@@ -181,6 +181,38 @@
   .seat.me { border-color: rgba(61, 214, 245, 0.4); }
   .promo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .promo button { font-size: 1.3rem; padding: 10px 0; font-family: "Segoe UI Symbol", "DejaVu Sans", sans-serif; }
+  .clock {
+    margin-left: auto; padding: 2px 7px; border-radius: 7px;
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em;
+    background: rgba(61, 214, 245, 0.12); border: 1px solid rgba(61, 214, 245, 0.3); color: #cdf4ff;
+  }
+  .clock + .clock { margin-left: 5px; }
+  .clock.dim { background: rgba(140, 170, 210, 0.08); border-color: var(--line); color: var(--mut); }
+  .clock.low { background: rgba(255, 77, 109, 0.16); border-color: rgba(255, 77, 109, 0.5); color: #ffc9d4; }
+
+  .tossbar {
+    position: fixed; left: 50%; top: 14px; transform: translate(-50%, -120%);
+    z-index: 55; max-width: min(440px, 92vw);
+    padding: 10px 14px; border-radius: 12px; text-align: center;
+    font-size: 0.64rem; letter-spacing: 0.04em; color: #04120a;
+    background: linear-gradient(180deg, #7ef0a3, #43d47a);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+    transition: transform 0.35s ease;
+  }
+  .tossbar.open { transform: translate(-50%, 0); }
+
+  /* coordinates, off by default */
+  body[data-coords="1"] .sq.bottom::after {
+    content: attr(data-file); position: absolute; right: 3px; bottom: 1px;
+    font-size: 0.46rem; font-weight: 800; color: rgba(10, 16, 24, 0.55);
+    font-family: ui-monospace, monospace;
+  }
+  body[data-coords="1"] .sq.left::before {
+    content: attr(data-rank); position: absolute; left: 3px; top: 1px;
+    font-size: 0.46rem; font-weight: 800; color: rgba(10, 16, 24, 0.55);
+    font-family: ui-monospace, monospace;
+  }
+
   .invitebar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: none;
     align-items: center; gap: 8px; padding: 11px 13px calc(11px + env(safe-area-inset-bottom));
@@ -202,7 +234,7 @@
   <div class="shell">
     <header>
       <div class="mark">KDL CHESS</div>
-      <button class="strip" id="strip" title="This build">chess <b>c2</b> · complete rules · <b id="modeTag">vs CPU</b></button>
+      <button class="strip" id="strip" title="This build">chess <b>c3</b> · complete rules · <b id="modeTag">vs CPU</b></button>
     </header>
 
     <div class="boardwrap">
@@ -210,7 +242,9 @@
     </div>
 
     <div class="panel">
-      <div class="turnline"><span class="dot" id="turnDot"></span><span id="turnText">White to move</span></div>
+      <div class="turnline"><span class="dot" id="turnDot"></span><span id="turnText">White to move</span>
+        <span class="clock" id="clockW">–:––</span><span class="clock dim" id="clockB">–:––</span>
+      </div>
       <div class="subline" id="statusLine"></div>
 
       <div class="row" id="modeRow">
@@ -224,6 +258,15 @@
         <button data-level="intermediate">INTERMEDIATE</button>
         <button data-level="advanced">ADVANCED</button>
         <button id="sideBtn">You: White</button>
+      </div>
+
+      <div class="row" id="clockRow">
+        <button data-clock="180,2">3+2</button>
+        <button data-clock="300,0">5+0</button>
+        <button data-clock="600,0">10+0</button>
+        <button data-clock="900,10">15+10</button>
+        <button data-clock="0,0" class="on">∞</button>
+        <button id="tossBtn">🪙 Toss</button>
       </div>
 
       <div class="row" id="matchBar" style="display:none;">
@@ -247,7 +290,9 @@
       <button id="themeBtn" class="grow">🎨 Theme</button>
       <button id="boardBtn" class="grow">🟦 Board</button>
       <button id="pieceBtn" class="grow">♟ Pieces</button>
+      <button id="coordsBtn" class="grow">⌗ Coords</button>
       <button id="lobbyBtn" class="grow">💬 Lobby</button>
+      <button id="shareBtn" class="grow">📄 PGN</button>
     </div>
 
     <p class="tiny">Complete rules: castling, en passant, promotion, check, checkmate, stalemate, the
@@ -305,6 +350,27 @@
     </div>
   </div>
 
+  <div class="tossbar" id="tossBar"><span id="tossText"></span></div>
+
+  <div class="sheet" id="shareSheet">
+    <div class="sheet-box">
+      <div class="sheet-head"><span class="sheet-title">The game, in text</span><button data-close>✕</button></div>
+      <h4>PGN</h4>
+      <textarea id="pgnBox" readonly rows="7" spellcheck="false"
+        style="width:100%; font:inherit; font-size:0.58rem; color:#cfe3f5; background:rgba(6,12,20,0.9);
+               border:1px solid var(--line); border-radius:9px; padding:9px; resize:vertical;"></textarea>
+      <h4>FEN</h4>
+      <textarea id="fenBox" readonly rows="2" spellcheck="false"
+        style="width:100%; font:inherit; font-size:0.56rem; color:#cfe3f5; background:rgba(6,12,20,0.9);
+               border:1px solid var(--line); border-radius:9px; padding:9px; resize:vertical;"></textarea>
+      <div class="row">
+        <button id="copyPgn" class="grow">Copy PGN</button>
+        <button id="copyFen" class="grow">Copy FEN</button>
+      </div>
+      <p>Both boxes select when you tap them, so a copy works even where the clipboard is blocked.</p>
+    </div>
+  </div>
+
   <div class="invitebar" id="inviteBar">
     <span id="inviteText">…</span>
     <button id="inviteYes" class="primary">Accept</button>
@@ -324,6 +390,7 @@
       <p id="overText"></p>
       <div class="row">
         <button id="overNew" class="primary grow">New game</button>
+        <button id="overRematch" class="grow" style="display:none;">Rematch</button>
         <button id="overClose" class="grow">Look at the board</button>
       </div>
     </div>
@@ -800,7 +867,11 @@
     palette: store.get("kdl_chess_palette", "neon"),
     tint: parseInt(store.get("kdl_chess_tint", "0"), 10) || 0,
     pieces: store.get("kdl_chess_pieces", "classic"),
-    match: null
+    match: null,
+    clock: { w: 0, b: 0, base: 0, inc: 0, on: false, tick: null, started: false, last: 0 },
+    coords: store.get("kdl_chess_coords", "0") === "1",
+    review: null,        /* how many moves back you are looking, null = the live position */
+    live: null
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -850,11 +921,14 @@
       var i = S.flip ? 63 - n : n;
       var p = S.pos.board[i];
       var cls = "sq " + squareColor(i);
+      if (chRank(i) === 7) cls += " bottom";
+      if (chFile(i) === 0) cls += " left";
       if (S.last && (S.last.from === i || S.last.to === i)) cls += " last";
       if (S.sel === i) cls += " sel";
       if (fromSet[i]) cls += p || (S.pos.ep === i) ? " take" : " hint";
       if (i === kingSq) cls += " check";
-      html += '<div class="' + cls + '" data-i="' + i + '">';
+      html += '<div class="' + cls + '" data-i="' + i + '" data-file="' + CH_FILES[chFile(i)] +
+        '" data-rank="' + (8 - chRank(i)) + '">';
       if (p) {
         var set = GLYPH[S.pieces] || GLYPH.classic;
         html += '<span class="pc ' + p.c + '">' + set[p.c][p.t] + "</span>";
@@ -886,7 +960,9 @@
       $("turnText").textContent = "Game over";
       return;
     }
-    if (chInCheck(S.pos, S.pos.turn)) { sub.textContent = "Check!"; sub.classList.add("bad"); }
+    if (S.review !== null) {
+      sub.textContent = "looking at move " + S.review + " of " + S.hist.length + " — tap the board to come back";
+    } else if (chInCheck(S.pos, S.pos.turn)) { sub.textContent = "Check!"; sub.classList.add("bad"); }
     else if (S.mode === "online" && S.match) {
       sub.textContent = S.match.seat === S.pos.turn ? "your move — " + S.match.oppName + " is waiting"
         : "waiting for " + S.match.oppName + "…";
@@ -898,14 +974,35 @@
     $("modeTag").textContent = S.mode === "room" ? "the room" : S.mode === "two" ? "2 players" : "vs CPU";
   }
 
+  /* looking back at the game: the board shows any earlier move, the game does not move */
+  function reviewTo(k) {
+    if (k === null || k === undefined || !S.hist.length) {
+      if (S.live) S.pos = S.live;
+      S.live = null;
+      S.review = null;
+      S.sel = -1;
+      render();
+      return;
+    }
+    k = Math.max(1, Math.min(S.hist.length, k));
+    if (S.review === null) S.live = S.pos;
+    S.review = k;
+    /* hist[k].fen is the position before move k+1, so it is the board after move k */
+    S.pos = (S.live && k >= S.hist.length) ? S.live : chFromFen(S.hist[k].fen);
+    S.sel = -1;
+    render();
+  }
+
   function paintMoveList() {
     var wrap = $("movelist"), html = "";
     var rows = Math.ceil(S.hist.length / 2);
     for (var r = 0; r < rows; r++) {
       var white = S.hist[r * 2], black = S.hist[r * 2 + 1];
       html += '<span class="no">' + (r + 1) + ".</span>";
-      html += '<span class="wmove' + (r * 2 === S.hist.length - 1 ? " cur" : "") + '">' + (white ? white.san : "") + "</span>";
-      html += '<span class="bmove' + (r * 2 + 1 === S.hist.length - 1 ? " cur" : "") + '">' + (black ? black.san : "") + "</span>";
+      var wOn = r * 2 === S.hist.length - 1 || (S.review !== null && S.review === r * 2 + 1);
+      var bOn = r * 2 + 1 === S.hist.length - 1 || (S.review !== null && S.review === r * 2 + 2);
+      html += '<span class="wmove' + (wOn ? " cur" : "") + '" data-k="' + (r * 2 + 1) + '">' + (white ? white.san : "") + "</span>";
+      html += '<span class="bmove' + (bOn ? " cur" : "") + '" data-k="' + (r * 2 + 2) + '">' + (black ? black.san : "") + "</span>";
     }
     wrap.innerHTML = html || '<span class="no">1.</span><span></span><span></span>';
     wrap.scrollTop = wrap.scrollHeight;
@@ -927,8 +1024,15 @@
       });
     });
     /* no measurements of who is ahead: just what has left the board */
+    var mat = { w: 0, b: 0 };
+    for (var i = 0; i < 64; i++) {
+      var pc = S.pos.board[i];
+      if (pc && pc.t !== "k" && VALUE[pc.t]) mat[pc.c] += VALUE[pc.t];
+    }
+    var diff = mat.w - mat.b;
+    var lead = diff === 0 ? "" : (diff > 0 ? "  +" + Math.round(diff / 100) : "  \u2212" + Math.round(-diff / 100));
     $("captured").textContent = (taken.w.length ? taken.w.join("") : "") +
-      (taken.w.length && taken.b.length ? "  ·  " : "") + (taken.b.length ? taken.b.join("") : "");
+      (taken.w.length && taken.b.length ? "  \u00b7  " : "") + (taken.b.length ? taken.b.join("") : "") + lead;
   }
 
   /* ---------- moving ---------- */
@@ -941,10 +1045,12 @@
     S.sel = -1;
     var res = chResult(S.pos);
     S.over = res.over ? res : null;      /* chResult always answers — "" is not "over" */
+    if (!quiet) clockAfterMove(chOther(S.pos.turn));   /* their move carries its own clocks */
     if (!quiet && S.mode === "online" && S.match) {
       S.match.seq++;
       relaySend({ t: "MOVE", matchId: S.match.id, seq: S.match.seq, from: mv.from, to: mv.to,
-        promo: mv.promo || "", san: san, name: myName() });
+        promo: mv.promo || "", san: san, name: myName(),
+        cw: Math.round(S.clock.w), cb: Math.round(S.clock.b) });
       paintMatchBar();
     }
     render();
@@ -974,6 +1080,7 @@
   });
 
   function tapSquare(i) {
+    if (S.review !== null) { reviewTo(null); return; }
     if (S.over || S.busy || S.pending) return;
     if (S.mode === "cpu" && S.pos.turn !== S.human) return;
     if (S.mode === "online" && S.match && S.match.seat !== S.pos.turn) return;
@@ -1038,15 +1145,25 @@
 
   function mirror(i) { return (7 - chRank(i)) * 8 + chFile(i); }
 
+  /* always white's point of view: + good for White, - good for Black */
   function evaluate(pos) {
     var score = 0;
+    var bishops = { w: 0, b: 0 }, pawnFiles = { w: [0,0,0,0,0,0,0,0], b: [0,0,0,0,0,0,0,0] };
     for (var i = 0; i < 64; i++) {
       var p = pos.board[i];
       if (!p) continue;
       var table = PST[p.t];
       var idx = p.c === "w" ? i : mirror(i);
       var v = VALUE[p.t] + (table ? table[idx] : 0);
+      if (p.t === "b") bishops[p.c]++;
+      if (p.t === "p") pawnFiles[p.c][chFile(i)]++;
       score += p.c === "w" ? v : -v;
+    }
+    if (bishops.w >= 2) score += 28;                 /* the bishop pair */
+    if (bishops.b >= 2) score -= 28;
+    for (var f = 0; f < 8; f++) {                    /* doubled pawns are a weakness */
+      if (pawnFiles.w[f] > 1) score -= 12 * (pawnFiles.w[f] - 1);
+      if (pawnFiles.b[f] > 1) score += 12 * (pawnFiles.b[f] - 1);
     }
     return score;
   }
@@ -1060,8 +1177,8 @@
     }).sort(function (a, b) { return b.s - a.s; }).map(function (x) { return x.m; });
   }
 
-  function search(pos, depth, alpha, beta, ply) {
-    if (depth <= 0) return quiesce(pos, alpha, beta, 3);
+  function search(pos, depth, alpha, beta, ply, quiet) {
+    if (depth <= 0) return quiet ? quiesce(pos, alpha, beta, 3) : evaluate(pos);
     var moves = chLegal(pos);
     if (!moves.length) {
       if (chInCheck(pos, pos.turn)) return pos.turn === "w" ? -90000 + ply : 90000 - ply;
@@ -1071,7 +1188,7 @@
     var best = pos.turn === "w" ? -Infinity : Infinity;
     for (var i = 0; i < moves.length; i++) {
       var next = chApply(pos, moves[i]);
-      var score = search(next, depth - 1, alpha, beta, ply + 1);
+      var score = search(next, depth - 1, alpha, beta, ply + 1, quiet);
       if (pos.turn === "w") {
         if (score > best) best = score;
         if (best > alpha) alpha = best;
@@ -1084,36 +1201,120 @@
     return best;
   }
 
+  /* captures only, and always in White's numbers — the old version flipped the
+     sign for Black, which made the CPU think a lost position was a won one */
   function quiesce(pos, alpha, beta, depth) {
-    var stand = evaluate(pos) * (pos.turn === "w" ? 1 : -1);
-    if (depth === 0) return stand;
-    if (stand >= beta) return beta;
-    if (stand > alpha) alpha = stand;
-    var caps = chLegal(pos).filter(function (m) { return !!pos.board[m.to] || m.promo; });
-    caps = orderMoves(pos, caps);
+    var stand = evaluate(pos);
+    var white = pos.turn === "w";
+    if (depth <= 0) return stand;
+    if (white) { if (stand >= beta) return beta; if (stand > alpha) alpha = stand; }
+    else { if (stand <= alpha) return alpha; if (stand < beta) beta = stand; }
+    var caps = orderMoves(pos, chLegal(pos).filter(function (m) {
+      return !!pos.board[m.to] || m.promo;
+    }));
     for (var i = 0; i < caps.length; i++) {
       var score = quiesce(chApply(pos, caps[i]), alpha, beta, depth - 1);
-      if (pos.turn === "w") { if (score >= beta) return beta; if (score > alpha) alpha = score; }
+      if (white) { if (score >= beta) return beta; if (score > alpha) alpha = score; }
       else { if (score <= alpha) return alpha; if (score < beta) beta = score; }
     }
-    return alpha;
+    return white ? alpha : beta;
   }
 
-  function chooseCpuMove(pos, level) {
+  /* Each level is a promise:
+       BEGINNER     — one move ahead, no capture follow-ups, wanders, blunders one move in five.
+       INTERMEDIATE — two moves ahead, sees a hanging piece, still slips once in twelve.
+       ADVANCED     — three moves ahead with capture follow-ups, no slips at all.
+     Deeper and quieter is stronger; the blunder roll is what keeps the low levels low. */
+  var LEVELS = {
+    beginner:     { label: "BEGINNER",     depth: 1, quiet: false, noise: 55, blunder: 0.20 },
+    intermediate: { label: "INTERMEDIATE", depth: 2, quiet: false, noise: 20, blunder: 0.08 },
+    advanced:     { label: "ADVANCED",     depth: 3, quiet: true,  noise: 0,  blunder: 0 }
+  };
+
+  function chooseCpuMove(pos, level, opts) {
+    var cfg = LEVELS[level] || LEVELS.intermediate;
+    var rnd = (opts && opts.random) || Math.random;
     var moves = chLegal(pos);
     if (!moves.length) return null;
-    var depth = level === "advanced" ? 3 : level === "intermediate" ? 2 : 1;
-    var noise = level === "beginner" ? 46 : level === "intermediate" ? 14 : 0;
+
+    /* a beginner has to miss things, or it is not a beginner */
+    if (cfg.blunder && rnd() < cfg.blunder) {
+      return moves[Math.floor(rnd() * moves.length) % moves.length];
+    }
+
     moves = orderMoves(pos, moves);
     var best = null, bestScore = pos.turn === "w" ? -Infinity : Infinity;
     for (var i = 0; i < moves.length; i++) {
-      var score = search(chApply(pos, moves[i]), depth - 1,
-        pos.turn === "w" ? -Infinity : Infinity,
-        pos.turn === "w" ? Infinity : -Infinity, 1);
-      if (noise) score += (Math.random() - 0.5) * noise;
+      var score = search(chApply(pos, moves[i]), cfg.depth - 1, -Infinity, Infinity, 1, cfg.quiet);
+      if (cfg.noise) score += (rnd() - 0.5) * cfg.noise;
       if (pos.turn === "w" ? score > bestScore : score < bestScore) { bestScore = score; best = moves[i]; }
     }
     return best;
+  }
+
+  /* ---------- the clocks ---------- */
+  function fmtClock(ms) {
+    if (!S.clock.on) return "\u221e";
+    var t = Math.max(0, Math.round(ms / 1000));
+    var m = Math.floor(t / 60), sec = t % 60;
+    return m + ":" + (sec < 10 ? "0" : "") + sec;
+  }
+
+  function paintClocks() {
+    var w = $("clockW"), b = $("clockB");
+    if (!w) return;
+    w.textContent = fmtClock(S.clock.w);
+    b.textContent = fmtClock(S.clock.b);
+    w.classList.toggle("dim", S.pos.turn !== "w" || !S.clock.on);
+    b.classList.toggle("dim", S.pos.turn !== "b" || !S.clock.on);
+    w.classList.toggle("low", S.clock.on && S.clock.w < 30000);
+    b.classList.toggle("low", S.clock.on && S.clock.b < 30000);
+  }
+
+  function setTimeControl(seconds, inc) {
+    S.clock.on = seconds > 0;
+    S.clock.inc = (inc || 0) * 1000;
+    S.clock.base = seconds * 1000;
+    S.clock.w = seconds * 1000;
+    S.clock.b = seconds * 1000;
+    S.clock.started = false;
+    S.clock.last = 0;
+    if (S.clock.tick) { clearInterval(S.clock.tick); S.clock.tick = null; }
+    if (S.clock.on) S.clock.tick = setInterval(clockTick, 250);
+    paintClocks();
+    var row = $("clockRow");
+    Array.prototype.forEach.call(row.querySelectorAll("button[data-clock]"), function (btn) {
+      btn.classList.toggle("on", btn.getAttribute("data-clock") === seconds + "," + (inc || 0));
+    });
+  }
+
+  function clockTick() {
+    if (!S.clock.on || !S.clock.started || S.over) return;
+    var now = Date.now();
+    var dt = now - (S.clock.last || now);
+    S.clock.last = now;
+    if (S.pos.turn === "w") S.clock.w -= dt; else S.clock.b -= dt;
+    if (S.clock.w <= 0 || S.clock.b <= 0) {
+      var loser = S.clock.w <= 0 ? "w" : "b";
+      S.clock.w = Math.max(0, S.clock.w);
+      S.clock.b = Math.max(0, S.clock.b);
+      if (S.match) relaySend({ t: "FLAG", matchId: S.match.id, loser: loser });
+      S.over = { over: true, reason: "time", winner: chOther(loser) };
+      paintClocks();
+      finishGame("time", chOther(loser));
+      return;
+    }
+    paintClocks();
+  }
+
+  function clockAfterMove(mover) {
+    if (!S.clock.on) return;
+    S.clock.started = true;
+    S.clock.last = Date.now();
+    if (S.clock.inc) {
+      if (mover === "w") S.clock.w += S.clock.inc; else S.clock.b += S.clock.inc;
+    }
+    paintClocks();
   }
 
   /* ---------- sheets ---------- */
@@ -1366,16 +1567,37 @@
     paintRelays();
   }
 
+  /* ---------- the coin toss: both sides put in a coin, neither can fake it alone ---------- */
+  var forcedCoin = null;      /* the tests pin the coin; a real game never does */
+  var rematchCoin = null;     /* your coin for a second game, once one is asked for */
+
+  function coinBit() {
+    if (forcedCoin !== null) return forcedCoin;
+    return Math.random() < 0.5 ? 0 : 1;
+  }
+
+  function showToss(text) {
+    var bar = $("tossBar");
+    $("tossText").textContent = text;
+    bar.classList.add("open");
+    if (showToss.timer) clearTimeout(showToss.timer);
+    showToss.timer = setTimeout(function () { bar.classList.remove("open"); }, 4600);
+  }
+
+  /* the two coins agree or they do not: neither side can steer it */
+  function tossWinner(hostCoin, guestCoin) { return (hostCoin | 0) === (guestCoin | 0); }
+
   /* ---------- challenges: a temporary room, like a 1v1 in Pindutan ---------- */
   function challengePeer(id) {
     var peer = lobby.peers[id];
     if (!peer) return;
     if (!lobby.on) { lobbyNote("Enter the lobby first."); return; }
-    if (S.match) { lobbyNote("Finish the game you are in first."); return; }
+    if (S.match && !S.match.done) { lobbyNote("Finish the game you are in first."); return; }
+    releaseDoneMatch();
     var matchId = "M" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 4).toUpperCase();
-    pendingChallenge = { id: matchId, to: id, name: peer.name, at: Date.now() };
-    relaySend({ t: "INVITE", kind: "duel", to: id, matchId: matchId, name: myName() });
-    lobbyNote("⚔ Challenge sent to " + peer.name + " — White. Waiting for them to accept.");
+    pendingChallenge = { id: matchId, to: id, name: peer.name, at: Date.now(), coin: coinBit() };
+    relaySend({ t: "INVITE", kind: "duel", to: id, matchId: matchId, name: myName(), coin: pendingChallenge.coin });
+    lobbyNote("⚔ Challenge sent to " + peer.name + " — the coin toss decides the colours. Waiting.");
   }
 
   function showInvite(inv) {
@@ -1391,8 +1613,10 @@
     if (bar) bar.classList.remove("open");
   }
 
-  function beginMatch(matchId, seat, oppId, oppName, myTurnMoves) {
-    S.match = { id: matchId, seat: seat, oppId: oppId, oppName: oppName || "Opponent", seq: myTurnMoves || 0, seen: Date.now() };
+  function beginMatch(matchId, seat, oppId, oppName, myTurnMoves, hostId) {
+    S.match = { id: matchId, seat: seat, oppId: oppId, oppName: oppName || "Opponent",
+      seq: myTurnMoves || 0, seen: Date.now(), hostId: hostId || oppId, done: false, sentOver: false };
+    rematchCoin = null;
     S.mode = "online";
     pendingChallenge = null;
     hideInvite();
@@ -1424,7 +1648,8 @@
     bar.style.display = "flex";
     var quiet = Date.now() - S.match.seen > 9000;
     document.getElementById("matchText").textContent = (S.match.seat === "w" ? "White" : "Black") +
-      " against " + S.match.oppName + (quiet ? " · no word from them…" : "");
+      " against " + S.match.oppName +
+      (S.match.done ? " · game over" : quiet ? " · no word from them…" : "");
   }
 
   function matchTick() {
@@ -1433,9 +1658,65 @@
     paintMatchBar();
   }
 
+  /* the room outlives the game only while a rematch might follow */
+  function releaseDoneMatch() {
+    if (S.match && S.match.done) endMatch("left", "");
+  }
+
+  /* a game is over but the two of you are still in the room: a rematch is one tap away */
+  function finishGame(why, winner) {
+    if (!S.over) S.over = { over: true, reason: why, winner: winner || "" };
+    if (S.clock.tick) { clearInterval(S.clock.tick); S.clock.tick = null; }
+    S.clock.started = false;
+    render();
+    showOver();
+    if (!S.match) return;
+    S.match.done = true;
+    S.match.offer = null;
+    rematchCoin = null;
+    if (S.match.tick) { clearInterval(S.match.tick); S.match.tick = null; }
+    if (!S.match.sentOver) {
+      S.match.sentOver = true;
+      relaySend({ t: "OVER", matchId: S.match.id, why: why, winner: winner || "" });
+    }
+    $("overRematch").style.display = "";
+    $("overRematch").textContent = "\ud83d\udd01 Rematch";
+    paintMatchBar();
+  }
+
+  /* the second game: another toss, so the colours change hands fairly */
+  function askRematch() {
+    if (!S.match) { newGame(); return; }
+    if (rematchCoin !== null) { showToss("\ud83d\udd01 Already asked — waiting for " + S.match.oppName); return; }
+    rematchCoin = coinBit();
+    relaySend({ t: "REMATCH", matchId: S.match.id, coin: rematchCoin });
+    showToss("\ud83d\udd01 Rematch asked \u2014 waiting for " + S.match.oppName);
+    $("overRematch").textContent = "Waiting\u2026";
+  }
+
+  function startRematch(hostCoin, guestCoin) {
+    if (!S.match || !S.over) return;
+    var iAmHost = S.match.hostId === MY_ID;
+    var hostIsWhite = tossWinner(hostCoin, guestCoin);
+    var mySeat = hostIsWhite === iAmHost ? "w" : "b";
+    S.match.seat = mySeat;
+    S.match.done = false;
+    S.match.sentOver = false;
+    S.match.seq = 0;
+    S.match.seen = Date.now();
+    S.flip = mySeat === "b";
+    if (!S.match.tick) S.match.tick = setInterval(matchTick, 2500);
+    if (!lobby.beatTimer) lobby.beatTimer = setInterval(lobbyBeat, 2500);
+    rematchCoin = null;
+    closeSheet("overSheet");
+    newGame();
+    paintMatchBar();
+    showToss("\ud83d\udd01 Rematch \u2014 you are " + (mySeat === "w" ? "White" : "Black"));
+  }
+
   function endMatch(why, winner) {
     if (!S.match) return;
-    relaySend({ t: "OVER", matchId: S.match.id, why: why, winner: winner || "" });
+    if (!S.match.done) relaySend({ t: "OVER", matchId: S.match.id, why: why, winner: winner || "" });
     if (S.match.tick) clearInterval(S.match.tick);
     S.match = null;
     S.mode = lobby.on ? "online" : "cpu";
@@ -1468,8 +1749,9 @@
 
     if (p.t === "INVITE") {
       if (p.to && p.to !== MY_ID) return;
-      if (S.match) { relaySend({ t: "BUSY", to: p.by, name: myName() }); return; }
-      showInvite({ by: p.by, name: String(p.name || "Player").slice(0, 14), matchId: p.matchId });
+      if (S.match && !S.match.done) { relaySend({ t: "BUSY", to: p.by, name: myName() }); return; }
+      releaseDoneMatch();
+      showInvite({ by: p.by, name: String(p.name || "Player").slice(0, 14), matchId: p.matchId, coin: p.coin | 0 });
       return;
     }
 
@@ -1484,23 +1766,53 @@
     if (p.t === "ACCEPT") {
       if (p.to && p.to !== MY_ID) return;
       if (!pendingChallenge || pendingChallenge.id !== p.matchId) return;
-      var seat = "w";
-      beginMatch(p.matchId, seat, p.by, p.name);
-      relaySend({ t: "START", matchId: p.matchId, white: MY_ID, black: p.by, name: myName() });
+      var hostIsWhite = tossWinner(pendingChallenge.coin, p.coin);
+      beginMatch(p.matchId, hostIsWhite ? "w" : "b", p.by, p.name, 0, MY_ID);
+      relaySend({ t: "START", matchId: p.matchId, white: hostIsWhite ? MY_ID : p.by,
+        black: hostIsWhite ? p.by : MY_ID, name: myName(), coin: pendingChallenge.coin, coin2: p.coin | 0 });
+      showToss("\ud83e\udebf Coin toss \u2014 " + (hostIsWhite ? "you are White" : p.name + " is White"));
       return;
     }
 
     if (p.t === "START") {
-      if (p.matchId !== (pendingInvite && pendingInvite.matchId)) return;
       var mySeat = p.white === MY_ID ? "w" : p.black === MY_ID ? "b" : "";
       if (!mySeat) return;
-      beginMatch(p.matchId, mySeat, p.by, p.name);
+      if (S.match && S.match.id === p.matchId) {      /* the guest already opened the room */
+        S.match.seat = mySeat;
+        S.flip = mySeat === "b";
+        syncModeButtons();
+        render();
+        return;
+      }
+      beginMatch(p.matchId, mySeat, p.by, p.name, 0, p.by);
+      showToss("🪙 Coin toss — " + (mySeat === "w" ? "you are White" : "you are Black"));
+      return;
+    }
+
+    if (p.t === "FLAG" && S.match && p.matchId === S.match.id) {
+      finishGame("time", chOther(p.loser));
+      return;
+    }
+
+    if (p.t === "REMATCH" && S.match && p.matchId === S.match.id) {
+      /* every ask is answered with a coin of your own, so the toss stays honest */
+      if (rematchCoin === null) {
+        rematchCoin = coinBit();
+        relaySend({ t: "REMATCH", matchId: S.match.id, coin: rematchCoin });
+      }
+      var iHost = S.match.hostId === MY_ID;
+      startRematch(iHost ? rematchCoin : (p.coin | 0), iHost ? (p.coin | 0) : rematchCoin);
       return;
     }
 
     if (p.t === "MOVE") {
       if (!S.match || p.matchId !== S.match.id) return;
       S.match.seen = Date.now();
+      if (typeof p.cw === "number" && typeof p.cb === "number") {
+        S.clock.w = p.cw; S.clock.b = p.cb;
+        S.clock.started = true; S.clock.last = Date.now();
+        paintClocks();
+      }
       var mv = chFindMove(S.pos, p.from, p.to, p.promo || "");
       if (!mv) return;                          /* not a legal move here: nothing to do */
       applyMove(mv, true);
@@ -1520,10 +1832,7 @@
     }
 
     if (p.t === "RESIGN" && S.match && p.matchId === S.match.id) {
-      S.over = { over: true, reason: "resign", winner: S.match.seat };
-      render();
-      showOver();
-      endMatch("resign", S.match.seat);
+      finishGame("resign", S.match.seat);
       return;
     }
 
@@ -1535,22 +1844,16 @@
     }
 
     if (p.t === "DRAWOK" && S.match && p.matchId === S.match.id) {
-      S.over = { over: true, reason: "agreed", winner: "" };
-      render();
-      showOver();
-      endMatch("agreed", "");
+      finishGame("agreed", "");
       return;
     }
 
     if (p.t === "OVER" && S.match && p.matchId === S.match.id) {
-      if (!S.over) {
-        S.over = p.why === "resign"
-          ? { over: true, reason: "resign", winner: p.winner || "" }
-          : { over: true, reason: "agreed", winner: "" };
-        render();
-        showOver();
-      }
-      endMatch(p.why, p.winner);
+      if (S.match.sentOver && S.over) return;             /* we ended it: no echo back */
+      S.match.sentOver = true;
+      var why = p.why === "resign" ? "resign" : p.why === "time" ? "time" :
+        p.why === "checkmate" ? "checkmate" : "agreed";
+      finishGame(why, p.winner || "");
       return;
     }
   }
@@ -1575,10 +1878,13 @@
   $("inviteYes").addEventListener("click", function () {
     if (!pendingInvite) return;
     var inv = pendingInvite;
-    relaySend({ t: "ACCEPT", to: inv.by, matchId: inv.matchId, name: myName() });
-    beginMatch(inv.matchId, "b", inv.by, inv.name);
+    var myCoin = coinBit();
+    var hostIsWhite = tossWinner(inv.coin, myCoin);
+    relaySend({ t: "ACCEPT", to: inv.by, matchId: inv.matchId, name: myName(), coin: myCoin });
+    beginMatch(inv.matchId, hostIsWhite ? "b" : "w", inv.by, inv.name, 0, inv.by);
     hideInvite();
-    $("lobbyNote").textContent = "You are Black against " + inv.name + ". Good luck.";
+    showToss("🪙 Coin toss — " + (hostIsWhite ? inv.name + " is White" : "you are White"));
+    $("lobbyNote").textContent = "You are " + (hostIsWhite ? "Black" : "White") + " against " + inv.name + ". Good luck.";
   });
   $("inviteNo").addEventListener("click", function () {
     if (!pendingInvite) return;
@@ -1647,6 +1953,13 @@
   });
 
   function newGame() {
+    S.review = null;
+    S.live = null;
+    S.clock.started = false;
+    S.clock.last = 0;
+    S.clock.w = S.clock.base;
+    S.clock.b = S.clock.base;
+    paintClocks();
     S.pos = chStart();
     S.hist = [];
     S.sel = -1;
@@ -1662,8 +1975,19 @@
     if (S.mode === "cpu" && S.human === "b") afterMove();
   }
 
-  $("newBtn").addEventListener("click", newGame);
-  $("overNew").addEventListener("click", newGame);
+  /* a new game in the middle of an online one means leaving it, so ask first */
+  function freshGame() {
+    if (S.match) {
+      if (!S.match.done && !window.confirm("Leave this game and start another?")) return;
+      endMatch("left", "");
+      S.mode = "cpu";
+      syncModeButtons();
+    }
+    newGame();
+  }
+
+  $("newBtn").addEventListener("click", freshGame);
+  $("overNew").addEventListener("click", freshGame);
   $("overClose").addEventListener("click", function () { closeSheet("overSheet"); });
 
   $("undoBtn").addEventListener("click", function () {
@@ -1684,14 +2008,19 @@
 
   $("flipBtn").addEventListener("click", function () { S.flip = !S.flip; render(); });
 
+  $("movelist").addEventListener("click", function (e) {
+    var span = e.target.closest ? e.target.closest("[data-k]") : null;
+    if (!span || !S.hist.length) return;
+    var k = parseInt(span.getAttribute("data-k"), 10);
+    reviewTo(S.review === k ? null : k);
+  });
+
   $("resignBtn").addEventListener("click", function () {
     if (S.over) return;
     if (S.mode === "online" && S.match) {
+      var loser = S.match.seat;
       relaySend({ t: "RESIGN", matchId: S.match.id });
-      S.over = { over: true, reason: "resign", winner: S.match.seat === "w" ? "b" : "w" };
-      render();
-      showOver();
-      endMatch("resign", S.match.seat === "w" ? "b" : "w");
+      finishGame("resign", chOther(loser));
       return;
     }
     var loser = S.mode === "cpu" ? S.human : S.pos.turn;
@@ -1706,10 +2035,7 @@
     if (S.mode === "online" && S.match) {
       if (S.match.offer) {
         relaySend({ t: "DRAWOK", matchId: S.match.id });
-        S.over = { over: true, reason: "agreed", winner: "" };
-        render();
-        showOver();
-        endMatch("agreed", "");
+        finishGame("agreed", "");
         return;
       }
       relaySend({ t: "DRAW", matchId: S.match.id });
@@ -1737,11 +2063,38 @@
     }
   });
 
+  function pgnText() {
+    var tags = ['[Event "KDL Chess"]', '[Site "KDL"]', '[Date "' + new Date().toISOString().slice(0, 10).replace(/-/g, ".") + '"]',
+      '[White "' + (S.mode === "online" && S.match ? (S.match.seat === "w" ? myName() : S.match.oppName) : "White") + '"]',
+      '[Black "' + (S.mode === "online" && S.match ? (S.match.seat === "b" ? myName() : S.match.oppName) : "Black") + '"]'];
+    var result = "*";
+    if (S.over) result = S.over.winner === "w" ? "1-0" : S.over.winner === "b" ? "0-1" : "1/2-1/2";
+    tags.push('[Result "' + result + '"]');
+    var body = "";
+    for (var i = 0; i < S.hist.length; i++) {
+      if (i % 2 === 0) body += (i / 2 + 1) + ". ";
+      body += S.hist[i].san + " ";
+    }
+    return tags.join("\n") + "\n\n" + body + result;
+  }
+
+  function copyBox(box) {
+    box.focus();
+    box.select();
+    var copied = false;
+    try { copied = document.execCommand && document.execCommand("copy"); } catch (e) { copied = false; }
+    if (!copied && navigator.clipboard) {
+      try { navigator.clipboard.writeText(box.value); copied = true; } catch (e) { }
+    }
+    $("lobbyNote").textContent = copied ? "Copied." : "Selected — press copy on your keyboard.";
+  }
+
   function showOver() {
     var r = S.over;
     var title = r.reason === "checkmate" ? "Checkmate" : r.reason === "resign" ? "Resignation" :
       r.reason === "agreed" ? "Draw agreed" : "Draw";
     $("overTitle").textContent = title;
+    $("overRematch").style.display = (S.mode === "online" && S.match) ? "" : "none";
     var who = r.winner ? (r.winner === "w" ? "White" : "Black") + " wins." : REASON[r.reason] || "Drawn.";
     $("overText").textContent = who;
     openSheet("overSheet");
@@ -1805,7 +2158,33 @@
     });
   }
 
+  $("tossBtn").addEventListener("click", function () {
+    var heads = coinBit() === 0;
+    showToss("🪙 Coin toss — " + (heads ? "heads" : "tails") + " · " + (heads ? "White" : "Black") + " starts");
+    if (S.mode === "two") { S.flip = !heads; render(); }
+  });
+
+  $("clockRow").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("button[data-clock]") : null;
+    if (!b) return;
+    var parts = b.getAttribute("data-clock").split(",");
+    setTimeControl(parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0);
+    S.clock.started = false;
+    paintClocks();
+  });
+
   $("themeBtn").addEventListener("click", function () { paintThemeGrid(); openSheet("themeSheet"); });
+
+  $("shareBtn").addEventListener("click", function () {
+    $("pgnBox").value = pgnText();
+    $("fenBox").value = chFen(S.pos);
+    openSheet("shareSheet");
+    setTimeout(function () { $("pgnBox").focus(); $("pgnBox").select(); }, 60);
+  });
+  $("copyPgn").addEventListener("click", function () { copyBox($("pgnBox")); });
+  $("copyFen").addEventListener("click", function () { copyBox($("fenBox")); });
+
+  $("overRematch").addEventListener("click", askRematch);
   $("boardBtn").addEventListener("click", function () {
     $("tintRange").value = String(S.tint);
     $("tintValue").textContent = S.tint + "°";
@@ -1813,6 +2192,12 @@
     openSheet("boardSheet");
   });
   $("pieceBtn").addEventListener("click", function () { paintPieceGrid(); openSheet("pieceSheet"); });
+  $("coordsBtn").addEventListener("click", function () {
+    S.coords = !S.coords;
+    store.set("kdl_chess_coords", S.coords ? "1" : "0");
+    document.body.setAttribute("data-coords", S.coords ? "1" : "0");
+    $("coordsBtn").classList.toggle("on", S.coords);
+  });
   $("lobbyBtn").addEventListener("click", function () { paintLobby(); openSheet("lobbySheet"); paintRelays(); });
 
   $("tintRange").addEventListener("input", function () {
@@ -1823,7 +2208,7 @@
   });
 
   $("strip").addEventListener("click", function () {
-    $("strip").innerHTML = "chess <b>c2</b> · " + S.hist.length + " moves played · <b id=\"modeTag\">" +
+    $("strip").innerHTML = "chess <b>c3</b> · " + S.hist.length + " moves played · <b id=\"modeTag\">" +
       (S.mode === "room" ? "the room" : S.mode === "two" ? "2 players" : "vs " + S.level) + "</b>";
   });
 
@@ -1832,6 +2217,9 @@
   paintBoardColors();
   document.body.setAttribute("data-pieces", S.pieces);
   syncModeButtons();
+  document.body.setAttribute("data-coords", S.coords ? "1" : "0");
+  $("coordsBtn").classList.toggle("on", S.coords);
+  setTimeControl(0, 0);
   paintMatchBar();
   paintLobby();
   paintRelays();
@@ -1844,7 +2232,17 @@
       san: chSan, result: chResult, inCheck: chInCheck, key: chKey, insufficient: chInsufficient, idx: chIdx },
     state: S,
     chooseCpuMove: chooseCpuMove,
+    levels: LEVELS,
+    search: search,
+    quiesce: quiesce,
     evaluate: evaluate,
+    setClock: setTimeControl,
+    tick: clockTick,
+    tossWinner: tossWinner,
+    pgn: pgnText,
+    review: reviewTo,
+    showToss: showToss,
+    fmtClock: fmtClock,
     tap: tapSquare,
     newGame: newGame,
     setMode: function (m) { S.mode = m; syncModeButtons(); },
@@ -1863,7 +2261,8 @@
       relays: function () { return BROKERS.map(function (b) { return { name: b.name, state: b.state }; }); },
       note: function () { return document.getElementById("lobbyNote").textContent; },
       invite: function () { return pendingInvite; },
-      age: function (id, ms) { if (lobby.peers[id]) lobby.peers[id].ts = Date.now() - ms; }
+      age: function (id, ms) { if (lobby.peers[id]) lobby.peers[id].ts = Date.now() - ms; },
+      coin: function (v) { forcedCoin = (typeof v === "number" ? v : null); }
     }
   };
 })();

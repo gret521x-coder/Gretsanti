@@ -737,7 +737,7 @@
     // Clean payload definitions without visible .html filenames, Luh removed
     const DEFAULT_APPS = [
         { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
-        { code: "PLD-02", icon: "🎮", title: "Pindutan v14", desc: "Pindutan game module", url: "pindutan.html", newTab: true },
+        { code: "PLD-02", icon: "🎮", title: "Pindutan", desc: "Always the newest build · from the repo", url: "pindutan-run.html", newTab: true },
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
@@ -750,7 +750,17 @@
         "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html",
         "Aurora.html": "https://aidekupal.unaux.com/aurora-v4.html",
         "aurora-v2.html": "https://aidekupal.unaux.com/aurora-v4.html",
-        "aurora-v3.html": "https://aidekupal.unaux.com/aurora-v4.html"
+        "aurora-v3.html": "https://aidekupal.unaux.com/aurora-v4.html",
+        /* Pindutan moved to the runner: it reads the build feed and plays whatever is newest,
+           so every saved game link — hosted or repo-relative — now opens pindutan-run.html */
+        "pindutan.html": "pindutan-run.html",
+        "pindutan-v21.html": "pindutan-run.html",
+        "pindutan-v20.html": "pindutan-run.html",
+        "pindutan-v18.html": "pindutan-run.html",
+        "labs/pindutan-v21.html": "pindutan-run.html",
+        "labs/pindutan-v20.html": "pindutan-run.html",
+        "labs/pindutan-v18.html": "pindutan-run.html",
+        "https://aidekupal.unaux.com/pindutan.html": "pindutan-run.html"
     };
 
     /* Where the payloads actually live. Relative card links ("tns.html") are resolved against
@@ -973,11 +983,23 @@
     // =========================================================================
     // Saved grids keep whatever filenames they were stored with — move the two
     // that were renamed so an existing localStorage still opens the live pages.
+    /* the wording the launcher shows for the game — no version number, because
+       the runner always plays the newest build */
+    const PINDUTAN_NAME = "Pindutan";
+    const PINDUTAN_DESC = "Always the newest build · from the repo";
+
     function upgradeAppLinks(apps) {
         let touched = false;
         apps.forEach(app => {
             if (app && APP_URL_UPGRADES[app.url]) {
                 app.url = APP_URL_UPGRADES[app.url];
+                touched = true;
+            }
+            /* a saved list keeps the old words otherwise: follow the game */
+            if (app && /pindutan/i.test(app.url || "") &&
+                (app.title !== PINDUTAN_NAME || app.desc !== PINDUTAN_DESC)) {
+                app.title = PINDUTAN_NAME;
+                app.desc = PINDUTAN_DESC;
                 touched = true;
             }
         });

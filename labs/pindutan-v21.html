@@ -1296,14 +1296,14 @@
     }
 
     /* ================= what changed: one window per build ================= */
-    #notesSheet {
+    #notesSheet, #gamesSheet {
       position: fixed; inset: 0; z-index: 88; display: none;
       padding: 14px 12px 40px; overflow-y: auto;
       background: rgba(4, 6, 10, 0.93);
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       -webkit-overflow-scrolling: touch;
     }
-    #notesSheet.open { display: block; }
+    #notesSheet.open, #gamesSheet.open { display: block; }
     .notes-box {
       max-width: 460px; margin: 0 auto; padding: 12px;
       border-radius: 16px; background: var(--card); border: 1px solid var(--line);
@@ -1324,6 +1324,22 @@
       border: 1px solid var(--line); cursor: pointer;
     }
     #notesOff:hover, #notesOff:focus-visible { color: var(--txt); border-color: var(--amber); }
+    .build-line.games { color: var(--violet); border-color: rgba(168, 85, 247, 0.45); }
+    .game-chair {
+      display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 8px; padding: 11px;
+      border-radius: 12px; text-align: left; background: var(--card2);
+      border: 1px solid var(--line); color: var(--txt); font: inherit; cursor: pointer;
+    }
+    .game-chair b { display: block; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; }
+    .game-chair small { display: block; font-size: 0.56rem; color: var(--mut); margin-top: 2px; line-height: 1.4; }
+    .game-chair .go { margin-left: auto; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.12em; color: var(--mut); }
+    .game-chair.here { border-color: rgba(74, 222, 128, 0.45); }
+    .game-chair.here .go { color: var(--lime); }
+    .game-chair.tbd { opacity: 0.68; }
+    .deck-link {
+      color: var(--cyan); font-size: 0.55rem; font-weight: 800; letter-spacing: 0.14em;
+      text-transform: uppercase; text-decoration: none; border-bottom: 1px dotted rgba(61, 214, 245, 0.5);
+    }
     #notesToggle { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; border-color: rgba(168, 85, 247, 0.45); color: var(--violet); }
 
     /* ================= the two skies: behind the game, never in front of it =================
@@ -1612,9 +1628,10 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.7</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.8</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v22.7 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v22.8 · checking…</button>
+            <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
@@ -1749,6 +1766,31 @@
     </div>
   </div>
 
+  <!-- THE OTHER GAMES: the arena is the second runner, so the chairs live here too -->
+  <div id="gamesSheet" role="dialog" aria-label="Games">
+    <div class="notes-box">
+      <div class="notes-head">
+        <h2>Games</h2>
+        <button id="gamesClose">✕</button>
+      </div>
+      <div class="notes-sub">pick a chair</div>
+      <button class="game-chair here" id="gameOne">
+        <span><b>Pindutan</b><small>the neon block arena — you are here</small></span>
+        <span class="go">▶</span>
+      </button>
+      <button class="game-chair tbd" id="gameTwo">
+        <span><b>Game two</b><small>the chair is built and wired — the game is not written yet</small></span>
+        <span class="go">TBD</span>
+      </button>
+      <button class="game-chair tbd" id="gameThree">
+        <span><b>Game three</b><small>one more chair, waiting for its game</small></span>
+        <span class="go">TBD</span>
+      </button>
+      <p class="note" id="gamesNote" hidden></p>
+      <div class="notes-foot"><a id="deckLink" class="deck-link" href="#">open the deck ↗</a></div>
+    </div>
+  </div>
+
   <main class="arena">
     <div class="hud-strip">
       <div class="chip hot"><h3>Score</h3><div class="val" id="scoreVal">0</div></div>
@@ -1843,7 +1885,8 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v22.7";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v22.8";     /* first, because the update log reads it on the way in */
+    const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
       const si = window.setInterval;
@@ -6116,6 +6159,23 @@
       }
     });
 
+    document.getElementById("gamesBtn").addEventListener("click", () => openGames());
+    document.getElementById("gamesClose").addEventListener("click", () => closeGames());
+    document.getElementById("gamesSheet").addEventListener("click", e => {
+      if (e.target && e.target.id === "gamesSheet") closeGames();      /* a tap outside the box */
+    });
+    document.getElementById("gameOne").addEventListener("click", () => { closeGames(); });
+    document.getElementById("gameTwo").addEventListener("click", () => {
+      gamesNote("Game two is not built yet — the chair is wired and waiting for it.");
+    });
+    document.getElementById("gameThree").addEventListener("click", () => {
+      gamesNote("Game three is not built yet — one more chair, waiting the same way.");
+    });
+    try {
+      const deckLink = document.getElementById("deckLink");
+      if (deckLink) deckLink.href = DECK_URL;
+    } catch (e) { }
+
     document.getElementById("notesToggle").addEventListener("click", () => notesOpen());
     document.getElementById("notesClose").addEventListener("click", () => notesClose());
     document.getElementById("notesSheet").addEventListener("click", e => {
@@ -6673,6 +6733,36 @@
         if (ref && ref.indexOf(location.origin) === 0) history.replaceState(null, "", ref);
       }
     } catch (e) { }
+
+    /* =========================================================
+       v22.8 — the arena is the second runner.
+       The first runner opens this page, so the other chairs live here:
+       a Games pill in the header lists them. Pindutan is the one you are
+       looking at; the other two are built, named and waiting for their games.
+       The deck page still exists for anyone who wants the menu on its own.
+       ========================================================= */
+
+    function gamesNote(text) {
+      const note = document.getElementById("gamesNote");
+      if (!note) return false;
+      note.hidden = !text;
+      note.textContent = text || "";
+      return true;
+    }
+
+    function openGames() {
+      const sheet = document.getElementById("gamesSheet");
+      if (!sheet) return false;
+      gamesNote("");
+      sheet.classList.add("open");
+      return true;
+    }
+
+    function closeGames() {
+      const sheet = document.getElementById("gamesSheet");
+      if (sheet) sheet.classList.remove("open");
+      return true;
+    }
 
     /* =========================================================
        v22.7 — the page is its own runner.

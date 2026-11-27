@@ -84,22 +84,22 @@
 <body>
   <main>
     <div class="mark">PINDUTAN</div>
-    <div class="sub">the first runner · opens the deck</div>
+    <div class="sub">the first runner · opens the arena</div>
 
     <div class="bar"><i id="bar"></i></div>
 
-    <p class="line" id="line">Looking for the game deck…</p>
+    <p class="line" id="line">Looking for the arena…</p>
     <p class="hint" id="hint" hidden></p>
 
     <div class="acts">
       <button class="btn" id="again" hidden>Try again</button>
-      <a class="btn ghost" id="hosted" href="https://aidekupal.unaux.com/pindutan.html" hidden>Open the hosted deck</a>
+      <a class="btn ghost" id="hosted" href="https://aidekupal.unaux.com/pindutan.html" hidden>Open the hosted copy</a>
     </div>
 
     <p class="tiny" id="tiny">
-      This page holds no game code and no menu. It reads
-      <b>labs/pindutan-build.json</b> on the <b>main</b> branch, then opens the
-      <b>deck</b> that file names — which is where the three games are picked.
+      This page holds no game code. It reads <b>labs/pindutan-build.json</b> on the
+      <b>main</b> branch, then opens the arena that file names. The other two chairs
+      are inside the arena, behind <b>☰ Games</b>.
     </p>
   </main>
 
@@ -110,8 +110,8 @@
     "use strict";
 
     var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
-    var DECK = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
-    var MIN_BYTES = 3000;
+    var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
+    var MIN_BYTES = 20000;
 
     var line = document.getElementById("line");
     var hint = document.getElementById("hint");
@@ -155,22 +155,22 @@
     function fail(why) {
       bar.style.width = "100%";
       bar.classList.add("bad");
-      line.textContent = "Could not open the game deck.";
+      line.textContent = "Could not open the arena.";
       hint.hidden = false;
       hint.textContent = (why || "no answer from the repo") +
-        ". Check your signal and try again — the hosted deck still has all three seats.";
+        ". Check your signal and try again — the hosted copy still plays.";
       again.hidden = false;
       hosted.hidden = false;
     }
 
-    function looksLikeDeck(html) {
+    function looksLikeArena(html) {
       return !!html && html.length >= MIN_BYTES &&
-        html.indexOf("</html>") >= 0 && html.indexOf("HUB-MENU") >= 0;
+        html.indexOf("</html>") >= 0 && html.indexOf("SELF-UPDATE") >= 0;
     }
 
-    /* the deck kept beside this page, for a copy uploaded by hand */
-    function localDeck() {
-      try { return new URL("pindutan.html", location.href).href; } catch (e) { return ""; }
+    /* an arena kept beside this page, for a copy uploaded by hand */
+    function nearArena() {
+      try { return new URL("pindutan-v21.html", location.href).href; } catch (e) { return ""; }
     }
 
     /* hand the whole page over to the deck */
@@ -185,26 +185,26 @@
       hosted.hidden = true;
       hint.hidden = true;
       bar.classList.remove("bad");
-      step("Looking for the game deck…", 14);
+      step("Looking for the arena…", 14);
 
       var wanted = "";
       fetchText(FEED).then(function (raw) {
         var feed = {};
         try { feed = JSON.parse(raw) || {}; } catch (e) { feed = {}; }
-        wanted = String(feed.menuBuild || feed.build || "").trim();
-        var url = (feed && feed.menu) || DECK;
+        wanted = String(feed.build || "").trim();
+        var url = (feed && feed.html) || ARENA;
         if (wanted) document.title = "Pindutan " + wanted + " — the first runner";
-        step("Deck " + (wanted || "newest") + " — opening it…", 46);
+        step("Newest build: " + (wanted || "the arena") + " — opening it…", 46);
         return fetchText(url);
       }).then(function (html) {
-        if (looksLikeDeck(html)) { step("Starting the deck…", 100); run(html); return true; }
+        if (looksLikeArena(html)) { step("Starting " + (wanted || "the arena") + "…", 100); run(html); return true; }
         /* the repo copy is missing or broken: try the one beside this page */
-        var near = localDeck();
-        if (!near) throw new Error("the file that came back is not the deck");
-        step("Trying the deck beside this page…", 70);
+        var near = nearArena();
+        if (!near) throw new Error("the file that came back is not a whole game");
+        step("Trying the arena beside this page…", 70);
         return fetchText(near).then(function (local) {
-          if (!looksLikeDeck(local)) throw new Error("the file that came back is not the deck");
-          step("Starting the deck…", 100);
+          if (!looksLikeArena(local)) throw new Error("the file that came back is not a whole game");
+          step("Starting the arena…", 100);
           run(local);
           return true;
         });

@@ -1,5 +1,5 @@
 {
-  "build": "v21.6",
+  "build": "v21.7",
   "html": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html",
   "note": "The game reads this file when it opens. To publish a new build: put it on main as labs/pindutan-v21.html, then bump build here to the same tag. Every copy — hosted or on a phone — updates itself from it. Set \"ladder\" to a full https address to move the leaderboard to a host of its own; leave it empty to keep api-leaderboard.php on aidekupal.unaux.com.",
   "ladder": "https://pindutan-ladder.pindutan-ladder1x.workers.dev/"

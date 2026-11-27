@@ -1628,9 +1628,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.8</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.9</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v22.8 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v22.9 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1885,7 +1885,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v22.8";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v22.9";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -6702,7 +6702,7 @@
 
       let next = "";
       try {
-        const url = (feed && feed.html) || UPDATE_HTML;
+        const url = String((feed && (feed.arena || feed.html)) || "").trim() || UPDATE_HTML;
         const r = await get(url + (url.indexOf("?") < 0 ? bust : "&" + bust.slice(1)), { cache: "no-store" });
         if (!r || !r.ok || typeof r.text !== "function") return { state: "offline", build };
         next = await r.text();
@@ -6735,6 +6735,7 @@
     } catch (e) { }
 
     /* =========================================================
+       v22.9 — the arena is the second runner, and the feed names the file it updates from.
        v22.8 — the arena is the second runner.
        The first runner opens this page, so the other chairs live here:
        a Games pill in the header lists them. Pindutan is the one you are

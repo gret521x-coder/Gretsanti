@@ -517,6 +517,47 @@
             letter-spacing: 2px;
             text-transform: uppercase;
         }
+
+        /* PINDUTAN — the picker in front of the game, and the stage it loads on */
+        .pin-options { display: flex; flex-direction: column; gap: 8px; }
+        .pin-opt {
+            display: flex; align-items: center; gap: 12px; width: 100%;
+            padding: 13px 15px; text-align: left; cursor: pointer;
+            background: var(--bg-card); border: 1px solid var(--border-line);
+            color: var(--text-primary); font-family: var(--font-sans); font-size: 1rem;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .pin-opt:hover:not(:disabled), .pin-opt:focus-visible:not(:disabled) {
+            border-color: var(--accent-cyan); background: var(--bg-card-hover);
+        }
+        .pin-opt:disabled { cursor: not-allowed; opacity: 0.55; }
+        .pin-num {
+            flex: none; min-width: 28px; text-align: center;
+            font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 1px;
+            color: var(--accent-cyan); border: 1px solid var(--border-line); padding: 3px 7px;
+        }
+        .pin-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .pin-body .pin-opt-title { font-weight: 600; }
+        .pin-opt-note {
+            font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.3px;
+            color: var(--text-secondary);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .pin-tag {
+            margin-left: auto; flex: none;
+            font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 1px;
+            color: var(--text-dim); border: 1px dashed var(--border-line); padding: 2px 6px;
+        }
+        .pin-bar { height: 3px; background: var(--border-line); overflow: hidden; }
+        .pin-bar i {
+            display: block; height: 100%; width: 8%;
+            background: var(--accent-cyan); transition: width 0.3s ease;
+        }
+        .pin-bar i.bad { background: var(--status-abort); }
+        .pin-line {
+            font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.5;
+            color: var(--text-secondary); word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -638,6 +679,32 @@
     </div>
 </div>
 
+<!-- PINDUTAN PICKER — the list in front of the game -->
+<div class="modal-backdrop" id="pinPickModal">
+    <div class="modal-box">
+        <div class="modal-title">PINDUTAN // PICK A GAME</div>
+        <div class="pin-options" id="pinOptions"></div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn-spacex" style="margin-top:0; border-color: var(--border-line); color: var(--text-secondary);" onclick="closeModal('pinPickModal')">CLOSE</button>
+        </div>
+    </div>
+</div>
+
+<!-- PINDUTAN STAGE — the newest build, fetched from the repo -->
+<div class="modal-backdrop" id="pinStage">
+    <div class="modal-box">
+        <div class="modal-title">PINDUTAN // STARTING</div>
+        <div class="pin-bar"><i id="pinBar"></i></div>
+        <p class="pin-line" id="pinLine">Looking for the newest build…</p>
+        <div class="error-readout" id="pinStageError"></div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-spacex" id="pinRetry" style="margin-top:0; display:none;" onclick="runLatestPindutan()">TRY AGAIN</button>
+            <a class="btn-spacex" id="pinHosted" href="https://aidekupal.unaux.com/pindutan.html" target="_blank" rel="noopener noreferrer" style="margin-top:0; display:none; text-align:center; text-decoration:none;">HOSTED COPY</a>
+            <button class="btn-spacex" style="margin-top:0; border-color: var(--border-line); color: var(--text-secondary);" onclick="closeModal('pinStage')">CANCEL</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // =========================================================================
     // HARDCODED OPENROUTER API CONFIGURATION
@@ -651,27 +718,25 @@
     const BARDAGULAN_SIG = "313e36606029323f282336";
 
     // Clean payload definitions without visible .html filenames, Luh removed
+    const PINDUTAN_PICK = "#pindutan";   /* the Pindutan card opens the picker, not a game */
+
     const DEFAULT_APPS = [
         { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
-        { code: "PLD-02", icon: "🎮", title: "Pindutan", desc: "Always the newest build · from the repo", url: "https://aidekupal.unaux.com/pindutan-run.html", newTab: true },
+        { code: "PLD-02", icon: "🎮", title: "Pindutan", desc: "Pick a game · our latest build", url: PINDUTAN_PICK, newTab: false },
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },
         { code: "PLD-05", icon: "🛰️", title: "OpenRouter Console", desc: "Telemetry & credits", url: "https://openrouter.ai/settings/keys", newTab: true },
         { code: "PLD-06", icon: "🌌", title: "Aurora", desc: "Aurora command module", url: "aurora-v4.html", newTab: true }
     ];
 
-    // Pindutan now opens the runner (pindutan-run.html), which reads the build feed
-    // and plays whatever is newest, so every old game link moves to it.
-    const PINDUTAN_RUN_URL = "https://aidekupal.unaux.com/pindutan-run.html";
-
     /* the wording the launcher shows for the game, kept in one place — no version
-       number, because the runner is always the newest build */
+       number, because slot 3 always plays the newest build */
     const PINDUTAN_NAME = "Pindutan";
-    const PINDUTAN_DESC = "Always the newest build · from the repo";
+    const PINDUTAN_DESC = "Pick a game · our latest build";
 
-    // Saved grids keep whatever filenames they were stored with — move the pages
-    // that were renamed so an existing localStorage still opens the live ones.
-    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html", "pindutan.html": PINDUTAN_RUN_URL, "https://aidekupal.unaux.com/pindutan.html": PINDUTAN_RUN_URL, "labs/pindutan-v21.html": PINDUTAN_RUN_URL, "labs/pindutan-v20.html": PINDUTAN_RUN_URL, "labs/pindutan-v18.html": PINDUTAN_RUN_URL, "pindutan-v21.html": PINDUTAN_RUN_URL, "pindutan-v20.html": PINDUTAN_RUN_URL, "pindutan-v18.html": PINDUTAN_RUN_URL };
+    // Saved grids keep whatever filenames they were stored with — every old Pindutan
+    // target now opens the picker instead of a build that would age.
+    const APP_URL_UPGRADES = { "gc.html": "https://aidekupal.unaux.com/gc.html", "gc-v5.html": "https://aidekupal.unaux.com/gc.html", "Screenshot.html": "https://aidekupal.unaux.com/Screenshot.html", "Aurora.html": "aurora-v4.html", "pindutan.html": PINDUTAN_PICK, "https://aidekupal.unaux.com/pindutan.html": PINDUTAN_PICK, "https://aidekupal.unaux.com/pindutan-run.html": PINDUTAN_PICK, "pindutan-run.html": PINDUTAN_PICK, "labs/pindutan-v21.html": PINDUTAN_PICK, "labs/pindutan-v20.html": PINDUTAN_PICK, "labs/pindutan-v18.html": PINDUTAN_PICK, "pindutan-v21.html": PINDUTAN_PICK, "pindutan-v20.html": PINDUTAN_PICK, "pindutan-v18.html": PINDUTAN_PICK };
 
     let missionStart = Date.now();
     let pendingBardagulanUrl = null;
@@ -807,6 +872,131 @@
     function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
     // =========================================================================
+    // PINDUTAN — PICK A GAME, THEN RUN THE NEWEST BUILD
+    // =========================================================================
+    /* Slot 3 is the point of this: instead of opening a copy that ages, the launcher
+       reads labs/pindutan-build.json on main and plays whatever game that file names.
+       Slots 1 and 2 are open — give one a `url` below and its row comes alive. */
+    const PINDUTAN_SLOTS = [
+        { n: 1, title: "TBD", note: "slot open", url: "" },
+        { n: 2, title: "TBD", note: "slot open", url: "" },
+        { n: 3, title: "Pindutan", note: "our latest build · from the repo", latest: true }
+    ];
+
+    const PIN_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
+    const PIN_FALLBACK = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
+    const PIN_HOSTED = "https://aidekupal.unaux.com/pindutan.html";
+    const PIN_MIN_BYTES = 20000;
+
+    function openPinPick() {
+        const box = document.getElementById("pinOptions");
+        box.innerHTML = "";
+        PINDUTAN_SLOTS.forEach(slot => {
+            const live = !!(slot.latest || slot.url);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "pin-opt";
+            if (!live) btn.disabled = true;
+            btn.innerHTML =
+                '<span class="pin-num">' + slot.n + '</span>' +
+                '<span class="pin-body">' +
+                    '<span class="pin-opt-title">' + escapeHTML(String(slot.title)) + '</span>' +
+                    '<span class="pin-opt-note">' + escapeHTML(String(slot.note)) + '</span>' +
+                '</span>' +
+                (live ? '' : '<span class="pin-tag">TBD</span>');
+            if (live) {
+                btn.onclick = () => {
+                    closeModal("pinPickModal");
+                    if (slot.latest) { runLatestPindutan(); return; }
+                    const w = window.open(slot.url, "_blank");
+                    if (w) { try { w.opener = null; } catch (e) {} }
+                    else location.href = slot.url;
+                };
+            }
+            box.appendChild(btn);
+        });
+        openModal("pinPickModal");
+    }
+
+    function pinStep(text, pct) {
+        const line = document.getElementById("pinLine");
+        const bar = document.getElementById("pinBar");
+        if (line) line.textContent = text;
+        if (bar) bar.style.width = pct + "%";
+    }
+
+    function pinFail(why) {
+        const bar = document.getElementById("pinBar");
+        const err = document.getElementById("pinStageError");
+        if (bar) { bar.style.width = "100%"; bar.classList.add("bad"); }
+        pinStep("Could not get the newest build.", 100);
+        if (err) err.innerText = (why || "no answer from the repo") +
+            ". Check your signal and try again — the hosted copy still plays.";
+        const retry = document.getElementById("pinRetry");
+        const hosted = document.getElementById("pinHosted");
+        if (retry) retry.style.display = "block";
+        if (hosted) { hosted.href = PIN_HOSTED; hosted.style.display = "block"; }
+    }
+
+    /* XHR second, for a browser or a host that will not let fetch through */
+    function pinXhr(url) {
+        return new Promise((resolve, reject) => {
+            const x = new XMLHttpRequest();
+            x.open("GET", url, true);
+            x.onload = () => (x.status >= 200 && x.status < 300)
+                ? resolve(x.responseText)
+                : reject(new Error("HTTP " + x.status));
+            x.onerror = () => reject(new Error("network refused the request"));
+            try { x.send(); } catch (e) { reject(e); }
+        });
+    }
+
+    function pinFetch(url) {
+        const busted = url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
+        if (typeof fetch === "function") {
+            return fetch(busted, { cache: "no-store" }).then(r => {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.text();
+            }).catch(() => pinXhr(busted));
+        }
+        return pinXhr(busted);
+    }
+
+    function runLatestPindutan() {
+        const bar = document.getElementById("pinBar");
+        const err = document.getElementById("pinStageError");
+        const retry = document.getElementById("pinRetry");
+        const hosted = document.getElementById("pinHosted");
+        if (bar) { bar.classList.remove("bad"); bar.style.width = "12%"; }
+        if (err) err.innerText = "";
+        if (retry) retry.style.display = "none";
+        if (hosted) hosted.style.display = "none";
+        openModal("pinStage");
+        pinStep("Looking for the newest build…", 14);
+
+        pinFetch(PIN_FEED).then(raw => {
+            let feed = {};
+            try { feed = JSON.parse(raw) || {}; } catch (e) { feed = {}; }
+            const build = String(feed.build || "").trim() || "the newest build";
+            const url = feed.html || PIN_FALLBACK;
+            pinStep("Newest build: " + build + " — loading it…", 46);
+            return pinFetch(url).then(html => ({ html: html, build: build }));
+        }).then(got => {
+            const html = got.html || "";
+            if (html.length < PIN_MIN_BYTES ||
+                html.indexOf("</html>") < 0 ||
+                html.indexOf("SELF-UPDATE") < 0) {
+                throw new Error("the file that came back is not a whole game");
+            }
+            pinStep("Starting " + got.build + "…", 100);
+            /* hand the whole page over to the game — same box, newest build */
+            document.open();
+            document.write(html);
+            document.close();
+        }).catch(e => pinFail(String((e && e.message) || e)));
+    }
+
+    // =========================================================================
     // PAYLOAD LAUNCHER GRID
     // =========================================================================
     // Saved grids keep whatever filenames they were stored with — the tables above
@@ -861,7 +1051,10 @@
             const card = document.createElement("a");
             card.className = "payload-card";
 
-            if (app.lock) {
+            if (app.url === PINDUTAN_PICK) {
+                card.href = "#";
+                card.onclick = (e) => { e.preventDefault(); openPinPick(); };
+            } else if (app.lock) {
                 card.href = "#";
                 card.onclick = (e) => requestBardagulanAccess(e, app.url);
             } else {

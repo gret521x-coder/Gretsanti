@@ -10,14 +10,14 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | Launcher | `https://aidekupal.unaux.com/index.html` |
 | Aurora | `https://aidekupal.unaux.com/Aurora.html` |
 | Group chat | `https://aidekupal.unaux.com/gc-v5.html` |
-| Pindutan | `https://aidekupal.unaux.com/pindutan.html` |
+| Pindutan | `https://aidekupal.unaux.com/pindutan-run.html` |
 | FreeModel relay | `https://aidekupal.unaux.com/api-free.php` |
 
 ## Files
 
 | File | Size | What |
 |---|---|---|
-| `index.html` | 31 KB | Launcher (an upload of `index-v5.html`) |
+| `index.html` | 31 KB | Launcher (an upload of `index-v5.html`) — the Pindutan card opens the runner |
 | `index-v5.html` | 54 KB | Launcher in use — motion, and cards that open the file name the host actually has |
 | `gc-v5.html` | 139 KB | Group chat — KDL skin, lightning storm, sky of stars/satellites/rockets |
 | `api-v5.php` | 43 KB | Backend for the chat: log, presence, uploads, single admin slot |
@@ -31,7 +31,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
-| `pindutan-run.html` | 8 KB | Pindutan runner — no game code; loads whichever build the feed names |
+| `pindutan-run.html` | 8 KB | Pindutan runner — no game code; loads whichever build the feed names. This is what the launcher's Pindutan card opens, so upload it next to `index.html` on the host |
 | `labs/pindutan-v21.html` | 219 KB | Pindutan v21 — the game, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, and where |
@@ -41,6 +41,16 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
 
 ## Latest changes
+
+**Launcher — the Pindutan card runs the runner.** PLD-02 no longer opens a fixed build: it opens
+`pindutan-run.html`, which reads `labs/pindutan-build.json` and plays whatever that file names. The card is
+just **Pindutan** with the line *Always the newest build · from the repo* — no version number to go stale. A
+saved grid in `localStorage` is moved too: every old target (`pindutan.html`, `pindutan-v18/20/21.html`,
+`labs/pindutan-v21.html`, and the hosted `pindutan.html`) now points at the runner. Both launchers carry the
+change, `index.html` and `index-v5.html`. **Upload `pindutan-run.html` beside `index.html` on the host** — the
+card has nothing to open otherwise. Also fixed: `index.html` declared its upgrade table below the
+"still unlocked" check, so a reload quietly fell back to the default grid and dropped whatever the player had
+saved; the table is now defined before that check runs.
 
 **Pindutan runner — one small file, always the newest game.** `pindutan-run.html` holds no game at all: it
 reads `labs/pindutan-build.json` on `main` and then loads the build that file names, so a copy kept on a phone
@@ -78,7 +88,8 @@ plainly instead of blaming the key, the Proxy box refuses FreeModel's own addres
 checks both doors — the model list, then one real chat request — and saves the address it proved.
 
 **Launcher.** Cards resolve the real file name on the host (`Aurora.html` vs `aurora-v4.html`), remember the
-answer, and never read a refused probe as a missing file. Relative cards point at the PHP host, so the
+answer, and never read a refused probe as a missing file. The Pindutan card opens the runner, not a fixed
+build. Relative cards point at the PHP host, so the
 launcher works wherever it is opened from.
 
 **Chat.** The KDL // MISSION CONTROL skin — pure black deck, hairline grid, square corners, mono caps, one

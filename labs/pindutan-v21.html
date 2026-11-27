@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#07080d" />
-<title>Pindutan v21 - Neon Block Arena</title>
+<title>Pindutan v22 - Neon Block Arena</title>
 <style>
     :root {
       --ink: #07080d;
@@ -23,7 +23,7 @@
       --glow: rgba(255, 176, 32, 0.35);
     }
 
-    /* ---------- five moods, one game ---------- */
+    /* ---------- six moods, one game ---------- */
     html[data-theme="sunset"] {
       --ink: #140a08; --ink2: #1d0f0b; --card: #26130f; --card2: #301913; --line: #46241b;
       --txt: #fff1e6; --mut: #c69a83; --amber: #ff9f43; --amber2: #ff5f3c; --cyan: #ffd166;
@@ -39,11 +39,29 @@
       --txt: #f4ecff; --mut: #a48bc4; --amber: #ffd257; --amber2: #c084fc; --cyan: #a78bfa;
       --lime: #f0abfc; --red: #fb7185; --violet: #e879f9; --glow: rgba(192, 132, 252, 0.4);
     }
+    html[data-theme="pink"] {
+      --ink: #150711; --ink2: #1e0b17; --card: #27101e; --card2: #331426; --line: #4c2138;
+      --txt: #ffeaf4; --mut: #c78fa9; --amber: #ff8fc7; --amber2: #ff5fa2; --cyan: #ffd3e8;
+      --lime: #ffa8d8; --red: #ff5c8a; --violet: #f0a6ff; --glow: rgba(255, 143, 199, 0.42);
+    }
     html[data-theme="mono"] {
       --ink: #0a0a0a; --ink2: #101010; --card: #161616; --card2: #1e1e1e; --line: #2e2e2e;
       --txt: #f5f5f5; --mut: #9a9a9a; --amber: #ffffff; --amber2: #d4d4d4; --cyan: #e5e5e5;
       --lime: #d9d9d9; --red: #ff8f8f; --violet: #c4c4c4; --glow: rgba(255, 255, 255, 0.22);
     }
+    /* ---------- mission control: the launch pad, painted like the index ---------- */
+    html[data-theme="space"] {
+      --ink: #03050c; --ink2: #050912; --card: #08101c; --card2: #0c1728; --line: #172944;
+      --txt: #e9f3ff; --mut: #7d92b4; --amber: #5ee7f7; --amber2: #38bdf8; --cyan: #7dd3fc;
+      --lime: #34d399; --red: #fb7185; --violet: #a78bfa; --glow: rgba(94, 231, 247, 0.34);
+    }
+    /* ---------- christmas: pine, gold and a red ribbon ---------- */
+    html[data-theme="christmas"] {
+      --ink: #08130e; --ink2: #0c1f1a; --card: #102a20; --card2: #143327; --line: #1f4a35;
+      --txt: #f5f0e6; --mut: #9dbcaa; --amber: #c9a227; --amber2: #c1121f; --cyan: #e8d9a8;
+      --lime: #7ed957; --red: #c1121f; --violet: #f0b8c8; --glow: rgba(201, 162, 39, 0.36);
+    }
+
     .theme-btn {
       display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 9px;
       font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
@@ -55,6 +73,7 @@
     /* ---------- three seconds before the first block falls ---------- */
     .countdown {
       position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 8px;
       pointer-events: none; z-index: 30;
     }
     .countdown.on { display: flex; }
@@ -64,6 +83,14 @@
       animation: countPop 0.9s ease-out both;
     }
     .countdown.go span { color: var(--lime); }
+    /* the line a challenger reads above the numbers, kept inside the board */
+    .countdown .cd-note {
+      max-width: 86%; padding: 0 4px;
+      font-size: 0.56rem; font-weight: 800; line-height: 1.4;
+      letter-spacing: 0.07em; text-transform: uppercase; text-align: center;
+      color: var(--amber); text-shadow: 0 0 10px var(--glow);
+    }
+    .countdown.has-note span { font-size: 3.5rem; }
     @keyframes countPop {
       0% { transform: scale(0.4); opacity: 0; }
       35% { transform: scale(1.15); opacity: 1; }
@@ -872,6 +899,22 @@
     .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0; }
     .sheet-head h2 { margin: 0; font-size: 0.9rem; letter-spacing: 0.24em; color: var(--amber); font-weight: 900; }
     .hero-sub { font-size: 0.55rem; letter-spacing: 0.16em; color: var(--mut); margin-top: 3px; text-transform: uppercase; }
+    /* the little line that says which copy this is, and whether a newer one is out */
+    .build-row { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+    .build-line {
+      font-size: 0.5rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 7px; cursor: pointer;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); color: var(--mut);
+      font-family: inherit;
+    }
+    .build-line.ok { color: var(--lime); border-color: rgba(74, 222, 128, 0.45); }
+    .build-line.busy { color: var(--cyan); border-color: rgba(61, 214, 245, 0.5); }
+    .build-line.warn { color: var(--amber); border-color: rgba(255, 176, 32, 0.55); }
+    .build-runner {
+      font-size: 0.5rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--cyan); text-decoration: none; border-bottom: 1px dotted rgba(61, 214, 245, 0.5);
+    }
+    .build-runner[hidden] { display: none; }
     .room-item { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border-radius: 11px; background: #0b111b; border: 1px solid var(--line); }
     .room-item + .room-item { margin-top: 6px; }
     .room-tag {
@@ -1123,7 +1166,8 @@
     }
     .lb-row.me { border-color: rgba(255, 176, 32, 0.45); background: rgba(255, 176, 32, 0.08); }
     .lb-row .r { color: var(--mut); font-weight: 800; text-align: right; }
-    .lb-row .n { color: var(--txt); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-row .n { color: var(--txt); font-weight: 700; display: flex; align-items: center; gap: 5px; min-width: 0; }
+    .lb-row .n .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-row .w { color: var(--lime); font-weight: 800; }
     .lb-row .s { color: var(--mut); font-variant-numeric: tabular-nums; }
     .lb-row .w small, .lb-row .s small { color: var(--mut); font-weight: 700; font-size: 0.5rem; letter-spacing: 0.08em; }
@@ -1134,13 +1178,283 @@
 
     /* ---------- the game screen keeps the same texture ---------- */
     .arena { position: relative; }
+
+    /* ================= v21.8: the table — you on the left, your rival on the right =================
+       One row holds both boards. With nobody over there the rival column is gone and the
+       board sits where it always did; with a rival it takes 54% of the row and the rival
+       column 72% of that, so the two read as big-and-slightly-smaller, side by side. */
+    .table-row {
+      --board-w: min(100%, 26vh, 264px);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+    }
+    .table-row.rival-side { --board-w: min(54%, 26vh, 264px); }
+    @supports (height: 100svh) {
+      .table-row { --board-w: min(100%, 26svh, 264px); }
+      .table-row.rival-side { --board-w: min(54%, 26svh, 264px); }
+    }
+    @media (min-width: 700px) {
+      .table-row { --board-w: min(100%, 34vh, 300px); }
+      .table-row.rival-side { --board-w: min(54%, 34vh, 300px); }
+    }
+    .table-row > .board-wrapper { width: var(--board-w); flex: 0 0 auto; }
+
+    .rival-col {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 0 0 auto;
+      width: calc(var(--board-w) * 0.72);
+    }
+    .table-row.rival-none .rival-col { display: none; }
+    .table-row.rival-wide .rival-col { width: 100%; flex: 1 1 100%; }
+
+    /* the CPU panel stands up: board on top, its numbers under it */
+    .rival-col .bot-panel {
+      width: 100%; max-width: none; flex-direction: column; align-items: stretch; gap: 6px; padding: 6px;
+    }
+    .rival-col .bot-panel canvas { width: 100%; height: auto; }
+    .rival-col .bot-panel button { width: 100%; }
+    .rival-col .bot-meta { text-align: center; font-size: 0.52rem; }
+    .rival-col .bot-meta b { font-size: 0.62rem; letter-spacing: 0.06em; }
+    .rival-col .bot-meta .hint { font-size: 0.5rem; }
+
+    /* a 1v1 rival sits in the same column, board first */
+    .rival-col .opponents-panel { width: 100%; max-width: none; padding: 6px; }
+    .rival-col .opponents-header { flex-direction: column; align-items: flex-start; gap: 3px; }
+    .rival-col .opponents-header h3 { font-size: 0.54rem; }
+    .rival-col .badges-group { flex-wrap: wrap; }
+    .rival-col .opponents-panel.on #opponentsGrid { flex-wrap: wrap; justify-content: center; }
+    .rival-col .opp-card { flex-direction: column; align-items: stretch; gap: 4px; width: 100%; }
+    .rival-col .opp-card canvas,
+    .rival-col .opponents-panel.duel .opp-card canvas { width: 100%; height: auto; }
+    .rival-col .opp-card .opp-info,
+    .rival-col .opponents-panel.duel .opp-card .opp-info { max-width: none; min-width: 0; text-align: center; }
+    .rival-col .opp-name { text-align: center; }
+
+    /* Watch is a small pill tucked under the "1 player in" badge, not a bar */
+    #watchRow { justify-content: flex-end; }
+    #watchToggle,
+    #themeBtn,
+    #godBtn { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; }
+    #godBtn { border-color: rgba(255, 210, 87, 0.5); color: var(--amber); }
+    #themeBtn { border-color: rgba(61, 214, 245, 0.45); color: var(--cyan); }
+    #themeBtn.on { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan) inset; }
+
+    /* ---- God mode: the maker's window, inside this tab ---- */
+    #godSheet {
+      position: fixed; inset: 0; z-index: 85; display: none;
+      padding: 14px 12px 40px; overflow-y: auto;
+      background: rgba(4, 6, 10, 0.93);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      -webkit-overflow-scrolling: touch;
+    }
+    #godSheet.open { display: block; }
+    .god-box {
+      max-width: 460px; margin: 0 auto; padding: 11px;
+      border-radius: 16px; border: 1px solid var(--line);
+      background: linear-gradient(165deg, #121a28, #0b101a);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    .god-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--amber);
+    }
+    .god-head button { padding: 3px 8px; font-size: 0.6rem; border-radius: 7px; }
+    .god-sub { color: var(--mut); font-size: 0.56rem; line-height: 1.55; margin: 8px 0 9px; }
+    .god-sub b { color: var(--txt); }
+    .god-row {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center;
+      padding: 6px 8px; border-radius: 9px; margin-bottom: 5px;
+      background: #0a0f18; border: 1px solid var(--line);
+    }
+    .god-row.ban-row { grid-template-columns: 1fr auto; }
+    .god-row .gname, .god-row .gsub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .god-row .gname { font-size: 0.66rem; font-weight: 800; color: var(--txt); }
+    .god-row .gsub { font-size: 0.52rem; color: var(--mut); }
+    .god-row button { padding: 4px 9px; font-size: 0.55rem; border-radius: 7px; }
+    .god-row button.ban { border-color: rgba(255, 77, 109, 0.5); color: var(--red); }
+    .god-row button.unban { border-color: rgba(74, 222, 128, 0.5); color: var(--lime); }
+    .god-empty { color: var(--mut); font-size: 0.6rem; padding: 7px 4px; }
+
+    /* a kicked or banned phone is told, in the line beside the word Lobby */
+    #roomStatus.warn { color: var(--red); }
+    #godNotice {
+      margin-top: 7px; padding: 7px 9px; border-radius: 9px;
+      border: 1px solid rgba(255, 77, 109, 0.45); background: rgba(255, 77, 109, 0.1);
+      color: var(--red); font-size: 0.6rem; font-weight: 800; line-height: 1.45;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
     .touch-controls button { background: linear-gradient(170deg, #141c29, #0a0f18); }
     .touch-controls button.hard {
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
     }
+
+    /* ================= what changed: one window per build ================= */
+    #notesSheet {
+      position: fixed; inset: 0; z-index: 88; display: none;
+      padding: 14px 12px 40px; overflow-y: auto;
+      background: rgba(4, 6, 10, 0.93);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      -webkit-overflow-scrolling: touch;
+    }
+    #notesSheet.open { display: block; }
+    .notes-box {
+      max-width: 460px; margin: 0 auto; padding: 12px;
+      border-radius: 16px; background: var(--card); border: 1px solid var(--line);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+    .notes-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+    .notes-head h2 { margin: 0; font-size: 0.76rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); }
+    .notes-sub { color: var(--mut); font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 8px; }
+    .notes-body { max-height: 54vh; overflow-y: auto; font-size: 0.62rem; line-height: 1.5; color: var(--txt); }
+    .notes-day { margin: 9px 0 4px; font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mut); }
+    .notes-body ul { margin: 0; padding-left: 14px; }
+    .notes-body li { margin: 0 0 3px; }
+    .notes-body b { color: var(--amber); font-weight: 800; }
+    .notes-foot { display: flex; justify-content: flex-end; margin-top: 11px; }
+    #notesOff {
+      font-size: 0.55rem; font-weight: 800; letter-spacing: 0.06em; padding: 7px 11px;
+      border-radius: 8px; background: var(--card2); color: var(--mut);
+      border: 1px solid var(--line); cursor: pointer;
+    }
+    #notesOff:hover, #notesOff:focus-visible { color: var(--txt); border-color: var(--amber); }
+    #notesToggle { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; border-color: rgba(168, 85, 247, 0.45); color: var(--violet); }
+
+    /* ================= the two skies: behind the game, never in front of it =================
+       Both are fixed sheets under the page, so a flake that reaches the top of the board
+       is hidden by the board itself and carries on below it — the whole page snows,
+       the table stays readable. */
+    #sky, #craft, #snow {
+      position: fixed; inset: 0; overflow: hidden;
+      pointer-events: none; display: none;
+    }
+    /* the sky and the snow lie under the table, so the board is what stops them;
+       the craft fly over the page, like the mission-control HUD they came from */
+    #sky { z-index: 0; }
+    #snow { z-index: 0; }
+    #craft { z-index: 2; }
+    html[data-theme="space"] #sky,
+    html[data-theme="space"] #craft { display: block; }
+    html[data-theme="christmas"] #snow { display: block; }
+    header, main.arena, .touch-controls, footer { position: relative; z-index: 1; }
+
+    /* ---- space: a grid, a horizon, and five things in the dark ---- */
+    #sky .grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    #sky .horizon {
+      position: absolute; top: -32vh; left: 50%; transform: translateX(-50%);
+      width: 150vw; height: 58vh; border-radius: 50%;
+      background: radial-gradient(ellipse at bottom, rgba(0, 82, 136, 0.3), transparent 70%);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+    }
+    #sky .orbit {
+      position: absolute; border: 1px dashed rgba(94, 231, 247, 0.1); border-radius: 50%;
+    }
+    #sky .o1 { width: 118vw; height: 60vh; left: -9vw; top: 18vh; }
+    #sky .o2 { width: 86vw; height: 44vh; left: 7vw; top: 30vh; border-style: solid; border-color: rgba(94, 231, 247, 0.06); }
+    #craft .craft {
+      position: absolute; display: flex; align-items: center; gap: 7px;
+      color: var(--cyan); opacity: 0.5;
+      filter: drop-shadow(0 0 8px rgba(94, 231, 247, 0.4));
+      animation-timing-function: linear; animation-iteration-count: infinite;
+      will-change: transform;
+    }
+    #craft .craft svg { display: block; }
+    #craft .tag {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.42rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: currentColor; opacity: 0.8; white-space: nowrap;
+    }
+    body:not(.in-play) #craft .craft { opacity: 0.18; }
+    #craft .k1 { top: 11%; left: 2%; animation-name: orbitArc; animation-duration: 52s; }
+    #craft .k2 { top: 26%; left: 6%; animation-name: orbitArc; animation-duration: 71s; animation-delay: -18s; }
+    #craft .k3 { top: 63%; left: 2%; animation-name: orbitArc; animation-duration: 64s; animation-delay: -34s; animation-direction: reverse; }
+    #craft .k4 { top: 34%; right: 4%; color: var(--amber); animation-name: climb; animation-duration: 46s; }
+    #craft .k5 { top: 58%; right: 8%; color: var(--amber); animation-name: climb; animation-duration: 68s; animation-delay: -26s; }
+    /* an arc, not a straight line: five stops of a shallow orbit */
+    @keyframes orbitArc {
+      0% { transform: translate3d(-20vw, 7vh, 0) rotate(-12deg); }
+      25% { transform: translate3d(9vw, -1vh, 0) rotate(-6deg); }
+      50% { transform: translate3d(46vw, -4vh, 0) rotate(0deg); }
+      75% { transform: translate3d(84vw, 1vh, 0) rotate(7deg); }
+      100% { transform: translate3d(120vw, 9vh, 0) rotate(13deg); }
+    }
+    /* a ship climbs, leans, and leaves the top of the page */
+    @keyframes climb {
+      0% { transform: translate3d(0, 112vh, 0) rotate(-14deg); }
+      50% { transform: translate3d(3vw, 52vh, 0) rotate(-9deg); }
+      100% { transform: translate3d(-3vw, -22vh, 0) rotate(-4deg); }
+    }
+
+    /* ---- christmas: snow over the whole page, stopped by the board ---- */
+    #snow .fl {
+      position: absolute; top: -8vh; border-radius: 50%; background: #ffffff;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+      animation-name: fall; animation-timing-function: linear; animation-iteration-count: infinite;
+    }
+    @keyframes fall {
+      from { transform: translate3d(0, -10vh, 0); }
+      to { transform: translate3d(var(--dx, 0px), 112vh, 0); }
+    }
+
+    /* ---- the ladder's colours ---- */
+    .rank-chip {
+      display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto;
+      padding: 1px 5px; border-radius: 6px; font-size: 0.5rem; font-weight: 800;
+      letter-spacing: 0.04em; color: var(--rk, var(--mut)); border: 1px solid var(--rk, var(--line));
+      background: rgba(255, 255, 255, 0.04); white-space: nowrap;
+    }
+    .rank-chip b { font-weight: 900; }
+    .rank-chip .rk-dots { letter-spacing: 0.02em; }
   </style>
 </head>
 <body>
+
+  <!-- SPACE: the open sky behind the board, five things in the dark -->
+  <!-- SPACE: the sky behind the board, and the craft flying over the page -->
+  <div id="sky" aria-hidden="true">
+    <div class="grid"></div>
+    <div class="horizon"></div>
+    <div class="orbit o1"></div>
+    <div class="orbit o2"></div>
+  </div>
+
+  <div id="craft" aria-hidden="true">
+    <div class="craft k1">
+      <svg width="56" height="30" viewBox="0 0 56 30" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="10" width="16" height="10" rx="1"></rect><rect x="39" y="10" width="16" height="10" rx="1"></rect><rect x="22" y="12" width="12" height="6" rx="1"></rect><path d="M28 4v8M28 18v8"></path></svg>
+      <span class="tag">SAT-01 · LEO</span>
+    </div>
+    <div class="craft k2">
+      <svg width="56" height="30" viewBox="0 0 56 30" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="10" width="16" height="10" rx="1"></rect><rect x="39" y="10" width="16" height="10" rx="1"></rect><rect x="22" y="12" width="12" height="6" rx="1"></rect><path d="M28 4v8M28 18v8"></path></svg>
+      <span class="tag">SAT-02 · SSO</span>
+    </div>
+    <div class="craft k3">
+      <svg width="56" height="30" viewBox="0 0 56 30" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="10" width="16" height="10" rx="1"></rect><rect x="39" y="10" width="16" height="10" rx="1"></rect><rect x="22" y="12" width="12" height="6" rx="1"></rect><path d="M28 4v8M28 18v8"></path></svg>
+      <span class="tag">SAT-03 · MEO</span>
+    </div>
+    <div class="craft k4">
+      <svg width="22" height="42" viewBox="0 0 22 42" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M11 1c4.2 5.2 6.2 10.6 6.2 16.4 0 5.3-2.1 9.7-6.2 14.4-4.1-4.7-6.2-9.1-6.2-14.4C4.8 11.6 6.8 6.2 11 1z"></path><path d="M4.8 21.4 1 31.4l3.8-2M17.2 21.4 21 31.4l-3.8-2"></path><circle cx="11" cy="13.4" r="2.5"></circle></svg>
+      <span class="tag">ORION · TLI</span>
+    </div>
+    <div class="craft k5">
+      <svg width="22" height="42" viewBox="0 0 22 42" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M11 41c-4.2-5.2-6.2-10.6-6.2-16.4 0-5.3 2.1-9.7 6.2-14.4 4.1 4.7 6.2 9.1 6.2 14.4C17.2 30.4 15.2 35.8 11 41z"></path><path d="M6.8 9.6 3 1.6l3.8 2M15.2 9.6 19 1.6l-3.8 2"></path><circle cx="11" cy="20.6" r="2.5"></circle></svg>
+      <span class="tag">DRAGON · LEO</span>
+    </div>
+  </div>
+
+  <!-- CHRISTMAS: flakes for the whole page, filled in by snowSeed() -->
+  <div id="snow" aria-hidden="true"></div>
 
   <!-- LIGHTNING, FOR EVERYONE -->
   <div class="storm-fx" id="stormFx" aria-hidden="true">
@@ -1183,7 +1497,7 @@
   <header>
     <div class="title-row">
       <canvas id="logoCanvas" width="240" height="36" role="img" aria-label="Pindutan"></canvas>
-      <span class="version-badge" id="versionBadge">v21</span>
+      <span class="version-badge" id="versionBadge">v22</span>
       <span class="title-spacer"></span>
       <button class="icon-btn" id="pauseBtn">⏸ Pause</button>
       <button class="icon-btn" id="lockBtn">🔒</button>
@@ -1293,10 +1607,16 @@
 
   <div id="lobbySheet">
     <div class="sheet">
+      <!-- the name the gate took, kept here for every card and packet; never shown, never typed -->
+      <input type="hidden" id="nicknameInput" />
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.6</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.7</div>
+          <div class="build-row">
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v22.7 · checking…</button>
+            <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
+          </div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1318,13 +1638,17 @@
           <span class="conn"><span class="dot wait" id="dotB2"></span>Mosquitto</span>
           <button class="conn" id="stormBtn" style="display:none;cursor:pointer;background:none;border:0;color:inherit;font:inherit;" title="Lightning, for everyone in the room">⚡</button>
         </div>
-        <div class="room-row" style="margin-top:9px;">
-          <input type="text" id="nicknameInput" maxlength="14" placeholder="Your nickname" />
+        <div class="room-row" id="watchRow" style="margin-top:8px;justify-content:flex-end;">
+          <!-- no name here: your card below already carries it, from the gate -->
+          <button id="godBtn" style="display:none;" title="God mode — the maker's key only">🛡 God mode</button>
+          <button id="themeBtn" title="Themes — colours, snow, and the sky">🎨 Themes</button>
+          <button id="notesToggle" title="What changed in this build">📜 Updates</button>
           <button id="watchToggle">👁 Watch</button>
         </div>
+        <div id="godNotice" style="display:none;"></div>
       </div>
 
-      <div class="card-box" id="themeCard">
+      <div class="card-box" id="themeCard" style="display:none;">
         <div class="card-title"><span>🎨 Theme</span><span id="themeName" style="color:var(--mut);font-size:0.55rem;">neon</span></div>
         <div id="themeRow" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
       </div>
@@ -1392,7 +1716,39 @@
     </div>
   </div>
 
+  <!-- GOD MODE — the maker's window, inside this same tab -->
+  <div id="godSheet" role="dialog" aria-label="God mode">
+    <div class="god-box">
+      <div class="god-head">
+        <span>🛡 God mode</span>
+        <button id="godClose">✕</button>
+      </div>
+      <div class="god-sub">
+        Everyone here except you. <b>Kick</b> throws a phone out of the lobby until it reloads;
+        <b>Ban</b> keeps it out and this phone remembers it, so only <b>Unban</b> brings it back.
+      </div>
+      <div id="godList"></div>
+      <div class="god-head" style="margin-top:12px;color:var(--mut);"><span>Banned</span><span id="godBanCount">0</span></div>
+      <div id="godBans"></div>
+    </div>
+  </div>
+
   <!-- MAIN ARENA -->
+  <!-- WHAT CHANGED: one window per build, opened on the way into the lobby -->
+  <div id="notesSheet" role="dialog" aria-label="Update log">
+    <div class="notes-box">
+      <div class="notes-head">
+        <h2 id="notesTitle">What changed</h2>
+        <button id="notesClose">✕</button>
+      </div>
+      <div class="notes-sub" id="notesSub">the last few days at Pindutan</div>
+      <div class="notes-body" id="notesBody"></div>
+      <div class="notes-foot">
+        <button id="notesOff">Do not show again</button>
+      </div>
+    </div>
+  </div>
+
   <main class="arena">
     <div class="hud-strip">
       <div class="chip hot"><h3>Score</h3><div class="val" id="scoreVal">0</div></div>
@@ -1415,15 +1771,46 @@
       </div>
     </div>
 
-    <div class="board-wrapper" id="playerBoardWrapper">
-      <canvas id="mainCanvas" width="260" height="520"></canvas>
-      <div class="countdown" id="countdown" aria-live="polite"></div>
-      <div class="board-overlay" id="boardOverlay">
-        <h2 id="overlayTitle">PINDUTAN</h2>
-        <p id="overlayDesc">Tap start. Stack the neon blocks, clear lines, and fire garbage at your rivals.</p>
-        <div class="over-stats" id="overStats"></div>
-        <button class="primary" id="startBtn">Start Game</button>
+    <!-- THE TABLE: your board on the left, your rival's on the right -->
+    <div class="table-row" id="tableRow">
+      <div class="board-wrapper" id="playerBoardWrapper">
+        <canvas id="mainCanvas" width="260" height="520"></canvas>
+        <div class="countdown" id="countdown" aria-live="polite"></div>
+        <div class="board-overlay" id="boardOverlay">
+          <h2 id="overlayTitle">PINDUTAN</h2>
+          <p id="overlayDesc">Tap start. Stack the neon blocks, clear lines, and fire garbage at your rivals.</p>
+          <div class="over-stats" id="overStats"></div>
+          <button class="primary" id="startBtn">Start Game</button>
+        </div>
       </div>
+
+      <aside class="rival-col" id="rivalCol" aria-label="Your rival's board">
+        <div class="bot-panel" id="botPanel">
+          <canvas id="botCanvas" width="80" height="160"></canvas>
+          <div class="bot-meta" id="botMetaBox" title="tap to change level">
+            CPU <b id="botName">INTERMEDIATE</b><br />
+            <span id="botLine">Score 0 · Lines 0 · Lv 1</span><br />
+            <span class="hint">tap here to change level</span>
+          </div>
+          <button id="botRestart">Restart</button>
+        </div>
+
+        <!-- OPPONENTS & LIVE STREAM VIEW -->
+        <div class="opponents-panel" id="opponentsPanel">
+          <div class="opponents-header">
+            <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
+            <div class="badges-group">
+              <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
+              <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
+            </div>
+          </div>
+          <div id="opponentsGrid">
+            <div style="color:var(--mut); font-size:0.68rem; padding:10px; text-align:center;">
+              Waiting for players to join the room...
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
 
     <div class="power-wrap">
@@ -1432,32 +1819,6 @@
         <span class="lbl" id="chargeLabel">PINDUTAN CHARGE</span>
       </div>
       <button id="powerBtn" disabled>GO</button>
-    </div>
-
-    <div class="bot-panel" id="botPanel">
-      <canvas id="botCanvas" width="80" height="160"></canvas>
-      <div class="bot-meta" id="botMetaBox" title="tap to change level">
-        CPU <b id="botName">INTERMEDIATE</b><br />
-        <span id="botLine">Score 0 · Lines 0 · Lv 1</span><br />
-        <span class="hint">tap here to change level</span>
-      </div>
-      <button id="botRestart">Restart</button>
-    </div>
-
-    <!-- OPPONENTS & LIVE STREAM VIEW -->
-    <div class="opponents-panel" id="opponentsPanel">
-      <div class="opponents-header">
-        <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
-        <div class="badges-group">
-          <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
-          <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
-        </div>
-      </div>
-      <div id="opponentsGrid">
-        <div style="color:var(--mut); font-size:0.68rem; padding:10px; text-align:center;">
-          Waiting for players to join the room...
-        </div>
-      </div>
     </div>
   </main>
 
@@ -1482,6 +1843,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
+    const BUILD_TAG = "v22.7";     /* first, because the update log reads it on the way in */
     const pageTimers = [];
     (function trackIntervals() {
       const si = window.setInterval;
@@ -1547,9 +1909,10 @@
       return cleanName(stripMark(getMyName()));
     }
 
-    /* A nickname field never shows a plus. Every "+" typed is swallowed and
+    /* A name box never shows a plus. Every "+" typed is swallowed and
        remembered; a "v" straight after them finishes the key, so the name in
-       the box is always clean and nobody watching the screen sees a mark. */
+       the box is always clean and nobody watching the screen sees a mark.
+       (The gate and the chat box are the two places left that take typing.) */
     function wireMarkField(field, arm) {
       if (!field) return;
       let hidden = 0;        /* pluses typed and not shown */
@@ -1599,7 +1962,7 @@
 
     function setCreator(on) {
       creatorOn = !!on;
-      if (!creatorOn) { kupalLightOn = false; autoPlan = null; }
+      if (!creatorOn) { kupalLightOn = false; autoPlan = null; royalSent = false; }
       /* older builds left the crown in the browser for good — clear it */
       try {
         localStorage.removeItem("pindutan_creator");
@@ -1608,6 +1971,20 @@
       } catch (e) {}
       const storm = document.getElementById("stormBtn");
       if (storm) storm.style.display = creatorOn ? "" : "none";
+
+      /* the entrance: the moment the key is taken, not at boot — the lobby is
+         already joined by then, so this is the only place it can fire, and it
+         happens on a real tap, which is also what lets the fanfare be heard */
+      if (creatorOn && !royalSent) {
+        royalSent = true;
+        try {
+          if (typeof sendPacket === "function" && roomCode) {
+            sendPacket({ t: "FX", kind: "royal", name: myDisplayName() });
+          }
+          runStorm("royal");
+        } catch (e) { }
+      }
+
       applyCreatorLock();
       if (typeof renderLobby === "function" && typeof roomCode !== "undefined" && roomCode) renderLobby();
       if (typeof lbFetch === "function" && typeof lbMode !== "undefined") lbFetch(lbMode, true);
@@ -1618,8 +1995,9 @@
     function applyCreatorLock() {
       const maker = isCreator();
       paintAutopilotButtons();
+      if (typeof paintGodButton === "function") paintGodButton();
       const badge = document.getElementById("versionBadge");
-      if (badge) badge.innerHTML = maker ? "v21 " + crownSvg("gold", 10) : "v21";
+      if (badge) badge.innerHTML = maker ? "v22 " + crownSvg("gold", 10) : "v22";
       if (typeof paintCpuLevels === "function" && typeof CPU_LEVELS !== "undefined") paintCpuLevels();
     }
 
@@ -2521,6 +2899,22 @@
     let countdownUntil = 0;
     let countdownTimers = [];
 
+    /* ---------- one line for the ones facing the maker ----------
+       In a 1v1 or a group battle, everyone on the other side of the maker reads
+       it above 3-2-1. The maker never sees it, and nobody in a solo or CPU run
+       ever does. The crown is not stored: it rides the maker's own packets. */
+    const CREATOR_CHALLENGE = "You are challenging the creator, Goodluck!";
+
+    function facingCreator() {
+      if (isCreator()) return false;                       /* never for the maker */
+      if (currentMode !== "1v1" && currentMode !== "group") return false;
+      return Object.keys(battlePlayers).some(id => id !== myId && crownPeers.has(id));
+    }
+
+    function countdownNote() {
+      return facingCreator() ? CREATOR_CHALLENGE : "";
+    }
+
     function countdownLeft() { return Math.max(0, countdownUntil - performance.now()); }
     function frozen() { return countdownLeft() > 0; }
 
@@ -2529,7 +2923,7 @@
       countdownTimers = [];
       countdownUntil = 0;
       const box = document.getElementById("countdown");
-      if (box) { box.classList.remove("on", "go"); box.innerHTML = ""; }
+      if (box) { box.classList.remove("on", "go", "has-note"); box.innerHTML = ""; }
     }
 
     function armCountdown() {
@@ -2538,8 +2932,16 @@
       if (!box || !(COUNTDOWN_MS > 0)) return 0;
       countdownUntil = performance.now() + COUNTDOWN_MS;
       box.classList.add("on");
+      const note = countdownNote();
+      box.classList.toggle("has-note", !!note);
       const say = (text, go) => {
         box.innerHTML = "";
+        if (note) {
+          const line = document.createElement("div");
+          line.className = "cd-note";
+          line.textContent = note;
+          box.appendChild(line);
+        }
         const span = document.createElement("span");
         span.textContent = text;
         box.appendChild(span);
@@ -2643,6 +3045,7 @@
       dropCounter = 0;
       isPaused = false;
       gameRunning = true;
+      document.body.classList.add("in-play");     /* the sky wakes up while you play */
       startedAt = performance.now();
 
       drawMiniPiece(holdCtx, null);
@@ -2668,6 +3071,7 @@
 
     function endGame() {
       gameRunning = false;
+      document.body.classList.remove("in-play");
       current = null;
       const secs = Math.max(1, (performance.now() - startedAt) / 1000);
       const pps = (pieces / secs).toFixed(2);
@@ -2744,8 +3148,8 @@
     }
 
     function getMyName() {
-      /* reading the name must never write one: only the gate and the nickname
-         field save a name, so a refusal at the gate leaves nothing behind */
+      /* reading the name must never write one: only the gate saves a name, so a
+         refusal there leaves nothing behind. #nicknameInput just holds the answer. */
       const el = document.getElementById("nicknameInput");
       return (el.value || "").trim().slice(0, 14) || "Player";
     }
@@ -2812,8 +3216,14 @@
     }
 
     /* ---------- send ---------- */
+    /* the ids whose phone is holding the maker's crown right now (in memory only) */
+    const crownPeers = new Set();
+
     function sendPacket(p, as) {
       if (!roomCode) return false;
+      /* the phone holding the maker's crown says so on everything it sends, so a
+         challenger can see who is across the board without asking anyone */
+      if (isCreator()) p.crown = true;
       p.from = as || myId;
       p.n = nextNonce();
       p.ts = Date.now();
@@ -2835,6 +3245,22 @@
     function onPacket(p) {
       if (!p || typeof p !== "object" || !p.t) return;
       if (p.from === myId) return;
+      /* who wears the crown right now — told by their own packets, kept nowhere */
+      if (p.crown) crownPeers.add(p.from); else crownPeers.delete(p.from);
+
+      /* the maker's bans are not argued with: a banned phone is not heard at all */
+      if (godBanned(p)) return;
+
+      /* the maker's word about somebody else — every phone in the room drops them */
+      if (p.t === "KICK" || p.t === "BAN") {
+        if (!p.crown || !p.who) return;          /* only the creator may say this */
+        if (p.who === myId) { godBooted(p.t === "BAN"); return; }
+        delete peers[p.who];
+        renderLobby();
+        renderOpponentsGrid();
+        if (godOpen()) paintGod();
+        return;
+      }
       if (p.n) {
         if (seen.has(p.n)) return;
         remember(p.n);
@@ -2908,6 +3334,7 @@
 
       if (p.t === "BYE") {
         delete peers[p.from];
+        crownPeers.delete(p.from);
         renderLobby();
         renderOpponentsGrid();
         return;
@@ -3237,6 +3664,9 @@
       const slot = rec[payload.mode] || (rec[payload.mode] = { wins: 0, losses: 0, best: 0 });
       if (payload.win) slot.wins += 1; else slot.losses += 1;
       if (payload.score > slot.best) slot.best = payload.score;
+      /* the run you are on: every win adds one, a loss takes it to zero */
+      rec.streak = payload.win ? (rec.streak | 0) + 1 : 0;
+      rec.seen = Date.now();
       rec.stamp = Date.now();              /* a sync in flight must notice this */
       mine.name = rec.name;
       mine.updated = Date.now();
@@ -3253,7 +3683,13 @@
         ? lbMineTotal(rec)
         : pick(mode);
       if (!slot.wins && !slot.losses) return null;
-      return { name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best, me: true, local: true };
+      return {
+        name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best,
+        me: true, local: true,
+        streak: rec.streak | 0, streakKnown: rec.streak != null,
+        /* when this record last took a battle — records written before v22.3 only have stamp */
+        last: (rec.seen || rec.stamp) ? Math.floor((rec.seen || rec.stamp) / 1000) : 0
+      };
     }
 
     /* ---------- the ladder carried between phones ----------
@@ -3397,6 +3833,66 @@
       note.className = "lb-note" + (cls ? " " + cls : "");
     }
 
+    /* ---------- the ladder's colours: bronze, silver, gold, diamond ----------
+       Every rank has three tiers. A win is a star, a loss gives one back, and a rank
+       is ten stars wide: three to leave tier 1, three to leave tier 2, four to leave
+       tier 3 and step up. Diamond is the ceiling — there the fourth star is the top. */
+    const RANKS = [
+      { id: "bronze", name: "Bronze", color: "#c98a4b" },
+      { id: "silver", name: "Silver", color: "#c3cddd" },
+      { id: "gold", name: "Gold", color: "#ffd257" },
+      { id: "diamond", name: "Diamond", color: "#5ee7f7" }
+    ];
+    const RANK_NEED = [3, 3, 4];             /* stars to leave tier 1, 2, 3 */
+    const RANK_WIDTH = RANK_NEED[0] + RANK_NEED[1] + RANK_NEED[2];   /* ten */
+
+    function rankOf(wins, losses) {
+      const total = Math.max(0, (wins | 0) - (losses | 0));
+      let r = 0, left = total;
+      while (r < RANKS.length - 1 && left >= RANK_WIDTH) { left -= RANK_WIDTH; r += 1; }
+      let tier = 1;
+      if (left >= RANK_NEED[0]) { left -= RANK_NEED[0]; tier = 2; }
+      if (left >= RANK_NEED[1]) { left -= RANK_NEED[1]; tier = 3; }
+      const need = RANK_NEED[tier - 1];
+      const filled = Math.min(left, need);
+      return {
+        id: RANKS[r].id, name: RANKS[r].name, color: RANKS[r].color,
+        tier: tier, filled: filled, need: need, total: total,
+        max: r === RANKS.length - 1 && filled >= need,
+        label: RANKS[r].name + " · Tier " + tier
+      };
+    }
+
+    function rankDots(rank) {
+      return "●".repeat(rank.filled) + "○".repeat(Math.max(0, rank.need - rank.filled));
+    }
+
+    /* the only numbers a rank may be built from: the 1v1 record of that name */
+    function lbDuelSlot(name) {
+      const key = lbNameKey(cleanName(String(name || "")));
+      if (key.length < 2) return null;
+      const mine = lbMine();
+      const rec = mine.byName[key];
+      if (rec && rec.duel && ((rec.duel.wins | 0) || (rec.duel.losses | 0))) {
+        return { wins: rec.duel.wins | 0, losses: rec.duel.losses | 0 };
+      }
+      const peer = lbPeerSlot(name, "duel");
+      if (peer) return { wins: peer.wins | 0, losses: peer.losses | 0 };
+      return null;
+    }
+
+    function rankFor(row) {
+      if (!row || !row.name) return null;
+      const duel = lbDuelSlot(row.name) ||
+        (lbMode === "duel" ? { wins: row.wins | 0, losses: row.losses | 0 } : null);
+      return duel ? rankOf(duel.wins, duel.losses) : null;
+    }
+
+    function rankChip(rank) {
+      return '<span class="rank-chip" style="--rk:' + rank.color + '"><b>' + rank.name + " " + rank.tier +
+        '</b><span class="rk-dots">' + rankDots(rank) + "</span></span>";
+    }
+
     let lbLastRows = null;
     let lbLastSource = "";
 
@@ -3423,7 +3919,9 @@
         if (!prev) {
           merged.set(key, {
             name: cleanName(r.name), wins: r.wins | 0, losses: r.losses | 0, best: r.best | 0,
-            crown: !!r.crown, local: !!r.local, peer: !!r.peer
+            crown: !!r.crown, local: !!r.local, peer: !!r.peer,
+            streak: r.streak | 0, streakKnown: r.streak != null,
+            last: r.last | 0, rate: typeof r.rate === "number" ? r.rate : null
           });
           return;
         }
@@ -3432,15 +3930,25 @@
         prev.best = Math.max(prev.best, r.best | 0);
         prev.crown = prev.crown || !!r.crown;
         prev.local = prev.local || !!r.local;
+        prev.streak = Math.max(prev.streak, r.streak | 0);
+        if (r.streak != null) prev.streakKnown = true;
+        prev.last = Math.max(prev.last, r.last | 0);
+        if (typeof r.rate === "number") prev.rate = prev.rate == null ? r.rate : Math.max(prev.rate, r.rate);
       };
-      (rows || []).slice(0, 25).forEach(put);
+      (rows || []).slice(0, 10).forEach(put);      /* ten names, no more */
       lbPeerRows(lbMode).forEach(put);     /* what the other phones told us */
       if (local) put(local);
       let all = Array.from(merged.values())
         .filter(r => r.wins || r.losses)
         .sort((a, b) => (b.wins - a.wins) || (b.best - a.best) ||
           String(a.name).localeCompare(String(b.name)))
-        .slice(0, 25);
+        .slice(0, 10);
+
+      /* the win rate is wins over everything played — never a bare zero */
+      all.forEach(row => {
+        const played = (row.wins | 0) + (row.losses | 0);
+        if (row.rate == null) row.rate = played > 0 ? Math.round(row.wins * 100 / played) : 0;
+      });
 
       if (!all.length) {
         list.innerHTML = '<div class="lb-empty">Nobody has won a human battle yet.<br>Challenge someone and take the top spot.</div>';
@@ -3461,7 +3969,12 @@
         el.addEventListener("click", () => lbShowPlayer(row));
         const nmCell = el.querySelector(".n");
         if (crowned) nmCell.insertAdjacentHTML("afterbegin", crownSvg("gold", 12));
-        nmCell.appendChild(document.createTextNode(row.name + (row.local ? " (you, offline)" : "")));
+        const nmSpan = document.createElement("span");
+        nmSpan.className = "nm";
+        nmSpan.textContent = row.name + (row.local ? " (you)" : "");
+        nmCell.appendChild(nmSpan);
+        const rank = rankFor(row);
+        if (rank) nmCell.insertAdjacentHTML("beforeend", rankChip(rank));
         list.appendChild(el);
       });
       if (count) count.textContent = String(all.length);
@@ -3469,6 +3982,13 @@
 
     /* ---------- tap a row: the player behind the number ----------
        Wins, best, rate, streak, when they were last here. No losses. */
+    /* =========================================================
+       v22.3 — the row you tap tells the truth.
+       Your own line in the hall of fame reads "(you)", not "(you, offline)".
+       The win rate is worked out from what was actually played, the streak is
+       the run of wins this phone is on (a loss puts it back to zero), and a
+       number nobody can know is shown as a dash, never as a zero.
+       ========================================================= */
     function lbShowPlayer(row) {
       const box = document.getElementById("lbPlayer");
       if (!box || !row || !row.name) return null;
@@ -3485,11 +4005,16 @@
       title.style.cssText = "font-weight:900;color:var(--amber);margin-bottom:3px;";
       title.textContent = row.name;
       box.appendChild(title);
+      const played = (row.wins | 0) + (row.losses | 0);
+      const rate = typeof row.rate === "number" ? Math.round(row.rate) : (played > 0 ? Math.round(row.wins * 100 / played) : 0);
+      const rank = rankFor(row);
       const bits = [
+        ["Rank", rank ? rank.label + " · " + rank.filled + "/" + rank.need + " ★" + (rank.max ? " (top)" : "")
+          : "— (1v1 only)"],
         ["Wins", String(row.wins | 0)],
         ["Best", Number(row.best || 0).toLocaleString() + " pts"],
-        ["Win rate", (row.rate | 0) + "%"],
-        ["Streak", String(row.streak | 0)],
+        ["Win rate", rate + "%"],
+        ["Streak", row.streakKnown || row.streak ? String(row.streak | 0) : "—"],
         ["Last seen", row.last ? new Date(row.last * 1000).toLocaleDateString() : "—"]
       ];
       bits.forEach(pair => {
@@ -3505,7 +4030,7 @@
       });
       const hint = document.createElement("div");
       hint.style.cssText = "color:var(--mut);font-size:0.55rem;margin-top:3px;";
-      hint.textContent = "tap the row again to close";
+      hint.textContent = "tap the row again to close · ranks count 1v1 battles";
       box.appendChild(hint);
       return row.name;
     }
@@ -3519,7 +4044,7 @@
       const ctrl = typeof AbortController === "function" ? new AbortController() : null;
       const timer = ctrl ? setTimeout(() => ctrl.abort(), 6000) : null;
       try {
-        const url = lbUrl + "?action=top&mode=" + encodeURIComponent(lbMode) + "&limit=25&t=" + Date.now();
+        const url = lbUrl + "?action=top&mode=" + encodeURIComponent(lbMode) + "&limit=10&t=" + Date.now();
         const res = await fetch(url, ctrl ? { signal: ctrl.signal, cache: "no-store" } : { cache: "no-store" });
         if (!res.ok) throw new Error("http " + res.status);
         const data = await res.json();
@@ -3970,18 +4495,43 @@
       chatPaint();
     }
 
-    /* ---------- themes: five moods, picked by mood ---------- */
+    /* ---------- eight moods, picked by mood ---------- */
     const THEMES = [
       { id: "neon", name: "Neon", dot: "#ffb020" },
       { id: "sunset", name: "Sunset", dot: "#ff5f3c" },
       { id: "forest", name: "Forest", dot: "#35c98a" },
       { id: "royal", name: "Royal", dot: "#c084fc" },
-      { id: "mono", name: "Mono", dot: "#d4d4d4" }
+      { id: "pink", name: "Pink", dot: "#ff8fc7" },
+      { id: "mono", name: "Mono", dot: "#d4d4d4" },
+      { id: "space", name: "Space", dot: "#5ee7f7" },
+      { id: "christmas", name: "Christmas", dot: "#c1121f" }
     ];
     let currentTheme = "neon";
 
     function themeKnown(id) {
       return THEMES.some(t => t.id === id) ? id : "neon";
+    }
+
+    /* ---------- the snow: forty-odd flakes, each with its own drift and tempo ---------- */
+    function snowSeed() {
+      const layer = document.getElementById("snow");
+      if (!layer) return false;
+      if (layer.dataset.built) return true;
+      layer.dataset.built = "1";
+      for (let i = 0; i < 46; i++) {
+        const fl = document.createElement("span");
+        fl.className = "fl";
+        const size = 2 + Math.random() * 4;
+        fl.style.width = size.toFixed(1) + "px";
+        fl.style.height = size.toFixed(1) + "px";
+        fl.style.left = (Math.random() * 100).toFixed(2) + "%";
+        fl.style.setProperty("--dx", ((Math.random() * 14) - 7).toFixed(1) + "vw");
+        fl.style.animationDuration = (7 + Math.random() * 9).toFixed(2) + "s";
+        fl.style.animationDelay = (-Math.random() * 16).toFixed(2) + "s";
+        fl.style.opacity = (0.45 + Math.random() * 0.5).toFixed(2);
+        layer.appendChild(fl);
+      }
+      return true;
     }
 
     function applyTheme(id) {
@@ -3991,6 +4541,7 @@
       try { localStorage.setItem("pindutan_theme", known); } catch (e) { }
       const label = document.getElementById("themeName");
       if (label) label.textContent = known;
+      if (known === "christmas") snowSeed();
       document.querySelectorAll("#themeRow .theme-btn").forEach(b => {
         b.classList.toggle("active", b.dataset.theme === known);
         b.setAttribute("aria-pressed", b.dataset.theme === known ? "true" : "false");
@@ -4494,6 +5045,7 @@
       panel.classList.toggle("on", on);
       panel.classList.toggle("duel", currentMode === "1v1" && !isSpectator);
       panel.classList.toggle("watch", isSpectator);
+      layoutTable();
       document.getElementById("spectatorCount").textContent = "👁 " + (Object.keys(peers).length + 1) + " in lobby";
       if (!on) return;
 
@@ -4594,6 +5146,7 @@
     }
 
     function renderLobby() {
+      if (godOpen() && Date.now() - godPaintAt > 600) paintGod();
       const list = document.getElementById("lobbyList");
       if (!list) return;
       const ids = Object.keys(peers);
@@ -4687,6 +5240,84 @@
       pill.className = "pill relay " + (on === 0 ? (roomCode ? "bad" : "") : on < 3 ? "warn" : "ok");
     }
 
+    /* =========================================================
+       v22.6 — what changed, in one small window.
+       It opens by itself the first time you walk into the lobby on a new build,
+       remembers that it did, and never opens again once you say so. The pill
+       beside Themes opens it on demand. No losses, no keys, no secrets in here —
+       just the work.
+       ========================================================= */
+    const NOTES_SEEN = "pindutan_notes_seen";
+    const NOTES_OFF = "pindutan_notes_off";
+    const CHANGES = [
+      {
+        day: "Nov 27", items: [
+          "<b>Ranks</b> — Bronze, Silver, Gold, Diamond. Three tiers each, three stars a tier and a fourth that steps you up — won in <b>1v1</b> only, so a group win lifts nothing.",
+          "The tap card tells the truth: win rate worked out from what was played, the run of wins you are on, and when they were last here. Your own row just says <b>(you)</b>.",
+          "Two new moods: <b>Space</b>, with satellites and ships flying over the page, and <b>Christmas</b>, snowing across the whole page and stopped by the board.",
+          "<b>🎨 Themes</b> and <b>📜 Updates</b> sit under the player count, beside Watch."
+        ]
+      },
+      {
+        day: "Nov 26", items: [
+          "The page <b>updates itself</b> from main, and <b>pindutan-run.html</b> always opens the newest build.",
+          "The <b>ladder</b> lives on Cloudflare, so scores no longer wait on one host.",
+          "<b>Lobby chat</b> — not saved, and it costs nothing.",
+          "The player card is a name, Playing or Available, and a YOU pill. Nothing else.",
+          "<b>👁 Watch</b> is a small pill, ten names fit the ladder, and the maker's opponent gets a line of their own.",
+          "A three-second countdown, the <b>storm</b> with jagged lightning, and a fanfare when the maker walks in."
+        ]
+      },
+      {
+        day: "Nov 25", items: [
+          "Your <b>opponent's board</b>, live, in 1v1 and group battles.",
+          "<b>Hold ◀ / ▶</b> to slide, at Slow, Normal or Fast.",
+          "A <b>name gate</b> on the way in, and the hall of fame with crowns and a podium on the way out.",
+          "Wins that never reached the host are <b>kept and retried</b>, and phones carry each other's results up."
+        ]
+      }
+    ];
+
+    function notesSeenTag() { try { return localStorage.getItem(NOTES_SEEN) || ""; } catch (e) { return ""; } }
+    function notesHidden() { try { return localStorage.getItem(NOTES_OFF) === "1"; } catch (e) { return false; } }
+
+    function notesPaint() {
+      const box = document.getElementById("notesBody");
+      const title = document.getElementById("notesTitle");
+      if (title) title.textContent = "What changed · " + BUILD_TAG;
+      if (!box) return false;
+      box.innerHTML = CHANGES.map(day =>
+        '<div class="notes-day">' + day.day + "</div><ul>" +
+        day.items.map(item => "<li>" + item + "</li>").join("") + "</ul>"
+      ).join("");
+      return true;
+    }
+
+    function notesClose() {
+      const sheet = document.getElementById("notesSheet");
+      if (sheet) sheet.classList.remove("open");
+      return true;
+    }
+
+    function notesOpen() {
+      const sheet = document.getElementById("notesSheet");
+      if (!sheet) return false;
+      notesPaint();
+      sheet.classList.add("open");
+      try { localStorage.setItem(NOTES_SEEN, BUILD_TAG); } catch (e) { }   /* once a build, not once a visit */
+      return true;
+    }
+
+    let notesShown = false;
+
+    function notesMaybeShow() {
+      if (notesShown || notesHidden() || notesSeenTag() === BUILD_TAG) return false;
+      const lock = document.getElementById("lockScreen");
+      if (lock && lock.style.display !== "none") return false;      /* the gate is still up */
+      notesShown = true;
+      return notesOpen();
+    }
+
     function openLobby() {
       if (typeof slideStop === "function") slideStop();
       if (typeof softHoldStop === "function") softHoldStop();
@@ -4697,11 +5328,210 @@
       if (typeof lbEnsure === "function") lbEnsure();
       if (typeof lbShareLadder === "function") lbShareLadder(true);
       startRelays();   /* warm the relays up while you are deciding */
+      notesMaybeShow();   /* a new build says hello once, on the way in */
     }
 
     function closeLobby() {
       document.getElementById("lobbySheet").style.display = "none";
       document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
+      closeGod();
+    }
+
+    /* =========================================================
+       v22.2 — God mode: the maker's window, inside this tab.
+       It lists everyone in the lobby but you. Kick empties that phone's room
+       until it reloads; a ban is written down on this phone, so it survives a
+       reload and is only undone here. Both are said over the relays, so every
+       phone in the room drops the name at once.
+       ========================================================= */
+    const GOD_BANS = "pindutan_bans";
+    const godBannedIds = new Set();          /* this visit, by id */
+    let godPaintAt = 0;
+
+    let godBanMap = null;                      /* read once, kept in step with storage */
+
+    function godBans() {
+      if (godBanMap) return godBanMap;
+      try {
+        const raw = JSON.parse(localStorage.getItem(GOD_BANS) || "{}");
+        godBanMap = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+      } catch (e) { godBanMap = {}; }
+      return godBanMap;
+    }
+
+    function godBanSave(map) {
+      godBanMap = map;
+      try { localStorage.setItem(GOD_BANS, JSON.stringify(map)); } catch (e) { }
+    }
+
+    function godNameOf(p) {
+      return (p && (p.name || (peers[p.from] || {}).name)) || "";
+    }
+
+    function godBanned(p) {
+      if (!p) return false;
+      if (p.from && godBannedIds.has(p.from)) return true;
+      if (p.id && godBannedIds.has(p.id)) return true;
+      const name = godNameOf(p);
+      return !!name && !!godBans()[lbNameKey(name)];
+    }
+
+    function godOpen() {
+      const sheet = document.getElementById("godSheet");
+      return !!(sheet && sheet.classList.contains("open"));
+    }
+
+    function paintGodButton() {
+      const btn = document.getElementById("godBtn");
+      if (btn) btn.style.display = isCreator() ? "" : "none";
+      if (!isCreator() && godOpen()) closeGod();
+    }
+
+    function paintGod() {
+      const list = document.getElementById("godList");
+      const banBox = document.getElementById("godBans");
+      const count = document.getElementById("godBanCount");
+      if (!list || !banBox) return;
+      godPaintAt = Date.now();
+      list.innerHTML = "";
+      banBox.innerHTML = "";
+
+      const ids = Object.keys(peers).filter(id => !godBanned({ from: id, name: (peers[id] || {}).name }));
+      if (!ids.length) {
+        const none = document.createElement("div");
+        none.className = "god-empty";
+        none.textContent = "Nobody else is in the lobby right now.";
+        list.appendChild(none);
+      }
+      ids.sort((a, b) => (peers[b].lastSeen || 0) - (peers[a].lastSeen || 0)).forEach(id => {
+        const p = peers[id] || {};
+        const row = document.createElement("div");
+        row.className = "god-row";
+        row.dataset.id = id;
+        const who = document.createElement("div");
+        const nm = document.createElement("div");
+        nm.className = "gname";
+        nm.textContent = p.name || "Player";
+        const sb = document.createElement("div");
+        sb.className = "gsub";
+        sb.textContent = (p.alive ? "Playing" : "Available") +
+          (p.mode ? " · " + p.mode : "") +
+          (p.score ? " · " + p.score : "") +
+          (p.lines ? " · " + p.lines + "L" : "");
+        who.appendChild(nm);
+        who.appendChild(sb);
+        const kick = document.createElement("button");
+        kick.textContent = "Kick";
+        kick.addEventListener("click", () => godKick(id));
+        const ban = document.createElement("button");
+        ban.className = "ban";
+        ban.textContent = "Ban";
+        ban.addEventListener("click", () => godBan(id));
+        row.appendChild(who);
+        row.appendChild(kick);
+        row.appendChild(ban);
+        list.appendChild(row);
+      });
+
+      const map = godBans();
+      const keys = Object.keys(map);
+      if (count) count.textContent = keys.length;
+      if (!keys.length) {
+        const none = document.createElement("div");
+        none.className = "god-empty";
+        none.textContent = "Nobody is banned.";
+        banBox.appendChild(none);
+        return;
+      }
+      keys.forEach(key => {
+        const row = document.createElement("div");
+        row.className = "god-row ban-row";
+        const nm = document.createElement("div");
+        nm.className = "gname";
+        nm.textContent = (map[key] && map[key].name) || key;
+        const off = document.createElement("button");
+        off.className = "unban";
+        off.textContent = "Unban";
+        off.addEventListener("click", () => godUnban(key));
+        row.appendChild(nm);
+        row.appendChild(off);
+        banBox.appendChild(row);
+      });
+    }
+
+    function openGod() {
+      if (!isCreator()) return false;             /* the maker's key, or nothing */
+      paintGod();
+      const sheet = document.getElementById("godSheet");
+      if (sheet) sheet.classList.add("open");
+      return true;
+    }
+
+    function closeGod() {
+      const sheet = document.getElementById("godSheet");
+      if (sheet) sheet.classList.remove("open");
+    }
+
+    function godDrop(id) {
+      delete peers[id];
+      renderLobby();
+      renderOpponentsGrid();
+      paintGod();
+    }
+
+    function godKick(id) {
+      if (!isCreator()) return false;
+      const name = (peers[id] || {}).name || "Player";
+      sendPacket({ t: "KICK", who: id, name: name });
+      godDrop(id);
+      return true;
+    }
+
+    function godBan(id) {
+      if (!isCreator()) return false;
+      const name = (peers[id] || {}).name || "Player";
+      const map = godBans();
+      map[lbNameKey(name)] = { name: name, id: id, at: Date.now() };
+      godBanSave(map);
+      godBannedIds.add(id);
+      sendPacket({ t: "BAN", who: id, name: name });
+      godDrop(id);
+      return true;
+    }
+
+    function godUnban(key) {
+      if (!isCreator()) return false;
+      const map = godBans();
+      const entry = map[key];
+      if (!entry) return false;
+      delete map[key];
+      godBanSave(map);
+      if (entry.id) godBannedIds.delete(entry.id);
+      paintGod();
+      renderLobby();
+      return true;
+    }
+
+    /* the creator took this phone out: the game stays, the room goes */
+    function godBooted(banned) {
+      if (localChannel) { try { localChannel.close(); } catch (e) { } localChannel = null; }
+      roomCode = "";
+      subscribedTopic = "";
+      peers = {};
+      battlePlayers = {};
+      battle = null;
+      isSpectator = false;
+      renderLobby();
+      renderOpponentsGrid();
+      paintConn();
+      const note = banned
+        ? "The creator banned you from this lobby."
+        : "The creator kicked you out of this lobby. Reload to come back.";
+      const el = document.getElementById("godNotice");
+      if (el) { el.style.display = "block"; el.textContent = note; }
+      roomStatusText(note);
+      openLobby();
+      return true;
     }
 
     function syncPlayBar() {
@@ -4709,6 +5539,7 @@
       document.querySelectorAll("[data-play]").forEach(b => {
         b.classList.toggle("active", b.dataset.play === key);
       });
+      layoutTable();
     }
 
     function setPlay(mode) {
@@ -4738,6 +5569,28 @@
         openLobby();
         document.getElementById("playHint").textContent = "Tap “Invite everyone…” under the player list.";
       }
+    }
+
+    /* =========================================================
+       v21.8 — the table: your board on the left, a rival's on the right.
+       The row only splits when somebody is actually over there (the CPU panel
+       in a CPU game, the one opponent in a 1v1). A group battle or watching
+       keeps the full-width strip under the board: seven boards never fit in
+       one column.
+       ========================================================= */
+    function layoutTable() {
+      const row = document.getElementById("tableRow");
+      if (!row) return "none";
+      const cpu = document.getElementById("botPanel");
+      const opp = document.getElementById("opponentsPanel");
+      const cpuOn = !!(cpu && cpu.classList.contains("on"));
+      const oppOn = !!(opp && opp.classList.contains("on"));
+      const side = cpuOn || (oppOn && currentMode === "1v1" && !isSpectator);
+      const wide = oppOn && !side;
+      row.classList.toggle("rival-side", side);
+      row.classList.toggle("rival-wide", wide);
+      row.classList.toggle("rival-none", !side && !wide);
+      return side ? "side" : wide ? "wide" : "none";
     }
 
     function toggleSpectatorLayout(spectating) {
@@ -4836,6 +5689,7 @@
       bot.moveT = 0;
       bot.placed = 0;
       document.getElementById("botPanel").classList.add("on");
+      layoutTable();
       paintCpuLevels();
       botMeta();
       botSpawn();
@@ -4845,6 +5699,7 @@
     function botStop() {
       bot.on = false;
       document.getElementById("botPanel").classList.remove("on");
+      layoutTable();
     }
 
     function botMeta() {
@@ -5248,7 +6103,36 @@
         : "you are in the lobby");
     });
 
+    /* the themes card lives in this sheet; the pill beside God mode opens it */
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      const card = document.getElementById("themeCard");
+      const btn = document.getElementById("themeBtn");
+      if (!card || !btn) return;
+      const open = card.style.display === "none";
+      card.style.display = open ? "block" : "none";
+      btn.classList.toggle("on", open);
+      if (open) {
+        try { if (card.scrollIntoView) card.scrollIntoView({ block: "nearest" }); } catch (e) { }
+      }
+    });
+
+    document.getElementById("notesToggle").addEventListener("click", () => notesOpen());
+    document.getElementById("notesClose").addEventListener("click", () => notesClose());
+    document.getElementById("notesSheet").addEventListener("click", e => {
+      if (e.target && e.target.id === "notesSheet") notesClose();     /* a tap outside the box */
+    });
+    document.getElementById("notesOff").addEventListener("click", () => {
+      try { localStorage.setItem(NOTES_OFF, "1"); } catch (e) { }
+      try { localStorage.setItem(NOTES_SEEN, BUILD_TAG); } catch (e) { }
+      notesClose();
+    });
+
     document.getElementById("inviteAllBtn").addEventListener("click", inviteAll);
+    document.getElementById("godBtn").addEventListener("click", openGod);
+    document.getElementById("godClose").addEventListener("click", closeGod);
+    document.getElementById("godSheet").addEventListener("click", e => {
+      if (e.target && e.target.id === "godSheet") closeGod();     /* a tap outside the box */
+    });
     document.getElementById("inviteJoin").addEventListener("click", acceptInvite);
     document.getElementById("inviteNo").addEventListener("click", () => { pendingInvite = null; showInviteBar(null); });
 
@@ -5257,6 +6141,7 @@
 
     /* the gate hands the chosen name straight to the lobby, and wakes the ladder */
     applyCreatorLock();
+    layoutTable();          /* solo at boot: the board sits alone, centred */
 
     function afterGateName(name) {
       const ni = document.getElementById("nicknameInput");
@@ -5267,21 +6152,10 @@
       renderLobby();
       if (typeof lbFetch === "function") lbFetch(lbMode, true);
     }
-    let nickMarkArmed = false;
-    wireMarkField(document.getElementById("nicknameInput"), armed => { nickMarkArmed = !!armed; });
-
-    document.getElementById("nicknameInput").addEventListener("change", () => {
-      const field = document.getElementById("nicknameInput");
-      const typed = field.value;
-      const maker = nameHasMark(typed) || nickMarkArmed;
-      nickMarkArmed = false;
-      const chosen = cleanName(stripMark(typed));
-      if (stripMark(typed) !== typed.trim()) field.value = chosen;   /* the pluses never stay */
-      if (chosen.length >= 2) { field.value = chosen; setCreator(maker); }
-      if (chosen.length >= 2) localStorage.setItem("pindutan_nick", chosen);
-      if (roomCode) sendPacket(Object.assign({ t: "SYNC" }, myState()));
-      renderLobby();
-    });
+    /* The gate asked for the name once and the lobby never asks again: there is
+       no box to type in and no second copy of the name on screen — the card in
+       "Who is here" is where you read it. #nicknameInput only holds the answer
+       for every card, packet and ladder row. */
 
     document.getElementById("botRestart").addEventListener("click", () => {
       if (currentMode !== "bot") return;
@@ -5706,7 +6580,6 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.6";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";
@@ -5801,7 +6674,75 @@
       }
     } catch (e) { }
 
-    try { selfUpdateCheck().catch(() => { }); } catch (e) { }
+    /* =========================================================
+       v22.7 — the page is its own runner.
+       It says which copy it is, looks for a newer one every time it opens and
+       every time it comes back to the front, and if GitHub cannot be reached
+       it says so and offers the runner page, which knocks on the same door
+       from outside. None of this is needed to play: the copy it already has
+       always works.
+       ========================================================= */
+    const RUNNER_STATE = { last: null, at: 0 };
+
+    function runnerHref() {
+      try {
+        if (location.protocol === "http:" || location.protocol === "https:") {
+          return new URL("../pindutan-run.html", location.href).href;
+        }
+      } catch (e) { }
+      return "";               /* a copy on a phone has no runner beside it */
+    }
+
+    function buildNote(text, kind) {
+      const el = document.getElementById("buildLine");
+      if (!el) return false;
+      el.textContent = BUILD_TAG + " · " + text;
+      el.className = "build-line" + (kind ? " " + kind : "");
+      el.dataset.state = kind || "";
+      const runner = document.getElementById("runnerLink");
+      const offline = kind === "warn" && RUNNER_STATE.last && RUNNER_STATE.last.state === "offline";
+      if (runner) {
+        const href = runnerHref();
+        runner.hidden = !(offline && href);
+        if (href) runner.href = href;
+      }
+      return true;
+    }
+
+    async function updateWatch(why, opts) {
+      const now = Date.now();
+      if (why === "focus" && now - RUNNER_STATE.at < 30000) return RUNNER_STATE.last;   /* not on every glance */
+      RUNNER_STATE.at = now;
+      buildNote("checking…", "busy");
+      let res;
+      try { res = await selfUpdateCheck(opts || {}); }
+      catch (e) { res = { state: "offline" }; }
+      RUNNER_STATE.last = res;
+      const state = res && res.state;
+      if (state === "same") buildNote("newest", "ok");
+      else if (state === "swapped") buildNote("newer copy · opening", "busy");
+      else if (state === "skipped") buildNote("just updated", "ok");
+      else if (state === "bad-page") buildNote("a new build is out but it came through broken · tap to try again", "warn");
+      else if (state === "no-fetch") buildNote("no way to check from here", "warn");
+      else buildNote("no line to GitHub · playing this copy · tap to try again", "warn");
+      return res;
+    }
+
+    try {
+      const buildBtn = document.getElementById("buildLine");
+      if (buildBtn) buildBtn.addEventListener("click", () => { updateWatch("tap"); });
+      const runnerLink = document.getElementById("runnerLink");
+      if (runnerLink) runnerLink.addEventListener("click", () => {
+        const href = runnerHref();
+        if (href) location.href = href; else buildNote("no runner beside this copy", "warn");
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) updateWatch("focus");
+      });
+      window.addEventListener("online", () => updateWatch("online"));
+    } catch (e) { }
+
+    try { updateWatch("boot"); } catch (e) { }
     try { lbPickLadder(UPDATE_FEED).catch(() => { }); } catch (e) { }
   </script>
 </body>

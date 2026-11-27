@@ -113,7 +113,7 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v22** — 218: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+- **Pindutan v22** — 224: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
   wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
   your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
   Playing/Available and nothing
@@ -128,9 +128,12 @@ All suites run in Node with jsdom, no browser needed.
   the creator, Goodluck!”, which the maker never reads), the storm
   (lightning for the whole room — three jagged vector bolts, each eight points of zig-zag, drawn as SVG so
   they stay sharp on any screen — a four-second fanfare the moment the maker's key is taken, a maker-only
-  ⚡ beside the relays that broadcasts, a second bolt inside 600 ms held back), six themes that stick, the player card
+  ⚡ beside the relays that broadcasts, a second bolt inside 600 ms held back), eight themes that stick — the last two
+  are skies: a launch pad with three satellites and two ships drifting behind the board once a game starts, and a
+  Christmas night whose snow falls over the whole page and is stopped by the table itself — the player card
   behind a row tap (wins, best, the win rate worked out from what was played, the run of wins you are on,
-  last seen — no losses), the ladder (ten names, no more, your own row reading "(you)", and
+  last seen — no losses), the ladder (ten names, no more, a rank for each of them — bronze, silver, gold, diamond,
+  three tiers of three stars and a fourth that steps you up — your own row reading "(you)", and
   the note that speaks of Cloudflare when the board lives there), the CPU rival and its three levels, the name gate,
   the hall of fame (the note names whatever host the feed points at), the GLIDE panel, hold-to-slide, the
   pills, and the self-update (nothing newer leaves it alone, a newer build comes over whole, a broken

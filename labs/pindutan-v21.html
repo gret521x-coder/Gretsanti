@@ -49,6 +49,19 @@
       --txt: #f5f5f5; --mut: #9a9a9a; --amber: #ffffff; --amber2: #d4d4d4; --cyan: #e5e5e5;
       --lime: #d9d9d9; --red: #ff8f8f; --violet: #c4c4c4; --glow: rgba(255, 255, 255, 0.22);
     }
+    /* ---------- mission control: the launch pad, painted like the index ---------- */
+    html[data-theme="space"] {
+      --ink: #03050c; --ink2: #050912; --card: #08101c; --card2: #0c1728; --line: #172944;
+      --txt: #e9f3ff; --mut: #7d92b4; --amber: #5ee7f7; --amber2: #38bdf8; --cyan: #7dd3fc;
+      --lime: #34d399; --red: #fb7185; --violet: #a78bfa; --glow: rgba(94, 231, 247, 0.34);
+    }
+    /* ---------- christmas: pine, gold and a red ribbon ---------- */
+    html[data-theme="christmas"] {
+      --ink: #08130e; --ink2: #0c1f1a; --card: #102a20; --card2: #143327; --line: #1f4a35;
+      --txt: #f5f0e6; --mut: #9dbcaa; --amber: #c9a227; --amber2: #c1121f; --cyan: #e8d9a8;
+      --lime: #7ed957; --red: #c1121f; --violet: #f0b8c8; --glow: rgba(201, 162, 39, 0.36);
+    }
+
     .theme-btn {
       display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 9px;
       font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
@@ -1137,7 +1150,8 @@
     }
     .lb-row.me { border-color: rgba(255, 176, 32, 0.45); background: rgba(255, 176, 32, 0.08); }
     .lb-row .r { color: var(--mut); font-weight: 800; text-align: right; }
-    .lb-row .n { color: var(--txt); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-row .n { color: var(--txt); font-weight: 700; display: flex; align-items: center; gap: 5px; min-width: 0; }
+    .lb-row .n .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-row .w { color: var(--lime); font-weight: 800; }
     .lb-row .s { color: var(--mut); font-variant-numeric: tabular-nums; }
     .lb-row .w small, .lb-row .s small { color: var(--mut); font-weight: 700; font-size: 0.5rem; letter-spacing: 0.08em; }
@@ -1209,8 +1223,11 @@
     /* Watch is a small pill tucked under the "1 player in" badge, not a bar */
     #watchRow { justify-content: flex-end; }
     #watchToggle,
+    #themeBtn,
     #godBtn { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; }
     #godBtn { border-color: rgba(255, 210, 87, 0.5); color: var(--amber); }
+    #themeBtn { border-color: rgba(61, 214, 245, 0.45); color: var(--cyan); }
+    #themeBtn.on { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan) inset; }
 
     /* ---- God mode: the maker's window, inside this tab ---- */
     #godSheet {
@@ -1261,9 +1278,98 @@
     .touch-controls button.hard {
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
     }
+
+    /* ================= the two skies: behind the game, never in front of it =================
+       Both are fixed sheets under the page, so a flake that reaches the top of the board
+       is hidden by the board itself and carries on below it — the whole page snows,
+       the table stays readable. */
+    #sky, #snow {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+      pointer-events: none; display: none;
+    }
+    html[data-theme="space"] #sky { display: block; }
+    html[data-theme="christmas"] #snow { display: block; }
+    header, main.arena, .touch-controls, footer { position: relative; z-index: 1; }
+
+    /* ---- space: a grid, a horizon, and five things in the dark ---- */
+    #sky .grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    #sky .horizon {
+      position: absolute; top: -32vh; left: 50%; transform: translateX(-50%);
+      width: 150vw; height: 58vh; border-radius: 50%;
+      background: radial-gradient(ellipse at bottom, rgba(0, 82, 136, 0.3), transparent 70%);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+    }
+    #sky .orbit {
+      position: absolute; border: 1px dashed rgba(94, 231, 247, 0.1); border-radius: 50%;
+    }
+    #sky .o1 { width: 118vw; height: 60vh; left: -9vw; top: 18vh; }
+    #sky .o2 { width: 86vw; height: 44vh; left: 7vw; top: 30vh; border-style: solid; border-color: rgba(94, 231, 247, 0.06); }
+    #sky .craft {
+      position: absolute; color: var(--cyan); opacity: 0.5;
+      filter: drop-shadow(0 0 9px rgba(94, 231, 247, 0.35));
+      animation-timing-function: linear; animation-iteration-count: infinite;
+    }
+    #sky .craft svg { display: block; }
+    body:not(.in-play) #sky .craft { animation-play-state: paused; opacity: 0.2; }
+    #sky .c1 { top: 13%; left: 3%; animation-name: driftAcross; animation-duration: 47s; }
+    #sky .c2 { top: 30%; right: 5%; animation-name: driftDown; animation-duration: 63s; color: var(--amber); }
+    #sky .c3 { top: 62%; left: 8%; animation-name: driftAcross; animation-duration: 58s; animation-direction: reverse; }
+    #sky .c4 { top: 72%; right: 11%; animation-name: driftDown; animation-duration: 74s; color: var(--amber); animation-direction: reverse; }
+    #sky .c5 { top: 44%; left: 44%; animation-name: driftAcross; animation-duration: 88s; opacity: 0.34; }
+    @keyframes driftAcross {
+      from { transform: translate3d(-16vw, 0, 0) rotate(-8deg); }
+      to { transform: translate3d(116vw, -4vh, 0) rotate(8deg); }
+    }
+    @keyframes driftDown {
+      from { transform: translate3d(0, -14vh, 0) rotate(7deg); }
+      to { transform: translate3d(0, 114vh, 0) rotate(-7deg); }
+    }
+
+    /* ---- christmas: snow over the whole page, stopped by the board ---- */
+    #snow .fl {
+      position: absolute; top: -8vh; border-radius: 50%; background: #ffffff;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+      animation-name: fall; animation-timing-function: linear; animation-iteration-count: infinite;
+    }
+    @keyframes fall {
+      from { transform: translate3d(0, -10vh, 0); }
+      to { transform: translate3d(var(--dx, 0px), 112vh, 0); }
+    }
+
+    /* ---- the ladder's colours ---- */
+    .rank-chip {
+      display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto;
+      padding: 1px 5px; border-radius: 6px; font-size: 0.5rem; font-weight: 800;
+      letter-spacing: 0.04em; color: var(--rk, var(--mut)); border: 1px solid var(--rk, var(--line));
+      background: rgba(255, 255, 255, 0.04); white-space: nowrap;
+    }
+    .rank-chip b { font-weight: 900; }
+    .rank-chip .rk-dots { letter-spacing: 0.02em; }
   </style>
 </head>
 <body>
+
+  <!-- SPACE: the open sky behind the board, five things in the dark -->
+  <div id="sky" aria-hidden="true">
+    <div class="grid"></div>
+    <div class="horizon"></div>
+    <div class="orbit o1"></div>
+    <div class="orbit o2"></div>
+    <div class="craft c1"><svg width="58" height="36" viewBox="0 0 58 36" aria-hidden="true"><g fill="currentColor"><rect x="0" y="13" width="17" height="10" rx="1" opacity=".78"></rect><rect x="41" y="13" width="17" height="10" rx="1" opacity=".78"></rect><rect x="23" y="15" width="12" height="6" rx="1.5"></rect><rect x="27" y="7" width="4" height="9" rx="1.5" opacity=".7"></rect><rect x="27" y="26" width="4" height="6" rx="1.5" opacity=".5"></rect></g></svg></div>
+    <div class="craft c2"><svg width="58" height="36" viewBox="0 0 58 36" aria-hidden="true"><g fill="currentColor"><rect x="0" y="13" width="17" height="10" rx="1" opacity=".78"></rect><rect x="41" y="13" width="17" height="10" rx="1" opacity=".78"></rect><rect x="23" y="15" width="12" height="6" rx="1.5"></rect><rect x="27" y="7" width="4" height="9" rx="1.5" opacity=".7"></rect><rect x="27" y="26" width="4" height="6" rx="1.5" opacity=".5"></rect></g></svg></div>
+    <div class="craft c3"><svg width="30" height="52" viewBox="0 0 30 52" aria-hidden="true"><g fill="currentColor"><path d="M15 0c6 7 8 15 8 23 0 7-3 13-8 19-5-6-8-12-8-19 0-8 2-16 8-23z" opacity=".94"></path><path d="M7 25 0 39l7-3zM23 25l7 14-7-3z" opacity=".7"></path><circle cx="15" cy="18" r="3.2" fill="#04070f" opacity=".65"></circle></g></svg></div>
+    <div class="craft c4"><svg width="30" height="52" viewBox="0 0 30 52" aria-hidden="true"><g fill="currentColor"><path d="M15 0c6 7 8 15 8 23 0 7-3 13-8 19-5-6-8-12-8-19 0-8 2-16 8-23z" opacity=".94"></path><path d="M7 25 0 39l7-3zM23 25l7 14-7-3z" opacity=".7"></path><circle cx="15" cy="18" r="3.2" fill="#04070f" opacity=".65"></circle></g></svg></div>
+    <div class="craft c5"><svg width="58" height="36" viewBox="0 0 58 36" aria-hidden="true"><g fill="currentColor"><rect x="0" y="13" width="17" height="10" rx="1" opacity=".78"></rect><rect x="41" y="13" width="17" height="10" rx="1" opacity=".78"></rect><rect x="23" y="15" width="12" height="6" rx="1.5"></rect><rect x="27" y="7" width="4" height="9" rx="1.5" opacity=".7"></rect><rect x="27" y="26" width="4" height="6" rx="1.5" opacity=".5"></rect></g></svg></div>
+  </div>
+
+  <!-- CHRISTMAS: flakes for the whole page, filled in by snowSeed() -->
+  <div id="snow" aria-hidden="true"></div>
 
   <!-- LIGHTNING, FOR EVERYONE -->
   <div class="storm-fx" id="stormFx" aria-hidden="true">
@@ -1421,7 +1527,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.3</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.4</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1446,12 +1552,13 @@
         <div class="room-row" id="watchRow" style="margin-top:8px;justify-content:flex-end;">
           <!-- no name here: your card below already carries it, from the gate -->
           <button id="godBtn" style="display:none;" title="God mode — the maker's key only">🛡 God mode</button>
+          <button id="themeBtn" title="Themes — colours, snow, and the sky">🎨 Themes</button>
           <button id="watchToggle">👁 Watch</button>
         </div>
         <div id="godNotice" style="display:none;"></div>
       </div>
 
-      <div class="card-box" id="themeCard">
+      <div class="card-box" id="themeCard" style="display:none;">
         <div class="card-title"><span>🎨 Theme</span><span id="themeName" style="color:var(--mut);font-size:0.55rem;">neon</span></div>
         <div id="themeRow" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
       </div>
@@ -2832,6 +2939,7 @@
       dropCounter = 0;
       isPaused = false;
       gameRunning = true;
+      document.body.classList.add("in-play");     /* the sky wakes up while you play */
       startedAt = performance.now();
 
       drawMiniPiece(holdCtx, null);
@@ -2857,6 +2965,7 @@
 
     function endGame() {
       gameRunning = false;
+      document.body.classList.remove("in-play");
       current = null;
       const secs = Math.max(1, (performance.now() - startedAt) / 1000);
       const pps = (pieces / secs).toFixed(2);
@@ -3618,6 +3727,45 @@
       note.className = "lb-note" + (cls ? " " + cls : "");
     }
 
+    /* ---------- the ladder's colours: bronze, silver, gold, diamond ----------
+       Every rank has three tiers. A win is a star, a loss gives one back, and a rank
+       is ten stars wide: three to leave tier 1, three to leave tier 2, four to leave
+       tier 3 and step up. Diamond is the ceiling — there the fourth star is the top. */
+    const RANKS = [
+      { id: "bronze", name: "Bronze", color: "#c98a4b" },
+      { id: "silver", name: "Silver", color: "#c3cddd" },
+      { id: "gold", name: "Gold", color: "#ffd257" },
+      { id: "diamond", name: "Diamond", color: "#5ee7f7" }
+    ];
+    const RANK_NEED = [3, 3, 4];             /* stars to leave tier 1, 2, 3 */
+    const RANK_WIDTH = RANK_NEED[0] + RANK_NEED[1] + RANK_NEED[2];   /* ten */
+
+    function rankOf(wins, losses) {
+      const total = Math.max(0, (wins | 0) - (losses | 0));
+      let r = 0, left = total;
+      while (r < RANKS.length - 1 && left >= RANK_WIDTH) { left -= RANK_WIDTH; r += 1; }
+      let tier = 1;
+      if (left >= RANK_NEED[0]) { left -= RANK_NEED[0]; tier = 2; }
+      if (left >= RANK_NEED[1]) { left -= RANK_NEED[1]; tier = 3; }
+      const need = RANK_NEED[tier - 1];
+      const filled = Math.min(left, need);
+      return {
+        id: RANKS[r].id, name: RANKS[r].name, color: RANKS[r].color,
+        tier: tier, filled: filled, need: need, total: total,
+        max: r === RANKS.length - 1 && filled >= need,
+        label: RANKS[r].name + " · Tier " + tier
+      };
+    }
+
+    function rankDots(rank) {
+      return "●".repeat(rank.filled) + "○".repeat(Math.max(0, rank.need - rank.filled));
+    }
+
+    function rankChip(rank) {
+      return '<span class="rank-chip" style="--rk:' + rank.color + '"><b>' + rank.name + " " + rank.tier +
+        '</b><span class="rk-dots">' + rankDots(rank) + "</span></span>";
+    }
+
     let lbLastRows = null;
     let lbLastSource = "";
 
@@ -3694,7 +3842,11 @@
         el.addEventListener("click", () => lbShowPlayer(row));
         const nmCell = el.querySelector(".n");
         if (crowned) nmCell.insertAdjacentHTML("afterbegin", crownSvg("gold", 12));
-        nmCell.appendChild(document.createTextNode(row.name + (row.local ? " (you)" : "")));
+        const nmSpan = document.createElement("span");
+        nmSpan.className = "nm";
+        nmSpan.textContent = row.name + (row.local ? " (you)" : "");
+        nmCell.appendChild(nmSpan);
+        nmCell.insertAdjacentHTML("beforeend", rankChip(rankOf(row.wins, row.losses)));
         list.appendChild(el);
       });
       if (count) count.textContent = String(all.length);
@@ -3727,7 +3879,9 @@
       box.appendChild(title);
       const played = (row.wins | 0) + (row.losses | 0);
       const rate = typeof row.rate === "number" ? Math.round(row.rate) : (played > 0 ? Math.round(row.wins * 100 / played) : 0);
+      const rank = rankOf(row.wins, row.losses);
       const bits = [
+        ["Rank", rank.label + " · " + rank.filled + "/" + rank.need + " ★" + (rank.max ? " (top)" : "")],
         ["Wins", String(row.wins | 0)],
         ["Best", Number(row.best || 0).toLocaleString() + " pts"],
         ["Win rate", rate + "%"],
@@ -4212,19 +4366,43 @@
       chatPaint();
     }
 
-    /* ---------- six moods, picked by mood ---------- */
+    /* ---------- eight moods, picked by mood ---------- */
     const THEMES = [
       { id: "neon", name: "Neon", dot: "#ffb020" },
       { id: "sunset", name: "Sunset", dot: "#ff5f3c" },
       { id: "forest", name: "Forest", dot: "#35c98a" },
       { id: "royal", name: "Royal", dot: "#c084fc" },
       { id: "pink", name: "Pink", dot: "#ff8fc7" },
-      { id: "mono", name: "Mono", dot: "#d4d4d4" }
+      { id: "mono", name: "Mono", dot: "#d4d4d4" },
+      { id: "space", name: "Space", dot: "#5ee7f7" },
+      { id: "christmas", name: "Christmas", dot: "#c1121f" }
     ];
     let currentTheme = "neon";
 
     function themeKnown(id) {
       return THEMES.some(t => t.id === id) ? id : "neon";
+    }
+
+    /* ---------- the snow: forty-odd flakes, each with its own drift and tempo ---------- */
+    function snowSeed() {
+      const layer = document.getElementById("snow");
+      if (!layer) return false;
+      if (layer.dataset.built) return true;
+      layer.dataset.built = "1";
+      for (let i = 0; i < 46; i++) {
+        const fl = document.createElement("span");
+        fl.className = "fl";
+        const size = 2 + Math.random() * 4;
+        fl.style.width = size.toFixed(1) + "px";
+        fl.style.height = size.toFixed(1) + "px";
+        fl.style.left = (Math.random() * 100).toFixed(2) + "%";
+        fl.style.setProperty("--dx", ((Math.random() * 14) - 7).toFixed(1) + "vw");
+        fl.style.animationDuration = (7 + Math.random() * 9).toFixed(2) + "s";
+        fl.style.animationDelay = (-Math.random() * 16).toFixed(2) + "s";
+        fl.style.opacity = (0.45 + Math.random() * 0.5).toFixed(2);
+        layer.appendChild(fl);
+      }
+      return true;
     }
 
     function applyTheme(id) {
@@ -4234,6 +4412,7 @@
       try { localStorage.setItem("pindutan_theme", known); } catch (e) { }
       const label = document.getElementById("themeName");
       if (label) label.textContent = known;
+      if (known === "christmas") snowSeed();
       document.querySelectorAll("#themeRow .theme-btn").forEach(b => {
         b.classList.toggle("active", b.dataset.theme === known);
         b.setAttribute("aria-pressed", b.dataset.theme === known ? "true" : "false");
@@ -5716,6 +5895,19 @@
         : "you are in the lobby");
     });
 
+    /* the themes card lives in this sheet; the pill beside God mode opens it */
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      const card = document.getElementById("themeCard");
+      const btn = document.getElementById("themeBtn");
+      if (!card || !btn) return;
+      const open = card.style.display === "none";
+      card.style.display = open ? "block" : "none";
+      btn.classList.toggle("on", open);
+      if (open) {
+        try { if (card.scrollIntoView) card.scrollIntoView({ block: "nearest" }); } catch (e) { }
+      }
+    });
+
     document.getElementById("inviteAllBtn").addEventListener("click", inviteAll);
     document.getElementById("godBtn").addEventListener("click", openGod);
     document.getElementById("godClose").addEventListener("click", closeGod);
@@ -6169,7 +6361,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v22.3";
+    const BUILD_TAG = "v22.4";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <title>Pindutan — the first runner</title>
+  <title>Pindutan — newest build</title>
   <style>
     :root {
       --bg: #05070d;
@@ -84,11 +84,11 @@
 <body>
   <main>
     <div class="mark">PINDUTAN</div>
-    <div class="sub">the first runner · opens the arena</div>
+    <div class="sub">the newest build, fetched from the repo</div>
 
     <div class="bar"><i id="bar"></i></div>
 
-    <p class="line" id="line">Looking for the arena…</p>
+    <p class="line" id="line">Looking for the newest build…</p>
     <p class="hint" id="hint" hidden></p>
 
     <div class="acts">
@@ -98,8 +98,8 @@
 
     <p class="tiny" id="tiny">
       This page holds no game code. It reads <b>labs/pindutan-build.json</b> on the
-      <b>main</b> branch, then opens the arena that file names. The other two chairs
-      are inside the arena, behind <b>☰ Games</b>.
+      <b>main</b> branch, then loads the build that file names — so whatever is newest
+      in the repo is what runs here, every time.
     </p>
   </main>
 
@@ -110,7 +110,7 @@
     "use strict";
 
     var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
-    var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
+    var FALLBACK_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     var MIN_BYTES = 20000;
 
     var line = document.getElementById("line");
@@ -155,7 +155,7 @@
     function fail(why) {
       bar.style.width = "100%";
       bar.classList.add("bad");
-      line.textContent = "Could not open the arena.";
+      line.textContent = "Could not get the newest build.";
       hint.hidden = false;
       hint.textContent = (why || "no answer from the repo") +
         ". Check your signal and try again — the hosted copy still plays.";
@@ -163,17 +163,7 @@
       hosted.hidden = false;
     }
 
-    function looksLikeArena(html) {
-      return !!html && html.length >= MIN_BYTES &&
-        html.indexOf("</html>") >= 0 && html.indexOf("SELF-UPDATE") >= 0;
-    }
-
-    /* an arena kept beside this page, for a copy uploaded by hand */
-    function nearArena() {
-      try { return new URL("pindutan-v21.html", location.href).href; } catch (e) { return ""; }
-    }
-
-    /* hand the whole page over to the deck */
+    /* hand the whole page over to the newest build */
     function run(html) {
       document.open();
       document.write(html);
@@ -185,29 +175,26 @@
       hosted.hidden = true;
       hint.hidden = true;
       bar.classList.remove("bad");
-      step("Looking for the arena…", 14);
+      step("Looking for the newest build…", 14);
 
-      var wanted = "";
       fetchText(FEED).then(function (raw) {
         var feed = {};
-        try { feed = JSON.parse(raw) || {}; } catch (e) { feed = {}; }
-        wanted = String(feed.build || "").trim();
-        var url = (feed && feed.html) || ARENA;
-        if (wanted) document.title = "Pindutan " + wanted + " — the first runner";
-        step("Newest build: " + (wanted || "the arena") + " — opening it…", 46);
-        return fetchText(url);
-      }).then(function (html) {
-        if (looksLikeArena(html)) { step("Starting " + (wanted || "the arena") + "…", 100); run(html); return true; }
-        /* the repo copy is missing or broken: try the one beside this page */
-        var near = nearArena();
-        if (!near) throw new Error("the file that came back is not a whole game");
-        step("Trying the arena beside this page…", 70);
-        return fetchText(near).then(function (local) {
-          if (!looksLikeArena(local)) throw new Error("the file that came back is not a whole game");
-          step("Starting the arena…", 100);
-          run(local);
-          return true;
-        });
+        try { feed = JSON.parse(raw); } catch (e) { feed = {}; }
+        var build = String((feed && feed.build) || "").trim();
+        var url = (feed && feed.html) || FALLBACK_HTML;
+        if (!build) build = "the newest build";
+        document.title = "Pindutan " + build;
+        step("Newest build: " + build + " — loading it…", 46);
+        return fetchText(url).then(function (html) { return { html: html, build: build }; });
+      }).then(function (got) {
+        var html = got.html || "";
+        if (html.length < MIN_BYTES ||
+            html.indexOf("</html>") < 0 ||
+            html.indexOf("SELF-UPDATE") < 0) {
+          throw new Error("the file that came back is not a whole game");
+        }
+        step("Starting " + got.build + "…", 100);
+        run(html);
       }).catch(function (e) {
         fail(String((e && e.message) || e));
       });

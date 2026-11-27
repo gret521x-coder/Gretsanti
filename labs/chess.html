@@ -135,6 +135,36 @@
   .captured { margin-top: 8px; font-size: 0.78rem; line-height: 1.2; color: #c9d9e8; min-height: 1.3em; letter-spacing: 0.02em; }
 
   /* sheets */
+  /* ---------- the gate: a nickname first, like Pindutan ---------- */
+  .gate {
+    position: fixed; inset: 0; z-index: 80; display: none;
+    justify-content: center; align-items: center; padding: 18px 14px;
+    background: radial-gradient(120% 60% at 50% 0%, rgba(61, 214, 245, 0.12), transparent 62%), var(--bg);
+  }
+  .gate.open { display: flex; }
+  .gate-box { width: min(360px, 100%); text-align: center; }
+  .gate-mark {
+    font-size: 1.5rem; font-weight: 900; letter-spacing: 0.3em; color: var(--cyan);
+    text-shadow: 0 0 18px rgba(61, 214, 245, 0.4); padding-left: 0.3em;
+  }
+  .gate-sub { margin-top: 6px; font-size: 0.55rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mut); }
+  .gate input {
+    width: 100%; margin-top: 18px; padding: 13px 12px; text-align: center;
+    font: inherit; font-size: 1rem; letter-spacing: 0.14em; color: var(--ink);
+    background: rgba(8, 16, 28, 0.92); border: 1px solid var(--line); border-radius: 12px;
+  }
+  .gate input:focus { outline: none; border-color: rgba(61, 214, 245, 0.6); }
+  .gate .gate-go {
+    width: 100%; margin-top: 10px; padding: 13px 10px; font: inherit; font-size: 0.74rem;
+    font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
+    color: #04121a; background: var(--cyan); border: 0; border-radius: 12px;
+  }
+  .gate .gate-go:active { transform: translateY(1px); }
+  .gate-err { margin-top: 10px; min-height: 1.2em; font-size: 0.56rem; letter-spacing: 0.06em; color: var(--amber); }
+  .gate-note { margin-top: 12px; font-size: 0.52rem; line-height: 1.6; color: #7f93ad; }
+  .gate-build { margin-top: 14px; font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mut); }
+  .gate-build b { color: var(--cyan); }
+
   /* ---------- the front door: pick the CPU or a person ---------- */
   .home {
     position: fixed; inset: 0; z-index: 60; display: none;
@@ -276,6 +306,19 @@
   <div class="grid" aria-hidden="true"></div>
   <div class="horizon" aria-hidden="true"></div>
 
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <div class="gate-mark">KDL CHESS</div>
+      <div class="gate-sub">your name</div>
+      <input id="gateName" maxlength="14" placeholder="nickname" autocomplete="off" spellcheck="false" />
+      <button class="gate-go" id="gateGo">Play</button>
+      <div class="gate-err" id="gateErr"></div>
+      <div class="gate-note">Two characters or more. This is the name the lobby shows and the name your
+        opponent sees — set once, at the door.</div>
+      <div class="gate-build" id="gateBuild">chess <b>c6</b></div>
+    </div>
+  </div>
+
   <div class="home" id="home">
     <div class="home-box">
       <div class="home-mark">KDL CHESS</div>
@@ -300,12 +343,7 @@
       </div>
 
       <h4>In the lobby <b id="homeCount">—</b></h4>
-      <div class="row">
-        <input id="homeName" maxlength="14" placeholder="your name" autocomplete="off"
-               style="flex:1 1 auto; padding:9px 10px; font:inherit; font-size:0.72rem; color:var(--ink);
-                      background:rgba(8,16,28,0.9); border:1px solid var(--line); border-radius:9px;" />
-        <button id="homeNameSave">Save</button>
-      </div>
+      <div class="seat me" id="homeMe"><span>You</span><span id="homeMeName">—</span><span class="chip">AT THE DOOR</span></div>
       <div class="home-list" id="homeList"></div>
       <div class="home-relays" id="homeRelays">looking for a relay…</div>
       <div class="home-note">Tap <b>⚔</b> beside a name to challenge — the coin toss decides the colours.
@@ -316,7 +354,7 @@
   <div class="shell">
     <header>
       <div class="mark">KDL CHESS</div>
-      <button class="strip" id="strip" title="This build">chess <b>c5</b> · complete rules · <b id="modeTag">vs CPU</b></button>
+      <button class="strip" id="strip" title="This build">chess <b>c6</b> · complete rules · <b id="modeTag">vs CPU</b></button>
     </header>
 
     <div class="boardwrap">
@@ -328,7 +366,7 @@
         <span class="clock" id="clockW">–:––</span><span class="clock dim" id="clockB">–:––</span>
       </div>
       <div class="subline" id="statusLine"></div>
-      <div class="subline dim" id="buildLine">chess <b>c5</b> · checking for a newer build…</div>
+      <div class="subline dim" id="buildLine">chess <b>c6</b> · checking for a newer build…</div>
 
       <div class="row" id="modeRow">
         <button data-mode="cpu" class="on">VS CPU</button>
@@ -415,12 +453,6 @@
     <div class="sheet-box">
       <div class="sheet-head"><span class="sheet-title">The lobby</span><button data-close>✕</button></div>
       <div class="seat"><span>You</span><span id="lobbyMe">—</span><span class="chip" id="lobbyMeSeat">—</span></div>
-      <div class="row">
-        <input id="nameInput" maxlength="14" placeholder="your name" autocomplete="off"
-               style="flex:1 1 auto; padding:9px 10px; font:inherit; font-size:0.72rem; color:var(--ink);
-                      background:rgba(8,16,28,0.9); border:1px solid var(--line); border-radius:9px;" />
-        <button id="nameSave">Save</button>
-      </div>
       <h4>Players here</h4>
       <div id="lobbyList"></div>
       <div class="row">
@@ -1579,16 +1611,58 @@
       : "looking for a relay… tabs on this device always work");
   }
 
+  /* ---------- the gate: a nickname first ----------
+     Like Pindutan: the page opens on the name, and the lobby and the board are behind it.
+     The name is set here once, so nothing in the lobby can rewrite it mid-game. */
+  var gatePassed = false;
+
+  function cleanName(v, from) {
+    /* prefill from the name Pindutan already knows, so a player types it once */
+    var t = String(v === undefined ? ((from && from.value) || "") : v);
+    return t.replace(/[^\w .\-]/g, "").trim().slice(0, 14);
+  }
+
+  function showGate() {
+    gatePassed = false;
+    $("gate").classList.add("open");
+    var saved = "";
+    try { saved = localStorage.getItem("pinduntan_nick") || localStorage.getItem("pindutan_nick") || ""; } catch (e) { }
+    $("gateName").value = saved.slice(0, 14);
+    $("gateErr").textContent = "";
+    if (saved.length >= 2) $("gateErr").textContent = "Welcome back, " + saved + " — tap Play to go in.";
+    return { open: true };
+  }
+
+  function passGate() {
+    var v = cleanName($("gateName").value);
+    if (v.length < 2) {
+      $("gateErr").textContent = "A name needs two characters.";
+      $("gateName").focus();
+      return false;
+    }
+    try { localStorage.setItem("pindutan_nick", v); } catch (e) { }
+    gatePassed = true;
+    $("gate").classList.remove("open");
+    $("gateErr").textContent = "";
+    $("lobbyMe").textContent = v;
+    var meName = $("homeMeName");
+    if (meName) meName.textContent = v;
+    lobbyEnter();          /* the lobby is joined with the name you just gave */
+    showHome();
+    return true;
+  }
+
   /* ---------- the front door ----------
      One screen: start against the CPU, start two on this phone, or tap a name in the
      lobby and play a person. The board is behind it and appears the moment a game starts. */
-  var homeOpen = true;
+  var homeOpen = false;
 
   function showHome() {
     homeOpen = true;
     $("home").classList.add("open");
-    $("homeName").value = myName();
-    if (!lobby.on) lobbyEnter();       /* the front door is the lobby, so it joins on the way in */
+    var meName = $("homeMeName");
+    if (meName) meName.textContent = myName();
+    if (gatePassed && !lobby.on) lobbyEnter();   /* the front door is the lobby, so it joins on the way in */
     paintHome();
     paintLobby();
     return { open: true };
@@ -1637,6 +1711,8 @@
     var watchCard = document.getElementById("homeWatch");
     if (watchCard) watchCard.classList.toggle("on", !!live);
 
+    var chip = document.getElementById("homeMe");
+    if (chip) chip.querySelector(".chip").textContent = S.match ? "IN A GAME" : lobby.on ? "IN THE LOBBY" : "AT THE DOOR";
     var count = document.getElementById("homeCount");
     if (count) count.textContent = lobby.on ? peers.length + (peers.length === 1 ? " here" : " here") : "not joined";
 
@@ -2065,15 +2141,6 @@
     endMatch("left", "");
     render();
   });
-  $("nameSave").addEventListener("click", function () {
-    var v = String($("nameInput").value || "").replace(/[^\w .\-]/g, "").trim().slice(0, 14);
-    if (v.length < 2) { lobbyNote("A name needs two characters."); return; }
-    try { localStorage.setItem("pindutan_nick", v); } catch (e) { }
-    lobbyNote("You are " + v + " in the lobby.");
-    paintLobby();
-    if (lobby.on) relaySend({ t: "HI", name: v, inMatch: !!S.match });
-  });
-
   setInterval(relayBusPoll, 700);
 
   /* ---------- controls ---------- */
@@ -2375,13 +2442,9 @@
     if (!b) return;
     challengePeer(b.getAttribute("data-challenge"));
   });
-  $("homeNameSave").addEventListener("click", function () {
-    var v = String($("homeName").value || "").replace(/[^\w .\-]/g, "").trim().slice(0, 14);
-    if (v.length < 2) { $("homeName").value = myName(); return; }
-    try { localStorage.setItem("pindutan_nick", v); } catch (e) { }
-    $("nameInput").value = v;
-    paintLobby();
-    if (lobby.on) relaySend({ t: "HI", name: v, inMatch: !!S.match });
+  $("gateGo").addEventListener("click", function () { passGate(); });
+  $("gateName").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); passGate(); }
   });
 
   $("tintRange").addEventListener("input", function () {
@@ -2397,7 +2460,7 @@
      Same idea as the arena and the hub: this page reads one small file from the
      repo, and if the feed names a newer chess it opens that copy instead. No
      signal, no file, or half a download and it plays the copy it has. */
-  var CHESS_BUILD = "c5";
+  var CHESS_BUILD = "c6";
   var UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
   var UPDATE_APPLIED = "kdl_chess_applied";
@@ -2505,9 +2568,8 @@
     }
   } catch (e) { }
   if (!window.__chessNoUpdate) selfUpdateCheck();
-  /* the lobby is joined quietly on the way in, so the front door already knows who is here */
-  try { lobbyEnter(); } catch (e) { }
-  showHome();
+  /* the door first, then the lobby: no name, no game */
+  showGate();
   render();
   afterMove();          /* if you chose Black against the CPU, it opens */
 
@@ -2527,6 +2589,9 @@
     pgn: pgnText,
     build: getBuildSelf,
     home: function () { return { open: homeOpen, count: document.getElementById("homeCount").textContent }; },
+    gate: function () { return { open: $("gate").classList.contains("open"), passed: gatePassed, name: myName() }; },
+    gatePass: passGate,
+    gateType: function (v) { $("gateName").value = v; },
     showHome: showHome,
     hideHome: hideHome,
     startCpu: homeStartCpu,

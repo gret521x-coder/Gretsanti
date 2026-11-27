@@ -10,7 +10,7 @@
  *    - one KV namespace, bound to this Worker as   LADDER
  *
  *  Endpoints — identical to the PHP one, so the game needs no change:
- *    GET  ?action=top&mode=all|duel|group&limit=25
+ *    GET  ?action=top&mode=all|duel|group|solo&limit=25
  *    POST ?action=report   {name, mode, win, score, lines, ts, sig, id}
  *    POST ?action=reset    {key}
  *
@@ -101,7 +101,8 @@ function blankPlayer(name) {
     wins: 0, losses: 0, best: 0,
     streak: 0, bestStreak: 0, last: 0, ids: [],
     duel: { wins: 0, losses: 0, best: 0 },
-    group: { wins: 0, losses: 0, best: 0 }
+    group: { wins: 0, losses: 0, best: 0 },
+    solo: { wins: 0, losses: 0, best: 0 }
   };
 }
 
@@ -215,7 +216,7 @@ async function handle(request, env) {
   const mode = String(url.searchParams.get("mode") || "all").toLowerCase();
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
 
-  if (["all", "duel", "group"].indexOf(mode) < 0) return fail("unknown mode");
+  if (["all", "duel", "group", "solo"].indexOf(mode) < 0) return fail("unknown mode");
 
   const table = await readTable(env);
 
@@ -252,7 +253,7 @@ async function handle(request, env) {
 
     const len = nameLength(name);
     if (len < MIN_NAME || len > MAX_NAME) return fail("name must be " + MIN_NAME + "–" + MAX_NAME + " characters");
-    if (["duel", "group"].indexOf(modeIn) < 0) return fail("mode must be duel or group");
+    if (["duel", "group", "solo"].indexOf(modeIn) < 0) return fail("mode must be duel, group or solo");
     if (score < 0 || score > MAX_SCORE) return fail("score out of range");
     if (lines < 0 || lines > 100000) return fail("lines out of range");
 
@@ -284,6 +285,26 @@ async function handle(request, env) {
     player.last = ts;
     if (!player.duel) player.duel = { wins: 0, losses: 0, best: 0 };
     if (!player.group) player.group = { wins: 0, losses: 0, best: 0 };
+    if (!player.solo) player.solo = { wins: 0, losses: 0, best: 0 };
+
+    /* a solo run is a score, not a battle: it never counts as a win, and it
+       never touches the duel/group tally, so the board's win column stays true */
+    if (modeIn === "solo") {
+      player.solo.wins = (Number(player.solo.wins) || 0) + 1;
+      if (score > (Number(player.solo.best) || 0)) player.solo.best = score;
+      table.players[key] = player;
+      table.updated = now;
+      if (!await writeTable(env, table)) return fail("could not save the table", 500);
+      const [srank, sof] = rankOf(table.players, "solo", key);
+      return out({
+        ok: true,
+        duplicate: false,
+        rank: srank,
+        of: sof,
+        you: viewRow(player, "solo", srank),
+        rows: sortedRows(table.players, "solo", 10)
+      });
+    }
 
     if (win === 1) {
       player.wins = (Number(player.wins) || 0) + 1;

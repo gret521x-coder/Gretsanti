@@ -13,7 +13,7 @@ declare(strict_types=1);
  *    data/pindutan-lb-rate.json         per-IP rate limiting counters
  *
  *  Endpoints
- *    GET  api-leaderboard.php?action=top&mode=all|duel|group&limit=25
+ *    GET  api-leaderboard.php?action=top&mode=all|duel|group|solo&limit=25
  *    POST api-leaderboard.php?action=report   {name, mode, win, score, lines, ts, sig}
  *    POST api-leaderboard.php?action=reset    {key}
  *
@@ -249,7 +249,8 @@ function blank_player(string $name): array
         'last' => 0,
         'ids' => [],
         'duel' => ['wins' => 0, 'losses' => 0, 'best' => 0],
-        'group' => ['wins' => 0, 'losses' => 0, 'best' => 0]
+        'group' => ['wins' => 0, 'losses' => 0, 'best' => 0],
+        'solo' => ['wins' => 0, 'losses' => 0, 'best' => 0]
     ];
 }
 
@@ -329,7 +330,7 @@ function rank_of(array $players, string $mode, string $key): array
 /* --------------------------------------------------------------- routing */
 $action = strtolower((string) ($_GET['action'] ?? 'top'));
 $mode = strtolower((string) ($_GET['mode'] ?? 'all'));
-if (!in_array($mode, ['all', 'duel', 'group'], true)) {
+if (!in_array($mode, ['all', 'duel', 'group', 'solo'], true)) {
     fail('unknown mode');
 }
 
@@ -386,8 +387,8 @@ if ($action === 'report') {
     if ($name_len < MIN_NAME || $name_len > MAX_NAME) {
         fail('name must be ' . MIN_NAME . '–' . MAX_NAME . ' characters');
     }
-    if (!in_array($mode_in, ['duel', 'group'], true)) {
-        fail('mode must be duel or group');
+    if (!in_array($mode_in, ['duel', 'group', 'solo'], true)) {
+        fail('mode must be duel, group or solo');
     }
     if ($score < 0 || $score > MAX_SCORE) {
         fail('score out of range');
@@ -431,6 +432,32 @@ if ($action === 'report') {
     }
     if (!isset($player['group'])) {
         $player['group'] = ['wins' => 0, 'losses' => 0, 'best' => 0];
+    }
+    if (!isset($player['solo'])) {
+        $player['solo'] = ['wins' => 0, 'losses' => 0, 'best' => 0];
+    }
+
+    /* a solo run is a score, not a battle: it never counts as a win and never
+       touches the duel/group tally, so the board's win column stays honest */
+    if ($mode_in === 'solo') {
+        $player['solo']['wins'] = (int) $player['solo']['wins'] + 1;
+        if ($score > (int) $player['solo']['best']) {
+            $player['solo']['best'] = $score;
+        }
+        $table['players'][$key] = $player;
+        $table['updated'] = $now;
+        if (!write_json($table_file, $table)) {
+            fail('could not save the table', 500);
+        }
+        [$srank, $sof] = rank_of($table['players'], 'solo', $key);
+        out([
+            'ok' => true,
+            'duplicate' => false,
+            'rank' => $srank,
+            'of' => $sof,
+            'you' => view_row($key, $player, 'solo', $srank),
+            'rows' => sorted_rows($table['players'], 'solo', 10)
+        ]);
     }
 
     if ($win === 1) {

@@ -1279,6 +1279,37 @@
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
     }
 
+    /* ================= what changed: one window per build ================= */
+    #notesSheet {
+      position: fixed; inset: 0; z-index: 88; display: none;
+      padding: 14px 12px 40px; overflow-y: auto;
+      background: rgba(4, 6, 10, 0.93);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      -webkit-overflow-scrolling: touch;
+    }
+    #notesSheet.open { display: block; }
+    .notes-box {
+      max-width: 460px; margin: 0 auto; padding: 12px;
+      border-radius: 16px; background: var(--card); border: 1px solid var(--line);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+    .notes-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+    .notes-head h2 { margin: 0; font-size: 0.76rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); }
+    .notes-sub { color: var(--mut); font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 8px; }
+    .notes-body { max-height: 54vh; overflow-y: auto; font-size: 0.62rem; line-height: 1.5; color: var(--txt); }
+    .notes-day { margin: 9px 0 4px; font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mut); }
+    .notes-body ul { margin: 0; padding-left: 14px; }
+    .notes-body li { margin: 0 0 3px; }
+    .notes-body b { color: var(--amber); font-weight: 800; }
+    .notes-foot { display: flex; justify-content: flex-end; margin-top: 11px; }
+    #notesOff {
+      font-size: 0.55rem; font-weight: 800; letter-spacing: 0.06em; padding: 7px 11px;
+      border-radius: 8px; background: var(--card2); color: var(--mut);
+      border: 1px solid var(--line); cursor: pointer;
+    }
+    #notesOff:hover, #notesOff:focus-visible { color: var(--txt); border-color: var(--amber); }
+    #notesToggle { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; border-color: rgba(168, 85, 247, 0.45); color: var(--violet); }
+
     /* ================= the two skies: behind the game, never in front of it =================
        Both are fixed sheets under the page, so a flake that reaches the top of the board
        is hidden by the board itself and carries on below it — the whole page snows,
@@ -1565,7 +1596,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.5</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.6</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1591,6 +1622,7 @@
           <!-- no name here: your card below already carries it, from the gate -->
           <button id="godBtn" style="display:none;" title="God mode — the maker's key only">🛡 God mode</button>
           <button id="themeBtn" title="Themes — colours, snow, and the sky">🎨 Themes</button>
+          <button id="notesToggle" title="What changed in this build">📜 Updates</button>
           <button id="watchToggle">👁 Watch</button>
         </div>
         <div id="godNotice" style="display:none;"></div>
@@ -1682,6 +1714,21 @@
   </div>
 
   <!-- MAIN ARENA -->
+  <!-- WHAT CHANGED: one window per build, opened on the way into the lobby -->
+  <div id="notesSheet" role="dialog" aria-label="Update log">
+    <div class="notes-box">
+      <div class="notes-head">
+        <h2 id="notesTitle">What changed</h2>
+        <button id="notesClose">✕</button>
+      </div>
+      <div class="notes-sub" id="notesSub">the last few days at Pindutan</div>
+      <div class="notes-body" id="notesBody"></div>
+      <div class="notes-foot">
+        <button id="notesOff">Do not show again</button>
+      </div>
+    </div>
+  </div>
+
   <main class="arena">
     <div class="hud-strip">
       <div class="chip hot"><h3>Score</h3><div class="val" id="scoreVal">0</div></div>
@@ -1776,6 +1823,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
+    const BUILD_TAG = "v22.6";     /* first, because the update log reads it on the way in */
     const pageTimers = [];
     (function trackIntervals() {
       const si = window.setInterval;
@@ -5172,6 +5220,84 @@
       pill.className = "pill relay " + (on === 0 ? (roomCode ? "bad" : "") : on < 3 ? "warn" : "ok");
     }
 
+    /* =========================================================
+       v22.6 — what changed, in one small window.
+       It opens by itself the first time you walk into the lobby on a new build,
+       remembers that it did, and never opens again once you say so. The pill
+       beside Themes opens it on demand. No losses, no keys, no secrets in here —
+       just the work.
+       ========================================================= */
+    const NOTES_SEEN = "pindutan_notes_seen";
+    const NOTES_OFF = "pindutan_notes_off";
+    const CHANGES = [
+      {
+        day: "Nov 27", items: [
+          "<b>Ranks</b> — Bronze, Silver, Gold, Diamond. Three tiers each, three stars a tier and a fourth that steps you up — won in <b>1v1</b> only, so a group win lifts nothing.",
+          "The tap card tells the truth: win rate worked out from what was played, the run of wins you are on, and when they were last here. Your own row just says <b>(you)</b>.",
+          "Two new moods: <b>Space</b>, with satellites and ships flying over the page, and <b>Christmas</b>, snowing across the whole page and stopped by the board.",
+          "<b>🎨 Themes</b> and <b>📜 Updates</b> sit under the player count, beside Watch."
+        ]
+      },
+      {
+        day: "Nov 26", items: [
+          "The page <b>updates itself</b> from main, and <b>pindutan-run.html</b> always opens the newest build.",
+          "The <b>ladder</b> lives on Cloudflare, so scores no longer wait on one host.",
+          "<b>Lobby chat</b> — not saved, and it costs nothing.",
+          "The player card is a name, Playing or Available, and a YOU pill. Nothing else.",
+          "<b>👁 Watch</b> is a small pill, ten names fit the ladder, and the maker's opponent gets a line of their own.",
+          "A three-second countdown, the <b>storm</b> with jagged lightning, and a fanfare when the maker walks in."
+        ]
+      },
+      {
+        day: "Nov 25", items: [
+          "Your <b>opponent's board</b>, live, in 1v1 and group battles.",
+          "<b>Hold ◀ / ▶</b> to slide, at Slow, Normal or Fast.",
+          "A <b>name gate</b> on the way in, and the hall of fame with crowns and a podium on the way out.",
+          "Wins that never reached the host are <b>kept and retried</b>, and phones carry each other's results up."
+        ]
+      }
+    ];
+
+    function notesSeenTag() { try { return localStorage.getItem(NOTES_SEEN) || ""; } catch (e) { return ""; } }
+    function notesHidden() { try { return localStorage.getItem(NOTES_OFF) === "1"; } catch (e) { return false; } }
+
+    function notesPaint() {
+      const box = document.getElementById("notesBody");
+      const title = document.getElementById("notesTitle");
+      if (title) title.textContent = "What changed · " + BUILD_TAG;
+      if (!box) return false;
+      box.innerHTML = CHANGES.map(day =>
+        '<div class="notes-day">' + day.day + "</div><ul>" +
+        day.items.map(item => "<li>" + item + "</li>").join("") + "</ul>"
+      ).join("");
+      return true;
+    }
+
+    function notesClose() {
+      const sheet = document.getElementById("notesSheet");
+      if (sheet) sheet.classList.remove("open");
+      return true;
+    }
+
+    function notesOpen() {
+      const sheet = document.getElementById("notesSheet");
+      if (!sheet) return false;
+      notesPaint();
+      sheet.classList.add("open");
+      try { localStorage.setItem(NOTES_SEEN, BUILD_TAG); } catch (e) { }   /* once a build, not once a visit */
+      return true;
+    }
+
+    let notesShown = false;
+
+    function notesMaybeShow() {
+      if (notesShown || notesHidden() || notesSeenTag() === BUILD_TAG) return false;
+      const lock = document.getElementById("lockScreen");
+      if (lock && lock.style.display !== "none") return false;      /* the gate is still up */
+      notesShown = true;
+      return notesOpen();
+    }
+
     function openLobby() {
       if (typeof slideStop === "function") slideStop();
       if (typeof softHoldStop === "function") softHoldStop();
@@ -5182,6 +5308,7 @@
       if (typeof lbEnsure === "function") lbEnsure();
       if (typeof lbShareLadder === "function") lbShareLadder(true);
       startRelays();   /* warm the relays up while you are deciding */
+      notesMaybeShow();   /* a new build says hello once, on the way in */
     }
 
     function closeLobby() {
@@ -5969,6 +6096,17 @@
       }
     });
 
+    document.getElementById("notesToggle").addEventListener("click", () => notesOpen());
+    document.getElementById("notesClose").addEventListener("click", () => notesClose());
+    document.getElementById("notesSheet").addEventListener("click", e => {
+      if (e.target && e.target.id === "notesSheet") notesClose();     /* a tap outside the box */
+    });
+    document.getElementById("notesOff").addEventListener("click", () => {
+      try { localStorage.setItem(NOTES_OFF, "1"); } catch (e) { }
+      try { localStorage.setItem(NOTES_SEEN, BUILD_TAG); } catch (e) { }
+      notesClose();
+    });
+
     document.getElementById("inviteAllBtn").addEventListener("click", inviteAll);
     document.getElementById("godBtn").addEventListener("click", openGod);
     document.getElementById("godClose").addEventListener("click", closeGod);
@@ -6422,7 +6560,6 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v22.5";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

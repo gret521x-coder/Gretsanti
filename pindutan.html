@@ -191,7 +191,7 @@
     <div class="mark">KDL</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m7</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m8</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -267,6 +267,11 @@
         <li><b>The CPU actually plays to its level now.</b> Beginner one move ahead and blunders one in five;
             intermediate two moves and takes a hanging piece; advanced three moves, follows every capture and
             never slips.</li>
+        <li><b>Chess keeps itself current</b> like the arena does: it reads <code>chessBuild</code> from the
+            build file, checks the page it finds, and opens it — a line under the board says which copy you
+            are on.</li>
+        <li><b>A new season for the ladder.</b> The hall of fame has a <b>↺ New season</b> button: it asks
+            once, clears the board for everyone, and says so plainly when a host refuses.</li>
         <li><b>The password moved here.</b> This page asks for it before anything opens, so the games get on
             with it: Pindutan opens straight on the nickname.</li>
         <li><b>The hub</b> — this page. Three chairs, and the games behind them keep themselves current.</li>
@@ -342,7 +347,7 @@
   var CHESS = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m7";                 /* this copy of the hub */
+  var DECK = "m8";                 /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 

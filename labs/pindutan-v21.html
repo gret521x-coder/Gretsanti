@@ -826,6 +826,14 @@
 
     /* the two autopilot pills: same shape and type as the RELAY pill,
        a green lamp dot first, then the single letter (K / I) */
+    .lb-reset {
+      margin-top: 6px; width: 100%; padding: 5px 8px; border-radius: 8px;
+      border: 1px solid var(--line); background: transparent; color: var(--mut);
+      font-size: 0.55rem; letter-spacing: 0.06em; font-weight: 800; cursor: pointer;
+    }
+    .lb-reset:hover { color: var(--ink); border-color: var(--ink); }
+    .lb-reset[disabled] { opacity: 0.5; cursor: default; }
+
     .sig-pill {
       display: inline-flex; align-items: center; gap: 5px;
       font-family: ui-monospace, Menlo, monospace;
@@ -1617,9 +1625,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v23</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v24</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v23 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v24 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1698,6 +1706,7 @@
         </div>
         <div id="lbPlayer" style="display:none;margin-top:6px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--card2);font-size:0.62rem;line-height:1.5;" aria-live="polite"></div>
         <div class="lb-note" id="lbNote">Human battles only — solo runs and VS CPU never count.</div>
+        <button id="lbReset" class="lb-reset" title="Clear the ladder and start a new season">↺ New season</button>
       </div>
 
       <div class="card-box">
@@ -1874,7 +1883,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v23";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v24";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -3810,6 +3819,39 @@
       note.className = "lb-note warn";
     }
 
+    /* a new season: clear the board for everyone. The key is the same shared
+       string the results are signed with, so this is for the host, not a lock. */
+    async function lbReset() {
+      const btn = document.getElementById("lbReset");
+      const first = "This clears the ladder for everyone — every name, every star.\n\nStart a new season?";
+      if (typeof confirm === "function" && !confirm(first)) return;
+      if (btn && btn.disabled) return;
+      if (btn) btn.disabled = true;
+      lbNote("Clearing the ladder…", "");
+      try {
+        const res = await fetch(lbUrl + "?action=reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: LB_KEY }),
+          cache: "no-store"
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || !data.ok) {
+          lbNote(res.status === 403 ? "That key was refused — the board is still there."
+            : "Could not clear the board (" + (data && data.error ? data.error : res.status) + ").", "warn");
+          return;
+        }
+        try { localStorage.removeItem(LB_CACHE); } catch (e) { }
+        lbRender([], "live");
+        await lbFetch(lbMode, true);
+        lbNote("The ladder is empty — a new season starts with the next game.", "live");
+      } catch (err) {
+        lbNote("Could not reach the host to clear it (" + lbPlainReason(err) + ").", "warn");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function lbNote(text, cls) {
       const note = document.getElementById("lbNote");
       if (!note) return;
@@ -4571,6 +4613,8 @@
       });
       chatWire();
       wireThemes();
+      const wipe = document.getElementById("lbReset");
+      if (wipe) wipe.addEventListener("click", () => { lbReset(); });
       const refresh = document.getElementById("lbRefresh");
       if (refresh) refresh.addEventListener("click", async () => {
         const list = document.getElementById("lbList");
@@ -6676,6 +6720,7 @@
     } catch (e) { }
 
     /* =========================================================
+       v24 — a new season: the hall of fame has a button that clears the ladder.
        v23 — the password moved to the hub; the gate here opens straight on the name.
        v22.9 — the arena is the second runner, and the feed names the file it updates from.
        v22.8 — the arena is the second runner.
@@ -6777,6 +6822,7 @@
 
     try { updateWatch("boot"); } catch (e) { }
     try { lbPickLadder(UPDATE_FEED).catch(() => { }); } catch (e) { }
+    try { window.__pindlResetLadder = lbReset; } catch (e) { }
   </script>
 </body>
 </html>

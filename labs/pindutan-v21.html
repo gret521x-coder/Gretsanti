@@ -1485,24 +1485,13 @@
       <div class="lock-badge">🔒</div>
       <h2>PINDUTAN</h2>
 
-      <div id="lockStep1">
-        <p>Enter the secret password to open the arena.</p>
-        <input type="password" id="passwordInput" placeholder="password" autocomplete="off" />
-        <div class="lock-actions">
-          <button class="primary" id="unlockBtn">Unlock</button>
-          <button id="hintBtn">Hint?</button>
-        </div>
-        <div class="hint-text" id="hintText">Hint: Ikaw ay isang?" 😉</div>
-      </div>
-
-      <div id="lockStep2" style="display:none;">
-        <p>Password accepted. Now pick the name you fight under — it goes on the leaderboard.</p>
+      <div id="lockStep2">
+        <p>Pick the name you fight under — it goes on the leaderboard.</p>
         <input type="text" id="gateNick" maxlength="14" placeholder="nickname" autocomplete="off" autocapitalize="words" />
         <div class="lock-actions">
           <button class="primary" id="gateNameBtn">Enter the arena</button>
-          <button id="gateBackBtn">Back</button>
         </div>
-        <div class="hint-text" style="display:block;">No name, no game. Skip it and you start over at the password.</div>
+        <div class="hint-text" style="display:block;">No name, no game — two characters at least. The password now lives in the hub, one page before this one.</div>
       </div>
 
       <div class="error-text" id="lockError"></div>
@@ -1628,9 +1617,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.9</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v23</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v22.9 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v23 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1885,7 +1874,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v22.9";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v23";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -1898,38 +1887,14 @@
     })();
 
     /* =========================================================
-       1. ENCRYPTED PASSWORD VERIFICATION ("kupal" via SHA-256)
+       1. THE GATE — one step now.
+       v23: the password moved to the hub (pindutan.html), one page before
+       this one, so the arena opens straight on the name. Nothing about the
+       lock is checked here any more; the name is still the only thing that
+       gets you a leaderboard row.
        ========================================================= */
-    /* crypto.subtle only exists on https:// and localhost — over a plain-http LAN
-       address (XAMPP on 192.168.x.x) it is undefined and the lock could never open.
-       Both sides use this same function, so the fallback still matches. */
-    function fallbackHash(str) {
-      let h1 = 0x811c9dc5, h2 = 0xc2b2ae35;
-      for (let i = 0; i < str.length; i++) {
-        const c = str.charCodeAt(i);
-        h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
-        h2 = Math.imul(h2 ^ c, 2654435761) >>> 0;
-      }
-      return (h1.toString(16) + h2.toString(16)).padStart(16, "0");
-    }
-
-    async function sha256(str) {
-      if (!(window.crypto && crypto.subtle && crypto.subtle.digest)) return fallbackHash(str);
-      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    let targetHash = "";
-    (async () => {
-      targetHash = await sha256(atob("a3VwYWw="));
-    })();
-
     const lockScreen = document.getElementById("lockScreen");
-    const passwordInput = document.getElementById("passwordInput");
     const lockError = document.getElementById("lockError");
-
-    /* ---- the gate has two steps: password, then a name you must give.
-            No name means no arena, and the password has to be typed again. ---- */
     const gateNick = document.getElementById("gateNick");
 
     /* the maker's key — kept out of sight, stripped before a name is used or stored */
@@ -2052,31 +2017,13 @@
         .slice(0, 14);
     }
 
-    function showLockStep(step) {
-      document.getElementById("lockStep1").style.display = step === 1 ? "block" : "none";
-      document.getElementById("lockStep2").style.display = step === 2 ? "block" : "none";
-      if (step === 1) {
-        passwordInput.value = "";
-        lockError.textContent = "";
-        setTimeout(() => passwordInput.focus(), 30);
-      } else {
-        const saved = localStorage.getItem("pindutan_nick") || "";
-        gateNick.value = /^Player_\d+$/.test(saved) ? "" : saved;
-        lockError.textContent = "";
-        setTimeout(() => { gateNick.focus(); gateNick.select(); }, 30);
-      }
-    }
-
-    async function attemptUnlock() {
-      const val = passwordInput.value.trim().toLowerCase();
-      if (!val) return;
-      const hashed = await sha256(val);
-      if (hashed === targetHash) {
-        passwordInput.value = "";
-        showLockStep(2);
-      } else {
-        lockError.textContent = "Wrong password! Try again.";
-      }
+    function showLockStep() {
+      document.getElementById("lockStep2").style.display = "block";
+      const saved = localStorage.getItem("pindutan_nick") || "";
+      gateNick.value = /^Player_\d+$/.test(saved) ? "" : saved;
+      lockError.textContent = "";
+      lockError.style.display = "none";
+      setTimeout(() => { gateNick.focus(); gateNick.select(); }, 30);
     }
 
     let gateMarkArmed = false;
@@ -2098,20 +2045,20 @@
     }
 
     function rejectGateName() {
-      /* the whole gate resets: nothing is stored, the password is asked again */
+      /* nothing is stored without a name — it is the only thing that makes a player */
       gateMarkArmed = false;
       sessionStorage.removeItem("pindutan_unlocked");
       gateNick.value = "";
-      showLockStep(1);
-      lockError.textContent = "A name is required — we start over. Type the password again.";
+      lockError.textContent = "A name is required — two characters at least.";
       lockError.style.display = "block";
+      gateNick.focus();
     }
 
     function lockEverything() {
       sessionStorage.removeItem("pindutan_unlocked");
       setCreator(false);           /* the crown and the light go with it */
       lockScreen.style.display = "flex";
-      showLockStep(1);
+      showLockStep();
     }
 
     if (sessionStorage.getItem("pindutan_unlocked") === "1" && cleanName(localStorage.getItem("pindutan_nick")).length >= 2) {
@@ -2119,18 +2066,12 @@
     } else {
       sessionStorage.removeItem("pindutan_unlocked");
       lockScreen.style.display = "flex";
-      showLockStep(1);
+      showLockStep();
     }
 
-    document.getElementById("unlockBtn").addEventListener("click", attemptUnlock);
-    passwordInput.addEventListener("keydown", e => { if (e.key === "Enter") attemptUnlock(); });
     document.getElementById("gateNameBtn").addEventListener("click", acceptGateName);
     gateNick.addEventListener("keydown", e => { if (e.key === "Enter") acceptGateName(); });
-    document.getElementById("gateBackBtn").addEventListener("click", () => showLockStep(1));
     wireMarkField(gateNick, armed => { gateMarkArmed = !!armed; });
-    document.getElementById("hintBtn").addEventListener("click", () => {
-      document.getElementById("hintText").style.display = "block";
-    });
     document.getElementById("lockBtn").addEventListener("click", lockEverything);
     document.getElementById("kupalJoinBtn").addEventListener("click", () => chooseAutopilot("kupal"));
     document.getElementById("interJoinBtn").addEventListener("click", () => chooseAutopilot("intermediate"));
@@ -6735,6 +6676,7 @@
     } catch (e) { }
 
     /* =========================================================
+       v23 — the password moved to the hub; the gate here opens straight on the name.
        v22.9 — the arena is the second runner, and the feed names the file it updates from.
        v22.8 — the arena is the second runner.
        The first runner opens this page, so the other chairs live here:

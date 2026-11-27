@@ -113,7 +113,7 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v22** — 226: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+- **Pindutan v22** — 230: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
   wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
   your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
   Playing/Available and nothing
@@ -136,7 +136,9 @@ All suites run in Node with jsdom, no browser needed.
   last seen — no losses), the ladder (ten names, no more, a rank for each of them earned in 1v1 alone — bronze,
   silver, gold, diamond, three tiers of three stars and a fourth that steps you up, so a group win lifts nothing —
   your own row reading "(you)", and
-  the note that speaks of Cloudflare when the board lives there), the CPU rival and its three levels, the name gate,
+  the note that speaks of Cloudflare when the board lives there), an update log that opens by itself the first time
+  you reach the lobby on a new build — three days of notes, and "Do not show again" in the lower right corner, with a
+  📜 Updates pill beside Themes for anyone who wants it back — the CPU rival and its three levels, the name gate,
   the hall of fame (the note names whatever host the feed points at), the GLIDE panel, hold-to-slide, the
   pills, and the self-update (nothing newer leaves it alone, a newer build comes over whole, a broken
   download refused, a swap lets go of the relays first, the feed tag must match the game's own)

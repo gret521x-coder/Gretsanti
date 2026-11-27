@@ -25,13 +25,13 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `pindutan.html` | 13 KB | **The deck** — the second runner: three chairs, Pindutan plus two still waiting for their games. Holds no game code, keeps itself current from `menuBuild`, and its Pindutan chair loads the newest arena from the feed |
+| `pindutan.html` | 21 KB | **The game hub** — the page the first runner opens: three chairs (Pindutan plus two still waiting for their games) and the manual under them. Holds no game code, keeps itself current from `menuBuild`, and its Pindutan chair loads `feed.arena` |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
-| `pindutan-run.html` | 8 KB | **The first runner** — no game code and no menu; reads the feed and opens the deck (`feed.menu`). The launcher card no longer goes through it, but a copy on a phone still lands on the newest deck |
-| `labs/pindutan-v21.html` | 219 KB | Pindutan v22 — the game, and the build that keeps itself current |
+| `pindutan-run.html` | 7 KB | **The first runner, frozen at the Nov 26 file** — no game code and no menu; reads the feed and opens `feed.html`, the hub. Left alone on purpose: every change since lives in the hub and the game |
+| `labs/pindutan-v21.html` | 268 KB | Pindutan v22.9 — the game: the arena, its three chairs behind ☰ Games, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, where the deck lives (`menu` / `menuBuild`), and the ladder's address |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
@@ -64,27 +64,31 @@ player's saved grid was thrown away — they are declared above that check now.
 reads `labs/pindutan-build.json` on `main` and then loads the build that file names, so a copy kept on a phone
 never goes stale. If the repo cannot be reached it says so, offers a retry and a link to the hosted copy.
 
-**Two runners, and the arena is the second one.** The chain is two links before you are playing:
+**Runner → hub → game.** The first link is frozen; everything after it keeps itself current.
 
 1. `pindutan-run.html` — the **first runner**: no game, no menu. Reads `labs/pindutan-build.json` and opens
-   `feed.html`, so the arena it starts is always the newest build. It refuses anything under 20 KB that is not
-   a whole page carrying the `SELF-UPDATE` marker, and if it cannot get one it says why, offers a retry and a
-   link to the hosted copy. **This file is frozen**: it is byte-for-byte the version from Nov 26 and is not to
-   be touched again — every change since lives in the arena and the deck, which both keep themselves current.
-2. `labs/pindutan-v21.html` — the **arena, and the second runner**: the games live inside it. A **☰ Games**
-   pill sits in the header beside the build strip and opens three chairs — **Pindutan** (green, "you are
-   here"), **Game two** and **Game three** (both TBD, and each says its own name when tapped). The sheet's
-   footer links to the deck page for anyone who wants the menu on its own.
+   `feed.html`. It refuses anything under 20 KB that is not a whole page carrying the `SELF-UPDATE` marker, and
+   if it cannot get one it says why, offers a retry and a link to the hosted copy. **This file is frozen**:
+   it is byte-for-byte the version from Nov 26 and is not to be touched again — which is exactly why the hub
+   below is 21 KB and still carries that marker.
+2. `pindutan.html` — the **game hub (m3)**: the three chairs and a manual, 21 KB, no game code. **Pindutan**
+   opens the build the feed calls `arena`; **Game two** and **Game three** are wired and say they are not
+   written yet. Under the chairs sit the real instructions — the board, the four modes, the keys, the room,
+   the ladder, the storm, the themes, updates. The hub keeps *itself* current from `menuBuild`/`menu`, and it
+   checks the feed on every open and on every tap of its strip so the arena line is never stale.
+3. `labs/pindutan-v21.html` — the **arena** (v22.9): the game. It carries the same three chairs behind a
+   **☰ Games** pill in its header, and it updates itself from `arena` in the feed.
 
-`pindutan.html` is still there as the **deck** — the same three chairs as a page of their own, 13 KB, no game
-code — reachable from the arena's Games sheet, from the feed's `menu` field, or by opening it directly. Upload
-the two small files beside `index.html` and the chain works from the host even when GitHub is blocked.
+The feed names three addresses, one per link: `html` (the hub the runner opens), `arena` (the game the hub
+opens, and the file the game updates itself from) and `menu`/`menuBuild` (the hub's own address and tag).
+Pointing `html` at the game instead takes the runner straight to Pindutan and skips the hub — one field, no
+upload.
 
-**And the deck keeps itself current too.** On opening — and on a tap of its strip — the deck compares its own
-tag with `menuBuild` in the feed. If a newer deck is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
-size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a deck that
-was just swapped in from swapping again. The strip says which copy you are on in one line — `deck m2 · newest ·
-arena v22.8` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
+**And the hub keeps itself current too.** On opening — and on a tap of its strip — the hub compares its own
+tag with `menuBuild` in the feed. If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a hub that
+was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m3 · newest ·
+arena v22.9` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
 
 **Pindutan v22 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
 `labs/pindutan-build.json`; if that names something newer, it runs that instead. A hosted copy moves to the
@@ -139,7 +143,7 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v22** — 236: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+- **Pindutan v22** — 238: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
   wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
   your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
   Playing/Available and nothing

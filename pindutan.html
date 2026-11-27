@@ -4,8 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
-<title>Pindutan — pick a game</title>
+<title>Pindutan — the game hub</title>
 <!-- HUB-MENU -->
+<!-- SELF-UPDATE: this page keeps itself current from labs/pindutan-build.json (menuBuild/menu),
+     and the game it opens keeps itself current too (build/html). No game code lives here. -->
 <style>
   :root {
     --bg: #04060c;
@@ -59,54 +61,79 @@
   .strip #deckState { color: var(--lime); font-weight: 800; }
   .strip.warn #deckState { color: var(--amber); }
   .strip.busy #deckState { color: var(--cyan); }
-  .strip b { color: var(--lime); font-weight: 800; }
-  .strip.off b { color: var(--amber); }
+  .strip.off { color: rgba(127, 147, 173, 0.6); }
+  .strip b { color: var(--ink); font-weight: 800; }
 
+  .bar { height: 3px; border-radius: 3px; background: rgba(140, 170, 210, 0.14); overflow: hidden; margin-bottom: 10px; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--cyan); transition: width 0.25s ease; }
+  .bar i.bad { background: var(--red); }
+  .note {
+    margin: 0 0 16px; font-size: 0.62rem; line-height: 1.45; color: var(--mut);
+    letter-spacing: 0.02em; text-align: left;
+  }
+  .note.bad { color: var(--amber); }
+
+  /* the chairs */
   .tile {
     display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 10px;
-    padding: 14px; border-radius: 14px; text-align: left; cursor: pointer;
-    background: var(--panel); border: 1px solid var(--line); color: var(--ink);
-    font: inherit; transition: border-color 0.2s ease, transform 0.08s ease;
+    padding: 14px 14px; text-align: left; cursor: pointer;
+    font: inherit; color: var(--ink);
+    background: linear-gradient(180deg, rgba(12, 22, 38, 0.9), rgba(6, 11, 20, 0.9));
+    border: 1px solid var(--line); border-radius: 13px;
   }
   .tile:active { transform: translateY(1px); }
   .tile .ico {
-    flex: 0 0 auto; width: 38px; height: 38px; display: grid; place-items: center;
-    border-radius: 10px; font-size: 1.05rem;
-    background: rgba(61, 214, 245, 0.10); color: var(--cyan); border: 1px solid rgba(61, 214, 245, 0.3);
+    width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center;
+    border-radius: 10px; font-size: 1rem;
+    background: rgba(61, 214, 245, 0.10); color: var(--cyan);
   }
-  .tile .body { flex: 1; min-width: 0; display: block; }
-  .tile .name { display: block; font-size: 0.9rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
-  .tile .desc { display: block; font-size: 0.62rem; color: var(--mut); margin-top: 2px; line-height: 1.4; }
+  .tile .body { flex: 1 1 auto; min-width: 0; }
+  .tile .name { display: block; font-size: 0.86rem; font-weight: 800; letter-spacing: 0.06em; }
+  .tile .desc { display: block; margin-top: 3px; font-size: 0.6rem; line-height: 1.4; color: var(--mut); }
+  .tile .meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .tile .meta span {
+    padding: 2px 6px; border-radius: 6px; font-size: 0.5rem; letter-spacing: 0.1em;
+    color: #9fd7e6; background: rgba(61, 214, 245, 0.08); border: 1px solid rgba(61, 214, 245, 0.16);
+  }
+  .tile.live { border-color: rgba(74, 222, 128, 0.34); box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.08) inset; }
+  .tile.live .ico { background: rgba(74, 222, 128, 0.12); color: var(--lime); }
+  .tile.tbd { border-style: dashed; opacity: 0.82; }
+  .tile.tbd .ico { background: rgba(168, 85, 247, 0.12); color: var(--violet); }
+  .tile.busy { opacity: 0.7; }
   .tile .go, .tile .chip {
-    flex: 0 0 auto; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--cyan); border: 1px solid rgba(61, 214, 245, 0.35); border-radius: 8px; padding: 5px 9px;
+    flex: 0 0 auto; padding: 6px 10px; border-radius: 9px;
+    font-size: 0.58rem; font-weight: 800; letter-spacing: 0.1em;
   }
-  .tile .chip { color: var(--mut); border-color: var(--line); }
-  .tile.live { border-color: rgba(61, 214, 245, 0.32); box-shadow: 0 0 0 3px rgba(61, 214, 245, 0.05); }
-  .tile.live .ico { color: var(--lime); border-color: rgba(74, 222, 128, 0.35); background: rgba(74, 222, 128, 0.08); }
-  .tile.live .go { color: var(--lime); border-color: rgba(74, 222, 128, 0.4); }
-  .tile.busy { border-color: rgba(255, 176, 32, 0.5); }
-  .tile.busy .go { color: var(--amber); border-color: rgba(255, 176, 32, 0.5); }
-  .tile.tbd { opacity: 0.62; cursor: default; }
-  .tile.tbd:active { transform: none; }
+  .tile .go { color: #04120a; background: var(--lime); }
+  .tile .chip { color: #cfc4ff; background: rgba(168, 85, 247, 0.14); border: 1px solid rgba(168, 85, 247, 0.3); }
 
-  .note {
-    margin: 4px 0 0; padding: 10px; border-radius: 10px; text-align: left;
-    font-size: 0.68rem; line-height: 1.5; color: var(--amber);
-    background: rgba(255, 176, 32, 0.08); border: 1px solid rgba(255, 176, 32, 0.3);
+  /* the manual under the chairs */
+  .manual {
+    margin-top: 22px; padding: 16px 15px 6px; text-align: left;
+    border: 1px solid var(--line); border-radius: 13px;
+    background: linear-gradient(180deg, rgba(8, 16, 28, 0.86), rgba(4, 8, 14, 0.86));
   }
-  .note.bad { color: var(--red); background: rgba(255, 77, 109, 0.08); border-color: rgba(255, 77, 109, 0.3); }
-  .note[hidden] { display: none; }
-  .tiny { margin: 22px 0 0; font-size: 0.58rem; line-height: 1.7; color: var(--mut); opacity: 0.85; }
-  .tiny b { color: var(--mut); font-weight: 700; }
-  .bar { margin: 0 0 14px; height: 3px; border-radius: 3px; background: rgba(140, 170, 210, 0.14); overflow: hidden; }
-  .bar i {
-    display: block; height: 100%; width: 0; border-radius: 3px;
-    background: linear-gradient(90deg, var(--cyan), var(--lime));
-    box-shadow: 0 0 12px rgba(61, 214, 245, 0.5); transition: width 0.3s ease;
+  .manual h2 {
+    margin: 0 0 4px; font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cyan);
   }
-  .bar i.bad { background: var(--red); box-shadow: 0 0 12px rgba(255, 77, 109, 0.5); }
-  noscript p { color: var(--red); font-size: 0.8rem; }
+  .manual h3 {
+    margin: 16px 0 5px; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink);
+  }
+  .manual p { margin: 0 0 8px; font-size: 0.6rem; line-height: 1.55; color: var(--mut); }
+  .manual p b, .manual li b { color: #cfe3f5; font-weight: 800; }
+  .manual ul { margin: 0 0 8px; padding-left: 16px; }
+  .manual li { margin-bottom: 4px; font-size: 0.6rem; line-height: 1.5; color: var(--mut); }
+  .manual kbd {
+    display: inline-block; padding: 1px 5px; margin-right: 2px; border-radius: 5px;
+    font: inherit; font-size: 0.56rem; color: var(--ink);
+    background: rgba(140, 170, 210, 0.12); border: 1px solid var(--line);
+  }
+  .manual .rule { height: 1px; margin: 14px 0 0; background: var(--line); }
+
+  .tiny {
+    margin: 18px 0 0; font-size: 0.58rem; line-height: 1.55; color: rgba(127, 147, 173, 0.8);
+  }
+  .tiny b { color: #a9c0d8; }
 </style>
 </head>
 <body>
@@ -115,9 +142,9 @@
 
   <main>
     <div class="mark">PINDUTAN</div>
-    <div class="sub">pick a game</div>
-    <button class="strip" id="strip" title="Tap to look for a newer deck">
-      <span id="deckBuild">deck m2</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+    <div class="sub">the game hub · pick a game</div>
+    <button class="strip" id="strip" title="Tap to look for a newer hub">
+      <span id="deckBuild">hub m3</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -127,7 +154,8 @@
       <span class="ico">▚</span>
       <span class="body">
         <span class="name">Pindutan</span>
-        <span class="desc">the neon block arena — stack, clear lines, fire garbage at your rivals</span>
+        <span class="desc">the neon block arena — stack the blocks, clear the lines, fire the garbage at your rivals</span>
+        <span class="meta"><span>SOLO</span><span>VS CPU</span><span>1v1</span><span>GROUP</span></span>
       </span>
       <span class="go" id="arenaGo">▶ Play</span>
     </button>
@@ -136,7 +164,8 @@
       <span class="ico">＋</span>
       <span class="body">
         <span class="name">Game two</span>
-        <span class="desc">the slot is built and wired — the game is not written yet</span>
+        <span class="desc">the chair is built and wired — the game itself is not written yet</span>
+        <span class="meta"><span>one tile</span><span>one file</span></span>
       </span>
       <span class="chip">TBD</span>
     </button>
@@ -145,15 +174,106 @@
       <span class="ico">＋</span>
       <span class="body">
         <span class="name">Game three</span>
-        <span class="desc">same here — one more chair, waiting for its game</span>
+        <span class="desc">the same chair, one row lower — waiting for its game</span>
+        <span class="meta"><span>one tile</span><span>one file</span></span>
       </span>
       <span class="chip">TBD</span>
     </button>
 
+    <section class="manual">
+      <h2>How to play</h2>
+      <p>Everything below is Pindutan, the game in the first chair. The two empty chairs will get their own
+         instructions the day they get their own game.</p>
+
+      <h3>The board</h3>
+      <p>Blocks fall one piece at a time. Fill a whole row and it clears; clear more than one row at once and
+         you send <b>garbage</b> over to your rival's board, where it arrives as a row of blocks with one hole
+         in it. The last board still standing wins. If your own stack reaches the top with nowhere to land,
+         you are out.</p>
+      <p>A piece you do not like can be <b>held</b> with <kbd>C</kbd>, which swaps it for the next one — once
+         per drop, so holding twice in a row is not a way out. The panel beside the board shows what is coming
+         next.</p>
+
+      <h3>The four ways to play</h3>
+      <ul>
+        <li><b>SOLO</b> — your board, nobody else's. No ranks, no garbage, just the stack.</li>
+        <li><b>VS CPU</b> — the same board against the computer, at <b>Beginner</b>, <b>Intermediate</b> or
+            <b>Kupal</b>. Each level thinks faster and makes fewer mistakes than the one before it.</li>
+        <li><b>1v1</b> — a real person. You play on the left, your rival's board sits beside yours at a smaller
+            size, and garbage crosses in both directions. <b>This is the only mode that earns rank.</b></li>
+        <li><b>GROUP</b> — up to four in the room, everyone at once, last board standing wins. A group win
+            lifts no rank, by design.</li>
+      </ul>
+
+      <h3>The controls</h3>
+      <p>On a keyboard: <kbd>←</kbd> <kbd>→</kbd> move, <kbd>↑</kbd> or <kbd>X</kbd> rotate, <kbd>Z</kbd> rotate
+         back, <kbd>↓</kbd> soft drop, <kbd>Space</kbd> hard drop, <kbd>C</kbd> hold, <kbd>E</kbd> the Pindutan
+         burst, <kbd>P</kbd> pause.</p>
+      <p>On a phone: the four pads under the board — left, rotate, right, and drop — plus the pause button. The
+         <b>GLIDE</b> panel beside them sets how smoothly the piece slides when you hold a direction: 38 ms by
+         default, with presets from instant to slow, so it can match whatever your thumb expects.</p>
+
+      <h3>The room</h3>
+      <p>One lobby for everyone. You give your name once, at the gate, and after that the only place it shows
+         is your own card — no box to change it, nothing repeating it beside Watch. Tap a card to see that
+         player's wins, best score, win rate, the run of wins they are on and when they were last seen; tap
+         ⚔ to challenge them to a 1v1. There is a chat under the list, and a <b>Watch</b> pill under the player
+         count if you would rather spectate.</p>
+
+      <h3>The ladder</h3>
+      <p>Ten names, no more. Ranks run <b>Bronze</b>, <b>Silver</b>, <b>Gold</b>, <b>Diamond</b>, three tiers
+         each, three stars to a tier and a fourth star that steps you up a tier. Your own row reads
+         <b>(you)</b>. Everything on that board was earned in 1v1 — a group win lifts nothing.</p>
+
+      <h3>Score, and the run you are on</h3>
+      <p>Your card keeps the score of your best board, the win rate worked out from what you actually played,
+         the run of wins you are on and the last time you were seen. There is no losses column — the page
+         counts what you won, not what you lost.</p>
+      <p>Clearing several rows at once is worth more than clearing them one at a time, and the garbage that
+         comes out of a big clear is bigger too, so a single well-placed piece can turn a losing board around.
+         Spending the whole game clearing single rows is how a stack quietly gets away from you.</p>
+
+      <h3>Sound</h3>
+      <p>There is a sound switch in the lobby row for anyone playing somewhere quiet, and it remembers what you
+         chose. The storm always announces itself with the fanfare at the moment the key is taken — that is
+         the one sound that is meant to be heard over the top of everything else.</p>
+
+      <h3>A few things worth knowing</h3>
+      <ul>
+        <li>Do not chase a hole. If a column already has one, filling beside it is usually cheaper than trying
+            to dig it out later.</li>
+        <li>Keep the middle low and the edges tidy; the piece you are given next is always on the panel, so
+            leave a slot for it.</li>
+        <li>In a 1v1, a flat board clears more often than a tall one, and every clear you take is garbage you
+            did not have to send by hand.</li>
+        <li>Pause is <kbd>P</kbd>, and auto-pause is on by default — a phone that goes to sleep does not lose
+            your board for you.</li>
+      </ul>
+
+      <h3>The storm</h3>
+      <p>When the maker holds the key, the whole room lights up: three jagged bolts across the page and a
+         fanfare at the moment the key is taken. It is lightning, not decoration — it is drawn as vector
+         bolts, so it stays sharp on any screen, and it never falls as a straight line.</p>
+
+      <h3>Themes</h3>
+      <p>Eight, and the one you pick sticks: <b>Neon</b>, <b>Sunset</b>, <b>Forest</b>, <b>Royal</b>,
+         <b>Pink</b>, <b>Mono</b>, <b>Space</b> and <b>Christmas</b>. Space sends satellites and ships over
+         the page on arcs and climbs; Christmas snows across the whole page and stops at the top of the board,
+         so the table itself stays clear to play on.</p>
+
+      <h3>Updates</h3>
+      <p>This hub reads <b>labs/pindutan-build.json</b> on the <b>main</b> branch before it opens a game, so the
+         arena you get is always the build that file names — never an old copy that happened to be uploaded
+         somewhere. The hub keeps <i>itself</i> current the same way, against the same file, and the game does
+         the same again once it is running. Nothing here has to be re-uploaded for a new build to reach you.</p>
+      <div class="rule"></div>
+      <p style="margin-top:10px;">No signal? Say so and stay put — the strip turns amber, the chairs still
+         answer, and Pindutan still opens the build it already knows about.</p>
+    </section>
+
     <p class="tiny">
-      The Pindutan tile reads <b>labs/pindutan-build.json</b> on the <b>main</b> branch and
-      opens whatever build that file names, so the arena here is always the newest one.
-      This deck holds no game code.
+      This page holds no game code. It reads <b>labs/pindutan-build.json</b>, then opens the build named
+      there, and it checks for a newer hub of its own on every open and on every tap of the strip.
     </p>
   </main>
 
@@ -165,9 +285,10 @@
 
   var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
+  var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m2";                 /* this copy of the deck */
-  var DECK_APPLIED = "pindutan_deck_applied";   /* a deck that was just swapped in must not swap again */
+  var DECK = "m3";                 /* this copy of the hub */
+  var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 
   var strip = document.getElementById("strip");
@@ -220,18 +341,19 @@
     go.textContent = on ? "…" : "▶ Play";
   }
 
-  /* the newest arena, then hand the whole page over to it */
+  /* the newest arena the feed names, then hand the whole page over to it */
   function openArena() {
     busy(true);
     bar.classList.remove("bad");
     percent(18);
     say("Looking for the newest arena…", false);
     var wanted = "";
+    var url = "";
     fetchText(FEED).then(function (raw) {
       var feed = {};
       try { feed = JSON.parse(raw) || {}; } catch (e) { feed = {}; }
       wanted = String(feed.build || "").trim();
-      var url = (feed && feed.html) || ARENA;
+      url = String(feed.arena || "").trim() || ARENA;
       if (wanted) {
         arenaBuild.textContent = wanted;
         strip.classList.remove("off");
@@ -270,11 +392,11 @@
   Array.prototype.forEach.call(document.querySelectorAll(".tile.tbd"), function (el) {
     el.addEventListener("click", function () {
       var name = el.querySelector(".name").textContent;
-      say(name + " is not built yet — the slot is wired and waiting for it.", false);
+      say(name + " is not built yet — the chair is wired and waiting for its game.", false);
     });
   });
 
-  /* ---------- the deck keeps itself current, like the game does ---------- */
+  /* ---------- the hub keeps itself current, like the game does ---------- */
   function deckSays(text, mood) {
     deckState.textContent = text;
     strip.classList.remove("warn", "busy");
@@ -298,9 +420,9 @@
       }
       if (!want || want === DECK) { deckSays("newest", ""); return { state: "same" }; }
 
-      /* a newer deck is out: fetch it, check it, and hand the page over */
+      /* a newer hub is out: fetch it, check it, and hand the page over */
       deckSays(want + " is out · opening…", "busy");
-      var url = feed.menu || "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
+      var url = String(feed.menu || "").trim() || HUB;
       return fetchText(url).then(function (html) {
         if (!html || html.length < MIN_DECK_BYTES ||
             html.indexOf("</html>") < 0 ||
@@ -310,7 +432,7 @@
           return { state: "bad-page" };
         }
         try { sessionStorage.setItem(DECK_APPLIED, want); } catch (e) { }
-        deckSays("starting deck " + want + "…", "busy");
+        deckSays("starting hub " + want + "…", "busy");
         document.open();
         document.write(html);
         document.close();
@@ -319,13 +441,13 @@
     }).catch(function (e) {
       strip.classList.add("off");
       arenaBuild.textContent = "offline";
-      deckSays("no line to GitHub · this deck still works", "warn");
+      deckSays("no line to GitHub · this hub still works", "warn");
       return { state: "offline", error: String((e && e.message) || e) };
     });
   }
 
-  /* say which deck and which arena you are on, before anyone taps */
-  deckBuild.textContent = "deck " + DECK;
+  /* say which hub and which arena you are on, before anyone taps */
+  deckBuild.textContent = "hub " + DECK;
   deckCheck();
   strip.addEventListener("click", deckCheck);
 })();

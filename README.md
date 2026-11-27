@@ -109,8 +109,9 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
 - **Pindutan v21** — 200: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
-  wordmark, the room line beside the word Lobby, the name given once at the gate and only read back here —
-  there is no second box to change it — a card that is a name and Playing/Available and nothing
+  wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
+  your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
+  Playing/Available and nothing
   else — the ladder is the only place that keeps score), the table (your board on the left, your rival's
   beside it on the right at 72% of its width, a group battle or watching keeping the full-width strip
   underneath), the lobby chat (words

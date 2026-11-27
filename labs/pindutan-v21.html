@@ -1197,15 +1197,8 @@
     .rival-col .opponents-panel.duel .opp-card .opp-info { max-width: none; min-width: 0; text-align: center; }
     .rival-col .opp-name { text-align: center; }
 
-    /* the lobby says who you are, once, and never asks again */
-    .me-tag {
-      display: flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0;
-      padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line);
-      background: #070a11; font-size: 0.72rem; color: var(--mut);
-      letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .me-tag b { color: var(--txt); font-weight: 800; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; }
-    .me-tag .me-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); flex: none; box-shadow: 0 0 8px rgba(74, 222, 128, 0.8); }
+    /* the Watch button has the row to itself — the name is on your card already */
+    #watchToggle { flex: 1 1 auto; }
     .touch-controls button { background: linear-gradient(170deg, #141c29, #0a0f18); }
     .touch-controls button.hard {
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
@@ -1365,10 +1358,12 @@
 
   <div id="lobbySheet">
     <div class="sheet">
+      <!-- the name the gate took, kept here for every card and packet; never shown, never typed -->
+      <input type="hidden" id="nicknameInput" />
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.8</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.9</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1391,9 +1386,7 @@
           <button class="conn" id="stormBtn" style="display:none;cursor:pointer;background:none;border:0;color:inherit;font:inherit;" title="Lightning, for everyone in the room">⚡</button>
         </div>
         <div class="room-row" style="margin-top:9px;">
-          <!-- the name comes from the gate, once. The lobby only reads it out. -->
-          <span class="me-tag" id="meTag"><span class="me-dot"></span>You · <b id="meNameChip">—</b></span>
-          <input type="hidden" id="nicknameInput" />
+          <!-- no name here: your card below already carries it, from the gate -->
           <button id="watchToggle">👁 Watch</button>
         </div>
       </div>
@@ -4690,7 +4683,6 @@
     }
 
     function renderLobby() {
-      paintMeName();
       const list = document.getElementById("lobbyList");
       if (!list) return;
       const ids = Object.keys(peers);
@@ -5384,26 +5376,16 @@
     function afterGateName(name) {
       const ni = document.getElementById("nicknameInput");
       if (ni) ni.value = name;
-      paintMeName();
       if (typeof roomCode !== "undefined" && roomCode) {
         sendPacket(Object.assign({ t: "SYNC" }, myState()));
       }
       renderLobby();
       if (typeof lbFetch === "function") lbFetch(lbMode, true);
     }
-    /* The gate asked for the name once; the lobby only reads it back.
-       #nicknameInput is nothing but the holder of that answer now, so there is
-       no second place to change it — every card, packet and ladder row keeps
-       using the name that was given at the door. */
-    function paintMeName() {
-      const chip = document.getElementById("meNameChip");
-      if (chip) {
-        const name = myDisplayName();
-        chip.textContent = name;
-        const tag = document.getElementById("meTag");
-        if (tag) tag.title = "You gave this name at the gate";
-      }
-    }
+    /* The gate asked for the name once and the lobby never asks again: there is
+       no box to type in and no second copy of the name on screen — the card in
+       "Who is here" is where you read it. #nicknameInput only holds the answer
+       for every card, packet and ladder row. */
 
     document.getElementById("botRestart").addEventListener("click", () => {
       if (currentMode !== "bot") return;
@@ -5828,7 +5810,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.8";
+    const BUILD_TAG = "v21.9";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

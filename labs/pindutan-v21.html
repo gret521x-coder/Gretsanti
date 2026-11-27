@@ -1208,7 +1208,55 @@
 
     /* Watch is a small pill tucked under the "1 player in" badge, not a bar */
     #watchRow { justify-content: flex-end; }
-    #watchToggle { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; }
+    #watchToggle,
+    #godBtn { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; }
+    #godBtn { border-color: rgba(255, 210, 87, 0.5); color: var(--amber); }
+
+    /* ---- God mode: the maker's window, inside this tab ---- */
+    #godSheet {
+      position: fixed; inset: 0; z-index: 85; display: none;
+      padding: 14px 12px 40px; overflow-y: auto;
+      background: rgba(4, 6, 10, 0.93);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      -webkit-overflow-scrolling: touch;
+    }
+    #godSheet.open { display: block; }
+    .god-box {
+      max-width: 460px; margin: 0 auto; padding: 11px;
+      border-radius: 16px; border: 1px solid var(--line);
+      background: linear-gradient(165deg, #121a28, #0b101a);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    .god-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--amber);
+    }
+    .god-head button { padding: 3px 8px; font-size: 0.6rem; border-radius: 7px; }
+    .god-sub { color: var(--mut); font-size: 0.56rem; line-height: 1.55; margin: 8px 0 9px; }
+    .god-sub b { color: var(--txt); }
+    .god-row {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center;
+      padding: 6px 8px; border-radius: 9px; margin-bottom: 5px;
+      background: #0a0f18; border: 1px solid var(--line);
+    }
+    .god-row.ban-row { grid-template-columns: 1fr auto; }
+    .god-row .gname, .god-row .gsub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .god-row .gname { font-size: 0.66rem; font-weight: 800; color: var(--txt); }
+    .god-row .gsub { font-size: 0.52rem; color: var(--mut); }
+    .god-row button { padding: 4px 9px; font-size: 0.55rem; border-radius: 7px; }
+    .god-row button.ban { border-color: rgba(255, 77, 109, 0.5); color: var(--red); }
+    .god-row button.unban { border-color: rgba(74, 222, 128, 0.5); color: var(--lime); }
+    .god-empty { color: var(--mut); font-size: 0.6rem; padding: 7px 4px; }
+
+    /* a kicked or banned phone is told, in the line beside the word Lobby */
+    #roomStatus.warn { color: var(--red); }
+    #godNotice {
+      margin-top: 7px; padding: 7px 9px; border-radius: 9px;
+      border: 1px solid rgba(255, 77, 109, 0.45); background: rgba(255, 77, 109, 0.1);
+      color: var(--red); font-size: 0.6rem; font-weight: 800; line-height: 1.45;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
     .touch-controls button { background: linear-gradient(170deg, #141c29, #0a0f18); }
     .touch-controls button.hard {
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
@@ -1373,7 +1421,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.1</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.2</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1397,8 +1445,10 @@
         </div>
         <div class="room-row" id="watchRow" style="margin-top:8px;justify-content:flex-end;">
           <!-- no name here: your card below already carries it, from the gate -->
+          <button id="godBtn" style="display:none;" title="God mode — the maker's key only">🛡 God mode</button>
           <button id="watchToggle">👁 Watch</button>
         </div>
+        <div id="godNotice" style="display:none;"></div>
       </div>
 
       <div class="card-box" id="themeCard">
@@ -1466,6 +1516,23 @@
           Solo and VS CPU start at once. For a human, tap ⚔ 1v1 on their name above.
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- GOD MODE — the maker's window, inside this same tab -->
+  <div id="godSheet" role="dialog" aria-label="God mode">
+    <div class="god-box">
+      <div class="god-head">
+        <span>🛡 God mode</span>
+        <button id="godClose">✕</button>
+      </div>
+      <div class="god-sub">
+        Everyone here except you. <b>Kick</b> throws a phone out of the lobby until it reloads;
+        <b>Ban</b> keeps it out and this phone remembers it, so only <b>Unban</b> brings it back.
+      </div>
+      <div id="godList"></div>
+      <div class="god-head" style="margin-top:12px;color:var(--mut);"><span>Banned</span><span id="godBanCount">0</span></div>
+      <div id="godBans"></div>
     </div>
   </div>
 
@@ -1715,6 +1782,7 @@
     function applyCreatorLock() {
       const maker = isCreator();
       paintAutopilotButtons();
+      if (typeof paintGodButton === "function") paintGodButton();
       const badge = document.getElementById("versionBadge");
       if (badge) badge.innerHTML = maker ? "v22 " + crownSvg("gold", 10) : "v22";
       if (typeof paintCpuLevels === "function" && typeof CPU_LEVELS !== "undefined") paintCpuLevels();
@@ -2964,6 +3032,20 @@
       if (p.from === myId) return;
       /* who wears the crown right now — told by their own packets, kept nowhere */
       if (p.crown) crownPeers.add(p.from); else crownPeers.delete(p.from);
+
+      /* the maker's bans are not argued with: a banned phone is not heard at all */
+      if (godBanned(p)) return;
+
+      /* the maker's word about somebody else — every phone in the room drops them */
+      if (p.t === "KICK" || p.t === "BAN") {
+        if (!p.crown || !p.who) return;          /* only the creator may say this */
+        if (p.who === myId) { godBooted(p.t === "BAN"); return; }
+        delete peers[p.who];
+        renderLobby();
+        renderOpponentsGrid();
+        if (godOpen()) paintGod();
+        return;
+      }
       if (p.n) {
         if (seen.has(p.n)) return;
         remember(p.n);
@@ -4726,6 +4808,7 @@
     }
 
     function renderLobby() {
+      if (godOpen() && Date.now() - godPaintAt > 600) paintGod();
       const list = document.getElementById("lobbyList");
       if (!list) return;
       const ids = Object.keys(peers);
@@ -4834,6 +4917,204 @@
     function closeLobby() {
       document.getElementById("lobbySheet").style.display = "none";
       document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
+      closeGod();
+    }
+
+    /* =========================================================
+       v22.2 — God mode: the maker's window, inside this tab.
+       It lists everyone in the lobby but you. Kick empties that phone's room
+       until it reloads; a ban is written down on this phone, so it survives a
+       reload and is only undone here. Both are said over the relays, so every
+       phone in the room drops the name at once.
+       ========================================================= */
+    const GOD_BANS = "pindutan_bans";
+    const godBannedIds = new Set();          /* this visit, by id */
+    let godPaintAt = 0;
+
+    let godBanMap = null;                      /* read once, kept in step with storage */
+
+    function godBans() {
+      if (godBanMap) return godBanMap;
+      try {
+        const raw = JSON.parse(localStorage.getItem(GOD_BANS) || "{}");
+        godBanMap = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+      } catch (e) { godBanMap = {}; }
+      return godBanMap;
+    }
+
+    function godBanSave(map) {
+      godBanMap = map;
+      try { localStorage.setItem(GOD_BANS, JSON.stringify(map)); } catch (e) { }
+    }
+
+    function godNameOf(p) {
+      return (p && (p.name || (peers[p.from] || {}).name)) || "";
+    }
+
+    function godBanned(p) {
+      if (!p) return false;
+      if (p.from && godBannedIds.has(p.from)) return true;
+      if (p.id && godBannedIds.has(p.id)) return true;
+      const name = godNameOf(p);
+      return !!name && !!godBans()[lbNameKey(name)];
+    }
+
+    function godOpen() {
+      const sheet = document.getElementById("godSheet");
+      return !!(sheet && sheet.classList.contains("open"));
+    }
+
+    function paintGodButton() {
+      const btn = document.getElementById("godBtn");
+      if (btn) btn.style.display = isCreator() ? "" : "none";
+      if (!isCreator() && godOpen()) closeGod();
+    }
+
+    function paintGod() {
+      const list = document.getElementById("godList");
+      const banBox = document.getElementById("godBans");
+      const count = document.getElementById("godBanCount");
+      if (!list || !banBox) return;
+      godPaintAt = Date.now();
+      list.innerHTML = "";
+      banBox.innerHTML = "";
+
+      const ids = Object.keys(peers).filter(id => !godBanned({ from: id, name: (peers[id] || {}).name }));
+      if (!ids.length) {
+        const none = document.createElement("div");
+        none.className = "god-empty";
+        none.textContent = "Nobody else is in the lobby right now.";
+        list.appendChild(none);
+      }
+      ids.sort((a, b) => (peers[b].lastSeen || 0) - (peers[a].lastSeen || 0)).forEach(id => {
+        const p = peers[id] || {};
+        const row = document.createElement("div");
+        row.className = "god-row";
+        row.dataset.id = id;
+        const who = document.createElement("div");
+        const nm = document.createElement("div");
+        nm.className = "gname";
+        nm.textContent = p.name || "Player";
+        const sb = document.createElement("div");
+        sb.className = "gsub";
+        sb.textContent = (p.alive ? "Playing" : "Available") +
+          (p.mode ? " · " + p.mode : "") +
+          (p.score ? " · " + p.score : "") +
+          (p.lines ? " · " + p.lines + "L" : "");
+        who.appendChild(nm);
+        who.appendChild(sb);
+        const kick = document.createElement("button");
+        kick.textContent = "Kick";
+        kick.addEventListener("click", () => godKick(id));
+        const ban = document.createElement("button");
+        ban.className = "ban";
+        ban.textContent = "Ban";
+        ban.addEventListener("click", () => godBan(id));
+        row.appendChild(who);
+        row.appendChild(kick);
+        row.appendChild(ban);
+        list.appendChild(row);
+      });
+
+      const map = godBans();
+      const keys = Object.keys(map);
+      if (count) count.textContent = keys.length;
+      if (!keys.length) {
+        const none = document.createElement("div");
+        none.className = "god-empty";
+        none.textContent = "Nobody is banned.";
+        banBox.appendChild(none);
+        return;
+      }
+      keys.forEach(key => {
+        const row = document.createElement("div");
+        row.className = "god-row ban-row";
+        const nm = document.createElement("div");
+        nm.className = "gname";
+        nm.textContent = (map[key] && map[key].name) || key;
+        const off = document.createElement("button");
+        off.className = "unban";
+        off.textContent = "Unban";
+        off.addEventListener("click", () => godUnban(key));
+        row.appendChild(nm);
+        row.appendChild(off);
+        banBox.appendChild(row);
+      });
+    }
+
+    function openGod() {
+      if (!isCreator()) return false;             /* the maker's key, or nothing */
+      paintGod();
+      const sheet = document.getElementById("godSheet");
+      if (sheet) sheet.classList.add("open");
+      return true;
+    }
+
+    function closeGod() {
+      const sheet = document.getElementById("godSheet");
+      if (sheet) sheet.classList.remove("open");
+    }
+
+    function godDrop(id) {
+      delete peers[id];
+      renderLobby();
+      renderOpponentsGrid();
+      paintGod();
+    }
+
+    function godKick(id) {
+      if (!isCreator()) return false;
+      const name = (peers[id] || {}).name || "Player";
+      sendPacket({ t: "KICK", who: id, name: name });
+      godDrop(id);
+      return true;
+    }
+
+    function godBan(id) {
+      if (!isCreator()) return false;
+      const name = (peers[id] || {}).name || "Player";
+      const map = godBans();
+      map[lbNameKey(name)] = { name: name, id: id, at: Date.now() };
+      godBanSave(map);
+      godBannedIds.add(id);
+      sendPacket({ t: "BAN", who: id, name: name });
+      godDrop(id);
+      return true;
+    }
+
+    function godUnban(key) {
+      if (!isCreator()) return false;
+      const map = godBans();
+      const entry = map[key];
+      if (!entry) return false;
+      delete map[key];
+      godBanSave(map);
+      if (entry.id) godBannedIds.delete(entry.id);
+      paintGod();
+      renderLobby();
+      return true;
+    }
+
+    /* the creator took this phone out: the game stays, the room goes */
+    function godBooted(banned) {
+      if (localChannel) { try { localChannel.close(); } catch (e) { } localChannel = null; }
+      roomCode = "";
+      subscribedTopic = "";
+      peers = {};
+      battlePlayers = {};
+      battle = null;
+      isSpectator = false;
+      renderLobby();
+      renderOpponentsGrid();
+      paintConn();
+      const note = banned
+        ? "The creator banned you from this lobby."
+        : "The creator kicked you out of this lobby. Reload to come back.";
+      const el = document.getElementById("godNotice");
+      if (el) { el.style.display = "block"; el.textContent = note; }
+      roomStatusText(note);
+      openLobby();
+      return true;
     }
 
     function syncPlayBar() {
@@ -5406,6 +5687,11 @@
     });
 
     document.getElementById("inviteAllBtn").addEventListener("click", inviteAll);
+    document.getElementById("godBtn").addEventListener("click", openGod);
+    document.getElementById("godClose").addEventListener("click", closeGod);
+    document.getElementById("godSheet").addEventListener("click", e => {
+      if (e.target && e.target.id === "godSheet") closeGod();     /* a tap outside the box */
+    });
     document.getElementById("inviteJoin").addEventListener("click", acceptInvite);
     document.getElementById("inviteNo").addEventListener("click", () => { pendingInvite = null; showInviteBar(null); });
 
@@ -5853,7 +6139,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v22.1";
+    const BUILD_TAG = "v22.2";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

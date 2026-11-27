@@ -113,7 +113,7 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v22** — 207: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+- **Pindutan v22** — 215: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
   wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
   your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
   Playing/Available and nothing
@@ -121,7 +121,9 @@ All suites run in Node with jsdom, no browser needed.
   beside it on the right at 72% of its width, a group battle or watching keeping the full-width strip
   underneath), the lobby chat (words
   ride the relay, never stored, markup shown as words, 80 characters, one message a second, floods turned
-  away, five lines tall), the three-second countdown (a frozen board and a frozen CPU until GO, and for
+  away, five lines tall), the maker's God mode (a button beside Watch that opens inside the same tab a list of
+  everyone else — Kick, Ban, and Unban; a kick empties that phone's room until it reloads, a ban is written on
+  the maker's phone and only Unban undoes it, and a banned phone is simply not heard), the three-second countdown (a frozen board and a frozen CPU until GO, and for
   whoever is facing the maker in a 1v1 or a group battle one line above the numbers — “You are challenging
   the creator, Goodluck!”, which the maker never reads), the storm
   (lightning for the whole room — three jagged vector bolts, each eight points of zig-zag, drawn as SVG so

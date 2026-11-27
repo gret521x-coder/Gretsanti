@@ -191,7 +191,7 @@
     <div class="mark">KDL</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m5</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m6</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -252,8 +252,11 @@
       <h3><span class="day">NOV 27</span></h3>
       <ul>
         <li><b>Chess</b> — the second chair, and a whole game: castling, en passant, promotion, mate,
-            stalemate, the fifty-move rule and repetition, against the CPU at three levels or a friend in the
-            same room. Six page themes, eight board palettes you can tint, three piece styles.</li>
+            stalemate, the fifty-move rule and repetition, against the CPU at three levels or a friend.
+            Six page themes, eight board palettes you can tint, three piece styles.</li>
+        <li><b>Chess is online.</b> One lobby, three relays (EMQX, HiveMQ, Mosquitto) plus this device's
+            tabs, and no room codes: tap <b>⚔</b> beside a name and the two of you get a temporary room that
+            closes when the game does.</li>
         <li><b>The password moved here.</b> This page asks for it before anything opens, so the games get on
             with it: Pindutan opens straight on the nickname.</li>
         <li><b>The hub</b> — this page. Three chairs, and the games behind them keep themselves current.</li>
@@ -329,7 +332,7 @@
   var CHESS = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m5";                 /* this copy of the hub */
+  var DECK = "m6";                 /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 

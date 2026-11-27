@@ -108,7 +108,7 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v21** — 200: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+- **Pindutan v21** — 207: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
   wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
   your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
   Playing/Available and nothing
@@ -116,12 +116,14 @@ All suites run in Node with jsdom, no browser needed.
   beside it on the right at 72% of its width, a group battle or watching keeping the full-width strip
   underneath), the lobby chat (words
   ride the relay, never stored, markup shown as words, 80 characters, one message a second, floods turned
-  away, five lines tall), the three-second countdown (a frozen board and a frozen CPU until GO), the storm
+  away, five lines tall), the three-second countdown (a frozen board and a frozen CPU until GO, and for
+  whoever is facing the maker in a 1v1 or a group battle one line above the numbers — “You are challenging
+  the creator, Goodluck!”, which the maker never reads), the storm
   (lightning for the whole room — three jagged vector bolts, each eight points of zig-zag, drawn as SVG so
   they stay sharp on any screen — a four-second fanfare the moment the maker's key is taken, a maker-only
   ⚡ beside the relays that broadcasts, a second bolt inside 600 ms held back), six themes that stick, the player card
-  behind a row tap (wins, best, rate, streak, last seen — no losses), the ladder note that speaks of
-  Cloudflare when the board lives there, the CPU rival and its three levels, the name gate,
+  behind a row tap (wins, best, rate, streak, last seen — no losses), the ladder (ten names, no more, and
+  the note that speaks of Cloudflare when the board lives there), the CPU rival and its three levels, the name gate,
   the hall of fame (the note names whatever host the feed points at), the GLIDE panel, hold-to-slide, the
   pills, and the self-update (nothing newer leaves it alone, a newer build comes over whole, a broken
   download refused, a swap lets go of the relays first, the feed tag must match the game's own)

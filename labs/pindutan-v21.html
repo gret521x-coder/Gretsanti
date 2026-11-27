@@ -60,6 +60,7 @@
     /* ---------- three seconds before the first block falls ---------- */
     .countdown {
       position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 8px;
       pointer-events: none; z-index: 30;
     }
     .countdown.on { display: flex; }
@@ -69,6 +70,14 @@
       animation: countPop 0.9s ease-out both;
     }
     .countdown.go span { color: var(--lime); }
+    /* the line a challenger reads above the numbers, kept inside the board */
+    .countdown .cd-note {
+      max-width: 86%; padding: 0 4px;
+      font-size: 0.56rem; font-weight: 800; line-height: 1.4;
+      letter-spacing: 0.07em; text-transform: uppercase; text-align: center;
+      color: var(--amber); text-shadow: 0 0 10px var(--glow);
+    }
+    .countdown.has-note span { font-size: 3.5rem; }
     @keyframes countPop {
       0% { transform: scale(0.4); opacity: 0; }
       35% { transform: scale(1.15); opacity: 1; }
@@ -1364,7 +1373,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.10</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.11</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -2609,6 +2618,22 @@
     let countdownUntil = 0;
     let countdownTimers = [];
 
+    /* ---------- one line for the ones facing the maker ----------
+       In a 1v1 or a group battle, everyone on the other side of the maker reads
+       it above 3-2-1. The maker never sees it, and nobody in a solo or CPU run
+       ever does. The crown is not stored: it rides the maker's own packets. */
+    const CREATOR_CHALLENGE = "You are challenging the creator, Goodluck!";
+
+    function facingCreator() {
+      if (isCreator()) return false;                       /* never for the maker */
+      if (currentMode !== "1v1" && currentMode !== "group") return false;
+      return Object.keys(battlePlayers).some(id => id !== myId && crownPeers.has(id));
+    }
+
+    function countdownNote() {
+      return facingCreator() ? CREATOR_CHALLENGE : "";
+    }
+
     function countdownLeft() { return Math.max(0, countdownUntil - performance.now()); }
     function frozen() { return countdownLeft() > 0; }
 
@@ -2617,7 +2642,7 @@
       countdownTimers = [];
       countdownUntil = 0;
       const box = document.getElementById("countdown");
-      if (box) { box.classList.remove("on", "go"); box.innerHTML = ""; }
+      if (box) { box.classList.remove("on", "go", "has-note"); box.innerHTML = ""; }
     }
 
     function armCountdown() {
@@ -2626,8 +2651,16 @@
       if (!box || !(COUNTDOWN_MS > 0)) return 0;
       countdownUntil = performance.now() + COUNTDOWN_MS;
       box.classList.add("on");
+      const note = countdownNote();
+      box.classList.toggle("has-note", !!note);
       const say = (text, go) => {
         box.innerHTML = "";
+        if (note) {
+          const line = document.createElement("div");
+          line.className = "cd-note";
+          line.textContent = note;
+          box.appendChild(line);
+        }
         const span = document.createElement("span");
         span.textContent = text;
         box.appendChild(span);
@@ -2900,8 +2933,14 @@
     }
 
     /* ---------- send ---------- */
+    /* the ids whose phone is holding the maker's crown right now (in memory only) */
+    const crownPeers = new Set();
+
     function sendPacket(p, as) {
       if (!roomCode) return false;
+      /* the phone holding the maker's crown says so on everything it sends, so a
+         challenger can see who is across the board without asking anyone */
+      if (isCreator()) p.crown = true;
       p.from = as || myId;
       p.n = nextNonce();
       p.ts = Date.now();
@@ -2923,6 +2962,8 @@
     function onPacket(p) {
       if (!p || typeof p !== "object" || !p.t) return;
       if (p.from === myId) return;
+      /* who wears the crown right now — told by their own packets, kept nowhere */
+      if (p.crown) crownPeers.add(p.from); else crownPeers.delete(p.from);
       if (p.n) {
         if (seen.has(p.n)) return;
         remember(p.n);
@@ -2996,6 +3037,7 @@
 
       if (p.t === "BYE") {
         delete peers[p.from];
+        crownPeers.delete(p.from);
         renderLobby();
         renderOpponentsGrid();
         return;
@@ -3521,14 +3563,14 @@
         prev.crown = prev.crown || !!r.crown;
         prev.local = prev.local || !!r.local;
       };
-      (rows || []).slice(0, 25).forEach(put);
+      (rows || []).slice(0, 10).forEach(put);      /* ten names, no more */
       lbPeerRows(lbMode).forEach(put);     /* what the other phones told us */
       if (local) put(local);
       let all = Array.from(merged.values())
         .filter(r => r.wins || r.losses)
         .sort((a, b) => (b.wins - a.wins) || (b.best - a.best) ||
           String(a.name).localeCompare(String(b.name)))
-        .slice(0, 25);
+        .slice(0, 10);
 
       if (!all.length) {
         list.innerHTML = '<div class="lb-empty">Nobody has won a human battle yet.<br>Challenge someone and take the top spot.</div>';
@@ -3607,7 +3649,7 @@
       const ctrl = typeof AbortController === "function" ? new AbortController() : null;
       const timer = ctrl ? setTimeout(() => ctrl.abort(), 6000) : null;
       try {
-        const url = lbUrl + "?action=top&mode=" + encodeURIComponent(lbMode) + "&limit=25&t=" + Date.now();
+        const url = lbUrl + "?action=top&mode=" + encodeURIComponent(lbMode) + "&limit=10&t=" + Date.now();
         const res = await fetch(url, ctrl ? { signal: ctrl.signal, cache: "no-store" } : { cache: "no-store" });
         if (!res.ok) throw new Error("http " + res.status);
         const data = await res.json();
@@ -5811,7 +5853,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.10";
+    const BUILD_TAG = "v21.11";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

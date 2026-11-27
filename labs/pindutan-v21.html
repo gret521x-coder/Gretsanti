@@ -1197,8 +1197,9 @@
     .rival-col .opponents-panel.duel .opp-card .opp-info { max-width: none; min-width: 0; text-align: center; }
     .rival-col .opp-name { text-align: center; }
 
-    /* the Watch button has the row to itself — the name is on your card already */
-    #watchToggle { flex: 1 1 auto; }
+    /* Watch is a small pill tucked under the "1 player in" badge, not a bar */
+    #watchRow { justify-content: flex-end; }
+    #watchToggle { flex: 0 0 auto; padding: 5px 11px; font-size: 0.62rem; border-radius: 8px; }
     .touch-controls button { background: linear-gradient(170deg, #141c29, #0a0f18); }
     .touch-controls button.hard {
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
@@ -1363,7 +1364,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.9</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.10</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1385,7 +1386,7 @@
           <span class="conn"><span class="dot wait" id="dotB2"></span>Mosquitto</span>
           <button class="conn" id="stormBtn" style="display:none;cursor:pointer;background:none;border:0;color:inherit;font:inherit;" title="Lightning, for everyone in the room">⚡</button>
         </div>
-        <div class="room-row" style="margin-top:9px;">
+        <div class="room-row" id="watchRow" style="margin-top:8px;justify-content:flex-end;">
           <!-- no name here: your card below already carries it, from the gate -->
           <button id="watchToggle">👁 Watch</button>
         </div>
@@ -5810,7 +5811,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.9";
+    const BUILD_TAG = "v21.10";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

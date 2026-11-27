@@ -67,9 +67,10 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
 **Two runners, and the arena is the second one.** The chain is two links before you are playing:
 
 1. `pindutan-run.html` — the **first runner**: no game, no menu. Reads `labs/pindutan-build.json` and opens
-   `feed.html`, so the arena it starts is always the newest build. If the repo answers with something that is
-   not a whole game it tries the `pindutan-v21.html` uploaded beside itself; if neither works it says why,
-   offers a retry and a link to the hosted copy.
+   `feed.html`, so the arena it starts is always the newest build. It refuses anything under 20 KB that is not
+   a whole page carrying the `SELF-UPDATE` marker, and if it cannot get one it says why, offers a retry and a
+   link to the hosted copy. **This file is frozen**: it is byte-for-byte the version from Nov 26 and is not to
+   be touched again — every change since lives in the arena and the deck, which both keep themselves current.
 2. `labs/pindutan-v21.html` — the **arena, and the second runner**: the games live inside it. A **☰ Games**
    pill sits in the header beside the build strip and opens three chairs — **Pindutan** (green, "you are
    here"), **Game two** and **Game three** (both TBD, and each says its own name when tapped). The sheet's

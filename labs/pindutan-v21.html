@@ -23,7 +23,7 @@
       --glow: rgba(255, 176, 32, 0.35);
     }
 
-    /* ---------- five moods, one game ---------- */
+    /* ---------- six moods, one game ---------- */
     html[data-theme="sunset"] {
       --ink: #140a08; --ink2: #1d0f0b; --card: #26130f; --card2: #301913; --line: #46241b;
       --txt: #fff1e6; --mut: #c69a83; --amber: #ff9f43; --amber2: #ff5f3c; --cyan: #ffd166;
@@ -38,6 +38,11 @@
       --ink: #08040f; --ink2: #0d0718; --card: #150c24; --card2: #1c1030; --line: #2f1d4d;
       --txt: #f4ecff; --mut: #a48bc4; --amber: #ffd257; --amber2: #c084fc; --cyan: #a78bfa;
       --lime: #f0abfc; --red: #fb7185; --violet: #e879f9; --glow: rgba(192, 132, 252, 0.4);
+    }
+    html[data-theme="pink"] {
+      --ink: #150711; --ink2: #1e0b17; --card: #27101e; --card2: #331426; --line: #4c2138;
+      --txt: #ffeaf4; --mut: #c78fa9; --amber: #ff8fc7; --amber2: #ff5fa2; --cyan: #ffd3e8;
+      --lime: #ffa8d8; --red: #ff5c8a; --violet: #f0a6ff; --glow: rgba(255, 143, 199, 0.42);
     }
     html[data-theme="mono"] {
       --ink: #0a0a0a; --ink2: #101010; --card: #161616; --card2: #1e1e1e; --line: #2e2e2e;
@@ -1134,6 +1139,73 @@
 
     /* ---------- the game screen keeps the same texture ---------- */
     .arena { position: relative; }
+
+    /* ================= v21.8: the table — you on the left, your rival on the right =================
+       One row holds both boards. With nobody over there the rival column is gone and the
+       board sits where it always did; with a rival it takes 54% of the row and the rival
+       column 72% of that, so the two read as big-and-slightly-smaller, side by side. */
+    .table-row {
+      --board-w: min(100%, 26vh, 264px);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+    }
+    .table-row.rival-side { --board-w: min(54%, 26vh, 264px); }
+    @supports (height: 100svh) {
+      .table-row { --board-w: min(100%, 26svh, 264px); }
+      .table-row.rival-side { --board-w: min(54%, 26svh, 264px); }
+    }
+    @media (min-width: 700px) {
+      .table-row { --board-w: min(100%, 34vh, 300px); }
+      .table-row.rival-side { --board-w: min(54%, 34vh, 300px); }
+    }
+    .table-row > .board-wrapper { width: var(--board-w); flex: 0 0 auto; }
+
+    .rival-col {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 0 0 auto;
+      width: calc(var(--board-w) * 0.72);
+    }
+    .table-row.rival-none .rival-col { display: none; }
+    .table-row.rival-wide .rival-col { width: 100%; flex: 1 1 100%; }
+
+    /* the CPU panel stands up: board on top, its numbers under it */
+    .rival-col .bot-panel {
+      width: 100%; max-width: none; flex-direction: column; align-items: stretch; gap: 6px; padding: 6px;
+    }
+    .rival-col .bot-panel canvas { width: 100%; height: auto; }
+    .rival-col .bot-panel button { width: 100%; }
+    .rival-col .bot-meta { text-align: center; font-size: 0.52rem; }
+    .rival-col .bot-meta b { font-size: 0.62rem; letter-spacing: 0.06em; }
+    .rival-col .bot-meta .hint { font-size: 0.5rem; }
+
+    /* a 1v1 rival sits in the same column, board first */
+    .rival-col .opponents-panel { width: 100%; max-width: none; padding: 6px; }
+    .rival-col .opponents-header { flex-direction: column; align-items: flex-start; gap: 3px; }
+    .rival-col .opponents-header h3 { font-size: 0.54rem; }
+    .rival-col .badges-group { flex-wrap: wrap; }
+    .rival-col .opponents-panel.on #opponentsGrid { flex-wrap: wrap; justify-content: center; }
+    .rival-col .opp-card { flex-direction: column; align-items: stretch; gap: 4px; width: 100%; }
+    .rival-col .opp-card canvas,
+    .rival-col .opponents-panel.duel .opp-card canvas { width: 100%; height: auto; }
+    .rival-col .opp-card .opp-info,
+    .rival-col .opponents-panel.duel .opp-card .opp-info { max-width: none; min-width: 0; text-align: center; }
+    .rival-col .opp-name { text-align: center; }
+
+    /* the lobby says who you are, once, and never asks again */
+    .me-tag {
+      display: flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0;
+      padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line);
+      background: #070a11; font-size: 0.72rem; color: var(--mut);
+      letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .me-tag b { color: var(--txt); font-weight: 800; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; }
+    .me-tag .me-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); flex: none; box-shadow: 0 0 8px rgba(74, 222, 128, 0.8); }
     .touch-controls button { background: linear-gradient(170deg, #141c29, #0a0f18); }
     .touch-controls button.hard {
       background: linear-gradient(170deg, rgba(255, 176, 32, 0.22), rgba(255, 122, 24, 0.1));
@@ -1296,7 +1368,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.7</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v21.8</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1319,7 +1391,9 @@
           <button class="conn" id="stormBtn" style="display:none;cursor:pointer;background:none;border:0;color:inherit;font:inherit;" title="Lightning, for everyone in the room">⚡</button>
         </div>
         <div class="room-row" style="margin-top:9px;">
-          <input type="text" id="nicknameInput" maxlength="14" placeholder="Your nickname" />
+          <!-- the name comes from the gate, once. The lobby only reads it out. -->
+          <span class="me-tag" id="meTag"><span class="me-dot"></span>You · <b id="meNameChip">—</b></span>
+          <input type="hidden" id="nicknameInput" />
           <button id="watchToggle">👁 Watch</button>
         </div>
       </div>
@@ -1415,15 +1489,46 @@
       </div>
     </div>
 
-    <div class="board-wrapper" id="playerBoardWrapper">
-      <canvas id="mainCanvas" width="260" height="520"></canvas>
-      <div class="countdown" id="countdown" aria-live="polite"></div>
-      <div class="board-overlay" id="boardOverlay">
-        <h2 id="overlayTitle">PINDUTAN</h2>
-        <p id="overlayDesc">Tap start. Stack the neon blocks, clear lines, and fire garbage at your rivals.</p>
-        <div class="over-stats" id="overStats"></div>
-        <button class="primary" id="startBtn">Start Game</button>
+    <!-- THE TABLE: your board on the left, your rival's on the right -->
+    <div class="table-row" id="tableRow">
+      <div class="board-wrapper" id="playerBoardWrapper">
+        <canvas id="mainCanvas" width="260" height="520"></canvas>
+        <div class="countdown" id="countdown" aria-live="polite"></div>
+        <div class="board-overlay" id="boardOverlay">
+          <h2 id="overlayTitle">PINDUTAN</h2>
+          <p id="overlayDesc">Tap start. Stack the neon blocks, clear lines, and fire garbage at your rivals.</p>
+          <div class="over-stats" id="overStats"></div>
+          <button class="primary" id="startBtn">Start Game</button>
+        </div>
       </div>
+
+      <aside class="rival-col" id="rivalCol" aria-label="Your rival's board">
+        <div class="bot-panel" id="botPanel">
+          <canvas id="botCanvas" width="80" height="160"></canvas>
+          <div class="bot-meta" id="botMetaBox" title="tap to change level">
+            CPU <b id="botName">INTERMEDIATE</b><br />
+            <span id="botLine">Score 0 · Lines 0 · Lv 1</span><br />
+            <span class="hint">tap here to change level</span>
+          </div>
+          <button id="botRestart">Restart</button>
+        </div>
+
+        <!-- OPPONENTS & LIVE STREAM VIEW -->
+        <div class="opponents-panel" id="opponentsPanel">
+          <div class="opponents-header">
+            <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
+            <div class="badges-group">
+              <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
+              <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
+            </div>
+          </div>
+          <div id="opponentsGrid">
+            <div style="color:var(--mut); font-size:0.68rem; padding:10px; text-align:center;">
+              Waiting for players to join the room...
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
 
     <div class="power-wrap">
@@ -1432,32 +1537,6 @@
         <span class="lbl" id="chargeLabel">PINDUTAN CHARGE</span>
       </div>
       <button id="powerBtn" disabled>GO</button>
-    </div>
-
-    <div class="bot-panel" id="botPanel">
-      <canvas id="botCanvas" width="80" height="160"></canvas>
-      <div class="bot-meta" id="botMetaBox" title="tap to change level">
-        CPU <b id="botName">INTERMEDIATE</b><br />
-        <span id="botLine">Score 0 · Lines 0 · Lv 1</span><br />
-        <span class="hint">tap here to change level</span>
-      </div>
-      <button id="botRestart">Restart</button>
-    </div>
-
-    <!-- OPPONENTS & LIVE STREAM VIEW -->
-    <div class="opponents-panel" id="opponentsPanel">
-      <div class="opponents-header">
-        <h3 id="opponentsTitle">OPPONENTS (0/7)</h3>
-        <div class="badges-group">
-          <span class="viewer-badge" id="spectatorCount">👁 0 Watching</span>
-          <span class="live-badge" id="liveBadge">● LIVE STREAM</span>
-        </div>
-      </div>
-      <div id="opponentsGrid">
-        <div style="color:var(--mut); font-size:0.68rem; padding:10px; text-align:center;">
-          Waiting for players to join the room...
-        </div>
-      </div>
     </div>
   </main>
 
@@ -1547,9 +1626,10 @@
       return cleanName(stripMark(getMyName()));
     }
 
-    /* A nickname field never shows a plus. Every "+" typed is swallowed and
+    /* A name box never shows a plus. Every "+" typed is swallowed and
        remembered; a "v" straight after them finishes the key, so the name in
-       the box is always clean and nobody watching the screen sees a mark. */
+       the box is always clean and nobody watching the screen sees a mark.
+       (The gate and the chat box are the two places left that take typing.) */
     function wireMarkField(field, arm) {
       if (!field) return;
       let hidden = 0;        /* pluses typed and not shown */
@@ -2758,8 +2838,8 @@
     }
 
     function getMyName() {
-      /* reading the name must never write one: only the gate and the nickname
-         field save a name, so a refusal at the gate leaves nothing behind */
+      /* reading the name must never write one: only the gate saves a name, so a
+         refusal there leaves nothing behind. #nicknameInput just holds the answer. */
       const el = document.getElementById("nicknameInput");
       return (el.value || "").trim().slice(0, 14) || "Player";
     }
@@ -3984,12 +4064,13 @@
       chatPaint();
     }
 
-    /* ---------- themes: five moods, picked by mood ---------- */
+    /* ---------- six moods, picked by mood ---------- */
     const THEMES = [
       { id: "neon", name: "Neon", dot: "#ffb020" },
       { id: "sunset", name: "Sunset", dot: "#ff5f3c" },
       { id: "forest", name: "Forest", dot: "#35c98a" },
       { id: "royal", name: "Royal", dot: "#c084fc" },
+      { id: "pink", name: "Pink", dot: "#ff8fc7" },
       { id: "mono", name: "Mono", dot: "#d4d4d4" }
     ];
     let currentTheme = "neon";
@@ -4508,6 +4589,7 @@
       panel.classList.toggle("on", on);
       panel.classList.toggle("duel", currentMode === "1v1" && !isSpectator);
       panel.classList.toggle("watch", isSpectator);
+      layoutTable();
       document.getElementById("spectatorCount").textContent = "👁 " + (Object.keys(peers).length + 1) + " in lobby";
       if (!on) return;
 
@@ -4608,6 +4690,7 @@
     }
 
     function renderLobby() {
+      paintMeName();
       const list = document.getElementById("lobbyList");
       if (!list) return;
       const ids = Object.keys(peers);
@@ -4723,6 +4806,7 @@
       document.querySelectorAll("[data-play]").forEach(b => {
         b.classList.toggle("active", b.dataset.play === key);
       });
+      layoutTable();
     }
 
     function setPlay(mode) {
@@ -4752,6 +4836,28 @@
         openLobby();
         document.getElementById("playHint").textContent = "Tap “Invite everyone…” under the player list.";
       }
+    }
+
+    /* =========================================================
+       v21.8 — the table: your board on the left, a rival's on the right.
+       The row only splits when somebody is actually over there (the CPU panel
+       in a CPU game, the one opponent in a 1v1). A group battle or watching
+       keeps the full-width strip under the board: seven boards never fit in
+       one column.
+       ========================================================= */
+    function layoutTable() {
+      const row = document.getElementById("tableRow");
+      if (!row) return "none";
+      const cpu = document.getElementById("botPanel");
+      const opp = document.getElementById("opponentsPanel");
+      const cpuOn = !!(cpu && cpu.classList.contains("on"));
+      const oppOn = !!(opp && opp.classList.contains("on"));
+      const side = cpuOn || (oppOn && currentMode === "1v1" && !isSpectator);
+      const wide = oppOn && !side;
+      row.classList.toggle("rival-side", side);
+      row.classList.toggle("rival-wide", wide);
+      row.classList.toggle("rival-none", !side && !wide);
+      return side ? "side" : wide ? "wide" : "none";
     }
 
     function toggleSpectatorLayout(spectating) {
@@ -4850,6 +4956,7 @@
       bot.moveT = 0;
       bot.placed = 0;
       document.getElementById("botPanel").classList.add("on");
+      layoutTable();
       paintCpuLevels();
       botMeta();
       botSpawn();
@@ -4859,6 +4966,7 @@
     function botStop() {
       bot.on = false;
       document.getElementById("botPanel").classList.remove("on");
+      layoutTable();
     }
 
     function botMeta() {
@@ -5271,31 +5379,31 @@
 
     /* the gate hands the chosen name straight to the lobby, and wakes the ladder */
     applyCreatorLock();
+    layoutTable();          /* solo at boot: the board sits alone, centred */
 
     function afterGateName(name) {
       const ni = document.getElementById("nicknameInput");
       if (ni) ni.value = name;
+      paintMeName();
       if (typeof roomCode !== "undefined" && roomCode) {
         sendPacket(Object.assign({ t: "SYNC" }, myState()));
       }
       renderLobby();
       if (typeof lbFetch === "function") lbFetch(lbMode, true);
     }
-    let nickMarkArmed = false;
-    wireMarkField(document.getElementById("nicknameInput"), armed => { nickMarkArmed = !!armed; });
-
-    document.getElementById("nicknameInput").addEventListener("change", () => {
-      const field = document.getElementById("nicknameInput");
-      const typed = field.value;
-      const maker = nameHasMark(typed) || nickMarkArmed;
-      nickMarkArmed = false;
-      const chosen = cleanName(stripMark(typed));
-      if (stripMark(typed) !== typed.trim()) field.value = chosen;   /* the pluses never stay */
-      if (chosen.length >= 2) { field.value = chosen; setCreator(maker); }
-      if (chosen.length >= 2) localStorage.setItem("pindutan_nick", chosen);
-      if (roomCode) sendPacket(Object.assign({ t: "SYNC" }, myState()));
-      renderLobby();
-    });
+    /* The gate asked for the name once; the lobby only reads it back.
+       #nicknameInput is nothing but the holder of that answer now, so there is
+       no second place to change it — every card, packet and ladder row keeps
+       using the name that was given at the door. */
+    function paintMeName() {
+      const chip = document.getElementById("meNameChip");
+      if (chip) {
+        const name = myDisplayName();
+        chip.textContent = name;
+        const tag = document.getElementById("meTag");
+        if (tag) tag.title = "You gave this name at the gate";
+      }
+    }
 
     document.getElementById("botRestart").addEventListener("click", () => {
       if (currentMode !== "bot") return;
@@ -5720,7 +5828,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.7";
+    const BUILD_TAG = "v21.8";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

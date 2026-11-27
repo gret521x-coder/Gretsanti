@@ -32,7 +32,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `pindutan-run.html` | 8 KB | Pindutan runner — no game code; loads whichever build the feed names |
-| `labs/pindutan-v21.html` | 192 KB | Pindutan v21 — the game, and the build that keeps itself current |
+| `labs/pindutan-v21.html` | 219 KB | Pindutan v21 — the game, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, and where |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
@@ -98,14 +98,17 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v21** — 194: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
-  wordmark, the room line beside the word Lobby, a card that is a name and Playing/Available and nothing
-  else — the ladder is the only place that keeps score), the lobby chat (words
+- **Pindutan v21** — 200: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+  wordmark, the room line beside the word Lobby, the name given once at the gate and only read back here —
+  there is no second box to change it — a card that is a name and Playing/Available and nothing
+  else — the ladder is the only place that keeps score), the table (your board on the left, your rival's
+  beside it on the right at 72% of its width, a group battle or watching keeping the full-width strip
+  underneath), the lobby chat (words
   ride the relay, never stored, markup shown as words, 80 characters, one message a second, floods turned
   away, five lines tall), the three-second countdown (a frozen board and a frozen CPU until GO), the storm
   (lightning for the whole room — three jagged vector bolts, each eight points of zig-zag, drawn as SVG so
   they stay sharp on any screen — a four-second fanfare the moment the maker's key is taken, a maker-only
-  ⚡ beside the relays that broadcasts, a second bolt inside 600 ms held back), five themes that stick, the player card
+  ⚡ beside the relays that broadcasts, a second bolt inside 600 ms held back), six themes that stick, the player card
   behind a row tap (wins, best, rate, streak, last seen — no losses), the ladder note that speaks of
   Cloudflare when the board lives there, the CPU rival and its three levels, the name gate,
   the hall of fame (the note names whatever host the feed points at), the GLIDE panel, hold-to-slide, the

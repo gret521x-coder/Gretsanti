@@ -235,22 +235,38 @@
       <span class="go" id="chessGo">▶ Play</span>
     </button>
 
-    <button class="tile tbd" id="tile-three">
+    <button class="tile live" id="tile-three">
       <span class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 24 24" role="presentation"><text class="q" x="12" y="18" text-anchor="middle">?</text></svg>
+        <svg viewBox="0 0 24 24" role="presentation">
+          <circle cx="6"  cy="7"  r="3.1" fill="#ff5b6e" />
+          <circle cx="13" cy="5"  r="2.6" fill="#4da6ff" />
+          <circle cx="18" cy="10" r="3"   fill="#5ee08a" />
+          <circle cx="8"  cy="15" r="2.8" fill="#ffd75e" />
+          <circle cx="15" cy="16" r="3.1" fill="#c58bff" />
+        </svg>
       </span>
       <span class="body">
-        <span class="name">Game three</span>
-        <span class="desc">the same chair, one row lower — waiting for its game</span>
-        <span class="meta"><span>one tile</span><span>one file</span></span>
+        <span class="name">Marble</span>
+        <span class="desc">a zuma-style marble shooter — match three, clear the snake before it reaches the skull,
+            and a new track for every level</span>
+        <span class="meta"><span>3+ TO POP</span><span>POWER-UPS</span><span>A MAP A LEVEL</span></span>
       </span>
-      <span class="chip">TBD</span>
+      <span class="go" id="threeGo">▶ Play</span>
     </button>
 
     <section class="panelbox">
       <h2>What changed</h2>
       <h3><span class="day">NOV 27</span></h3>
       <ul>
+        <li><b>Marble</b> — the third chair, and it is a game: a marble shooter on a smooth track that runs
+            from the spawn to a skull. Match three or more of a colour and they pop; cut the snake in two and
+            the back half slides up to meet the front, which is how a chain reaction starts.</li>
+        <li><b>A map of its own for every level</b> — spiral, serpent, coil, ring, then round again — with the
+            colours growing, the snake quicker and the quota taking more of the track each time.</li>
+        <li><b>Power-ups</b> ride on the odd ball: 🌀 reverse, 🐌 slow and 💣 bomb. They fire when their ball is
+            popped.</li>
+        <li><b>Marble keeps its own score by name</b> — the name you give at the door, saved on this device and
+            posted to the ladder as a <b>solo</b> run: a score, never a battle, so nobody's win column moves.</li>
         <li><b>Chess</b> — the second chair, and a whole game: castling, en passant, promotion, mate,
             stalemate, the fifty-move rule and repetition, against the CPU at three levels or a friend.
             Six page themes, eight board palettes you can tint, three piece styles.</li>
@@ -324,10 +340,11 @@
       <p>If there is no signal, nothing breaks: the strip turns amber, the chairs still answer, and the chair
          that is built still opens the copy it already knows about.</p>
       <div class="rule"></div>
-      <p style="margin-top:10px;">One thing worth saying plainly: the empty chairs are <b>not</b> teasers. The
-         second and third games are not half-written somewhere — they have a row, a name and a place to land,
-         and the day one of them is written it becomes a tile here, a file beside the others, and a line in the
-         same file that everything else already reads.</p>
+      <p style="margin-top:10px;">One thing worth saying plainly: all three chairs are games now, in one file
+         each — <b>labs/pindutan-v21.html</b> for the arena, <b>labs/chess.html</b> for chess and
+         <b>labs/zuma.html</b> for marble. Each one carries its own tag (<b>v24</b>, <b>c6</b>, <b>m1</b>),
+         and the file above is the only place those tags are compared. Rename a chair here and you rename it
+         everywhere.</p>
     </section>
 
     <p class="tiny">
@@ -345,6 +362,7 @@
   var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
   var CHESS = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
+  var MARBLE = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/zuma.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
   var DECK = "m8";                 /* this copy of the hub */
@@ -361,6 +379,8 @@
   var go = document.getElementById("arenaGo");
   var chessTile = document.getElementById("tile-chess");
   var chessGo = document.getElementById("chessGo");
+  var threeTile = document.getElementById("tile-three");
+  var threeGo = document.getElementById("threeGo");
 
   /* ---------- the way in: the password moved here from the game ----------
      crypto.subtle only exists on https:// and localhost — over a plain-http LAN
@@ -508,11 +528,16 @@
     openGame({ tile: chessTile, go: chessGo, label: "chess", buildField: "chessBuild", urlField: "chess",
       fallback: CHESS, marker: "CHESS-APP" });
   }
+  function openThree() {
+    openGame({ tile: threeTile, go: threeGo, label: "marble", buildField: "threeBuild", urlField: "three",
+      fallback: MARBLE, marker: "MARBLE-APP" });
+  }
 
   tile.addEventListener("click", openArena);
   chessTile.addEventListener("click", openChess);
+  threeTile.addEventListener("click", openThree);
 
-  /* the two empty chairs */
+  /* any chair still waiting for its game */
   Array.prototype.forEach.call(document.querySelectorAll(".tile.tbd"), function (el) {
     el.addEventListener("click", function () {
       var name = el.querySelector(".name").textContent;

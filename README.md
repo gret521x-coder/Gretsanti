@@ -25,15 +25,15 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `pindutan.html` | 43 KB | Pindutan v14 arcade game |
+| `pindutan.html` | 12 KB | **The deck** — the second runner: three chairs, Pindutan plus two still waiting for their games. Holds no game code; the Pindutan chair loads the newest build from the feed |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
-| `pindutan-run.html` | 8 KB | Pindutan runner — no game code; loads whichever build the feed names. This is what the launcher's Pindutan card opens, so upload it next to `index.html` on the host |
+| `pindutan-run.html` | 8 KB | **The first runner** — no game code and no menu; reads the feed and opens the deck (`feed.menu`). This is what the launcher's Pindutan card opens, so upload it next to `index.html` on the host |
 | `labs/pindutan-v21.html` | 219 KB | Pindutan v22 — the game, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
-| `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, and where |
+| `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, where the deck lives (`menu` / `menuBuild`), and the ladder's address |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
 | `wrangler.jsonc` | 1 KB | Cloudflare build config — the worker, its entry file, and its KV box |
 | `labs/index.html` | 12 KB | The experiment list |
@@ -59,6 +59,21 @@ saved; the table is now defined before that check runs.
 **Pindutan runner — one small file, always the newest game.** `pindutan-run.html` holds no game at all: it
 reads `labs/pindutan-build.json` on `main` and then loads the build that file names, so a copy kept on a phone
 never goes stale. If the repo cannot be reached it says so, offers a retry and a link to the hosted copy.
+
+**Two runners, one deck.** The chain is now three links long, and only the middle one is a menu:
+
+1. `pindutan-run.html` — the **first runner**: no game, no menu. Reads `labs/pindutan-build.json` and opens
+   `feed.menu`, the deck, so even the menu is always the newest copy. If the repo answers with something that
+   is not a deck it tries the `pindutan.html` uploaded beside itself; if neither works it says why, offers a
+   retry and a link to the hosted deck.
+2. `pindutan.html` — the **deck**: three chairs in the index's mission-control look — **Pindutan** (live, and it
+   reads the same feed so the arena is always the newest build), **Game two** and **Game three** (the slots are
+   built and wired, each saying it is not written yet when tapped). No game code: 12 KB.
+3. `labs/pindutan-v21.html` — the arena itself, which also keeps itself current.
+
+The feed grew two fields: `menu` (where the deck lives) and `menuBuild` (`m1`), so the first runner can check
+the deck without knowing this repository's layout. Upload both small files beside `index.html` and the chain
+works from the host even when GitHub is blocked.
 
 **Pindutan v22 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
 `labs/pindutan-build.json`; if that names something newer, it runs that instead. A hosted copy moves to the

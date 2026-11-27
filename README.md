@@ -25,8 +25,8 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `pindutan.html` | 29 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then three chairs, all three live (Pindutan, Chess, Marble), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess` and `feed.three` |
-| `labs/zuma.html` | 66 KB | **Marble, game three** — a zuma-style marble shooter on a spline track: a frog in the middle of the board that aims at your pointer (or your finger) and fires on click or **Space**, a chain that inserts where the marble lands, 3+ of a colour pops, a cut chain **pulls its back half up** to the front and chains the reaction, power-up marbles (🌀 reverse, 🐌 slow, 💣 bomb), a quota bar per stage, three lives and a skull at the end of the track, **four tracks that cycle level by level** with the pace, colours and quota tightening, Web Audio sound made from oscillators, a nickname door, and a score kept **by name** on the device with a **solo** post to the ladder when there is a signal |
+| `pindutan.html` | 30 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then three chairs, all three live (Pindutan, Chess, Zumang), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess` and `feed.three` |
+| `labs/zuma.html` | 108 KB | **Zumang, game three** — a zuma-style marble shooter on a carved stone board: a jade frog idol flanked by two gold sunbursts aims at your pointer (or your finger) and fires on click or **Space**, a chain that inserts where the marble lands, 3+ of a colour pops, a cut chain **pulls its back half up** to the front and chains the reaction, power-up marbles (🌀 reverse, 🐌 slow, 💣 bomb), a gold quota gauge and green life gems on an ornate bar over the board, a gold skull at the end of the track, **100 levels in ten temples, each with a board of its own** (spiral, serpent, corridor, rosette or ring, fixed by the level number) with the pace, colours and quota tightening, Web Audio sound made from oscillators, a nickname door, and a score kept **by name** on the device with a **solo** post to the ladder when there is a signal |
 | `labs/chess.html` | 96 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge, a coin toss for colours, chess clocks, rematch, PGN/FEN and a scoresheet you can tap back through**, keeps itself current from `chessBuild`, six page themes, eight board palettes with a tint slider, three piece styles |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
@@ -75,29 +75,36 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    below is 29 KB and still carries that marker.
 2. `pindutan.html` — the **game hub (m8)**, wordmark **KDL**, 29 KB, no game code. It asks for **the
    password** first — that is where the lock lives now — and then shows three chairs: **Pindutan** opens the
-   build the feed calls `arena`, **Chess** opens `chess`, and **Marble** opens `three`. Under the chairs:
+   build the feed calls `arena`, **Chess** opens `chess`, and **Zumang** opens `three`. Under the chairs:
    **what changed** and a short **about this page**. The hub keeps *itself* current
    from `menuBuild`/`menu`, and it checks the feed on every open and on every tap of its strip.
 3. `labs/pindutan-v21.html` — the **arena** (v24): the game. It carries the same three chairs behind a
    **☰ Games** pill in its header, and it updates itself from `arena` in the feed. Its gate opens **straight on
    the nickname**: the password step is gone, because it is asked one page earlier, in the hub.
 
-`labs/zuma.html` is game three: **Marble**, 66 KB, build tag **m1**, opened from `three`/`threeBuild` in the
+`labs/zuma.html` is game three: **Zumang**, 108 KB, build tag **m2**, opened from `three`/`threeBuild` in the
 same file. Its door is the same door chess has — a nickname, once, before the board — and the name it is given
 is the key to everything after it: the best score, the levels opened, the sound preference, all kept on the
 device under that name, and the run posted to the ladder as a **solo** score (a score, not a battle: it never
 touches a win column). With no signal the run is still saved locally and the board says the ladder is out of
 reach; when the signal comes back the next run posts.
 
-**Marble — how it plays.** The track is a Catmull-Rom spline through the map's waypoints, and every marble's
+**Zumang — how it plays.** The track is a Catmull-Rom spline through the map's waypoints, and every marble's
 position is a distance along it, so a chain is just a front position and a list of colours: inserting a marble
 re-spaces the whole run along the curve instead of moving it in straight lines. Three or more of a colour
 pop; the piece that was cut free is then **pulled forward** until it touches the piece in front, which is what
 makes a chain reaction possible — if the two ends match, they pop too, and the combo multiplier climbs to ×9
 while the reactions keep coming. The frog is placed automatically in the roomiest pocket near the middle of the
-map, so every map gets a shooter that can actually see the track. The four maps — spiral, serpent, coil, ring —
-cycle with the level, and the quota is a share of the track rather than a fixed number, so a level plays the
-same on a phone and on a desktop.
+map, so every map gets a shooter that can actually see the track.
+
+**A hundred boards.** Each level draws its own map from five generators — spiral, serpent, corridor, rosette and
+ring — seeded by the level number, so a board is the same board every time you come back to it, and all five
+shapes are used in every twenty levels. Each candidate line is **checked before it is used**: long enough for a
+stage (44–68 marbles), inside the board past the way in, no two turns of the track closer than a marble and a
+half, and a clear pocket near the middle for the frog. A board that fails is drawn again with another seed, so a
+level can never open on an unplayable track. The quota is a share of the track rather than a fixed number, so a
+level plays the same on a phone and on a desktop, and losing a life brings the snake again from the start — the
+quota starts over with it, so a life lost can never leave an empty track that would count as a cleared level.
 
 `labs/chess.html` is game two: a complete chess app of its own, 96 KB, with its own build tag (`c6`) and its
 own feed field, so it updates itself the same way the arena does. It reads `chessBuild`/`chess` from the same
@@ -140,9 +147,9 @@ Moves travel as squares and are re-checked with the local rules before they are 
 packet cannot put an illegal piece on your board; resign, draw offers and rematches travel the same way, and a
 player who goes quiet is named on the match bar rather than left hanging.
 
-**Three modes, and the third one is not a battle.** The ladder takes `duel`, `group` and, since Marble,
+**Three modes, and the third one is not a battle.** The ladder takes `duel`, `group` and, since Zumang,
 `solo`. A solo report carries a score and the level reached, and it lands on its own board: the worker and the
-PHP both keep it out of the win/loss/streak counters and out of the battle best, so a marble run can never
+PHP both keep it out of the win/loss/streak counters and out of the battle best, so a Zumang run can never
 make somebody look like a better duellist. `?action=top&mode=solo` reads that board back.
 
 **A new season, when the board needs one.** The hall of fame carries a quiet **↺ New season** button. It asks
@@ -151,7 +158,7 @@ copy, and redraws an empty board for everyone. A refused key and an unreachable 
 under the list instead of pretending the wipe happened.
 
 The feed names an address per link: `html` (the hub the runner opens), `arena` (the game the hub
-opens, and the file the game updates itself from), `chess`/`chessBuild`, `three`/`threeBuild` for Marble,
+opens, and the file the game updates itself from), `chess`/`chessBuild`, `three`/`threeBuild` for Zumang,
 and `menu`/`menuBuild` (the hub's own address and tag).
 Pointing `html` at the game instead takes the runner straight to Pindutan and skips the hub — one field, no
 upload.
@@ -249,7 +256,7 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
-- **Pindutan v17** — 48 · **Pindutan v18** — 243 · **Chess** — 84 · **Marble** — 45 · **hub and runner** — 27 · **labs pages** — 20 · **leaderboard PHP** — 27 · **leaderboard worker** — 20
+- **Pindutan v17** — 48 · **Pindutan v18** — 243 · **Chess** — 84 · **Zumang** — 48 · **hub and runner** — 27 · **labs pages** — 20 · **leaderboard PHP** — 27 · **leaderboard worker** — 20
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

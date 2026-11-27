@@ -31,7 +31,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `pindutan-run.html` | 8 KB | Pindutan runner — no game code; loads whichever build the feed names. This is what the launcher's Pindutan card opens, so upload it next to `index.html` on the host |
-| `labs/pindutan-v21.html` | 219 KB | Pindutan v21 — the game, and the build that keeps itself current |
+| `labs/pindutan-v21.html` | 219 KB | Pindutan v22 — the game, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, and where |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
@@ -40,6 +40,11 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `labs/` | 7 KB + | Experiments: Castle Defense, Call Spider (one file), the transcript extension, the auto clicker APK |
 
 ## Latest changes
+
+**Build numbers — v21 stops at nine.** A minor number is one digit, so a build after `v21.9` is `v22`, and the
+ones after that are `v22.1`, `v22.2` … up to `v22.9`, then `v23`. The file the board lives in keeps its old
+name, `labs/pindutan-v21.html`, so the feed and every saved copy keep working; only the tag on the page moves —
+the badge reads `v22` and the line under the wordmark reads `v22.1`.
 
 **Launcher — the Pindutan card runs the runner.** PLD-02 no longer opens a fixed build: it opens
 `pindutan-run.html`, which reads `labs/pindutan-build.json` and plays whatever that file names. The card is
@@ -55,7 +60,7 @@ saved; the table is now defined before that check runs.
 reads `labs/pindutan-build.json` on `main` and then loads the build that file names, so a copy kept on a phone
 never goes stale. If the repo cannot be reached it says so, offers a retry and a link to the hosted copy.
 
-**Pindutan v21 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
+**Pindutan v22 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
 `labs/pindutan-build.json`; if that names something newer, it runs that instead. A hosted copy moves to the
 new page — same address, same saved name, same ladder. A copy kept on a phone has the newer page written over
 itself, after letting go of its relays, its lobby channel and its timers, so two versions never talk at once.
@@ -108,7 +113,7 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v21** — 207: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+- **Pindutan v22** — 207: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
   wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
   your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
   Playing/Available and nothing

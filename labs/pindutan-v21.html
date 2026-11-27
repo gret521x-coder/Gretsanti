@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#07080d" />
-<title>Pindutan v21 - Neon Block Arena</title>
+<title>Pindutan v22 - Neon Block Arena</title>
 <style>
     :root {
       --ink: #07080d;
@@ -1258,7 +1258,7 @@
   <header>
     <div class="title-row">
       <canvas id="logoCanvas" width="240" height="36" role="img" aria-label="Pindutan"></canvas>
-      <span class="version-badge" id="versionBadge">v21</span>
+      <span class="version-badge" id="versionBadge">v22</span>
       <span class="title-spacer"></span>
       <button class="icon-btn" id="pauseBtn">⏸ Pause</button>
       <button class="icon-btn" id="lockBtn">🔒</button>
@@ -1373,7 +1373,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v21.11</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.1</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -1716,7 +1716,7 @@
       const maker = isCreator();
       paintAutopilotButtons();
       const badge = document.getElementById("versionBadge");
-      if (badge) badge.innerHTML = maker ? "v21 " + crownSvg("gold", 10) : "v21";
+      if (badge) badge.innerHTML = maker ? "v22 " + crownSvg("gold", 10) : "v22";
       if (typeof paintCpuLevels === "function" && typeof CPU_LEVELS !== "undefined") paintCpuLevels();
     }
 
@@ -5853,7 +5853,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v21.11";
+    const BUILD_TAG = "v22.1";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

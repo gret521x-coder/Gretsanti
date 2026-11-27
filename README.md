@@ -17,7 +17,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 
 | File | Size | What |
 |---|---|---|
-| `index.html` | 31 KB | Launcher (an upload of `index-v5.html`) — the Pindutan card opens the runner |
+| `index.html` | 31 KB | Launcher (an upload of `index-v5.html`) — Pindutan opens a three-slot picker, slot 3 plays the newest build |
 | `index-v5.html` | 54 KB | Launcher in use — motion, and cards that open the file name the host actually has |
 | `gc-v5.html` | 139 KB | Group chat — KDL skin, lightning storm, sky of stars/satellites/rockets |
 | `api-v5.php` | 43 KB | Backend for the chat: log, presence, uploads, single admin slot |
@@ -30,7 +30,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
-| `pindutan-run.html` | 8 KB | **The first runner** — no game code and no menu; reads the feed and opens the deck (`feed.menu`). This is what the launcher's Pindutan card opens, so upload it next to `index.html` on the host |
+| `pindutan-run.html` | 8 KB | **The first runner** — no game code and no menu; reads the feed and opens the deck (`feed.menu`). The launcher card no longer goes through it, but a copy on a phone still lands on the newest deck |
 | `labs/pindutan-v21.html` | 219 KB | Pindutan v22 — the game, and the build that keeps itself current |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, where the deck lives (`menu` / `menuBuild`), and the ladder's address |
@@ -46,15 +46,19 @@ ones after that are `v22.1`, `v22.2` … up to `v22.9`, then `v23`. The file the
 name, `labs/pindutan-v21.html`, so the feed and every saved copy keep working; only the tag on the page moves —
 the badge reads `v22` and the line under the wordmark reads `v22.1`.
 
-**Launcher — the Pindutan card runs the runner.** PLD-02 no longer opens a fixed build: it opens
-`pindutan-run.html`, which reads `labs/pindutan-build.json` and plays whatever that file names. The card is
-just **Pindutan** with the line *Always the newest build · from the repo* — no version number to go stale. A
-saved grid in `localStorage` is moved too: every old target (`pindutan.html`, `pindutan-v18/20/21.html`,
-`labs/pindutan-v21.html`, and the hosted `pindutan.html`) now points at the runner. Both launchers carry the
-change, `index.html` and `index-v5.html`. **Upload `pindutan-run.html` beside `index.html` on the host** — the
-card has nothing to open otherwise. Also fixed: `index.html` declared its upgrade table below the
-"still unlocked" check, so a reload quietly fell back to the default grid and dropped whatever the player had
-saved; the table is now defined before that check runs.
+**Launcher — Pindutan opens a short list before the game.** PLD-02 no longer jumps into a fixed build. It
+opens a picker with three rows — **1** and **2** sit there marked `TBD` (greyed, waiting for a game), and **3
+Pindutan · our latest build** reads `labs/pindutan-build.json` on `main`, fetches the build that file names,
+refuses a half download, and hands the whole page over to it once it is whole. So the launcher is a runner
+too, and `pindutan-run.html` is left exactly as it was. No signal, and it says so, with **Try again** and the
+hosted copy. Both launchers carry it, `index.html` and `index-v5.html`, and a saved grid moves with it —
+`pindutan.html`, `pindutan-v18/20/21.html`, `labs/pindutan-v21.html`, the hosted copies and even
+`pindutan-run.html` all open the list now. To fill an empty row, give it a `url` in `PINDUTAN_SLOTS`. The deck
+at `pindutan.html` keeps its own three chairs for the runner and for anyone who opens it directly; nothing
+here changes it. Also fixed in both launchers: the wording and upgrade tables were declared below the
+"still unlocked" check, so a reload hit a dead zone inside `getApps()`, the `catch` swallowed it and the
+player's saved grid was thrown away — they are declared above that check now.
+
 
 **Pindutan runner — one small file, always the newest game.** `pindutan-run.html` holds no game at all: it
 reads `labs/pindutan-build.json` on `main` and then loads the build that file names, so a copy kept on a phone
@@ -107,8 +111,8 @@ plainly instead of blaming the key, the Proxy box refuses FreeModel's own addres
 checks both doors — the model list, then one real chat request — and saves the address it proved.
 
 **Launcher.** Cards resolve the real file name on the host (`Aurora.html` vs `aurora-v4.html`), remember the
-answer, and never read a refused probe as a missing file. The Pindutan card opens the runner, not a fixed
-build. Relative cards point at the PHP host, so the
+answer, and never read a refused probe as a missing file. The Pindutan card opens a three-row picker, and
+row 3 runs the newest build from the repo. Relative cards point at the PHP host, so the
 launcher works wherever it is opened from.
 
 **Chat.** The KDL // MISSION CONTROL skin — pure black deck, hairline grid, square corners, mono caps, one
@@ -128,13 +132,9 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Pindutan v22** — 234: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
-  wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
-  your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
-  Playing/Available and nothing
-  else — the ladder is the only place that keeps score), the table (your board on the left, your rival's
-  beside it on the right at 72% of its width, a group battle or watching keeping the full-width strip
-  underneath), the lobby chat (words
+- **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
+  feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
+  any old Pindutan target lands on the list
   ride the relay, never stored, markup shown as words, 80 characters, one message a second, floods turned
   away, five lines tall), the maker's God mode (a button beside Watch that opens inside the same tab a list of
   everyone else — Kick, Ban, and Unban; a kick empties that phone's room until it reloads, a ban is written on

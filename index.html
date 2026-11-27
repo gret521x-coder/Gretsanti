@@ -612,7 +612,7 @@
         <input type="text" id="newAppIcon" placeholder="ICON (e.g. 🛰️)" maxlength="4" value="🛰️">
         <input type="text" id="newAppTitle" placeholder="PAYLOAD NAME">
         <input type="text" id="newAppDesc" placeholder="MISSION BRIEF">
-        <input type="text" id="newAppUrl" placeholder="FILE OR URL (e.g. tns.html)">
+        <input type="text" id="newAppUrl" placeholder="FILE OR URL (e.g. aurora-v4.html)">
         <div style="display: flex; gap: 8px; margin-top: 6px;">
             <button class="btn-spacex" style="margin-top:0;" onclick="saveNewApp()">DEPLOY</button>
             <button class="btn-spacex" style="margin-top:0; border-color: var(--border-line); color: var(--text-secondary);" onclick="closeModal('addModal')">CANCEL</button>
@@ -652,7 +652,6 @@
 
     // Clean payload definitions without visible .html filenames, Luh removed
     const DEFAULT_APPS = [
-        { code: "PLD-01", icon: "🚨", title: "TNS – Safety Dispatch", desc: "Safety dispatch tool", url: "tns.html", newTab: true },
         { code: "PLD-02", icon: "🎮", title: "Pindutan v17", desc: "Lobby block arena", url: "labs/pindutan-v17.html", newTab: true },
         { code: "PLD-03", icon: "💎", title: "Collectibles", desc: "Collectibles vault", url: "https://aidekupal.unaux.com/Screenshot.html", newTab: true },
         { code: "PLD-04", icon: "💬", title: "Bardagulan", desc: "Online Rambulan", url: "https://aidekupal.unaux.com/gc.html", newTab: true, lock: true },

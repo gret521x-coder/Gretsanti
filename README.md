@@ -24,7 +24,6 @@ Pages on a free account, so `github.io` serves nothing.
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `tns.html` | 33 KB | TNS — Safety Dispatch |
 | `pindutan.html` | 43 KB | Pindutan v14 arcade game |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |

@@ -1421,7 +1421,7 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v22.2</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v22.3</div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -3449,6 +3449,9 @@
       const slot = rec[payload.mode] || (rec[payload.mode] = { wins: 0, losses: 0, best: 0 });
       if (payload.win) slot.wins += 1; else slot.losses += 1;
       if (payload.score > slot.best) slot.best = payload.score;
+      /* the run you are on: every win adds one, a loss takes it to zero */
+      rec.streak = payload.win ? (rec.streak | 0) + 1 : 0;
+      rec.seen = Date.now();
       rec.stamp = Date.now();              /* a sync in flight must notice this */
       mine.name = rec.name;
       mine.updated = Date.now();
@@ -3465,7 +3468,12 @@
         ? lbMineTotal(rec)
         : pick(mode);
       if (!slot.wins && !slot.losses) return null;
-      return { name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best, me: true, local: true };
+      return {
+        name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best,
+        me: true, local: true,
+        streak: rec.streak | 0, streakKnown: rec.streak != null,
+        last: rec.seen ? Math.floor(rec.seen / 1000) : 0
+      };
     }
 
     /* ---------- the ladder carried between phones ----------
@@ -3635,7 +3643,9 @@
         if (!prev) {
           merged.set(key, {
             name: cleanName(r.name), wins: r.wins | 0, losses: r.losses | 0, best: r.best | 0,
-            crown: !!r.crown, local: !!r.local, peer: !!r.peer
+            crown: !!r.crown, local: !!r.local, peer: !!r.peer,
+            streak: r.streak | 0, streakKnown: r.streak != null,
+            last: r.last | 0, rate: typeof r.rate === "number" ? r.rate : null
           });
           return;
         }
@@ -3644,6 +3654,10 @@
         prev.best = Math.max(prev.best, r.best | 0);
         prev.crown = prev.crown || !!r.crown;
         prev.local = prev.local || !!r.local;
+        prev.streak = Math.max(prev.streak, r.streak | 0);
+        if (r.streak != null) prev.streakKnown = true;
+        prev.last = Math.max(prev.last, r.last | 0);
+        if (typeof r.rate === "number") prev.rate = prev.rate == null ? r.rate : Math.max(prev.rate, r.rate);
       };
       (rows || []).slice(0, 10).forEach(put);      /* ten names, no more */
       lbPeerRows(lbMode).forEach(put);     /* what the other phones told us */
@@ -3653,6 +3667,12 @@
         .sort((a, b) => (b.wins - a.wins) || (b.best - a.best) ||
           String(a.name).localeCompare(String(b.name)))
         .slice(0, 10);
+
+      /* the win rate is wins over everything played — never a bare zero */
+      all.forEach(row => {
+        const played = (row.wins | 0) + (row.losses | 0);
+        if (row.rate == null) row.rate = played > 0 ? Math.round(row.wins * 100 / played) : 0;
+      });
 
       if (!all.length) {
         list.innerHTML = '<div class="lb-empty">Nobody has won a human battle yet.<br>Challenge someone and take the top spot.</div>';
@@ -3673,7 +3693,7 @@
         el.addEventListener("click", () => lbShowPlayer(row));
         const nmCell = el.querySelector(".n");
         if (crowned) nmCell.insertAdjacentHTML("afterbegin", crownSvg("gold", 12));
-        nmCell.appendChild(document.createTextNode(row.name + (row.local ? " (you, offline)" : "")));
+        nmCell.appendChild(document.createTextNode(row.name + (row.local ? " (you)" : "")));
         list.appendChild(el);
       });
       if (count) count.textContent = String(all.length);
@@ -3681,6 +3701,13 @@
 
     /* ---------- tap a row: the player behind the number ----------
        Wins, best, rate, streak, when they were last here. No losses. */
+    /* =========================================================
+       v22.3 — the row you tap tells the truth.
+       Your own line in the hall of fame reads "(you)", not "(you, offline)".
+       The win rate is worked out from what was actually played, the streak is
+       the run of wins this phone is on (a loss puts it back to zero), and a
+       number nobody can know is shown as a dash, never as a zero.
+       ========================================================= */
     function lbShowPlayer(row) {
       const box = document.getElementById("lbPlayer");
       if (!box || !row || !row.name) return null;
@@ -3697,11 +3724,13 @@
       title.style.cssText = "font-weight:900;color:var(--amber);margin-bottom:3px;";
       title.textContent = row.name;
       box.appendChild(title);
+      const played = (row.wins | 0) + (row.losses | 0);
+      const rate = typeof row.rate === "number" ? Math.round(row.rate) : (played > 0 ? Math.round(row.wins * 100 / played) : 0);
       const bits = [
         ["Wins", String(row.wins | 0)],
         ["Best", Number(row.best || 0).toLocaleString() + " pts"],
-        ["Win rate", (row.rate | 0) + "%"],
-        ["Streak", String(row.streak | 0)],
+        ["Win rate", rate + "%"],
+        ["Streak", row.streakKnown || row.streak ? String(row.streak | 0) : "—"],
         ["Last seen", row.last ? new Date(row.last * 1000).toLocaleDateString() : "—"]
       ];
       bits.forEach(pair => {
@@ -6139,7 +6168,7 @@
           No signal, no file, or a half download and it simply
           plays the copy it already has.
        ========================================================= */
-    const BUILD_TAG = "v22.2";
+    const BUILD_TAG = "v22.3";
     const UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
     const UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
     const UPDATE_APPLIED = "pindutan_applied_build";

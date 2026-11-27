@@ -64,26 +64,26 @@ player's saved grid was thrown away — they are declared above that check now.
 reads `labs/pindutan-build.json` on `main` and then loads the build that file names, so a copy kept on a phone
 never goes stale. If the repo cannot be reached it says so, offers a retry and a link to the hosted copy.
 
-**Two runners, one deck.** The chain is now three links long, and only the middle one is a menu:
+**Two runners, and the arena is the second one.** The chain is two links before you are playing:
 
 1. `pindutan-run.html` — the **first runner**: no game, no menu. Reads `labs/pindutan-build.json` and opens
-   `feed.menu`, the deck, so even the menu is always the newest copy. If the repo answers with something that
-   is not a deck it tries the `pindutan.html` uploaded beside itself; if neither works it says why, offers a
-   retry and a link to the hosted deck.
-2. `pindutan.html` — the **deck**: three chairs in the index's mission-control look — **Pindutan** (live, and it
-   reads the same feed so the arena is always the newest build), **Game two** and **Game three** (the slots are
-   built and wired, each saying it is not written yet when tapped). No game code: 12 KB.
-3. `labs/pindutan-v21.html` — the arena itself, which also keeps itself current.
+   `feed.html`, so the arena it starts is always the newest build. If the repo answers with something that is
+   not a whole game it tries the `pindutan-v21.html` uploaded beside itself; if neither works it says why,
+   offers a retry and a link to the hosted copy.
+2. `labs/pindutan-v21.html` — the **arena, and the second runner**: the games live inside it. A **☰ Games**
+   pill sits in the header beside the build strip and opens three chairs — **Pindutan** (green, "you are
+   here"), **Game two** and **Game three** (both TBD, and each says its own name when tapped). The sheet's
+   footer links to the deck page for anyone who wants the menu on its own.
 
-The feed grew two fields: `menu` (where the deck lives) and `menuBuild` (`m2`), so the first runner can check
-the deck without knowing this repository's layout. Upload both small files beside `index.html` and the chain
-works from the host even when GitHub is blocked.
+`pindutan.html` is still there as the **deck** — the same three chairs as a page of their own, 13 KB, no game
+code — reachable from the arena's Games sheet, from the feed's `menu` field, or by opening it directly. Upload
+the two small files beside `index.html` and the chain works from the host even when GitHub is blocked.
 
 **And the deck keeps itself current too.** On opening — and on a tap of its strip — the deck compares its own
 tag with `menuBuild` in the feed. If a newer deck is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
 size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a deck that
 was just swapped in from swapping again. The strip says which copy you are on in one line — `deck m2 · newest ·
-arena v22.7` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
+arena v22.8` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
 
 **Pindutan v22 — the page keeps itself current.** Open a copy and it reads one small file from this repo,
 `labs/pindutan-build.json`; if that names something newer, it runs that instead. A hosted copy moves to the
@@ -138,9 +138,13 @@ All suites run in Node with jsdom, no browser needed.
   stars and satellites, loop runs, survives a missing canvas, gone under reduced motion
 - **Launcher** — 70: every card resolves to the PHP host, `Aurora.html` found when `aurora-v4.html` is
   missing, refused probe never read as missing, chosen name remembered
-- **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
-  feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
-  any old Pindutan target lands on the list
+- **Pindutan v22** — 236: engine, glance rules, rooms over four paths, the lobby (created by KDL under the
+  wordmark, the room line beside the word Lobby, the name given once at the gate and then carried only by
+  your card — no box to change it, nothing repeating it beside Watch — a card that is a name and
+  Playing/Available and nothing
+  else — the ladder is the only place that keeps score), the table (your board on the left, your rival's
+  beside it on the right at 72% of its width, a group battle or watching keeping the full-width strip
+  underneath), the lobby chat (words
   ride the relay, never stored, markup shown as words, 80 characters, one message a second, floods turned
   away, five lines tall), the maker's God mode (a button beside Watch that opens inside the same tab a list of
   everyone else — Kick, Ban, and Unban; a kick empties that phone's room until it reloads, a ban is written on
@@ -165,6 +169,9 @@ All suites run in Node with jsdom, no browser needed.
   the hall of fame (the note names whatever host the feed points at), the GLIDE panel, hold-to-slide, the
   pills, and the self-update (nothing newer leaves it alone, a newer build comes over whole, a broken
   download refused, a swap lets go of the relays first, the feed tag must match the game's own)
+- **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
+  feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
+  any old Pindutan target lands on the list
 - **Pindutan v17** — 48 · **labs pages** — 20 · **leaderboard PHP** — 23 · **leaderboard worker** — 19
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request

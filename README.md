@@ -25,7 +25,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `pindutan.html` | 21 KB | **The game hub** — the page the first runner opens: three chairs (Pindutan plus two still waiting for their games) and the manual under them. Holds no game code, keeps itself current from `menuBuild`, and its Pindutan chair loads `feed.arena` |
+| `pindutan.html` | 20 KB | **The game hub — KDL** — the page the first runner opens: three chairs (Pindutan plus two still waiting for their games), what changed, and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`, and its Pindutan chair loads `feed.arena` |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
@@ -71,11 +71,11 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    if it cannot get one it says why, offers a retry and a link to the hosted copy. **This file is frozen**:
    it is byte-for-byte the version from Nov 26 and is not to be touched again — which is exactly why the hub
    below is 21 KB and still carries that marker.
-2. `pindutan.html` — the **game hub (m3)**: the three chairs and a manual, 21 KB, no game code. **Pindutan**
+2. `pindutan.html` — the **game hub (m4)**, wordmark **KDL**: three chairs, 20 KB, no game code. **Pindutan**
    opens the build the feed calls `arena`; **Game two** and **Game three** are wired and say they are not
-   written yet. Under the chairs sit the real instructions — the board, the four modes, the keys, the room,
-   the ladder, the storm, the themes, updates. The hub keeps *itself* current from `menuBuild`/`menu`, and it
-   checks the feed on every open and on every tap of its strip so the arena line is never stale.
+   written yet. Under the chairs: **what changed** (the last three days of work) and a short **about this
+   page**. The hub keeps *itself* current from `menuBuild`/`menu`, and it checks the feed on every open and on
+   every tap of its strip so the arena line is never stale.
 3. `labs/pindutan-v21.html` — the **arena** (v22.9): the game. It carries the same three chairs behind a
    **☰ Games** pill in its header, and it updates itself from `arena` in the feed.
 
@@ -85,9 +85,9 @@ Pointing `html` at the game instead takes the runner straight to Pindutan and sk
 upload.
 
 **And the hub keeps itself current too.** On opening — and on a tap of its strip — the hub compares its own
-tag with `menuBuild` in the feed. If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+tag with `menuBuild` in the feed (currently `m4`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
 size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a hub that
-was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m3 · newest ·
+was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m4 · newest ·
 arena v22.9` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
 
 **Pindutan v22 — the page keeps itself current.** Open a copy and it reads one small file from this repo,

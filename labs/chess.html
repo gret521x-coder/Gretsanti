@@ -135,6 +135,51 @@
   .captured { margin-top: 8px; font-size: 0.78rem; line-height: 1.2; color: #c9d9e8; min-height: 1.3em; letter-spacing: 0.02em; }
 
   /* sheets */
+  /* ---------- the front door: pick the CPU or a person ---------- */
+  .home {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    justify-content: center; align-items: flex-start; overflow-y: auto;
+    padding: 18px 14px 26px;
+    background: radial-gradient(120% 60% at 50% 0%, rgba(61, 214, 245, 0.12), transparent 62%), var(--bg);
+  }
+  .home.open { display: flex; }
+  .home-box { width: min(460px, 100%); }
+  .home-mark {
+    text-align: center; font-size: 1.45rem; font-weight: 900; letter-spacing: 0.3em;
+    color: var(--cyan); text-shadow: 0 0 18px rgba(61, 214, 245, 0.4); padding-left: 0.3em;
+  }
+  .home-sub {
+    text-align: center; margin-top: 4px; font-size: 0.55rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--mut);
+  }
+  .home-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 16px 0 6px; }
+  .home-card {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left;
+    padding: 13px 12px; font: inherit; color: var(--ink); cursor: pointer;
+    background: rgba(10, 20, 34, 0.86); border: 1px solid var(--line); border-radius: 13px;
+  }
+  .home-card:active { transform: translateY(1px); }
+  .home-card .hc-ico { font-size: 1.15rem; }
+  .home-card .hc-t { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+  .home-card .hc-d { font-size: 0.53rem; color: var(--mut); line-height: 1.35; }
+  .home-card.wide { grid-column: 1 / -1; }
+  .home-card.on { border-color: rgba(61, 214, 245, 0.55); box-shadow: 0 0 0 1px rgba(61, 214, 245, 0.2) inset; }
+  .home h4 {
+    margin: 16px 0 7px; font-size: 0.52rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mut);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .home h4 b { color: var(--cyan); font-size: 0.55rem; }
+  .home-list .seat { font-size: 0.64rem; }
+  .home-list .seat button[data-challenge] { padding: 4px 9px; font-size: 0.62rem; }
+  .home-empty {
+    border: 1px dashed var(--line); border-radius: 10px; padding: 12px 11px;
+    font-size: 0.58rem; line-height: 1.5; color: var(--mut);
+  }
+  .home-relays {
+    margin-top: 10px; font-size: 0.5rem; letter-spacing: 0.08em; color: var(--mut); text-align: center;
+  }
+  .home-note { margin-top: 10px; font-size: 0.52rem; line-height: 1.55; color: #7f93ad; text-align: center; }
+
   .sheet {
     position: fixed; inset: 0; z-index: 40; display: none;
     align-items: flex-end; justify-content: center;
@@ -214,7 +259,7 @@
   }
 
   .invitebar {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: none;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; display: none;
     align-items: center; gap: 8px; padding: 11px 13px calc(11px + env(safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(10, 20, 34, 0.96), rgba(6, 11, 19, 0.98));
     border-top: 1px solid rgba(61, 214, 245, 0.35);
@@ -231,10 +276,47 @@
   <div class="grid" aria-hidden="true"></div>
   <div class="horizon" aria-hidden="true"></div>
 
+  <div class="home" id="home">
+    <div class="home-box">
+      <div class="home-mark">KDL CHESS</div>
+      <div class="home-sub">pick your game</div>
+
+      <div class="home-cards">
+        <button class="home-card" id="homeCpu">
+          <span class="hc-ico">🤖</span>
+          <span class="hc-t">Play the CPU</span>
+          <span class="hc-d">Beginner, Intermediate or Advanced — set on the board</span>
+        </button>
+        <button class="home-card" id="homeTwo">
+          <span class="hc-ico">👥</span>
+          <span class="hc-t">Two here</span>
+          <span class="hc-d">One phone, both colours, pass it back and forth</span>
+        </button>
+        <button class="home-card wide" id="homeWatch">
+          <span class="hc-ico">🛰️</span>
+          <span class="hc-t">Live game</span>
+          <span class="hc-d" id="homeWatchText">Back to the board you are playing</span>
+        </button>
+      </div>
+
+      <h4>In the lobby <b id="homeCount">—</b></h4>
+      <div class="row">
+        <input id="homeName" maxlength="14" placeholder="your name" autocomplete="off"
+               style="flex:1 1 auto; padding:9px 10px; font:inherit; font-size:0.72rem; color:var(--ink);
+                      background:rgba(8,16,28,0.9); border:1px solid var(--line); border-radius:9px;" />
+        <button id="homeNameSave">Save</button>
+      </div>
+      <div class="home-list" id="homeList"></div>
+      <div class="home-relays" id="homeRelays">looking for a relay…</div>
+      <div class="home-note">Tap <b>⚔</b> beside a name to challenge — the coin toss decides the colours.
+        One lobby, no room codes, and the board appears as soon as the game starts.</div>
+    </div>
+  </div>
+
   <div class="shell">
     <header>
       <div class="mark">KDL CHESS</div>
-      <button class="strip" id="strip" title="This build">chess <b>c4</b> · complete rules · <b id="modeTag">vs CPU</b></button>
+      <button class="strip" id="strip" title="This build">chess <b>c5</b> · complete rules · <b id="modeTag">vs CPU</b></button>
     </header>
 
     <div class="boardwrap">
@@ -246,7 +328,7 @@
         <span class="clock" id="clockW">–:––</span><span class="clock dim" id="clockB">–:––</span>
       </div>
       <div class="subline" id="statusLine"></div>
-      <div class="subline dim" id="buildLine">chess <b>c4</b> · checking for a newer build…</div>
+      <div class="subline dim" id="buildLine">chess <b>c5</b> · checking for a newer build…</div>
 
       <div class="row" id="modeRow">
         <button data-mode="cpu" class="on">VS CPU</button>
@@ -292,7 +374,7 @@
       <button id="boardBtn" class="grow">🟦 Board</button>
       <button id="pieceBtn" class="grow">♟ Pieces</button>
       <button id="coordsBtn" class="grow">⌗ Coords</button>
-      <button id="lobbyBtn" class="grow">💬 Lobby</button>
+      <button id="menuBtn" class="grow">⌂ Menu</button>
       <button id="shareBtn" class="grow">📄 PGN</button>
     </div>
 
@@ -1497,6 +1579,88 @@
       : "looking for a relay… tabs on this device always work");
   }
 
+  /* ---------- the front door ----------
+     One screen: start against the CPU, start two on this phone, or tap a name in the
+     lobby and play a person. The board is behind it and appears the moment a game starts. */
+  var homeOpen = true;
+
+  function showHome() {
+    homeOpen = true;
+    $("home").classList.add("open");
+    $("homeName").value = myName();
+    if (!lobby.on) lobbyEnter();       /* the front door is the lobby, so it joins on the way in */
+    paintHome();
+    paintLobby();
+    return { open: true };
+  }
+
+  function hideHome() {
+    homeOpen = false;
+    $("home").classList.remove("open");
+  }
+
+  function homeStartCpu(level) {
+    if (level) S.level = level;
+    if (S.match) endMatch("left", "");
+    S.mode = "cpu";
+    syncModeButtons();
+    hideHome();
+    newGame();
+    render();
+    store.set("kdl_chess_front", "cpu");
+    return S.mode;
+  }
+
+  function homeStartTwo() {
+    if (S.match) endMatch("left", "");
+    S.mode = "two";
+    syncModeButtons();
+    hideHome();
+    newGame();
+    render();
+    store.set("kdl_chess_front", "two");
+    return S.mode;
+  }
+
+  function paintHome() {
+    var list = document.getElementById("homeList");
+    if (!list) return;
+    var peers = lobbyPeers();
+    var live = S.match && !S.match.done;
+    var watch = document.getElementById("homeWatchText");
+    if (watch) {
+      watch.textContent = live
+        ? "You are playing " + S.match.oppName + " — tap to go back to the board"
+        : S.hist.length ? "Back to the board (" + S.hist.length + " moves played)"
+        : "No game on the board yet";
+    }
+    var watchCard = document.getElementById("homeWatch");
+    if (watchCard) watchCard.classList.toggle("on", !!live);
+
+    var count = document.getElementById("homeCount");
+    if (count) count.textContent = lobby.on ? peers.length + (peers.length === 1 ? " here" : " here") : "not joined";
+
+    if (!lobby.on) {
+      list.innerHTML = '<div class="home-empty">Not in the lobby yet. Tap <b>Live</b> once — names appear ' +
+        'here as people arrive, and tabs on this device always find each other.</div>';
+    } else if (!peers.length) {
+      list.innerHTML = '<div class="home-empty">Nobody else here yet — leave this screen open and names ' +
+        'appear as they arrive. You can start against the CPU while you wait.</div>';
+    } else {
+      list.innerHTML = peers.map(function (p) {
+        return '<div class="seat' + (p.id === MY_ID ? " me" : "") + '"><span>' + p.name + '</span>' +
+          '<span class="chip">' + (p.inMatch ? "PLAYING" : "HERE") + '</span>' +
+          '<button data-challenge="' + p.id + '"' + (p.inMatch ? " disabled" : "") + '>⚔</button></div>';
+      }).join("");
+    }
+    var relays = document.getElementById("homeRelays");
+    if (relays) {
+      var up = BROKERS.filter(function (b) { return b.state === "ok"; }).length;
+      relays.textContent = up ? up + " relay" + (up === 1 ? "" : "s") + " connected · tabs on this device too"
+        : "looking for a relay… tabs on this device always work";
+    }
+  }
+
   /* ---------- lobby presence ---------- */
   var PEER_TTL = 12000;
 
@@ -1566,6 +1730,7 @@
     var out = document.getElementById("lobbyOut");
     if (out) out.style.display = lobby.on ? "" : "none";
     paintRelays();
+    paintHome();
   }
 
   /* ---------- the coin toss: both sides put in a coin, neither can fake it alone ---------- */
@@ -1634,6 +1799,7 @@
     S.busy = false;
     S.flip = seat === "b";
     syncModeButtons();
+    hideHome();
     paintMatchBar();
     render();
     lobbyBeat();
@@ -1767,10 +1933,11 @@
     if (p.t === "ACCEPT") {
       if (p.to && p.to !== MY_ID) return;
       if (!pendingChallenge || pendingChallenge.id !== p.matchId) return;
-      var hostIsWhite = tossWinner(pendingChallenge.coin, p.coin);
+      var hostCoin = pendingChallenge.coin;      /* beginMatch clears the pending challenge */
+      var hostIsWhite = tossWinner(hostCoin, p.coin);
       beginMatch(p.matchId, hostIsWhite ? "w" : "b", p.by, p.name, 0, MY_ID);
       relaySend({ t: "START", matchId: p.matchId, white: hostIsWhite ? MY_ID : p.by,
-        black: hostIsWhite ? p.by : MY_ID, name: myName(), coin: pendingChallenge.coin, coin2: p.coin | 0 });
+        black: hostIsWhite ? p.by : MY_ID, name: myName(), coin: hostCoin, coin2: p.coin | 0 });
       showToss("\ud83e\udebf Coin toss \u2014 " + (hostIsWhite ? "you are White" : p.name + " is White"));
       return;
     }
@@ -2199,7 +2366,23 @@
     document.body.setAttribute("data-coords", S.coords ? "1" : "0");
     $("coordsBtn").classList.toggle("on", S.coords);
   });
-  $("lobbyBtn").addEventListener("click", function () { paintLobby(); openSheet("lobbySheet"); paintRelays(); });
+  $("homeCpu").addEventListener("click", function () { homeStartCpu(); });
+  $("homeTwo").addEventListener("click", function () { homeStartTwo(); });
+  $("homeWatch").addEventListener("click", function () { if (homeOpen) hideHome(); });
+  $("menuBtn").addEventListener("click", function () { showHome(); });
+  $("homeList").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("button[data-challenge]") : null;
+    if (!b) return;
+    challengePeer(b.getAttribute("data-challenge"));
+  });
+  $("homeNameSave").addEventListener("click", function () {
+    var v = String($("homeName").value || "").replace(/[^\w .\-]/g, "").trim().slice(0, 14);
+    if (v.length < 2) { $("homeName").value = myName(); return; }
+    try { localStorage.setItem("pindutan_nick", v); } catch (e) { }
+    $("nameInput").value = v;
+    paintLobby();
+    if (lobby.on) relaySend({ t: "HI", name: v, inMatch: !!S.match });
+  });
 
   $("tintRange").addEventListener("input", function () {
     S.tint = parseInt(this.value, 10) || 0;
@@ -2214,7 +2397,7 @@
      Same idea as the arena and the hub: this page reads one small file from the
      repo, and if the feed names a newer chess it opens that copy instead. No
      signal, no file, or half a download and it plays the copy it has. */
-  var CHESS_BUILD = "c4";
+  var CHESS_BUILD = "c5";
   var UPDATE_FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var UPDATE_HTML = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
   var UPDATE_APPLIED = "kdl_chess_applied";
@@ -2322,6 +2505,9 @@
     }
   } catch (e) { }
   if (!window.__chessNoUpdate) selfUpdateCheck();
+  /* the lobby is joined quietly on the way in, so the front door already knows who is here */
+  try { lobbyEnter(); } catch (e) { }
+  showHome();
   render();
   afterMove();          /* if you chose Black against the CPU, it opens */
 
@@ -2340,6 +2526,11 @@
     tossWinner: tossWinner,
     pgn: pgnText,
     build: getBuildSelf,
+    home: function () { return { open: homeOpen, count: document.getElementById("homeCount").textContent }; },
+    showHome: showHome,
+    hideHome: hideHome,
+    startCpu: homeStartCpu,
+    startTwo: homeStartTwo,
     selfUpdate: selfUpdateCheck,
     checkBuild: checkBuild,
     review: reviewTo,

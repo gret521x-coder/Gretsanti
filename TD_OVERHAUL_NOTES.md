@@ -186,6 +186,56 @@ build); the keys are already in the manifest so nothing has to be renamed later.
 
 ---
 
+### The first art that is not drawn (build f5)
+
+Two pictures are in the game now, both taken from a screenshot of a painted tower-defence board:
+
+- **`TD/images/maps/forest_trail.png`** (720×480, 149 KB) — the backdrop for **Forest Trail**, and
+  the same picture behind the boot screen. It is softened and slightly dimmed before install, so it
+  reads as out-of-focus terrain and the roads and units in it do not compete with the ones you play
+  with: the road on the board is still the road the horde walks, painted on top at 78 %.
+- **`TD/images/heroes/royal_knight_portrait.png`** (76×76, 4 KB) — drawn into the 38×38 HUD
+  portrait, twice the resolution it is shown at.
+
+The other four maps have a slot each (`maps:serpent`, `swamp`, `canyon`, `ashen`) and nothing in
+them, so they keep the drawn grid. A backdrop needs no alpha — `sprite-boxes.json` marks those slots
+`opaque`, which the installer honours.
+
+Swapping either picture is one command:
+
+```bash
+node TD/tools/install-sprite.js mine.png maps:forest
+```
+
+---
+
+### Installing a picture (build f5)
+
+Any of the 36 slots takes a PNG now — not just monsters. Towers, the knight on the board and the
+HUD portrait all ask for their picture first and fall back to the character grid if it is missing,
+so art can land one file at a time and nothing ever breaks.
+
+```bash
+node TD/tools/install-sprite.js --list                       # every key and its path
+node TD/tools/install-sprite.js mine.png monsters:grunt      # checks, then installs
+node TD/tools/install-sprite.js knight.png heroes:royal_knight
+```
+
+It reads the PNG header itself and refuses, with the reason:
+
+- a key that is not in the manifest (nothing would ever load it)
+- a file that is not a PNG
+- **no alpha channel** — it would paint its background over the map
+- **the wrong shape** — the game stretches the picture into the box its grid fills, so a 1:1 image
+  in a 10:11 slot comes out fat. `TD/resources/sprite-boxes.json` holds every box; the tolerance is
+  2.5 %. `--force` overrides it.
+- over 200 KB (36 of those would blow the 2.6 s preloader)
+
+Nothing else needs editing: the manifest already names the path. Commit the file and the hosted copy
+picks it up from `main` — `KDL_FORTRESS.pngReady('monsters:grunt')` says whether it arrived.
+
+---
+
 ## 5. If you want to go further (not done here)
 
 1. **Multi-frame PNG animation.** `drawMonster` takes one image; to animate, add

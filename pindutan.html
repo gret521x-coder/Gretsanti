@@ -191,7 +191,7 @@
     <div class="mark">KDL</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m10</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m11</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -254,10 +254,37 @@
       <span class="go" id="threeGo">▶ Play</span>
     </button>
 
+    <button class="tile live" id="tile-fortress">
+      <span class="thumb" aria-hidden="true">
+        <svg viewBox="0 0 24 24" role="presentation">
+          <rect class="b2" x="4"  y="9"  width="16" height="11" rx="1" />
+          <rect class="b1" x="4"  y="4"  width="4"  height="5" />
+          <rect class="b1" x="10" y="4"  width="4"  height="5" />
+          <rect class="b1" x="16" y="4"  width="4"  height="5" />
+          <rect class="b3" x="10.5" y="14" width="3" height="6" />
+        </svg>
+      </span>
+      <span class="body">
+        <span class="name">Fortress</span>
+        <span class="desc">tower defence — four towers that fork at level four, seven heroes to pick three
+            from, and three stages on roads of their own</span>
+        <span class="meta"><span>TOWER DEFENCE</span><span>7 HEROES</span><span>3 STAGES</span></span>
+      </span>
+      <span class="go" id="fortressGo">▶ Play</span>
+    </button>
+
     <section class="panelbox">
       <h2>What changed</h2>
       <h3><span class="day">NOV 30</span></h3>
       <ul>
+        <li><b>The fourth chair opened: Fortress.</b> A tower-defence game sits beside the other three —
+            four families of tower that fork into a level-four path of their own, seven heroes to pick three
+            from, and three stages, each on a road built for it. Its art travels <b>inside the file</b>, so
+            the chair opens with nothing but the page itself: no folder of pictures to lose.</li>
+        <li><b>Every chair now has a tag in the file.</b> The feed names <b>fortressBuild</b> the way it
+            names the other three, the hub opens the copy the feed points at, and the game introduces
+            itself as <b>fortress f1</b> on its muster screen — so the picker and the game can never
+            quietly disagree about which build is live.</li>
         <li><b>The hall of fame is two boards.</b> The <b>All</b> tab is gone — it added two games together and
             flattered nobody. <b>1V1</b> is the duel board it always was, and <b>Royale</b> is the group game,
             named for the ladder it now keeps.</li>
@@ -329,7 +356,7 @@
             once, clears the board for everyone, and says so plainly when a host refuses.</li>
         <li><b>The password moved here.</b> This page asks for it before anything opens, so the games get on
             with it: Pindutan opens straight on the nickname.</li>
-        <li><b>The hub</b> — this page. Three chairs, and the games behind them keep themselves current.</li>
+        <li><b>The hub</b> — this page. Four chairs, and the games behind them keep themselves current.</li>
         <li><b>Ranks</b> — Bronze, Silver, Gold, Diamond, three tiers each, three stars a tier and a fourth
             that steps you up. Earned in <b>1v1</b> only, so a group win lifts nothing.</li>
         <li>The tap card tells the truth: win rate worked out from what was played, the run of wins you are
@@ -379,11 +406,11 @@
       <p>If there is no signal, nothing breaks: the strip turns amber, the chairs still answer, and the chair
          that is built still opens the copy it already knows about.</p>
       <div class="rule"></div>
-      <p style="margin-top:10px;">One thing worth saying plainly: all three chairs are games now, in one file
-         each — <b>labs/pindutan-v21.html</b> for the arena, <b>labs/chess.html</b> for chess and
-         <b>labs/zuma.html</b> for Zumang. Each one carries its own tag (<b>v26</b>, <b>c6</b>, <b>m3</b>),
-         and the file above is the only place those tags are compared. Rename a chair here and you rename it
-         everywhere.</p>
+      <p style="margin-top:10px;">One thing worth saying plainly: all four chairs are games now, in one file
+         each — <b>labs/pindutan-v21.html</b> for the arena, <b>labs/chess.html</b> for chess,
+         <b>labs/zuma.html</b> for Zumang and <b>labs/fortress.html</b> for Fortress. Each one carries its
+         own tag (<b>v26</b>, <b>c6</b>, <b>m3</b>, <b>f1</b>), and the file above is the only place those
+         tags are compared. Rename a chair here and you rename it everywhere.</p>
     </section>
 
     <p class="tiny">
@@ -402,9 +429,10 @@
   var ARENA = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html";
   var CHESS = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html";
   var ZUMANG = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/zuma.html";
+  var FORT = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/fortress.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m10";                /* this copy of the hub */
+  var DECK = "m11";                /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 
@@ -420,6 +448,8 @@
   var chessGo = document.getElementById("chessGo");
   var threeTile = document.getElementById("tile-three");
   var threeGo = document.getElementById("threeGo");
+  var fortTile = document.getElementById("tile-fortress");
+  var fortGo = document.getElementById("fortressGo");
 
   /* ---------- the way in: the password moved here from the game ----------
      crypto.subtle only exists on https:// and localhost — over a plain-http LAN
@@ -571,10 +601,15 @@
     openGame({ tile: threeTile, go: threeGo, label: "zumang", buildField: "threeBuild", urlField: "three",
       fallback: ZUMANG, marker: "ZUMANG-APP" });
   }
+  function openFort() {
+    openGame({ tile: fortTile, go: fortGo, label: "fortress", buildField: "fortressBuild", urlField: "fortress",
+      fallback: FORT, marker: "FORTRESS-APP" });
+  }
 
   tile.addEventListener("click", openArena);
   chessTile.addEventListener("click", openChess);
   threeTile.addEventListener("click", openThree);
+  fortTile.addEventListener("click", openFort);
 
   /* any chair still waiting for its game */
   Array.prototype.forEach.call(document.querySelectorAll(".tile.tbd"), function (el) {

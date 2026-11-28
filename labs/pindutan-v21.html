@@ -1706,9 +1706,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v29</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v30</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v29 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v30 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1910,7 +1910,7 @@
         <h2>✉ Feedback</h2>
         <button id="feedbackClose" aria-label="Close feedback">✕</button>
       </div>
-      <div class="notes-sub">to the maker's inbox · <b id="fbTo">gret521x@gmail.com</b></div>
+      <div class="notes-sub">goes straight to the maker · nothing of theirs is printed here</div>
 
       <div class="fb-kinds" id="fbKinds" role="tablist" aria-label="Kind of feedback">
         <button class="fb-kind on" data-kind="Bug" role="tab" aria-selected="true">🐞 Bug</button>
@@ -1933,13 +1933,13 @@
 
       <div class="notes-foot">
         <button id="fbCopy" class="fb-ghost" title="Copy the whole report, in case nothing opens">Copy report</button>
-        <button id="fbGh" class="fb-ghost gh" title="No mail app? Open a new issue on GitHub instead">GitHub ↗</button>
-        <button id="fbSend" class="fb-send">✉ Send by email</button>
+        <button id="fbGh" class="fb-ghost gh" title="Prefer GitHub? Open the same report as a new issue">GitHub ↗</button>
+        <button id="fbSend" class="fb-send">✉ Send</button>
       </div>
 
-      <p class="fb-fine">This form has no server behind it: <b>Send by email</b> opens your mail app with the report
-        already written, addressed to <b id="fbToFine">gret521x@gmail.com</b> — press <b>send</b> there and it is in the inbox.
-        No mail app? <b>GitHub ↗</b> opens
+      <p class="fb-fine"><b>Send</b> posts the report quietly to the maker — the address it goes to lives on
+        their server, never on this page, so there is nothing here for anyone else to read. Prefer to see
+        where it lands? <b>GitHub ↗</b> opens
         <a id="fbRepoLink" href="https://github.com/gret521x-coder/Gretsanti/issues/new" target="_blank" rel="noopener">a new issue</a>
         with the same report, and <b>Copy report</b> puts it on the clipboard. Your draft is kept on this phone until you send it.</p>
     </div>
@@ -2039,7 +2039,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v29";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v30";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -5564,7 +5564,7 @@
         day: "Dec 1", items: [
           "<b>✉ Feedback</b> sits in the upper right, level with the wordmark. Pick <b>Bug</b>, <b>Idea</b> or <b>Praise</b>, say what happened, and <b>Send</b> opens a new issue on GitHub with your words, the build, the room and the page already written — press <b>Create</b> there and it reaches the maker.",
           "There is no server behind the form: your draft is kept on the phone until you send it, and <b>Copy report</b> puts the whole thing on the clipboard if the browser will not open a tab.",
-          "<b>Send now fills an email</b> addressed to the maker, with the report, the build and the page already written — press send in your mail app. No mail app? <b>GitHub ↗</b> opens the same report as a new issue, and the address itself lives in the build file, so it can change without a new build."
+          "<b>Send now posts the report straight to the maker</b>, quietly, with the build, the page and the room already in it. The address it goes to sits on their server, not on this page, so nothing of theirs is printed for anyone else to read — and <b>GitHub ↗</b> is still there if you would rather see where it lands."
         ]
       },
       {
@@ -6653,10 +6653,12 @@
 
     const FB = {
       kind: "Bug",
-      to: "gret521x@gmail.com",      /* where the report is addressed; the feed can change it */
+      /* the inbox is a script on the maker's host: it knows the address, this page never does */
+      endpoint: "https://aidekupal.unaux.com/api-feedback.php",
       repo: "https://github.com/gret521x-coder/Gretsanti/issues/new",
       feed: "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json",
       draftKey: "pindutan_feedback_draft",
+      sending: false,
       lastUrl: ""
     };
 
@@ -6708,7 +6710,6 @@
     if (fbCopyEl) fbCopyEl.addEventListener("click", () => feedbackCopy());
     (function setupFeedback() {
       feedbackKind();
-      fbPaintTo();
       fbDraftLoad();
       fbCount();
       feedbackDestination();     /* the feed may name a different inbox */
@@ -7329,6 +7330,8 @@
     } catch (e) { }
 
     /* =========================================================
+       v30 — ✉ Feedback goes privately: Send posts the report to the maker's inbox
+             script, so no address is printed on the page at all.
        v29 — ✉ Feedback goes to the inbox: Send fills a mail to the maker, and GitHub
              ↗ is still there for anyone with no mail app.
        v28 — ✉ Feedback sits in the upper right, level with the wordmark: it opens a
@@ -7514,34 +7517,38 @@
       return FB.repo + "?title=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
     }
 
-    /* the mail app every phone already has: no server, nothing to deploy */
-    function feedbackMailUrl() {
+    function feedbackPayload() {
       const r = feedbackReport();
-      return "mailto:" + FB.to + "?subject=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
+      let page = "";
+      try { page = String(location.href || ""); } catch (e) { }
+      return {
+        subject: r.title,
+        body: r.body,
+        kind: FB.kind,
+        text: r.text,
+        name: r.name,
+        build: BUILD_TAG,
+        page: page,
+        room: (typeof roomCode === "string" && roomCode) ? roomCode : "lobby",
+        screen: (window.innerWidth || 0) + "x" + (window.innerHeight || 0),
+        browser: String((navigator && navigator.userAgent) || "").slice(0, 150),
+        when: new Date().toISOString()
+      };
     }
 
-    function fbPaintTo() {
-      const a = fbEl("fbTo"), b = fbEl("fbToFine");
-      if (a) a.textContent = FB.to;
-      if (b) b.textContent = FB.to;
-      const send = fbEl("fbSend");
-      if (send) send.title = "Open your mail app with the report addressed to " + FB.to;
-      return FB.to;
-    }
-
-    /* the address is not baked in for good: change feedbackTo in the feed and every copy follows */
+    /* the inbox may move: the feed can name another endpoint, and a bad one is ignored */
     function feedbackDestination() {
       try {
-        if (typeof fetch !== "function") return Promise.resolve(FB.to);
+        if (typeof fetch !== "function") return Promise.resolve(FB.endpoint);
         return fetch(FB.feed + "?t=" + Date.now(), { cache: "no-store" })
           .then((r) => (r && r.ok && typeof r.json === "function") ? r.json() : null)
           .then((feed) => {
-            const to = feed && typeof feed.feedbackTo === "string" ? feed.feedbackTo.trim() : "";
-            if (/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(to)) { FB.to = to; fbPaintTo(); }
-            return FB.to;
+            const url = feed && typeof feed.feedback === "string" ? feed.feedback.trim() : "";
+            if (/^https:\/\/[^\s]+$/i.test(url)) FB.endpoint = url;
+            return FB.endpoint;
           })
-          .catch(() => FB.to);
-      } catch (e) { return Promise.resolve(FB.to); }
+          .catch(() => FB.endpoint);
+      } catch (e) { return Promise.resolve(FB.endpoint); }
     }
 
     function feedbackSend() {
@@ -7551,18 +7558,49 @@
         fbCount();
         return false;
       }
-      const url = feedbackMailUrl();
-      FB.lastUrl = url;
-      feedbackNote("Opening your mail app — the report is written and addressed to " + FB.to + ". Press send there.");
-      let opened = null;
-      try { opened = window.open(url, "_blank"); } catch (e) { opened = null; }
-      if (!opened) {
-        try { location.href = url; return true; } catch (e) {
-          feedbackNote("The mail app would not open — use Copy report, or GitHub ↗ instead.", true);
-          return false;
+      if (FB.sending) return false;
+      const send = fbEl("fbSend");
+      const started = send ? send.textContent : "";
+      FB.sending = true;
+      if (send) { send.disabled = true; send.textContent = "✉ Sending…"; }
+      feedbackNote("Sending your report…");
+
+      const done = (good, msg) => {
+        FB.sending = false;
+        if (send) { send.textContent = started || "✉ Send"; send.disabled = false; }
+        fbCount();
+        feedbackNote(msg, !good);
+        if (good) {
+          try { if (localStorage) localStorage.removeItem(FB.draftKey); } catch (e) { }
         }
+        return good;
+      };
+
+      const posted = (() => {
+        try {
+          return fetch(FB.endpoint + "?t=" + Date.now(), {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(feedbackPayload())
+          });
+        } catch (e) { return null; }
+      })();
+
+      if (!posted || typeof posted.then !== "function") {
+        return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
       }
-      return true;
+
+      return posted
+        .then((res) => {
+          if (!res || !res.ok) return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
+          return (res.json ? res.json().catch(() => ({ ok: true })) : Promise.resolve({ ok: true }))
+            .then((data) => {
+              if (data && data.ok === false) return done(false, "The inbox said no — try GitHub ↗, or Copy report.");
+              return done(true, "Sent — thank you. It is in the maker's inbox.");
+            });
+        })
+        .catch(() => done(false, "Could not reach the inbox — try GitHub ↗, or Copy report."));
     }
 
     function feedbackGitHub() {

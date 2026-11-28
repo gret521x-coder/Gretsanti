@@ -186,6 +186,33 @@ build); the keys are already in the manifest so nothing has to be renamed later.
 
 ---
 
+### Installing a picture (build f4)
+
+Any of the 36 slots takes a PNG now — not just monsters. Towers, the knight on the board and the
+HUD portrait all ask for their picture first and fall back to the character grid if it is missing,
+so art can land one file at a time and nothing ever breaks.
+
+```bash
+node TD/tools/install-sprite.js --list                       # every key and its path
+node TD/tools/install-sprite.js mine.png monsters:grunt      # checks, then installs
+node TD/tools/install-sprite.js knight.png heroes:royal_knight
+```
+
+It reads the PNG header itself and refuses, with the reason:
+
+- a key that is not in the manifest (nothing would ever load it)
+- a file that is not a PNG
+- **no alpha channel** — it would paint its background over the map
+- **the wrong shape** — the game stretches the picture into the box its grid fills, so a 1:1 image
+  in a 10:11 slot comes out fat. `TD/resources/sprite-boxes.json` holds every box; the tolerance is
+  2.5 %. `--force` overrides it.
+- over 200 KB (36 of those would blow the 2.6 s preloader)
+
+Nothing else needs editing: the manifest already names the path. Commit the file and the hosted copy
+picks it up from `main` — `KDL_FORTRESS.pngReady('monsters:grunt')` says whether it arrived.
+
+---
+
 ## 5. If you want to go further (not done here)
 
 1. **Multi-frame PNG animation.** `drawMonster` takes one image; to animate, add

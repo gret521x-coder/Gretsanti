@@ -70,7 +70,7 @@ p{font-size:13px;color:#b8c4a8;margin:6px 0 0}
 </div>
 <div id="nextWave"></div>
 <div><button id="btnWave">Start Wave</button><button id="btnRestart">Restart</button></div>
-<div id="build">fortress <b id="buildTag">f3</b></div>
+<div id="build">fortress <b id="buildTag">f4</b></div>
 <div id="msg"></div>
 <div id="tip"></div>
 <canvas id="cv" width="720" height="480"></canvas>
@@ -180,6 +180,9 @@ var ASSET_BASES=['../TD/','https://raw.githubusercontent.com/gret521x-coder/Gret
 var SPRITE={};          /* key -> HTMLImageElement, only when the PNG really arrived */
 var SPRITE_STATE={};    /* key -> 'png' on arrival, 'drawn' when the grid stands in */
 var ASSET_LIST=[];
+/* a key that really arrived as a PNG, or null. Every draw site asks this first and
+   falls back to the character grid, so art can land one file at a time. */
+function pngFor(key){var im=SPRITE[key];return (im&&im.width)?im:null;}
 var BOOT={done:false,total:0,settled:0,source:'builtin',png:0,pct:0};
 
 function flattenAssets(man){
@@ -376,7 +379,7 @@ function drawTowerSprite(type,x,y,angle,lvl){
 }
 
 // the tag the hub compares against the feed; bump it when the game changes
-var BUILD_TAG='f3';
+var BUILD_TAG='f4';
 
 // ---------- game state ----------
 var lives,coins,waveNum,grid,enemies,shots,fx,spawnT,spawnQ,selTower,gameOver,shakeT,frame,hoverTile,hoverTower,loopCount;
@@ -778,7 +781,13 @@ function drawTowers(){
    cx.strokeStyle='rgba(255,224,138,0.5)';cx.lineWidth=2;
    cx.beginPath();cx.arc(t.rx,t.ry-4,17+Math.sin(frame*0.08)*1.5,0,Math.PI*2);cx.stroke();
   }
-  drawTowerSprite(t.type,t.rx,t.ry,t.type==='Mortar'?0:t.angle,t.lvl);
+  var tp=pngFor('towers:'+t.type);
+  if(tp){
+   var bw=40,bh=40,bx=Math.round(t.rx-bw/2),by=Math.round(t.ry-4-bh/2);
+   cx.drawImage(tp,bx,by,bw,bh);
+   if(t.lvl>1){cx.font='bold 9px monospace';cx.fillStyle='#ffe08a';cx.textAlign='right';
+    cx.fillText('L'+t.lvl,bx+bw,by+9);cx.textAlign='left';}
+  }else drawTowerSprite(t.type,t.rx,t.ry,t.type==='Mortar'?0:t.angle,t.lvl);
   if(t.flash>0){
    t.flash--;
    cx.globalAlpha=t.flash/8;cx.fillStyle='#fff2b0';
@@ -944,11 +953,14 @@ function paintHeroBar(){
 function paintPortrait(){
  var c=document.getElementById('heroPortrait');if(!c||!c.getContext)return;
  var g=c.getContext('2d');if(!g||!g.fillRect)return;
+ var pic=pngFor('heroes:royal_knight_portrait')||pngFor('heroes:royal_knight');
  var spr=SPR.knight,rows=spr.frames[0];
  var s=Math.max(1,Math.floor(Math.min(c.width/(rows[0].length*spr.s),c.height/(rows.length*spr.s))));
  var w=rows[0].length*spr.s*s,h=rows.length*spr.s*s;
  g.clearRect(0,0,c.width,c.height);
  g.fillStyle='#0d130a';g.fillRect(0,0,c.width,c.height);
+ if(pic){g.imageSmoothingEnabled=false;
+  g.drawImage(pic,0,0,c.width,c.height);return;}
  for(var r=0;r<rows.length;r++)for(var col=0;col<rows[r].length;col++){
   var ch=rows[r][col];if(ch==='.'||ch===' ')continue;
   g.fillStyle=spr.pal[ch]||'#ff00ff';
@@ -965,7 +977,13 @@ function drawHero(){
   cx.strokeStyle='rgba(255,224,138,0.9)';cx.lineWidth=2;cx.setLineDash([5,4]);
   cx.beginPath();cx.arc(HERO.x,HERO.y+18,20,0,Math.PI*2);cx.stroke();cx.setLineDash([]);
  }
- drawSprite(SPR.knight,HERO.x,y,HERO.walk?Math.floor(HERO.walk/6)%2:0,HERO.flash>0);
+ var kp=pngFor('heroes:royal_knight');
+ if(kp){
+  var kw=48,kh=48;
+  cx.drawImage(kp,Math.round(HERO.x-kw/2),Math.round(y-kh/2),kw,kh);
+  if(HERO.flash>0){cx.globalAlpha=.55;cx.fillStyle='#fff';
+   cx.fillRect(Math.round(HERO.x-kw/2),Math.round(y-kh/2),kw,kh);cx.globalAlpha=1;}
+ }else drawSprite(SPR.knight,HERO.x,y,HERO.walk?Math.floor(HERO.walk/6)%2:0,HERO.flash>0);
  if(HERO.swing>0){
   cx.strokeStyle='rgba(255,255,210,'+(0.25+HERO.swing/12)+')';cx.lineWidth=3;
   cx.beginPath();cx.arc(HERO.x+12,y-6,20,-1.3,0.9);cx.stroke();
@@ -1059,6 +1077,8 @@ window.KDL_FORTRESS={
  assets:function(){return {done:BOOT.done,total:BOOT.total,settled:BOOT.settled,png:BOOT.png,source:BOOT.source};},
  assetList:function(){return ASSET_LIST.map(function(a){return a.key+'='+a.path;});},
  spriteMode:function(k){return SPRITE_STATE[k]||'drawn';},
+ pngReady:function(k){return !!pngFor(k);},
+ pngSlots:function(){return ASSET_LIST.map(function(a){return a.key;});},
  manifestUrl:function(){return ASSET_BASES[0]+'resources/assets.json';},
  probe:function(type,dmg,src){
   var d=ENEMY[type];if(!d)return null;

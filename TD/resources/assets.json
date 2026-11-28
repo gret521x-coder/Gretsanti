@@ -1,7 +1,7 @@
 {
   "name": "Fortress — Royal Knight",
-  "version": 11,
-  "build": "f3",
+  "version": 12,
+  "build": "f4",
   "root": "TD/",
   "spritePx": 3,
   "note": "Every path is relative to TD/. The game reads this file from ../TD/resources/assets.json first, then from main on GitHub. A missing PNG is not an error: the game draws that sprite from its own character grid instead, so it always runs.",

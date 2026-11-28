@@ -1,0 +1,45 @@
+{
+  "note": "The box each sprite is stretched into, in game pixels. The game does not read this file — it draws every PNG into the same box its character grid occupies — but the installer does, to refuse a picture whose shape would get squashed. Width and height are the box; only their ratio is enforced.",
+  "boxes": {
+    "towers:Archer": [40, 40],
+    "towers:Cannon": [40, 40],
+    "towers:Frost": [40, 40],
+    "towers:Sniper": [40, 40],
+    "towers:Poison": [40, 40],
+    "towers:Tesla": [40, 40],
+    "towers:Laser": [40, 40],
+    "towers:Mortar": [40, 40],
+    "towers:Bank": [40, 40],
+
+    "troops:militia": [24, 24],
+    "troops:sentry": [24, 24],
+    "troops:knight_guard": [24, 24],
+
+    "monsters:grunt": [10, 11],
+    "monsters:berserker": [10, 11],
+    "monsters:brute": [10, 12],
+    "monsters:shaman": [10, 11],
+    "monsters:necro": [10, 11],
+    "monsters:goblin": [6, 7],
+    "monsters:ogre": [11, 11],
+    "monsters:skeleton": [8, 7],
+    "monsters:boss": [12, 13],
+    "monsters:bat": [10, 7],
+    "monsters:gargoyle": [12, 8],
+    "monsters:wyvern": [14, 11],
+    "monsters:skyboss": [12, 8],
+    "monsters:sapper": [8, 8],
+    "monsters:vanguard": [11, 13],
+    "monsters:ram": [12, 12],
+    "monsters:shade": [10, 12],
+    "monsters:harpy": [12, 8],
+
+    "heroes:royal_knight": [48, 48],
+    "heroes:royal_knight_portrait": [38, 38],
+
+    "ui:crest": [48, 48],
+    "ui:shield_bash": [48, 48],
+    "ui:range_ring": [64, 64],
+    "ui:coin": [24, 24]
+  }
+}

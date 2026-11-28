@@ -27,7 +27,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
 | `pindutan.html` | 30 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then four chairs, all four live (Pindutan, Chess, Zumang, Fortress), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess`, `feed.three` and `feed.fortress` |
 | `labs/zuma.html` | 108 KB | **Zumang, game three** — a zuma-style marble shooter on a carved stone board: a jade frog idol flanked by two gold sunbursts aims at your pointer (or your finger) and fires on click or **Space**, a chain that inserts where the marble lands, 3+ of a colour pops, a cut chain **pulls its back half up** to the front and chains the reaction, power-up marbles (🌀 reverse, 🐌 slow, 💣 bomb), a shot that misses breaks on the wall instead of bouncing, rings blooming where a colour pops, a gold quota gauge and green life gems on an ornate bar over the board (score, lives, quota — no level plate), a gold skull at the end of the track, the levels a name has **finished** ticked ✓ in the grid so they can be picked again, **100 levels in ten temples, each with a board of its own** (spiral, serpent, corridor, rosette or ring, fixed by the level number) with the pace, colours and quota tightening, Web Audio sound made from oscillators, a nickname door, and a score kept **by name** on the device with a **solo** post to the ladder when there is a signal |
-| `labs/fortress.html` | 415 KB | **Fortress, game four** — tower defence on three stages, each with a road of its own: four families of tower (archer, warrior barracks, mage, catapult) on stone pads beside the road, each upgrading through levels 1–3 and then **forking at level four** (Rangers Hideout or Frost Archers, Holy Order or Barbarian Hall, Pyromancer or Sorcerer, Big Bertha or Tesla x104), a panel per tower for upgrade, path and target priority, **seven heroes on cards** (Gerald, Alleria, Malik, Bolin, Magnus, Ignus, Denas) with three picked at the muster and a skill each, plus a militia spell; zombies, runners, orcs, bombers, knights, brutes and a boss a wave. Art is **inside the file** — 43 data-URI sprites from Tiny Swords (`labs/assets/fortress` holds the sources and the slicing scripts), so it opens with nothing but the page. Build tag **f1**, opened from `fortress`/`fortressBuild` |
+| `labs/fortress.html` | 30 KB | **Fortress, game four** — pixel-orc tower defence (the TDv10 file): a 15x10 tile board, **nine towers** (Archer, Cannon, Frost, Sniper, Poison, Tesla, Laser, Mortar, and a Bank that pays 8 gold every 4s), **thirteen monsters** and some of them **fly** — bats, gargoyles, wyverns and a sky warlord go straight over the walls, and the Cannon and the Mortar cannot touch them. Shaman heal, necromancers raise skeletons, a warlord spits goblins below half health. **Five maps** (Forest Trail, Serpent Pass, Swamp Loop, Frozen Canyon, Ashen Fortress) swap in every five waves, refunding 60% of any tower the new road swallows; after wave 20 the stage loops with everything at **+50%**. Tap a tower to upgrade it (+35% dmg, +10% range a level), shift-tap to sell for 60%, hover for the range ring and the numbers. **Every sprite is drawn from a grid of characters on the canvas, so this file carries no images at all** — nothing to lose and nothing to fetch. Locked to 60 fps so a 120 Hz phone plays the same game. Build tag **f2**, opened from `fortress`/`fortressBuild` |
 | `labs/chess.html` | 96 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge, a coin toss for colours, chess clocks, rematch, PGN/FEN and a scoresheet you can tap back through**, keeps itself current from `chessBuild`, six page themes, eight board palettes with a tint slider, three piece styles |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
@@ -83,6 +83,14 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
 3. `labs/pindutan-v21.html` — the **arena** (v26): the game. It carries the same three chairs behind a
    **☰ Games** pill in its header, and it updates itself from `arena` in the feed. Its gate opens **straight on
    the nickname**: the password step is gone, because it is asked one page earlier, in the hub.
+
+![Fortress — the pixel-orc tower defence](labs/assets/fortress-cover.png)
+
+`labs/fortress.html` is game four: **Fortress**, 30 KB, build tag **f2**, opened from `fortress`/`fortressBuild`
+in the feed. It is a pixel-orc tower defence on a 15x10 grid: nine towers, thirteen monsters, five maps that
+swap every five waves, flyers that the cannon and mortar cannot reach, and a loop after wave twenty at +50%.
+There are **no image files anywhere in it** — each monster and tower is a grid of characters painted onto the
+canvas, so the game is one page and nothing else.
 
 `labs/zuma.html` is game three: **Zumang**, 108 KB, build tag **m3**, opened from `three`/`threeBuild` in the
 same file. Its door is the same door chess has — a nickname, once, before the board — and the name it is given
@@ -198,7 +206,7 @@ Pointing `html` at the game instead takes the runner straight to Pindutan and sk
 upload.
 
 **And the hub keeps itself current too.** On opening — and on a tap of its strip — the hub compares its own
-tag with `menuBuild` in the feed (currently `m11`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+tag with `menuBuild` in the feed (currently `m12`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
 size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a hub that
 was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m4 · newest ·
 arena v22.9` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
@@ -292,7 +300,7 @@ All suites run in Node with jsdom, no browser needed.
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
 - **Pindutan v17** — 48 · **Pindutan v18** — 262 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 30 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
-- **Fortress** — 117 · **Castle Defense** — 34
+- **Fortress** — 56 · **Castle Defense** — 34
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

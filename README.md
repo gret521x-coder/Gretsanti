@@ -27,7 +27,8 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
 | `pindutan.html` | 30 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then four chairs, all four live (Pindutan, Chess, Zumang, Fortress), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess`, `feed.three` and `feed.fortress` |
 | `labs/zuma.html` | 108 KB | **Zumang, game three** — a zuma-style marble shooter on a carved stone board: a jade frog idol flanked by two gold sunbursts aims at your pointer (or your finger) and fires on click or **Space**, a chain that inserts where the marble lands, 3+ of a colour pops, a cut chain **pulls its back half up** to the front and chains the reaction, power-up marbles (🌀 reverse, 🐌 slow, 💣 bomb), a shot that misses breaks on the wall instead of bouncing, rings blooming where a colour pops, a gold quota gauge and green life gems on an ornate bar over the board (score, lives, quota — no level plate), a gold skull at the end of the track, the levels a name has **finished** ticked ✓ in the grid so they can be picked again, **100 levels in ten temples, each with a board of its own** (spiral, serpent, corridor, rosette or ring, fixed by the level number) with the pace, colours and quota tightening, Web Audio sound made from oscillators, a nickname door, and a score kept **by name** on the device with a **solo** post to the ladder when there is a signal |
-| `labs/fortress.html` | 30 KB | **Fortress, game four** — pixel-orc tower defence (the TDv10 file): a 15x10 tile board, **nine towers** (Archer, Cannon, Frost, Sniper, Poison, Tesla, Laser, Mortar, and a Bank that pays 8 gold every 4s), **thirteen monsters** and some of them **fly** — bats, gargoyles, wyverns and a sky warlord go straight over the walls, and the Cannon and the Mortar cannot touch them. Shaman heal, necromancers raise skeletons, a warlord spits goblins below half health. **Five maps** (Forest Trail, Serpent Pass, Swamp Loop, Frozen Canyon, Ashen Fortress) swap in every five waves, refunding 60% of any tower the new road swallows; after wave 20 the stage loops with everything at **+50%**. Tap a tower to upgrade it (+35% dmg, +10% range a level), shift-tap to sell for 60%, hover for the range ring and the numbers. **Every sprite is drawn from a grid of characters on the canvas, so this file carries no images at all** — nothing to lose and nothing to fetch. Locked to 60 fps so a 120 Hz phone plays the same game. Build tag **f2**, opened from `fortress`/`fortressBuild` |
+| `labs/fortress.html` | 56 KB | **Fortress, game four** — pixel-orc tower defence (TDv11, the Royal Knight build): a 15x10 tile board, **nine towers** (Archer, Cannon, Frost, Sniper, Poison, Tesla, Laser, Mortar, and a Bank that pays 8 gold every 4s), **eighteen monsters** — thirteen orcs, bats, gargoyles, wyverns, a warlord and a sky warlord, plus five classic archetypes (Goblin Sapper, Shielded Vanguard, Siege Ram, Dark Necromancer, Sky Harpy). Some **fly** straight over the walls, and the Cannon and the Mortar cannot touch them; shields eat steel and let magic through, the ram's armour eats steel and not fire. **The Royal Knight** is playable: tap him, tap the board, he holds the road; Royal Aura fires nearby towers 18% faster and Shield Bash stuns around him on a 12s button. It opens on a **boot screen** that caches `TD/resources/assets.json` behind a progress bar, and every sprite keeps a character-grid fallback, so a missing PNG is invisible. **Five maps** (Forest Trail, Serpent Pass, Swamp Loop, Frozen Canyon, Ashen Fortress) swap every five waves, refunding 60% of any tower the new road swallows; after wave 20 the stage loops at **+50%**. Tap a tower to upgrade (+35% dmg, +10% range a level), shift-tap to sell for 60%. Menu flashes, projectile trails, death bursts, floating damage numbers and a wave preview. Locked to 60 fps. Build tag **f3**, opened from `fortress`/`fortressBuild` |
+| `TD/` | 2 KB | **The tower defence's art root** — `images/{towers,troops,monsters,heroes,ui}/` (36 keys), `resources/assets.json` (the manifest: key → path), `assets/` and `audio/` reserved. The game reads the manifest from `../TD/`, then from `main`, then from the copy written into the page; every key keeps a drawn canvas fallback, so a missing PNG never blanks a sprite or throws. `TD_OVERHAUL_NOTES.md` holds the prompt and filename for all 36 |
 | `labs/chess.html` | 96 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge, a coin toss for colours, chess clocks, rematch, PGN/FEN and a scoresheet you can tap back through**, keeps itself current from `chessBuild`, six page themes, eight board palettes with a tint slider, three piece styles |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
@@ -89,11 +90,33 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
 
 ![Fortress — the pixel-orc tower defence](labs/assets/fortress-cover.png)
 
-`labs/fortress.html` is game four: **Fortress**, 30 KB, build tag **f2**, opened from `fortress`/`fortressBuild`
-in the feed. It is a pixel-orc tower defence on a 15x10 grid: nine towers, thirteen monsters, five maps that
+`labs/fortress.html` is game four: **Fortress**, 56 KB, build tag **f3**, opened from `fortress`/`fortressBuild`
+in the feed. It is a pixel-orc tower defence on a 15x10 grid: nine towers, **eighteen** monsters, five maps that
 swap every five waves, flyers that the cannon and mortar cannot reach, and a loop after wave twenty at +50%.
-There are **no image files anywhere in it** — each monster and tower is a grid of characters painted onto the
-canvas, so the game is one page and nothing else.
+It opens on a **boot screen** — crest, progress bar, three of its own sprites — that caches the art from
+**`TD/resources/assets.json`** before the first frame, and every sprite still has a drawn fallback, so a missing
+PNG is invisible and the page never waits on the network. **The Royal Knight** is playable: tap him, tap the
+board and he holds that ground; his *Royal Aura* fires nearby towers 18% faster, and *Shield Bash* stuns the
+horde around him on a 12-second button. Five classic archetypes joined the horde — the **Goblin Sapper**
+(swarm), the **Shielded Vanguard** (shields eat steel, magic goes through), the **Siege Ram** (armour, six
+lives), the **Dark Necromancer** (heals, raises, wards) and the **Sky Harpy** (anti-air only). All of the art
+in `TD/` is scaffolded and mapped; `TD_OVERHAUL_NOTES.md` carries the image prompts and the exact filenames.
+
+**The `TD/` art root.** Everything the tower defence draws lives in one folder, mapped key by key in
+`TD/resources/assets.json`:
+
+```
+TD/images/{towers,troops,monsters,heroes,ui}/  36 keys, one folder each
+TD/resources/assets.json                       the manifest: key → path
+TD/assets/  TD/audio/                          reserved for atlases and sound
+```
+
+The game looks for the manifest at `../TD/…` (which is `/TD/…` whether the page is served from `labs/`
+or written into the arena), then on `main`, then falls back to the copy written into the page — so
+hosted copies, phones and offline all boot. Every key has a **drawn canvas fallback**: the character
+grids are the art until a PNG lands, which is why a missing file can never blank a sprite or throw.
+`KDL_FORTRESS.spriteMode(key)` says `png` or `drawn`, and `TD_OVERHAUL_NOTES.md` has the prompt and
+the filename for all 36.
 
 `labs/zuma.html` is game three: **Zumang**, 108 KB, build tag **m3**, opened from `three`/`threeBuild` in the
 same file. Its door is the same door chess has — a nickname, once, before the board — and the name it is given
@@ -303,7 +326,7 @@ All suites run in Node with jsdom, no browser needed.
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
 - **Pindutan v17** — 48 · **Pindutan v18** — 273 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 30 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
-- **Fortress** — 56 · **Castle Defense** — 34
+- **Fortress** — 97 · **Castle Defense** — 34
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

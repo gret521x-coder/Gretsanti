@@ -1,0 +1,54 @@
+{
+  "name": "Fortress — Royal Knight",
+  "version": 11,
+  "build": "f3",
+  "root": "TD/",
+  "spritePx": 3,
+  "note": "Every path is relative to TD/. The game reads this file from ../TD/resources/assets.json first, then from main on GitHub. A missing PNG is not an error: the game draws that sprite from its own character grid instead, so it always runs.",
+  "towers": {
+    "Archer": "images/towers/archer.png",
+    "Cannon": "images/towers/cannon.png",
+    "Frost": "images/towers/frost.png",
+    "Sniper": "images/towers/sniper.png",
+    "Poison": "images/towers/poison.png",
+    "Tesla": "images/towers/tesla.png",
+    "Laser": "images/towers/laser.png",
+    "Mortar": "images/towers/mortar.png",
+    "Bank": "images/towers/bank.png"
+  },
+  "troops": {
+    "militia": "images/troops/militia.png",
+    "sentry": "images/troops/sentry.png",
+    "knight_guard": "images/troops/knight_guard.png"
+  },
+  "monsters": {
+    "grunt": "images/monsters/orc_grunt.png",
+    "berserker": "images/monsters/orc_berserker.png",
+    "brute": "images/monsters/orc_brute.png",
+    "shaman": "images/monsters/orc_shaman.png",
+    "necro": "images/monsters/orc_necromancer.png",
+    "goblin": "images/monsters/goblin_runner.png",
+    "ogre": "images/monsters/stone_ogre.png",
+    "skeleton": "images/monsters/skeleton.png",
+    "boss": "images/monsters/orc_warlord.png",
+    "bat": "images/monsters/cave_bat.png",
+    "gargoyle": "images/monsters/gargoyle.png",
+    "wyvern": "images/monsters/wyvern.png",
+    "skyboss": "images/monsters/sky_warlord.png",
+    "sapper": "images/monsters/goblin_sapper.png",
+    "vanguard": "images/monsters/shielded_vanguard.png",
+    "ram": "images/monsters/siege_ram.png",
+    "shade": "images/monsters/dark_necromancer.png",
+    "harpy": "images/monsters/sky_harpy.png"
+  },
+  "heroes": {
+    "royal_knight": "images/heroes/royal_knight.png",
+    "royal_knight_portrait": "images/heroes/royal_knight_portrait.png"
+  },
+  "ui": {
+    "crest": "images/ui/crest.png",
+    "shield_bash": "images/ui/shield_bash.png",
+    "range_ring": "images/ui/range_ring.png",
+    "coin": "images/ui/coin.png"
+  }
+}

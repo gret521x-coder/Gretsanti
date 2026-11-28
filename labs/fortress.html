@@ -5,7 +5,7 @@
 <!-- FORTRESS-APP · the hub opens this file from the feed and checks for that string -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#12180e">
-<title>Fortress — TDv10 Pixel Orcs</title>
+<title>Fortress — TDv11 Pixel Orcs &amp; the Royal Knight</title>
 <style>
 body{background:#12180e;color:#e8e4d8;font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;margin:0;padding:8px;user-select:none;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 h1{margin:4px;font-size:20px;letter-spacing:2px;text-shadow:2px 2px 0 #000}
@@ -23,13 +23,54 @@ td.sel{background:#4a6a2a}
 #build b{color:#b8c4a8}
 #tip{min-height:18px;font-size:13px;color:#a0d8ff;margin-top:2px;max-width:740px;text-align:center}
 p{font-size:13px;color:#b8c4a8;margin:6px 0 0}
+
+/* ---------- the boot screen: the art is cached before the first frame ---------- */
+#boot{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ background:radial-gradient(circle at 50% 38%,#1b2612 0%,#0b1007 72%);color:#e8e4d8;transition:opacity .5s ease}
+#boot.gone{opacity:0;pointer-events:none}
+#boot .crest{font-size:clamp(26px,7vw,40px);letter-spacing:8px;font-weight:bold;
+ text-shadow:0 0 22px rgba(122,201,58,.65),3px 3px 0 #000;margin-bottom:4px}
+#boot .sub{font-size:10px;letter-spacing:4px;color:#9ab08a;margin-bottom:22px}
+#bootBar{width:min(78vw,420px);height:12px;background:#080c05;border:2px solid #3a4a2a;box-shadow:inset 0 0 10px #000;overflow:hidden}
+#bootBar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#2e7a1a,#7ac93a 55%,#ffe08a);
+ box-shadow:0 0 14px #7ac93a;transition:width .18s ease}
+#bootLine{display:flex;justify-content:space-between;width:min(78vw,420px);font-size:11px;color:#8fa07e;margin-top:8px;letter-spacing:1px}
+#bootArt{margin-top:24px;display:flex;gap:14px;opacity:.92;filter:drop-shadow(0 3px 0 rgba(0,0,0,.6))}
+#bootArt canvas{image-rendering:pixelated;width:54px;height:54px}
+/* ---------- the knight's bar ---------- */
+#heroBar{display:flex;align-items:center;gap:8px;margin:2px 0 4px;font-size:12px;flex-wrap:wrap;justify-content:center}
+#heroPortrait{width:38px;height:38px;image-rendering:pixelated;background:#0d130a;border:2px solid #6a5a2a;border-radius:4px}
+#heroHp{width:118px;height:9px;background:#141410;border:1px solid #4a3a1a;position:relative}
+#heroHp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#c93a2a,#ff8060);transition:width .18s ease}
+#heroTag{font-size:10px;letter-spacing:1px;color:#b8c4a8;max-width:230px;text-align:left}
+#bashBtn{position:relative;background:#2a3a1a;border:2px solid #6a5a2a;color:#ffe08a;font:inherit;font-size:11px;
+ font-weight:bold;letter-spacing:1px;padding:6px 10px;cursor:pointer;overflow:hidden;min-width:104px}
+#bashBtn b{position:relative;z-index:2}
+#bashBtn i{position:absolute;left:0;bottom:0;height:100%;background:rgba(255,224,138,.20);width:0%;z-index:1;transition:width .1s linear}
+#bashBtn.on{border-color:#c9a23a;box-shadow:0 0 12px rgba(255,224,138,.55)}
+#bashBtn:disabled{opacity:.55;cursor:not-allowed}
+#nextWave{font-size:11px;color:#9ab08a;margin:2px 0 4px;letter-spacing:.4px;text-align:center;max-width:760px}
 </style>
 </head>
 <body>
-<h1>TDv10 - PIXEL ORCS</h1>
+<div id="boot">
+  <div class="crest">FORTRESS</div>
+  <div class="sub">PIXEL ORCS &middot; THE ROYAL KNIGHT</div>
+  <div id="bootBar"><i></i></div>
+  <div id="bootLine"><span id="bootWhat">waking the garrison&hellip;</span><span id="bootPct">0%</span></div>
+  <div id="bootArt"><canvas id="bootA" width="36" height="36"></canvas><canvas id="bootB" width="36" height="36"></canvas><canvas id="bootC" width="36" height="36"></canvas></div>
+</div>
+<h1>TDv11 &middot; PIXEL ORCS &amp; THE ROYAL KNIGHT</h1>
 <div id="hud">&#10084;&#65039; <span id="lives">20</span> &nbsp;|&nbsp; &#128176; <span id="coins">250</span> &nbsp;|&nbsp; &#127754; <span id="wave">0</span> &nbsp;|&nbsp; &#128260; Loop <span id="loop">0</span> &nbsp;|&nbsp; &#128506; <span id="mapname">Forest Trail</span></div>
+<div id="heroBar">
+  <canvas id="heroPortrait" width="38" height="38"></canvas>
+  <div id="heroHp"><i></i></div>
+  <span id="heroTag">KNIGHT &mdash; tap him, then tap the board</span>
+  <button id="bashBtn" title="Shield Bash: stun every monster around the knight"><b>SHIELD BASH</b><i></i></button>
+</div>
+<div id="nextWave"></div>
 <div><button id="btnWave">Start Wave</button><button id="btnRestart">Restart</button></div>
-<div id="build">fortress <b id="buildTag">f2</b></div>
+<div id="build">fortress <b id="buildTag">f3</b></div>
 <div id="msg"></div>
 <div id="tip"></div>
 <canvas id="cv" width="720" height="480"></canvas>
@@ -77,11 +118,32 @@ gargoyle:{s:3,frames:[
 wyvern:{s:4,frames:[
  ["G............G","GG..KKKKKK..GG",".GGKKGGGGKKGG.","..GKGGEEGGKG..","..GKGGGGGGKG..","...KGGGGGGK...","...KGAAGAAK...","....KGGGGK....","....KGLLGK....",".....KGGK.....","......KK......"],
  ["..............",".GG........GG.",".GGKKKKKKKKGG.","..GKGGGGGGKG..","..GKGGEEGGKG..","...KGGGGGGK...","...KGAAGAAK...","....KGGGGK....","....KGLLGK....",".....KGGK.....","......KK......"]],
- pal:{G:'#3a7a4a',K:'#0e2a0e',E:'#ffd000',A:'#9aa0b0',L:'#e0c060'}}
+ pal:{G:'#3a7a4a',K:'#0e2a0e',E:'#ffd000',A:'#9aa0b0',L:'#e0c060'}},
+
+/* ---- the five new archetypes, and the knight ---- */
+sapper:{s:3,rows:["..KKKK..",".KGEGEGK","KGGGGGGK","KGKWWKGK","KGGGGGGK",".KKWWKK.","..K..K.."],
+ legs1:["..K..K.."],legs2:["..KK.K.."],
+ pal:{G:'#7ac92a',K:'#0e0e0e',E:'#ff2020',W:'#3a2a10'}},
+vanguard:{s:3,rows:["...KKKK....","..KSSSSK...","..KSEESK...","..KSSSSK...",".KKGGGGKK..","KBKGGGGKBK.","KBBKGGKBBK.","KBBAAGABBK.","KBBKGGKBBK.","KBKGGGGKBK.","KKKGGGGKKK.","..KGGK.KGK.","..KKK...KK."],
+ legs1:[],legs2:[],
+ pal:{S:'#c8d0dc',K:'#0e0e14',E:'#ffd000',B:'#3f5f8f',A:'#e8c860',G:'#7a8494'}},
+ram:{s:3,rows:["..KKKKKKKK..",".KIIIIIIIIK.","KIIKIIIIKIIK","KIIIIIIIIIIK",".KIIIIIIIIK.","KKWWWWWWWWKK","KWWKWWWWKWWK","KWWWWWWWWWWK","KWWKWWWWKWWK",".KKWWWWWWKK.",".K..K..K..K.",".K..K..K..K."],
+ legs1:[],legs2:[],
+ pal:{W:'#8a5a2a',K:'#1a1008',I:'#9aa4b4',G:'#b07a3a'}},
+shade:{s:3,rows:["...KKKK...","..KDDDDK..",".KDDDDDDK.","KDDDDDDDDK","KDDEEEDDDK","KDDDDDDDDK","KDVVVVVVDK",".KDVVVVDK.","..KDDDDK..","...KDDK...","...K..K...","..SKS.SKS."],
+ legs1:[],legs2:[],
+ pal:{D:'#3a3358',K:'#0a0a12',E:'#c060ff',V:'#7a4ac9',S:'#c9b27a'}},
+harpy:{s:3,frames:[
+ ["W..........W","WW..KKKK..WW",".WWKGGGGKWW.","..WKEGGEKW..","...KGGGGK...","...KGWWGK...","....KGGK....","....K..K...."],
+ [".W........W.",".WW.KKKK.WW.","..WWKGGKWW..","..WKEGGEKW..","...KGGGGK...","...KGWWGK...","....KGGK....","....K..K...."]],
+ pal:{W:'#c98a3a',K:'#1a1408',G:'#8a6a2a',E:'#ff4040'}},
+knight:{s:3,frames:[["......CCC.......",".....KKKKKK.....","....KKKKKKKKSA..","....SSSSSSSS.A..","....SEESSEES.A..","....KSSSSSSK.A..","KKK..KKKKKK..A..","KHHCCKGGGGK..A..","HCCCGKGAAGKG.A..","HACCGKAAAAKG.A..","HCCCGKGAAGKHHHH.","KHHCCKGAAGK..K..","KKKCCKGGGGK..K..","......KG.GK.....","......KG.GK.....","......KKKKK....."]],
+ legs1:[],legs2:[],
+ pal:{S:'#d8dce4',K:'#0e0e14',E:'#3a6ad8',G:'#c9a23a',A:'#e8e4d8',C:'#a02020',H:'#8a6a1a'}},
 };
 function drawSprite(spr,x,y,frame,flash){
  var rows;
- if(spr.frames){rows=spr.frames[frame%2];}
+ if(spr.frames){rows=spr.frames[frame%spr.frames.length];}
  else{rows=spr.rows.concat(frame===0?spr.legs1:spr.legs2);}
  var s=spr.s,w=rows[0].length*s,h=rows.length*s;
  var ox=Math.round(x-w/2),oy=Math.round(y-h/2);
@@ -90,6 +152,116 @@ function drawSprite(spr,x,y,frame,flash){
    if(ch==='.'||ch===' ')continue;
    cx.fillStyle=flash?'#ffffff':(spr.pal[ch]||'#ff00ff');
    cx.fillRect(ox+c*s,oy+r*s,s,s);}}
+}
+
+// ---------- TD/ assets: a manifest, a preloader, and a drawn sprite for every key ----------
+/* The art lives in TD/. This page reads TD/resources/assets.json — first beside the page
+   (../TD/), then from main on GitHub, because a hosted copy of this file can sit one folder
+   further up. Every key also has a drawn fallback: the character grids are the art until a
+   PNG lands, so a missing file is never an error and the screen never hangs on one. */
+var ASSET_FALLBACK={
+ towers:{Archer:'images/towers/archer.png',Cannon:'images/towers/cannon.png',Frost:'images/towers/frost.png',
+  Sniper:'images/towers/sniper.png',Poison:'images/towers/poison.png',Tesla:'images/towers/tesla.png',
+  Laser:'images/towers/laser.png',Mortar:'images/towers/mortar.png',Bank:'images/towers/bank.png'},
+ troops:{militia:'images/troops/militia.png',sentry:'images/troops/sentry.png',knight_guard:'images/troops/knight_guard.png'},
+ monsters:{grunt:'images/monsters/orc_grunt.png',berserker:'images/monsters/orc_berserker.png',
+  brute:'images/monsters/orc_brute.png',shaman:'images/monsters/orc_shaman.png',
+  necro:'images/monsters/orc_necromancer.png',goblin:'images/monsters/goblin_runner.png',
+  ogre:'images/monsters/stone_ogre.png',skeleton:'images/monsters/skeleton.png',
+  boss:'images/monsters/orc_warlord.png',bat:'images/monsters/cave_bat.png',
+  gargoyle:'images/monsters/gargoyle.png',wyvern:'images/monsters/wyvern.png',
+  skyboss:'images/monsters/sky_warlord.png',sapper:'images/monsters/goblin_sapper.png',
+  vanguard:'images/monsters/shielded_vanguard.png',ram:'images/monsters/siege_ram.png',
+  shade:'images/monsters/dark_necromancer.png',harpy:'images/monsters/sky_harpy.png'},
+ heroes:{royal_knight:'images/heroes/royal_knight.png',royal_knight_portrait:'images/heroes/royal_knight_portrait.png'},
+ ui:{crest:'images/ui/crest.png',shield_bash:'images/ui/shield_bash.png',range_ring:'images/ui/range_ring.png',coin:'images/ui/coin.png'}
+};
+var ASSET_BASES=['../TD/','https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/TD/'];
+var SPRITE={};          /* key -> HTMLImageElement, only when the PNG really arrived */
+var SPRITE_STATE={};    /* key -> 'png' on arrival, 'drawn' when the grid stands in */
+var ASSET_LIST=[];
+var BOOT={done:false,total:0,settled:0,source:'builtin',png:0,pct:0};
+
+function flattenAssets(man){
+ var out=[];
+ ['towers','troops','monsters','heroes','ui'].forEach(function(g){
+  var grp=(man&&man[g])||{};
+  Object.keys(grp).forEach(function(k){out.push({key:g+':'+k,group:g,name:k,path:String(grp[k])});});
+ });
+ return out;
+}
+function loadManifest(){
+ var i=0;
+ function attempt(){
+  if(i>=ASSET_BASES.length||typeof fetch!=='function')return Promise.resolve(null);
+  var url=ASSET_BASES[i++]+'resources/assets.json?t='+Date.now();
+  return fetch(url,{cache:'no-store'}).then(function(r){
+   if(!r||!r.ok)throw new Error('no manifest');
+   return r.json();
+  }).then(function(man){return (man&&man.monsters)?man:null;}).catch(function(){return attempt();});
+ }
+ return attempt();
+}
+function paintBoot(){
+ var pct=BOOT.total?Math.round(BOOT.settled/BOOT.total*100):100;
+ BOOT.pct=pct;
+ var bar=document.querySelector('#bootBar i'),pctEl=document.getElementById('bootPct'),what=document.getElementById('bootWhat');
+ if(bar)bar.style.width=pct+'%';
+ if(pctEl)pctEl.textContent=pct+'%';
+ if(what&&!BOOT.done)what.textContent='caching sprites '+BOOT.settled+'/'+BOOT.total;
+}
+function bootArt(){
+ /* three of the game's own sprites, so the first screen already looks like the game */
+ [['bootA','grunt'],['bootB','vanguard'],['bootC','ram']].forEach(function(pair){
+  var c=document.getElementById(pair[0]);if(!c)return;
+  var g=c.getContext('2d');if(!g||!g.drawImage)return;
+  var spr=SPR[pair[1]];if(!spr)return;
+  var rows=spr.frames?spr.frames[0]:spr.rows.concat(spr.legs1||[]);
+  var s=Math.max(1,Math.floor(Math.min(c.width/(rows[0].length*spr.s),c.height/(rows.length*spr.s))));
+  var w=rows[0].length*spr.s*s,h=rows.length*spr.s*s;
+  var ox=Math.round((c.width-w)/2),oy=Math.round((c.height-h)/2);
+  g.clearRect(0,0,c.width,c.height);
+  for(var r=0;r<rows.length;r++)for(var col=0;col<rows[r].length;col++){
+   var ch=rows[r][col];if(ch==='.'||ch===' ')continue;
+   g.fillStyle=spr.pal[ch]||'#ff00ff';g.fillRect(ox+col*spr.s*s,oy+r*spr.s*s,spr.s*s,spr.s*s);
+  }
+ });
+}
+function finishBoot(){
+ if(BOOT.done)return;
+ BOOT.done=true;BOOT.settled=BOOT.total||BOOT.settled;
+ var bar=document.querySelector('#bootBar i'),pctEl=document.getElementById('bootPct'),what=document.getElementById('bootWhat');
+ if(bar)bar.style.width='100%';
+ if(pctEl)pctEl.textContent='100%';
+ if(what)what.textContent=BOOT.png?('ready — '+BOOT.png+' painted sprites'):'ready — all art drawn in canvas';
+ var el=document.getElementById('boot');
+ if(el){el.classList.add('gone');setTimeout(function(){el.style.display='none';},620);}
+ paintHeroBar();
+}
+function bootAssets(){
+ var list=flattenAssets(ASSET_FALLBACK);
+ ASSET_LIST=list;BOOT.total=list.length;paintBoot();bootArt();
+ var go=function(man){
+  var use=man?flattenAssets(man):list;
+  if(use.length){ASSET_LIST=use;BOOT.total=use.length;BOOT.source=man?'manifest':'builtin';}
+  paintBoot();
+  var settle=function(entry,ok,img){
+   if(ok){SPRITE[entry.key]=img;BOOT.png++;}
+   SPRITE_STATE[entry.key]=ok?'png':'drawn';
+   BOOT.settled++;paintBoot();
+   if(BOOT.settled>=BOOT.total)finishBoot();
+  };
+  ASSET_LIST.forEach(function(entry){
+   if(typeof Image!=='function'){settle(entry,false);return;}
+   var img=new Image(),used=false;
+   img.onload=function(){if(used)return;used=true;settle(entry,true,img);};
+   img.onerror=function(){if(used)return;used=true;settle(entry,false);};
+   try{img.src=ASSET_BASES[0]+entry.path;}catch(e){settle(entry,false);}
+  });
+ };
+ loadManifest().then(function(man){go(man);},function(){go(null);});
+ /* art that never arrives must not hold the game: the drawn sprites are already sharp */
+ setTimeout(function(){if(!BOOT.done)finishBoot();},2600);
 }
 
 // ---------- maps ----------
@@ -127,7 +299,18 @@ var ENEMY={
  bat:{name:'Cave Bat',spr:SPR.bat,hp:18,spd:2.2,gold:15,dmg:1,fly:true},
  gargoyle:{name:'Gargoyle',spr:SPR.gargoyle,hp:90,spd:1.4,gold:25,dmg:2,fly:true},
  wyvern:{name:'Wyvern',spr:SPR.wyvern,hp:220,spd:1.0,gold:50,dmg:3,fly:true},
- skyboss:{name:'Sky WARLORD',spr:SPR.wyvern,hp:1000,spd:0.8,gold:100,dmg:5,fly:true,boss:true}
+ skyboss:{name:'Sky WARLORD',spr:SPR.wyvern,hp:1000,spd:0.8,gold:100,dmg:5,fly:true,boss:true},
+ /* ---- the classic five ---- */
+ sapper:{name:'Goblin Sapper',spr:SPR.sapper,hp:16,spd:2.9,gold:12,dmg:1,swarm:true,
+  blurb:'runs the choke with a lit charge — kills anything it reaches'},
+ vanguard:{name:'Shielded Vanguard',spr:SPR.vanguard,hp:240,spd:0.7,gold:55,dmg:2,shield:true,
+  blurb:'a tower shield from the front: bolts bounce, magic does not'},
+ ram:{name:'Siege Ram',spr:SPR.ram,hp:560,spd:0.36,gold:120,dmg:6,armor:0.5,siege:true,
+  blurb:'slow iron-headed ram — double exit damage, breaks on fire'},
+ shade:{name:'Dark Necromancer',spr:SPR.shade,hp:130,spd:0.7,gold:70,dmg:1,heal:true,raise:true,ward:true,
+  blurb:'heals the horde, raises skeletons, and wards what stands near'},
+ harpy:{name:'Sky Harpy',spr:SPR.harpy,hp:75,spd:2.3,gold:30,dmg:2,fly:true,air:true,
+  blurb:'screams over the ground troops — only anti-air can touch her'}
 };
 // ---------- tower defs (noAir = cannot hit flying) ----------
 var TW={
@@ -142,6 +325,9 @@ var TW={
  Bank:{cost:140,bank:true,col:'#c9a23a',desc:'Bank: +8 gold/4s per level',per:'+8 gold/4s per level'}
 };
 TW.Cannon.noAir=true;TW.Mortar.noAir=true;
+/* what a shot is made of: magic goes through shields, fire breaks armour */
+TW.Frost.magic=true;TW.Poison.magic=true;TW.Tesla.magic=true;TW.Laser.magic=true;TW.Sniper.magic=true;
+TW.Cannon.boom=true;TW.Mortar.boom=true;
 var TOWERLIST=['Archer','Cannon','Frost','Sniper','Poison','Tesla','Laser','Mortar','Bank'];
 
 // ---------- themed tower sprites ----------
@@ -190,7 +376,7 @@ function drawTowerSprite(type,x,y,angle,lvl){
 }
 
 // the tag the hub compares against the feed; bump it when the game changes
-var BUILD_TAG='f2';
+var BUILD_TAG='f3';
 
 // ---------- game state ----------
 var lives,coins,waveNum,grid,enemies,shots,fx,spawnT,spawnQ,selTower,gameOver,shakeT,frame,hoverTile,hoverTower,loopCount;
@@ -203,6 +389,7 @@ function init(){
  var picks=document.querySelectorAll('td.t.sel');
  for(var pi=0;pi<picks.length;pi++)picks[pi].classList.remove('sel');
  document.getElementById('buildTag').textContent=BUILD_TAG;
+ heroReset();paintPortrait();
  msg('');updHUD();
 }
 function restart(){init();}
@@ -213,6 +400,17 @@ function updHUD(){
  document.getElementById('coins').textContent=coins;
  document.getElementById('wave').textContent=waveNum;
  document.getElementById('loop').textContent=loopCount;
+ var nw=document.getElementById('nextWave');
+ if(nw)nw.textContent=wavePreviewText();
+}
+function wavePreviewText(){
+ var q=waveList(Math.min(20,(waveNum||0)+1));
+ if(!q||!q.length)return '';
+ var counts={},order=[];
+ q.forEach(function(k){if(!counts[k]){counts[k]=0;order.push(k);}counts[k]++;});
+ return 'NEXT \u2014 WAVE '+((waveNum||0)+1)+': '+order.map(function(k){
+  return counts[k]+'\u00d7 '+ENEMY[k].name;
+ }).join('  \u00b7  ');
 }
 function bind(id,fn){document.getElementById(id).addEventListener('click',fn);}
 bind('btnRestart',restart);
@@ -248,7 +446,12 @@ intelEl.innerHTML='<tr><th>Monster</th><th>HP</th><th>Speed</th><th>Trait</th></
  '<tr><td>Wyvern &#9992;</td><td>very high</td><td>slow</td><td>FLIES, tanky</td></tr>'+
  '<tr><td>Stone Ogre</td><td>extreme</td><td>very slow</td><td>super tanky</td></tr>'+
  '<tr><td>WARLORD</td><td>boss</td><td>slow</td><td>spawns goblins</td></tr>'+
- '<tr><td>Sky WARLORD &#9992;</td><td>boss</td><td>medium</td><td>FLYING boss</td></tr>';
+ '<tr><td>Sky WARLORD &#9992;</td><td>boss</td><td>medium</td><td>FLYING boss</td></tr>'+
+ '<tr><td>Goblin Sapper</td><td>very low</td><td>very fast</td><td>swarms the choke</td></tr>'+
+ '<tr><td>Shielded Vanguard</td><td>high</td><td>slow</td><td>shield: physical 35% &mdash; magic full</td></tr>'+
+ '<tr><td>Siege Ram</td><td>extreme</td><td>very slow</td><td>armour 50%, 6 lives, fire breaks it</td></tr>'+
+ '<tr><td>Dark Necromancer</td><td>high</td><td>slow</td><td>heals, raises, wards the horde</td></tr>'+
+ '<tr><td>Sky Harpy &#9992;</td><td>medium</td><td>very fast</td><td>FLIES &mdash; anti-air only</td></tr>';
 
 // ---------- waves ----------
 function waveList(n){
@@ -274,6 +477,12 @@ function waveList(n){
  if(n>=10)for(i=0;i<scaled(n/2);i++)q.push('necro');
  if(n>=12)for(i=0;i<scaled(n/2);i++)q.push('wyvern');
  if(n>=14)for(i=0;i<scaled(n/2);i++)q.push('ogre');
+ /* the classic five, each on its own hook: the choke fills up early, the siege comes late */
+ if(n>=3)for(i=0;i<scaled(n/2);i++)q.push('sapper');
+ if(n>=8)for(i=0;i<scaled(n/2);i++)q.push('harpy');
+ if(n>=9)for(i=0;i<scaled(n/2);i++)q.push('vanguard');
+ if(n>=11)for(i=0;i<scaled(n/3);i++)q.push('ram');
+ if(n>=13)for(i=0;i<scaled(n/2);i++)q.push('shade');
  return q;
 }
 function startWave(){
@@ -311,7 +520,7 @@ function spawnEnemy(type,atWp,ax,ay){
  var d=ENEMY[type];
  var e={type:type,def:d,hp:hpFor(type),maxhp:hpFor(type),
   x:WAYP[0][0],y:WAYP[0][1],wi:atWp||0,
-  slow:0,poi:0,flash:0,frame:0,flyT:Math.random()*6};
+  slow:0,poi:0,flash:0,frame:0,flyT:Math.random()*6,stun:0};
  if(d.fly){e.x=-20;e.y=40+Math.random()*(cv.height-80);}
  if(ax!==undefined){e.x=ax;e.y=ay;}
  enemies.push(e);
@@ -320,7 +529,12 @@ function stepEnemies(){
  for(var i=enemies.length-1;i>=0;i--){
   var e=enemies[i];
   var spd=e.def.spd*(e.slow>0?0.45:1);
-  if(e.def.fly){
+  var stunned=e.stun>0;if(stunned)e.stun--;
+  /* the knight holds the road: anything that reaches him turns on him instead of walking past */
+  var hold=stunned||(!e.def.fly&&HERO.down<=0&&Math.hypot(e.x-HERO.x,e.y-HERO.y)<38);
+  if(hold){
+   if(stunned&&frame%9===0)fx.push({t:'puff',x:e.x+(Math.random()*18-9),y:e.y-26,vx:0,vy:-0.6,life:0,maxF:20,col:'#ffe08a'});
+  }else if(e.def.fly){
    e.flyT+=0.05;
    e.x+=spd;
    e.y+=Math.sin(e.flyT)*0.4;
@@ -366,6 +580,7 @@ function stepEnemies(){
   if(e.hp<=0){
    coins+=e.def.gold;updHUD();
    fx.push({x:e.x,y:e.y,t:'txt',s:'+$'+e.def.gold,col:'#ffd000'});
+   burst(e.x,e.y,e.def.boss?26:9,e.def.fly?'#c0a060':'#7ac93a',e.def.boss?3.4:2);
    if(e.def.boss){shakeT=30;msg(e.def.fly?'SKY WARLORD SLAIN!':'WARLORD SLAIN!');}
    enemies.splice(i,1);
   }
@@ -425,12 +640,39 @@ function tapTile(tx,ty,shift){
  }else msg('Not enough gold for '+selTower+'.');
 }
 cv.addEventListener('pointerdown',function(ev){
+ var rect=cv.getBoundingClientRect();
+ var mx=(ev.clientX-rect.left)*(cv.width/rect.width);
+ var my=(ev.clientY-rect.top)*(cv.height/rect.height);
+ if(!gameOver){
+  if(Math.hypot(mx-HERO.x,my-HERO.y)<30){
+   heroSelect(!HERO.sel);
+   msg(HERO.sel?'Knight selected \u2014 tap the board and he will hold that ground.':'Knight released.');
+   return;
+  }
+  if(HERO.sel){
+   if(heroMoveTo(mx,my)){
+    heroSelect(false);
+    fx.push({t:'ring',x:mx,y:my,r:4,max:28,col:'#ffe08a'});
+    msg('Knight moving \u2014 anything that reaches him stops to fight.');
+   }
+   return;
+  }
+ }
  var p=tileAt(ev);
  tapTile(p[0],p[1],ev.shiftKey);
 });
+bind('bashBtn',function(){heroBash();});
 function towerRange(t){return t.rngv||t.def.rng||100;}
 function towerDmg(t){return(t.def.dmg||1)*(1+0.35*(t.lvl-1));}
-function applyHit(e,dmg){e.hp-=dmg;e.flash=5;}
+function applyHit(e,dmg,src){
+ src=src||{};
+ var d=dmg;
+ if(e.def.shield&&!src.magic&&!src.flank)d*=0.35;      /* the tower shield takes the bolt */
+ if(e.def.armor&&!src.magic&&!src.boom)d*=(1-e.def.armor);
+ if(e.def.ward)d*=0.88;                                  /* the dark ward hums around it */
+ e.hp-=d;e.flash=5;
+ if(d>=0.5)dmgText(e.x,e.y-30,Math.max(1,Math.round(d)),src.magic?'#a0e8ff':(src.boom?'#ffb060':'#ffe08a'));
+}
 
 // ---------- towers firing ----------
 function stepTowers(){
@@ -446,22 +688,22 @@ function stepTowers(){
    if(t.def.noAir&&e.def.fly)return;
    var d=Math.hypot(e.x-t.rx,e.y-t.ry);if(d<towerRange(t)&&d<bd){bd=d;best=e;}});
   if(!best)continue;
-  t.cd=Math.max(3,Math.floor(t.def.rate/(0.8+0.15*t.lvl)));
+  t.cd=Math.max(3,Math.floor(t.def.rate/((0.8+0.15*t.lvl)*(t.aura?1.18:1))));t.flash=6;
   t.angle=Math.atan2(best.y-t.ry,best.x-t.rx);
   var dmg=towerDmg(t);
-  if(t.def.beam){applyHit(best,dmg);shots.push({x1:t.rx,y1:t.ry,x2:best.x,y2:best.y,beam:true,life:4,col:'#ff4040'});}
+  if(t.def.beam){applyHit(best,dmg,{magic:true});shots.push({x1:t.rx,y1:t.ry,x2:best.x,y2:best.y,beam:true,life:4,col:'#ff4040'});}
   else if(t.def.chain){
    var hit=[best],cur=best;
    enemies.forEach(function(e){if(hit.indexOf(e)<0&&Math.hypot(e.x-cur.x,e.y-cur.y)<55)hit.push(e);});
-   hit.forEach(function(e){applyHit(e,dmg);});
+   hit.forEach(function(e){applyHit(e,dmg,{magic:true});});
    shots.push({x1:t.rx,y1:t.ry,x2:best.x,y2:best.y,beam:true,life:5,col:'#40b0e0'});
   }
   else if(t.def.splash){
-   enemies.forEach(function(e){if(!(t.def.noAir&&e.def.fly)&&Math.hypot(e.x-best.x,e.y-best.y)<t.def.splash)applyHit(e,dmg);});
+   enemies.forEach(function(e){if(!(t.def.noAir&&e.def.fly)&&Math.hypot(e.x-best.x,e.y-best.y)<t.def.splash)applyHit(e,dmg,{boom:true,magic:!!t.def.magic});});
    shots.push({x:t.rx,y:t.ry,tgt:best,proj:true,life:400,splash:t.def.splash,col:t.def.col});
   }
   else{
-   applyHit(best,dmg);
+   applyHit(best,dmg,{magic:!!t.def.magic,boom:!!t.def.boom});
    if(t.def.poison)best.poi=100;
    if(t.def.slow)best.slow=100;
    shots.push({x:t.rx,y:t.ry,tgt:best,proj:true,life:400,col:t.def.col});
@@ -479,12 +721,16 @@ function stepShots(){
     shots.splice(i,1);continue;
    }
    s.x+=dx/d*7;s.y+=dy/d*7;
+   s.trail=s.trail||[];s.trail.push({x:s.x,y:s.y});if(s.trail.length>7)s.trail.shift();
   }else{s.life--;if(s.life<=0)shots.splice(i,1);}
  }
 }
 function stepFx(){
  for(var i=fx.length-1;i>=0;i--){var f=fx[i];
-  if(f.t==='txt'){f.y-=0.6;f.life=(f.life||0)+1;if(f.life>45)fx.splice(i,1);}
+  if(f.t==='txt'){f.y-=0.62;f.life=(f.life||0)+1;if(f.life>48)fx.splice(i,1);}
+  else if(f.t==='puff'){f.life++;f.x+=f.vx;f.y+=f.vy;f.vy+=0.09;if(f.life>f.maxF)fx.splice(i,1);}
+  else if(f.t==='shock'){f.r+=7;if(f.r>f.max)fx.splice(i,1);}
+  else if(f.t==='slash'){f.life++;if(f.life>f.max)fx.splice(i,1);}
   else{f.r+=3;if(f.r>f.max)fx.splice(i,1);}
  }
 }
@@ -528,7 +774,17 @@ function drawTowers(){
  for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
   var t=grid[y][x];if(!t)continue;
   cx.fillStyle='rgba(0,0,0,0.3)';cx.fillRect(t.rx-16,t.ry+16,32,6);
+  if(t.aura){
+   cx.strokeStyle='rgba(255,224,138,0.5)';cx.lineWidth=2;
+   cx.beginPath();cx.arc(t.rx,t.ry-4,17+Math.sin(frame*0.08)*1.5,0,Math.PI*2);cx.stroke();
+  }
   drawTowerSprite(t.type,t.rx,t.ry,t.type==='Mortar'?0:t.angle,t.lvl);
+  if(t.flash>0){
+   t.flash--;
+   cx.globalAlpha=t.flash/8;cx.fillStyle='#fff2b0';
+   cx.beginPath();cx.arc(t.rx+Math.cos(t.angle||0)*18,t.ry+Math.sin(t.angle||0)*18,5,0,Math.PI*2);cx.fill();
+   cx.globalAlpha=1;
+  }
  }
 }
 function drawEnemies(){
@@ -540,22 +796,48 @@ function drawEnemies(){
   cx.fillRect(Math.round(e.x)-8,Math.round(e.y)+16,16,4);
   drawE(e);});
  function drawE(e){
-  drawSprite(e.def.spr,e.x,e.y,e.frame,e.flash>0);
+  drawMonster(e);
   var w=e.def.boss?40:26,hp=Math.max(0,e.hp/e.maxhp);
   cx.fillStyle='#000';cx.fillRect(e.x-w/2-1,e.y-32,w+2,5);
   cx.fillStyle=hp>0.5?'#4ac92a':(hp>0.25?'#ffd000':'#ff4040');cx.fillRect(e.x-w/2,e.y-31,w*hp,3);
+  if(e.stun>0){
+   cx.fillStyle='#ffe08a';cx.font='bold 11px monospace';
+   cx.fillText('\u2736',e.x-4,e.y-38);cx.fillText('\u2736',e.x-14,e.y-34);
+  }
  }
 }
 function drawShots(){
  shots.forEach(function(s){
   if(s.beam){cx.strokeStyle=s.col;cx.lineWidth=2;cx.beginPath();cx.moveTo(s.x1,s.y1);cx.lineTo(s.x2,s.y2);cx.stroke();}
-  else{cx.fillStyle='#f0f0d0';cx.fillRect(s.x-3,s.y-3,6,6);}
+  else{
+   if(s.trail)s.trail.forEach(function(p,i){
+    cx.globalAlpha=(i+1)/s.trail.length*0.45;cx.fillStyle=s.col||'#f0f0d0';
+    cx.fillRect(p.x-2,p.y-2,4,4);cx.globalAlpha=1;
+   });
+   cx.fillStyle='rgba(0,0,0,.3)';cx.fillRect(s.x-3,s.y+4,6,3);
+   cx.fillStyle='#f0f0d0';cx.fillRect(s.x-3,s.y-3,6,6);
+  }
  });
 }
 function drawFx(){
  fx.forEach(function(f){
-  if(f.t==='txt'){cx.fillStyle=f.col;cx.font='bold 12px monospace';cx.fillText(f.s,f.x-12,f.y);}
-  else{cx.strokeStyle=f.col;cx.lineWidth=2;cx.beginPath();cx.arc(f.x,f.y,f.r,0,Math.PI*2);cx.stroke();}
+  if(f.t==='txt'){
+   var a=Math.max(0,1-(f.life||0)/48),sc=1+Math.min(0.5,(f.life||0)/40);
+   cx.globalAlpha=a;cx.fillStyle=f.col;cx.font='bold '+Math.round(12*sc)+'px monospace';
+   cx.strokeStyle='rgba(0,0,0,.75)';cx.lineWidth=3;
+   cx.strokeText(f.s,f.x-12,f.y);cx.fillText(f.s,f.x-12,f.y);cx.globalAlpha=1;
+  }else if(f.t==='puff'){
+   cx.globalAlpha=Math.max(0,1-f.life/f.maxF);cx.fillStyle=f.col;
+   cx.fillRect(Math.round(f.x),Math.round(f.y),3,3);cx.globalAlpha=1;
+  }else if(f.t==='shock'){
+   cx.globalAlpha=Math.max(0,1-f.r/f.max);cx.strokeStyle=f.col;cx.lineWidth=4;
+   cx.beginPath();cx.arc(f.x,f.y,f.r,0,Math.PI*2);cx.stroke();cx.globalAlpha=1;
+  }else if(f.t==='slash'){
+   cx.globalAlpha=Math.max(0,1-f.life/f.max);cx.strokeStyle='#ffffff';cx.lineWidth=3;
+   cx.beginPath();cx.arc(f.x,f.y,16,-1.2,0.8);cx.stroke();cx.globalAlpha=1;
+  }else{
+   cx.strokeStyle=f.col;cx.lineWidth=2;cx.beginPath();cx.arc(f.x,f.y,f.r,0,Math.PI*2);cx.stroke();
+  }
  });
 }
 function drawWaveInfo(){
@@ -565,6 +847,153 @@ function drawWaveInfo(){
  if(parts.length){cx.fillStyle='#ffe08a';cx.font='12px monospace';cx.fillText('Incoming: '+parts.join(', '),10,cv.height-8);}
 }
 
+// ---------- the Royal Knight: click-to-move, Royal Aura, Shield Bash ----------
+var HERO={x:0,y:0,tx:0,ty:0,hp:320,maxhp:320,down:0,cd:0,bashCd:0,sel:false,flash:0,swing:0,
+ spawnX:0,spawnY:0,walk:0,kills:0,blocked:0};
+var BASH_CD=720, BASH_R=112, BASH_DMG=46, BASH_STUN=96, AURA_R=150, HERO_REACH=46;
+function heroReset(){
+ /* he starts beside the road, not on it: the player decides where he holds */
+ HERO.x=HERO.spawnX=7*T+T/2;HERO.y=HERO.spawnY=5*T+T/2;
+ HERO.tx=HERO.x;HERO.ty=HERO.y;HERO.hp=HERO.maxhp;HERO.down=0;HERO.cd=0;HERO.bashCd=0;
+ HERO.sel=false;HERO.flash=0;HERO.swing=0;HERO.walk=0;HERO.kills=0;HERO.blocked=0;
+ for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++)if(grid&&grid[y]&&grid[y][x])grid[y][x].aura=0;
+ paintHeroBar();
+}
+function heroSelect(on){HERO.sel=!!on;paintHeroBar();}
+function heroMoveTo(px,py){
+ if(gameOver||HERO.down>0)return false;
+ HERO.tx=Math.max(12,Math.min(cv.width-12,px));
+ HERO.ty=Math.max(12,Math.min(cv.height-12,py));
+ return true;
+}
+/* a sword does not reach the sky: the knight fights what walks, the towers take the air */
+function heroNear(r){return enemies.filter(function(e){return !e.def.fly&&Math.hypot(e.x-HERO.x,e.y-HERO.y)<r;});}
+function heroBash(){
+ if(gameOver||HERO.down>0||HERO.bashCd>0)return false;
+ HERO.bashCd=BASH_CD;shakeT=Math.max(shakeT,16);
+ var inRange=heroNear(BASH_R);
+ fx.push({t:'shock',x:HERO.x,y:HERO.y,r:10,max:BASH_R,col:'#ffe08a',life:0});
+ for(var i=0;i<18;i++){
+  var a=Math.PI*2*i/18;
+  fx.push({t:'puff',x:HERO.x+Math.cos(a)*16,y:HERO.y+Math.sin(a)*16,
+   vx:Math.cos(a)*2.8,vy:Math.sin(a)*2.4,life:0,maxF:36,col:'#ffe08a'});
+ }
+ inRange.forEach(function(e){e.stun=BASH_STUN;applyHit(e,BASH_DMG,{magic:true});});
+ msg(inRange.length?('SHIELD BASH — '+inRange.length+' monster'+(inRange.length===1?'':'s')+' stunned!'):'SHIELD BASH — the ground shakes, but nothing was close.');
+ paintHeroBar();
+ return true;
+}
+function stepHero(){
+ if(gameOver)return;
+ if(HERO.bashCd>0)HERO.bashCd--;
+ if(HERO.down>0){
+  HERO.down--;
+  if(HERO.down===0){HERO.x=HERO.spawnX;HERO.y=HERO.spawnY;HERO.tx=HERO.x;HERO.ty=HERO.y;
+   HERO.hp=HERO.maxhp;msg('The knight rises again.');}
+  paintHeroBar();return;
+ }
+ var dx=HERO.tx-HERO.x,dy=HERO.ty-HERO.y,d=Math.hypot(dx,dy);
+ if(d>2){HERO.x+=dx/d*3.4;HERO.y+=dy/d*3.4;HERO.walk++;}else HERO.walk=0;
+ /* Royal Aura: every tower standing with him fires faster */
+ for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
+  var t=grid[y][x];if(!t)continue;
+  t.aura=Math.hypot(t.rx-HERO.x,t.ry-HERO.y)<AURA_R?1:0;
+ }
+ var reach=heroNear(HERO_REACH);
+ if(HERO.swing>0)HERO.swing--;
+ if(reach.length){
+  if(HERO.cd>0)HERO.cd--;
+  else{
+   HERO.cd=42;HERO.swing=9;
+   var tgt=reach[0];
+   var dmg=Math.max(6,22+Math.floor(waveNum*0.7));
+   applyHit(tgt,dmg,{});
+   fx.push({t:'slash',x:tgt.x,y:tgt.y,life:0,max:9});
+   if(tgt.hp<=0)HERO.kills++;
+  }
+  /* the horde fights back — the stance of a knight who stays put is his armour */
+  var guard=Math.hypot(HERO.tx-HERO.x,HERO.ty-HERO.y)<3?0.65:1;
+  HERO.hp-=0.10*reach.length*guard;
+  if(HERO.hp<=0){
+   HERO.hp=0;HERO.down=420;HERO.sel=false;
+   fx.push({t:'shock',x:HERO.x,y:HERO.y,r:6,max:70,col:'#ff6060',life:0});
+   msg('The knight is down — he will rise again in seven seconds.');
+  }
+ }else if(HERO.hp<HERO.maxhp){
+  HERO.hp=Math.min(HERO.maxhp,HERO.hp+0.22);
+ }
+ paintHeroBar();
+}
+function paintHeroBar(){
+ var bar=document.querySelector('#heroHp i');
+ if(bar)bar.style.width=Math.max(0,Math.round(HERO.hp/HERO.maxhp*100))+'%';
+ var btn=document.getElementById('bashBtn');
+ if(btn){
+  var ready=HERO.bashCd<=0&&HERO.down<=0&&!gameOver;
+  btn.disabled=!ready;
+  btn.className=ready?'on':'';
+  var fill=btn.querySelector('i');
+  if(fill)fill.style.width=Math.round((1-HERO.bashCd/BASH_CD)*100)+'%';
+  var label=btn.querySelector('b');
+  if(label)label.textContent=ready?'SHIELD BASH':(HERO.down>0?'DOWN':(Math.ceil(HERO.bashCd/60)+'s'));
+ }
+ var tag=document.getElementById('heroTag');
+ if(tag)tag.textContent=HERO.down>0?('KNIGHT DOWN — '+Math.ceil(HERO.down/60)+'s')
+   :(HERO.sel?'KNIGHT — tap the board to move him':'KNIGHT — tap him, then tap the board');
+}
+function paintPortrait(){
+ var c=document.getElementById('heroPortrait');if(!c||!c.getContext)return;
+ var g=c.getContext('2d');if(!g||!g.fillRect)return;
+ var spr=SPR.knight,rows=spr.frames[0];
+ var s=Math.max(1,Math.floor(Math.min(c.width/(rows[0].length*spr.s),c.height/(rows.length*spr.s))));
+ var w=rows[0].length*spr.s*s,h=rows.length*spr.s*s;
+ g.clearRect(0,0,c.width,c.height);
+ g.fillStyle='#0d130a';g.fillRect(0,0,c.width,c.height);
+ for(var r=0;r<rows.length;r++)for(var col=0;col<rows[r].length;col++){
+  var ch=rows[r][col];if(ch==='.'||ch===' ')continue;
+  g.fillStyle=spr.pal[ch]||'#ff00ff';
+  g.fillRect(Math.round((c.width-w)/2)+col*spr.s*s,Math.round((c.height-h)/2)+r*spr.s*s,spr.s*s,spr.s*s);
+ }
+}
+function drawHero(){
+ if(HERO.down>0&&HERO.down%20>10)return;                /* a slow blink while he is down */
+ var bob=HERO.walk?Math.sin(HERO.walk*0.35)*1.2:Math.sin(frame*0.06)*0.8;
+ var y=Math.round(HERO.y+bob);
+ cx.fillStyle='rgba(0,0,0,0.34)';
+ cx.beginPath();cx.ellipse(HERO.x,HERO.y+18,16,5,0,0,Math.PI*2);cx.fill();
+ if(HERO.sel){
+  cx.strokeStyle='rgba(255,224,138,0.9)';cx.lineWidth=2;cx.setLineDash([5,4]);
+  cx.beginPath();cx.arc(HERO.x,HERO.y+18,20,0,Math.PI*2);cx.stroke();cx.setLineDash([]);
+ }
+ drawSprite(SPR.knight,HERO.x,y,HERO.walk?Math.floor(HERO.walk/6)%2:0,HERO.flash>0);
+ if(HERO.swing>0){
+  cx.strokeStyle='rgba(255,255,210,'+(0.25+HERO.swing/12)+')';cx.lineWidth=3;
+  cx.beginPath();cx.arc(HERO.x+12,y-6,20,-1.3,0.9);cx.stroke();
+ }
+ var w=30,hp=Math.max(0,HERO.hp/HERO.maxhp);
+ cx.fillStyle='#000';cx.fillRect(HERO.x-w/2-1,y-38,w+2,5);
+ cx.fillStyle='#ffe08a';cx.fillRect(HERO.x-w/2,y-37,w,3);
+ cx.fillStyle=hp>0.5?'#7ac93a':(hp>0.25?'#ffd000':'#ff4040');cx.fillRect(HERO.x-w/2,y-37,w*hp,3);
+}
+
+function dmgText(x,y,s,col){fx.push({t:'txt',s:String(s),x:x,y:y-26,col:col||'#ffe08a',life:0});}
+function burst(x,y,n,col,spd){
+ for(var i=0;i<n;i++){var a=Math.random()*Math.PI*2,v=spd*(0.4+Math.random());
+  fx.push({t:'puff',x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-0.4,life:0,maxF:24+Math.random()*14,col:col});}
+}
+/* a PNG in TD/ wins; the character grid is the fallback and the default */
+function drawMonster(e){
+ var img=SPRITE['monsters:'+e.type];
+ var bob=e.def.fly?Math.sin(frame*0.12+e.flyT)*2.2:Math.sin((frame+e.flyT*10)*0.09)*1.1;
+ var y=e.y+bob;
+ if(img&&img.width){
+  var spr=e.def.spr,rows=spr.frames?spr.frames[0]:spr.rows.concat(spr.legs1||[]);
+  var w=rows[0].length*spr.s,h=rows.length*spr.s;
+  cx.drawImage(img,Math.round(e.x-w/2),Math.round(y-h/2),w,h);
+  if(e.flash>0){cx.globalAlpha=.6;cx.fillStyle='#fff';
+   cx.fillRect(Math.round(e.x-w/2),Math.round(y-h/2),w,h);cx.globalAlpha=1;}
+ }else drawSprite(e.def.spr,e.x,y,e.frame,e.flash>0);
+}
 // ---------- main loop ----------
 var SPAWN_EVERY=20;
 function tickSim(){
@@ -574,30 +1003,34 @@ function tickSim(){
   if(spawnT>0)spawnT--;
   if(spawnT<=0){spawnEnemy(spawnQ.shift());spawnT=SPAWN_EVERY;}
  }
- stepEnemies();stepTowers();stepShots();stepFx();
+ stepEnemies();stepHero();stepTowers();stepShots();stepFx();
 }
 
 /* locked to 60 — a 120 Hz phone plays the same game, not a faster one */
 var FRAME_MS=1000/60,lastFrame=0;
+function paint(){
+ cx.save();
+ if(shakeT>0){shakeT--;cx.translate(Math.floor(Math.random()*6-3),Math.floor(Math.random()*6-3));}
+ drawMap();drawRangeCircles();drawTowers();drawEnemies();drawHero();drawShots();drawFx();drawWaveInfo();
+ cx.restore();
+ if(gameOver){cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle='#ff4040';cx.font='bold 34px monospace';cx.textAlign='center';cx.fillText('GAME OVER',cv.width/2,cv.height/2);cx.textAlign='left';}
+}
 function loop(ts){
  if(ts-lastFrame<FRAME_MS-0.6){requestAnimationFrame(loop);return;}
  lastFrame=ts;
  tickSim();
- cx.save();
- if(shakeT>0){shakeT--;cx.translate(Math.floor(Math.random()*6-3),Math.floor(Math.random()*6-3));}
- drawMap();drawRangeCircles();drawTowers();drawEnemies();drawShots();drawFx();drawWaveInfo();
- cx.restore();
- if(gameOver){cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle='#ff4040';cx.font='bold 34px monospace';cx.textAlign='center';cx.fillText('GAME OVER',cv.width/2,cv.height/2);cx.textAlign='left';}
+ paint();
  requestAnimationFrame(loop);
 }
 init();
+bootAssets();
 
 window.KDL_FORTRESS={
  buildTag:BUILD_TAG,
  state:function(){return {lives:lives,coins:coins,waveNum:waveNum,loopCount:loopCount,gameOver:gameOver,
    map:MAPS[curMapIdx].name,enemies:enemies.length,shots:shots.length,spawnLeft:spawnQ.length};},
  towers:function(){var out=[];for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){var t=grid[y][x];
-   if(t)out.push({type:t.type,lvl:t.lvl,x:x,y:y,cost:t.totalCost,range:towerRange(t),dmg:towerDmg(t)});}return out;},
+   if(t)out.push({type:t.type,lvl:t.lvl,x:x,y:y,cost:t.totalCost,range:towerRange(t),dmg:towerDmg(t),aura:!!t.aura});}return out;},
  grid:function(){return grid;},
  maps:MAPS,towerDefs:TW,enemyDefs:ENEMY,towerList:TOWERLIST,
  waveList:waveList,
@@ -610,13 +1043,32 @@ window.KDL_FORTRESS={
  spawn:function(type){spawnEnemy(type);},
  hurt:function(n){lives-=n;if(lives<=0){lives=0;if(!gameOver){gameOver=true;msg('GAME OVER — the horde broke through!');}}updHUD();return lives;},
  enemyList:function(){return enemies.map(function(e){return {type:e.type,hp:Math.round(e.hp),max:e.maxhp,
-   slow:e.slow,poi:e.poi,fly:!!e.def.fly,x:Math.round(e.x),y:Math.round(e.y)};});},
+   slow:e.slow,poi:e.poi,stun:e.stun||0,fly:!!e.def.fly,x:Math.round(e.x),y:Math.round(e.y)};});},
  tile:T,cols:COLS,rows:ROWS,
  path:function(){return Object.keys(pathSet);},
  hudText:function(){return document.getElementById('hud').textContent;},
  msgText:function(){return document.getElementById('msg').textContent;},
  tipText:function(){return document.getElementById('tip').textContent;},
- frameMs:FRAME_MS
+ frameMs:FRAME_MS,
+ hero:function(){return {x:Math.round(HERO.x),y:Math.round(HERO.y),tx:Math.round(HERO.tx),ty:Math.round(HERO.ty),
+   hp:Math.round(HERO.hp),maxhp:HERO.maxhp,down:HERO.down,bashCd:HERO.bashCd,sel:HERO.sel,kills:HERO.kills};},
+ heroSelect:heroSelect, heroMoveTo:heroMoveTo, heroBash:heroBash, heroReset:heroReset,
+ brush:function(x,y){HERO.x=x;HERO.y=y;HERO.tx=x;HERO.ty=y;},
+ auraAt:function(x,y){var c=0;for(var yy=0;yy<ROWS;yy++)for(var xx=0;xx<COLS;xx++){
+   var t=grid[yy][xx];if(t&&t.aura)c++;}return c;},
+ assets:function(){return {done:BOOT.done,total:BOOT.total,settled:BOOT.settled,png:BOOT.png,source:BOOT.source};},
+ assetList:function(){return ASSET_LIST.map(function(a){return a.key+'='+a.path;});},
+ spriteMode:function(k){return SPRITE_STATE[k]||'drawn';},
+ manifestUrl:function(){return ASSET_BASES[0]+'resources/assets.json';},
+ probe:function(type,dmg,src){
+  var d=ENEMY[type];if(!d)return null;
+  var fake={type:type,def:d,hp:hpFor(type),maxhp:hpFor(type),x:0,y:0,flash:0,frame:0};
+  var before=fake.hp;applyHit(fake,dmg,src||{});
+  return Math.round((before-fake.hp)*100)/100;
+ },
+ waveHas:function(n,type){return waveList(n).indexOf(type)>=0;},
+ paint:paint,
+ sprites:SPR
 };
 requestAnimationFrame(loop);
 </script>

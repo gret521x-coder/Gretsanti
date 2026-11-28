@@ -186,7 +186,30 @@ build); the keys are already in the manifest so nothing has to be renamed later.
 
 ---
 
-### Installing a picture (build f4)
+### The first art that is not drawn (build f5)
+
+Two pictures are in the game now, both taken from a screenshot of a painted tower-defence board:
+
+- **`TD/images/maps/forest_trail.png`** (720×480, 149 KB) — the backdrop for **Forest Trail**, and
+  the same picture behind the boot screen. It is softened and slightly dimmed before install, so it
+  reads as out-of-focus terrain and the roads and units in it do not compete with the ones you play
+  with: the road on the board is still the road the horde walks, painted on top at 78 %.
+- **`TD/images/heroes/royal_knight_portrait.png`** (76×76, 4 KB) — drawn into the 38×38 HUD
+  portrait, twice the resolution it is shown at.
+
+The other four maps have a slot each (`maps:serpent`, `swamp`, `canyon`, `ashen`) and nothing in
+them, so they keep the drawn grid. A backdrop needs no alpha — `sprite-boxes.json` marks those slots
+`opaque`, which the installer honours.
+
+Swapping either picture is one command:
+
+```bash
+node TD/tools/install-sprite.js mine.png maps:forest
+```
+
+---
+
+### Installing a picture (build f5)
 
 Any of the 36 slots takes a PNG now — not just monsters. Towers, the knight on the board and the
 HUD portrait all ask for their picture first and fall back to the character grid if it is missing,

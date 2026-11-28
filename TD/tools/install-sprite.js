@@ -73,16 +73,21 @@ for (let i = 0; i < argv.length; i++) {
 }
 const [source, key] = rest;
 
+if (source === '--list') {
+  const man = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'resources', 'assets.json'), 'utf8'));
+  const boxes = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'resources', 'sprite-boxes.json'), 'utf8')).boxes;
+  ['towers', 'troops', 'monsters', 'heroes', 'ui', 'maps'].forEach(g => {
+    Object.keys(man[g] || {}).forEach(k => {
+      const b = boxes[g + ':' + k] || [];
+      console.log((g + ':' + k).padEnd(30) + ' ' + String(b[0] || '?') + '×' + String(b[1] || '?') +
+        (b[2] === 'opaque' ? ' opaque' : '').padEnd(8) + '  ' + man[g][k]);
+    });
+  });
+  process.exit(0);
+}
 if (!source || !key) {
   fail('usage: node TD/tools/install-sprite.js <source.png> <group:key> [--force] [--root DIR]\n' +
     '       keys: node TD/tools/install-sprite.js --list');
-}
-if (source === '--list') {
-  const man = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'resources', 'assets.json'), 'utf8'));
-  ['towers', 'troops', 'monsters', 'heroes', 'ui'].forEach(g => {
-    Object.keys(man[g] || {}).forEach(k => console.log(g + ':' + k + '  →  ' + man[g][k]));
-  });
-  process.exit(0);
 }
 
 const root = flags.root ? path.resolve(flags.root) : path.resolve(__dirname, '..');
@@ -106,18 +111,21 @@ if (!png) fail('that is not a PNG. The game asks for .png and nothing else.');
 
 const bytes = buf.length;
 const warn = [];
+const rawBox = boxes[key];
+const box = Array.isArray(rawBox) ? rawBox.slice(0, 2) : null;
+/* some slots are allowed to be opaque: a backdrop, a portrait — nothing is drawn behind them */
+const opaqueOK = Array.isArray(rawBox) && rawBox[2] === 'opaque';
 if (bytes > HARD_BYTES && !flags.force) {
   fail('that file is ' + Math.round(bytes / 1024) + ' KB; the ceiling is ' + (HARD_BYTES / 1024) +
     ' KB so the preloader still finishes in 2.6 s. Shrink it, or --force.');
 }
 if (bytes > SOFT_BYTES) warn.push(Math.round(bytes / 1024) + ' KB is heavy for a sprite this small');
 
-if (!hasAlpha(png, buf) && !flags.force) {
+if (!hasAlpha(png, buf) && !opaqueOK && !flags.force) {
   fail('no alpha channel — this would paint its background over the map.\n' +
     '  Export it again with a transparent background, or --force to take the box.');
 }
 
-const box = boxes[key];
 if (box) {
   const want = box[0] / box[1];
   const got = png.width / png.height;

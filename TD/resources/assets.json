@@ -1,7 +1,7 @@
 {
-  "name": "Fortress — Royal Knight",
-  "version": 12,
-  "build": "f4",
+  "name": "Fortress \u2014 Royal Knight",
+  "version": 13,
+  "build": "f5",
   "root": "TD/",
   "spritePx": 3,
   "note": "Every path is relative to TD/. The game reads this file from ../TD/resources/assets.json first, then from main on GitHub. A missing PNG is not an error: the game draws that sprite from its own character grid instead, so it always runs.",
@@ -50,5 +50,12 @@
     "shield_bash": "images/ui/shield_bash.png",
     "range_ring": "images/ui/range_ring.png",
     "coin": "images/ui/coin.png"
+  },
+  "maps": {
+    "forest": "images/maps/forest_trail.png",
+    "serpent": "images/maps/serpent_pass.png",
+    "swamp": "images/maps/swamp_loop.png",
+    "canyon": "images/maps/frozen_canyon.png",
+    "ashen": "images/maps/ashen_fortress.png"
   }
 }

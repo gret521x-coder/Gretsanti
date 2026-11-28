@@ -167,90 +167,6 @@
   }
   .tiny b { color: #a9c0d8; }
 
-  /* ---- feedback: in the header, beside the wordmark ---- */
-  .markrow { position: relative; display: flex; align-items: center; justify-content: center; }
-  .fb-pill {
-    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-    display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
-    padding: 6px 9px; border-radius: 999px; font: inherit;
-    font-size: 0.52rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--cyan); background: rgba(61, 214, 245, 0.08);
-    border: 1px solid rgba(61, 214, 245, 0.34);
-  }
-  .fb-pill:hover, .fb-pill:active { color: var(--ink); border-color: var(--cyan); background: rgba(61, 214, 245, 0.16); }
-  .fb-pill .ico { font-size: 0.74rem; line-height: 1; }
-  @media (max-width: 360px) { .fb-pill .lbl { display: none; } .fb-pill { padding: 6px 8px; } }
-
-  #feedbackSheet {
-    position: fixed; inset: 0; z-index: 70; display: none;
-    padding: 16px 14px calc(26px + env(safe-area-inset-bottom)); overflow-y: auto;
-    background: rgba(2, 4, 8, 0.92);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    -webkit-overflow-scrolling: touch;
-  }
-  #feedbackSheet.open { display: block; }
-  .fb-box {
-    width: min(460px, 100%); margin: 0 auto; padding: 14px; text-align: left;
-    border-radius: 16px; border: 1px solid var(--line);
-    background: linear-gradient(180deg, rgba(12, 22, 38, 0.98), rgba(6, 11, 20, 0.98));
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
-  }
-  .fb-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .fb-head h2 { margin: 0; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
-  .fb-close {
-    flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
-    font: inherit; font-size: 0.72rem; line-height: 1; color: var(--mut);
-    background: transparent; border: 1px solid var(--line);
-  }
-  .fb-close:hover { color: var(--ink); border-color: var(--cyan); }
-  .fb-to { margin: 3px 0 10px; font-size: 0.54rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mut); }
-  .fb-to b { color: var(--cyan); font-weight: 800; letter-spacing: 0; text-transform: none; }
-  .fb-kinds { display: flex; gap: 6px; margin-bottom: 10px; }
-  .fb-kind {
-    flex: 1 1 0; padding: 8px 6px; border-radius: 10px; cursor: pointer; font: inherit;
-    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; color: var(--mut);
-    background: rgba(4, 8, 14, 0.7); border: 1px solid var(--line);
-  }
-  .fb-kind.on { color: var(--ink); border-color: rgba(61, 214, 245, 0.55); background: rgba(61, 214, 245, 0.12); }
-  .fb-label { display: block; margin-bottom: 4px; font-size: 0.52rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mut); }
-  #fbText {
-    width: 100%; min-height: 104px; padding: 10px; resize: vertical;
-    font: inherit; font-size: 0.72rem; line-height: 1.5; color: var(--ink);
-    background: rgba(4, 8, 14, 0.9); border: 1px solid var(--line); border-radius: 10px;
-  }
-  #fbText:focus { outline: none; border-color: rgba(61, 214, 245, 0.5); }
-  .fb-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
-  #fbCount { font-size: 0.52rem; letter-spacing: 0.08em; color: var(--mut); }
-  #fbCount.over { color: var(--red); }
-  #fbName {
-    flex: 0 1 190px; padding: 8px 10px; font: inherit; font-size: 0.66rem; color: var(--ink);
-    background: rgba(4, 8, 14, 0.9); border: 1px solid var(--line); border-radius: 10px;
-  }
-  #fbName:focus { outline: none; border-color: rgba(61, 214, 245, 0.5); }
-  .fb-note { margin: 8px 0 0; font-size: 0.6rem; line-height: 1.45; color: var(--lime); }
-  .fb-note.bad { color: var(--amber); }
-  .fb-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .fb-ghost {
-    flex: 0 0 auto; padding: 9px 11px; border-radius: 10px; cursor: pointer; font: inherit;
-    font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; color: var(--mut);
-    background: transparent; border: 1px solid var(--line);
-  }
-  .fb-ghost:hover { color: var(--ink); border-color: var(--cyan); }
-  .fb-send {
-    flex: 1 1 140px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font: inherit;
-    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em;
-    color: #04121a; background: linear-gradient(180deg, var(--cyan), #22a9c8); border: 0;
-  }
-  .fb-send:disabled { opacity: 0.42; cursor: default; }
-  .fb-fine { margin: 10px 0 0; font-size: 0.54rem; line-height: 1.55; color: rgba(127, 147, 173, 0.85); }
-  .fb-fine a { color: var(--cyan); }
-  .fb-fine b { color: #a9c0d8; }
-  .fb-gate {
-    display: inline-block; margin-top: 12px; cursor: pointer; font: inherit;
-    font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--mut); background: none; border: 0; border-bottom: 1px dotted var(--mut);
-  }
-  .fb-gate:hover { color: var(--cyan); border-color: var(--cyan); }
 </style>
 </head>
 <body>
@@ -269,20 +185,14 @@
       </div>
       <div class="gate-hint" id="pwHint" hidden>Hint: Ikaw ay isang?" 😉</div>
       <div class="gate-err" id="pwError"></div>
-      <button class="fb-gate" id="feedbackGate" type="button">✉ can't get in? tell me</button>
     </div>
   </div>
 
   <main>
-    <div class="markrow">
-      <div class="mark">Alpha</div>
-      <button class="fb-pill" id="feedbackBtn" type="button" title="Tell the maker what broke — it goes straight to the inbox">
-        <span class="ico" aria-hidden="true">✉</span><span class="lbl">Feedback</span>
-      </button>
-    </div>
+    <div class="mark">Alpha</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m14</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m15</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -366,17 +276,6 @@
 
     <section class="panelbox">
       <h2>What changed</h2>
-      <h3><span class="day">DEC 1</span></h3>
-      <ul>
-        <li><b>✉ Feedback, beside the wordmark — and the wordmark is Alpha now.</b> A small pill sits in
-            the upper right, level with <b>Alpha</b>. It takes a Bug, an Idea or a Praise, a message and an
-            optional name, then <b>Send</b> posts it quietly to the maker's inbox — the build, the page,
-            the room, the screen and the time go in with it, so nothing has to be explained twice.
-            <b>GitHub ↗</b> opens the same report as a new issue for anyone who would rather see where it
-            lands, and <b>Copy report</b> covers everything else. <b>No address is printed anywhere on
-            this page</b>: it lives on the server, in the script that receives the report. The draft waits
-            on the phone, and even the password gate has a dotted little link for anyone who cannot get in.</li>
-      </ul>
       <h3><span class="day">NOV 30</span></h3>
       <ul>
         <li><b>The fourth chair opened: Fortress.</b> A pixel-orc tower defence sits beside the other three —
@@ -522,38 +421,6 @@
     </p>
   </main>
 
-  <div id="feedbackSheet" role="dialog" aria-modal="true" aria-label="Send feedback">
-    <div class="fb-box">
-      <div class="fb-head">
-        <h2>✉ Feedback</h2>
-        <button class="fb-close" id="feedbackClose" type="button" aria-label="Close">✕</button>
-      </div>
-      <p class="fb-to">goes straight to the maker · nothing of theirs is printed here</p>
-      <div class="fb-kinds" id="fbKinds" role="tablist" aria-label="What kind of report">
-        <button class="fb-kind on" type="button" role="tab" aria-selected="true" data-kind="Bug">🐞 Bug</button>
-        <button class="fb-kind" type="button" role="tab" aria-selected="false" data-kind="Idea">💡 Idea</button>
-        <button class="fb-kind" type="button" role="tab" aria-selected="false" data-kind="Praise">🔥 Praise</button>
-      </div>
-      <label class="fb-label" for="fbText">What happened?</label>
-      <textarea id="fbText" maxlength="1200" placeholder="What you tapped, what broke, what you expected instead…"></textarea>
-      <div class="fb-row">
-        <span id="fbCount">0/1200</span>
-        <input id="fbName" type="text" maxlength="40" placeholder="your name (optional)" autocomplete="nickname" />
-      </div>
-      <p class="fb-note" id="fbNote" hidden></p>
-      <div class="fb-foot">
-        <button class="fb-ghost" id="fbCopy" type="button" title="Copy the whole report, in case nothing opens">Copy report</button>
-        <button class="fb-ghost" id="fbGh" type="button" title="Prefer GitHub? Open the same report as a new issue">GitHub ↗</button>
-        <button class="fb-send" id="fbSend" type="button">✉ Send</button>
-      </div>
-      <p class="fb-fine"><b>Send</b> posts the report quietly to the maker — the address it goes to lives on
-        their server, never on this page, so there is nothing here for anyone else to read. Prefer to see
-        where it lands? <b>GitHub ↗</b> opens the same report as a
-        <a id="fbRepoLink" href="https://github.com/gret521x-coder/Gretsanti/issues/new" target="_blank" rel="noopener">new issue</a>,
-        and <b>Copy report</b> puts it on the clipboard. Your draft is kept on this phone until you send it.</p>
-    </div>
-  </div>
-
   <noscript><p>Alpha needs JavaScript. Turn it on, then reload this page.</p></noscript>
 
 <script>
@@ -567,7 +434,7 @@
   var FORT = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/fortress.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m14";                /* this copy of the hub */
+  var DECK = "m15";                /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 
@@ -829,277 +696,6 @@
   pwInput.addEventListener("keydown", function (e) { if (e.key === "Enter") attemptUnlock(); });
   pwHintBtn.addEventListener("click", function () { pwHint.hidden = !pwHint.hidden; });
 
-  /* ---------------------------------------------------------------------------
-     ✉ Feedback — beside the wordmark. There is no server behind this page, so
-     the report is written into a mail (or a GitHub issue) that the maker sends.
-     The address is read from the feed, so it can change without a new hub.
-     --------------------------------------------------------------------------- */
-  (function feedbackCard() {
-    var sheet = document.getElementById("feedbackSheet");
-    if (!sheet) return;
-    var byId = function (id) { return document.getElementById(id); };
-    var FB = {
-      kind: "Bug",
-      /* the inbox is a script on the maker's host: it knows the address, this page never does */
-      endpoint: "https://aidekupal.unaux.com/api-feedback.php",
-      repo: "https://github.com/gret521x-coder/Gretsanti/issues/new",
-      draftKey: "pindutan_feedback_draft",
-      sending: false,
-      lastUrl: ""
-    };
-    var text = byId("fbText"), name = byId("fbName"), count = byId("fbCount"),
-        note = byId("fbNote"), send = byId("fbSend");
-
-    function say(msg, bad) {
-      if (!note) return;
-      note.hidden = !msg;
-      note.textContent = msg || "";
-      note.className = "fb-note" + (bad ? " bad" : "");
-    }
-
-    function paintKinds() {
-      var btns = sheet.querySelectorAll("#fbKinds .fb-kind");
-      for (var i = 0; i < btns.length; i++) {
-        var on = btns[i].getAttribute("data-kind") === FB.kind;
-        btns[i].classList.toggle("on", on);
-        btns[i].setAttribute("aria-selected", on ? "true" : "false");
-      }
-      if (send) send.title = "Post the report privately to the maker's inbox";
-    }
-
-    function paintCount() {
-      if (!count || !text) return;
-      var n = text.value.length;
-      count.textContent = n + "/1200";
-      count.classList.toggle("over", n > 1200);
-      if (send) send.disabled = text.value.trim().length < 8;
-    }
-
-    function saveDraft() {
-      try {
-        var t = text ? text.value : "", n = name ? name.value : "";
-        if (!t && !n) localStorage.removeItem(FB.draftKey);
-        else localStorage.setItem(FB.draftKey, JSON.stringify({ text: t, name: n, kind: FB.kind }));
-      } catch (e) { }
-    }
-
-    function loadDraft() {
-      try {
-        var raw = localStorage.getItem(FB.draftKey);
-        if (!raw) return;
-        var d = JSON.parse(raw) || {};
-        if (d.text && text) text.value = d.text;
-        if (d.name && name) name.value = d.name;
-        if (d.kind) FB.kind = d.kind;
-      } catch (e) { }
-    }
-
-    function where() {
-      var gate = document.getElementById("gate");
-      return gate && gate.classList.contains("open") ? "the password gate" : "the hub menu";
-    }
-
-    function report() {
-      var body = (text ? text.value : "").trim().replace(/\r/g, "");
-      var who = (name ? name.value : "").trim().slice(0, 40);
-      var from = who || "anonymous";
-      var first = body.split("\n")[0].replace(/\s+/g, " ").trim().slice(0, 70)
-        || (FB.kind === "Bug" ? "something broke in the hub" : "a note about the hub");
-      var meta = [
-        "kind: " + FB.kind,
-        "from: " + from,
-        "build: hub " + DECK + " (arena " + ((byId("arenaBuild") || {}).textContent || "—") + ")",
-        "page: " + String(location.href || ""),
-        "where: " + where(),
-        "screen: " + (window.screen ? (window.screen.width + "x" + window.screen.height) : "unknown"),
-        "browser: " + (navigator.userAgent || "unknown").slice(0, 160),
-        "when: " + new Date().toISOString()
-      ].join("\n");
-      return {
-        title: "[" + FB.kind + "] " + first,
-        body: (body || "(nothing written)") + "\n\n---\n" + meta,
-        text: body, name: who
-      };
-    }
-
-    function payload() {
-      var r = report();
-      return {
-        subject: r.title,
-        body: r.body,
-        kind: FB.kind,
-        text: r.text,
-        name: r.name,
-        build: "hub " + DECK,
-        page: String(location.href || ""),
-        where: where(),
-        screen: (window.screen ? (window.screen.width + "x" + window.screen.height) : "unknown"),
-        browser: String(navigator.userAgent || "").slice(0, 160),
-        when: new Date().toISOString()
-      };
-    }
-
-    /* the inbox may move: the feed can name another endpoint, and a bad one is ignored */
-    function endpointFrom(feed) {
-      var url = feed && typeof feed.feedback === "string" ? feed.feedback.trim() : "";
-      return /^https:\/\/[^\s]+$/i.test(url) ? url : "";
-    }
-
-    function issueUrl() {
-      var r = report();
-      return FB.repo + "?title=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
-    }
-
-    function openUrl(url) {
-      var opened = null;
-      try { opened = window.open(url, "_blank", "noopener"); } catch (e) { opened = null; }
-      if (!opened) { try { location.href = url; } catch (e) { return false; } }
-      return true;
-    }
-
-    function sendReport() {
-      if (!report().text || report().text.length < 8) {
-        say("A few more words first — what happened?", true);
-        paintCount();
-        return false;
-      }
-      if (FB.sending) return false;
-      FB.sending = true;
-      var started = send ? send.textContent : "✉ Send";
-      if (send) { send.disabled = true; send.textContent = "✉ Sending…"; }
-      say("Sending your report…");
-
-      var done = function (good, msg) {
-        FB.sending = false;
-        if (send) { send.textContent = started; send.disabled = false; }
-        paintCount();
-        say(msg, !good);
-        if (good) { try { localStorage.removeItem(FB.draftKey); } catch (e) { } }
-        return good;
-      };
-
-      var posted = null;
-      try {
-        posted = fetch(FB.endpoint + "?t=" + Date.now(), {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload())
-        });
-      } catch (e) { posted = null; }
-
-      if (!posted || typeof posted.then !== "function") {
-        return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
-      }
-
-      return posted
-        .then(function (res) {
-          if (!res || !res.ok) return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
-          return (res.json ? res.json().catch(function () { return { ok: true }; }) : Promise.resolve({ ok: true }))
-            .then(function (data) {
-              if (data && data.ok === false) return done(false, "The inbox said no — try GitHub ↗, or Copy report.");
-              return done(true, "Sent — thank you. It is in the maker's inbox.");
-            });
-        })
-        .catch(function () { return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report."); });
-    }
-
-    function sendIssue() {
-      if (report().text.length < 8) {
-        say("A few more words first — what happened?", true);
-        paintCount();
-        return false;
-      }
-      FB.lastUrl = issueUrl();
-      say("Opening GitHub — press Create there and it is in the queue.");
-      return openUrl(FB.lastUrl);
-    }
-
-    function copyFallback(txt) {
-      try {
-        var ta = document.createElement("textarea");
-        ta.value = txt; ta.setAttribute("readonly", "");
-        ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
-        document.body.appendChild(ta); ta.select();
-        var done = document.execCommand && document.execCommand("copy");
-        document.body.removeChild(ta);
-        return !!done;
-      } catch (e) { return false; }
-    }
-
-    function copyReport() {
-      var r = report();
-      var txt = r.title + "\n\n" + r.body;
-      var done = function (okCopy) {
-        say(okCopy ? "Copied — paste it anywhere you like." : "Copy did not work; select the text and copy it by hand.", !okCopy);
-      };
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(copyFallback(txt)); });
-          return;
-        }
-      } catch (e) { }
-      done(copyFallback(txt));
-    }
-
-    function openCard() {
-      sheet.classList.add("open");
-      destination();
-      paintCount();
-      loadDraft();
-      paintKinds();
-      try { if (text) text.focus(); } catch (e) { }
-    }
-
-    function closeCard() {
-      sheet.classList.remove("open");
-      saveDraft();
-      say("");
-    }
-
-    function destination() {
-      try {
-        if (typeof fetch !== "function") return;
-        fetch(FEED + "?t=" + Date.now(), { cache: "no-store" })
-          .then(function (r) { return (r && r.ok && r.json) ? r.json() : null; })
-          .then(function (feed) {
-            var url = endpointFrom(feed);
-            if (url) { FB.endpoint = url; }
-            return FB.endpoint;
-          })
-          .catch(function () { });
-      } catch (e) { }
-    }
-
-    var btn = byId("feedbackBtn");
-    if (btn) btn.addEventListener("click", openCard);
-    var gbtn = byId("feedbackGate");
-    if (gbtn) gbtn.addEventListener("click", openCard);
-    var close = byId("feedbackClose");
-    if (close) close.addEventListener("click", closeCard);
-    sheet.addEventListener("click", function (e) { if (e.target === sheet) closeCard(); });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && sheet.classList.contains("open")) closeCard();
-    });
-    sheet.querySelectorAll("#fbKinds .fb-kind").forEach(function (b) {
-      b.addEventListener("click", function () {
-        FB.kind = b.getAttribute("data-kind") || "Bug";
-        paintKinds(); saveDraft();
-      });
-    });
-    if (text) text.addEventListener("input", function () { paintCount(); saveDraft(); });
-    if (name) name.addEventListener("input", saveDraft);
-    if (send) send.addEventListener("click", sendReport);
-    var gh = byId("fbGh");
-    if (gh) gh.addEventListener("click", sendIssue);
-    var cp = byId("fbCopy");
-    if (cp) cp.addEventListener("click", copyReport);
-
-    paintKinds();
-    loadDraft();
-    paintCount();
-    destination();          /* the feed may name a different inbox */
-  })();
 })();
 </script>
 </body>

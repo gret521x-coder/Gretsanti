@@ -25,7 +25,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `pindutan.html` | 53 KB | **The game hub — Alpha** — the page the first runner opens: a **✉ Feedback** pill beside the wordmark (it posts the report to a private inbox script, so **no address is printed anywhere**, with `GitHub ↗` and `Copy report` as fallbacks), **the password gate** (which has its own way to write, for anyone who cannot get in), then four chairs, all four live (Pindutan, Chess, Zumang, Fortress), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess`, `feed.three` and `feed.fortress` |
+| `pindutan.html` | 35 KB | **The game hub — Alpha** — the page the first runner opens: **the password gate**, then four chairs, all four live (Pindutan, Chess, Zumang, Fortress), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess`, `feed.three` and `feed.fortress` |
 | `labs/zuma.html` | 108 KB | **Zumang, game three** — a zuma-style marble shooter on a carved stone board: a jade frog idol flanked by two gold sunbursts aims at your pointer (or your finger) and fires on click or **Space**, a chain that inserts where the marble lands, 3+ of a colour pops, a cut chain **pulls its back half up** to the front and chains the reaction, power-up marbles (🌀 reverse, 🐌 slow, 💣 bomb), a shot that misses breaks on the wall instead of bouncing, rings blooming where a colour pops, a gold quota gauge and green life gems on an ornate bar over the board (score, lives, quota — no level plate), a gold skull at the end of the track, the levels a name has **finished** ticked ✓ in the grid so they can be picked again, **100 levels in ten temples, each with a board of its own** (spiral, serpent, corridor, rosette or ring, fixed by the level number) with the pace, colours and quota tightening, Web Audio sound made from oscillators, a nickname door, and a score kept **by name** on the device with a **solo** post to the ladder when there is a signal |
 | `labs/fortress.html` | 56 KB | **Fortress, game four** — pixel-orc tower defence (TDv11, the Royal Knight build): a 15x10 tile board, **nine towers** (Archer, Cannon, Frost, Sniper, Poison, Tesla, Laser, Mortar, and a Bank that pays 8 gold every 4s), **eighteen monsters** — thirteen orcs, bats, gargoyles, wyverns, a warlord and a sky warlord, plus five classic archetypes (Goblin Sapper, Shielded Vanguard, Siege Ram, Dark Necromancer, Sky Harpy). Some **fly** straight over the walls, and the Cannon and the Mortar cannot touch them; shields eat steel and let magic through, the ram's armour eats steel and not fire. **The Royal Knight** is playable: tap him, tap the board, he holds the road; Royal Aura fires nearby towers 18% faster and Shield Bash stuns around him on a 12s button. It opens on a **boot screen** that caches `TD/resources/assets.json` behind a progress bar, and every sprite keeps a character-grid fallback, so a missing PNG is invisible. **Five maps** (Forest Trail, Serpent Pass, Swamp Loop, Frozen Canyon, Ashen Fortress) swap every five waves, refunding 60% of any tower the new road swallows; after wave 20 the stage loops at **+50%**. Tap a tower to upgrade (+35% dmg, +10% range a level), shift-tap to sell for 60%. Menu flashes, projectile trails, death bursts, floating damage numbers and a wave preview. Locked to 60 fps. Build tag **f3**, opened from `fortress`/`fortressBuild` |
 | `TD/` | 2 KB | **The tower defence's art root** — `images/{towers,troops,monsters,heroes,ui}/` (36 keys), `resources/assets.json` (the manifest: key → path), `assets/` and `audio/` reserved. The game reads the manifest from `../TD/`, then from `main`, then from the copy written into the page; every key keeps a drawn canvas fallback, so a missing PNG never blanks a sprite or throws. `TD_OVERHAUL_NOTES.md` holds the prompt and filename for all 36 |
@@ -35,7 +35,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `pindutan-run.html` | 7 KB | **The first runner, frozen at the Nov 26 file** — no game code and no menu; reads the feed and opens `feed.html`, the hub. Left alone on purpose: every change since lives in the hub and the game |
-| `labs/pindutan-v21.html` | 306 KB | Pindutan v30 — the game: the arena, a **✉ Feedback** pill in the upper right, level with the wordmark (Bug/Idea/Praise → **posted privately to the maker's inbox**, no address on the page, with `GitHub ↗` and `Copy report` as fallbacks), its four chairs behind ☰ Games (**Chess**, **Zumang** and **Fortress** each open from the feed by their own field, checked before they run), a hall of fame with two boards (**1V1** and **Royale**, no **All**), Royale tiers read off Royale wins, and a **new season** button, and the build that keeps itself current. The gate opens straight on the nickname now. The **GLIDE** panel sets how a held piece moves, for the arrow keys and the on-screen ◀ ▶ ▼ alike |
+| `labs/pindutan-v21.html` | 288 KB | Pindutan v31 — the game: the arena, its four chairs behind ☰ Games (**Chess**, **Zumang** and **Fortress** each open from the feed by their own field, checked before they run), a hall of fame with two boards (**1V1** and **Royale**, no **All**), Royale tiers read off Royale wins, and a **new season** button, and the build that keeps itself current. The gate opens straight on the nickname now. The **GLIDE** panel sets how a held piece moves, for the arrow keys and the on-screen ◀ ▶ ▼ alike |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, where the deck lives (`menu` / `menuBuild`), and the ladder's address |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
@@ -75,26 +75,18 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    if it cannot get one it says why, offers a retry and a link to the hosted copy. **This file is frozen**:
    it is byte-for-byte the version from Nov 26 and is not to be touched again — which is exactly why the hub
    below is 29 KB and still carries that marker.
-2. `pindutan.html` — the **game hub (m14)**, wordmark **Alpha**, 53 KB, no game code. It asks for **the
+2. `pindutan.html` — the **game hub (m15)**, wordmark **Alpha**, 35 KB, no game code. It asks for **the
    password** first — that is where the lock lives now — and then shows four chairs: **Pindutan** opens the
    build the feed calls `arena`, **Chess** opens `chess`, **Zumang** opens `three`, and **Fortress**
    opens `fortress`. Under the chairs:
    **what changed** and a short **about this page**. The hub keeps *itself* current
    from `menuBuild`/`menu`, and it checks the feed on every open and on every tap of its strip.
-3. `labs/pindutan-v21.html` — the **arena** (v30): the game. It carries the same four chairs behind a
+3. `labs/pindutan-v21.html` — the **arena** (v31): the game. It carries the same four chairs behind a
    **☰ Games** pill in its header, and it updates itself from `arena` in the feed. A chair reads its own field
    (`arena`, `chess`, `three`, `fortress`), fetches that file, refuses anything that is not a whole page with
    the right marker, and only then hands the tab over to it — so the pill opens the newest Fortress, not a copy
    kept inside the arena. Its gate opens **straight on
    the nickname**: the password step is gone, because it is asked one page earlier, in the hub.
-   In the header, level with the wordmark, **✉ Feedback** opens a card with three kinds (Bug, Idea,
-   Praise), a message and an optional name. **Send** posts the report to a small PHP inbox
-   (`api-feedback.php`) with the message, the build, the page, the room the screen and the time
-   already written. **No address of the maker is printed anywhere** — the pages know only the
-   script's URL, and the script keeps the address in a file that is uploaded beside it and never
-   committed. **GitHub ↗** opens the same report as a new issue for anyone who would rather see where
-   it lands, and **Copy report** puts it on the clipboard. The draft stays on the phone, the endpoint
-   lives in the feed (`feedback`), and `FEEDBACK_NOTES.md` is the one page that explains the upload.
 
 ![Fortress — the pixel-orc tower defence](labs/assets/fortress-cover.png)
 
@@ -240,7 +232,7 @@ Pointing `html` at the game instead takes the runner straight to Pindutan and sk
 upload.
 
 **And the hub keeps itself current too.** On opening — and on a tap of its strip — the hub compares its own
-tag with `menuBuild` in the feed (currently `m14`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+tag with `menuBuild` in the feed (currently `m15`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
 size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a hub that
 was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m4 · newest ·
 arena v22.9` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
@@ -333,7 +325,7 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
-- **Pindutan v17** — 48 · **Pindutan v18** — 286 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 41 · **feedback PHP** — 30 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
+- **Pindutan v17** — 48 · **Pindutan v18** — 273 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 30 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
 - **Fortress** — 97 · **Castle Defense** — 34
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request

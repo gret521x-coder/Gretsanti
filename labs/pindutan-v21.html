@@ -1338,14 +1338,14 @@
     }
 
     /* ================= what changed: one window per build ================= */
-    #notesSheet, #gamesSheet, #feedbackSheet {
+    #notesSheet, #gamesSheet {
       position: fixed; inset: 0; z-index: 88; display: none;
       padding: 14px 12px 40px; overflow-y: auto;
       background: rgba(4, 6, 10, 0.93);
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       -webkit-overflow-scrolling: touch;
     }
-    #notesSheet.open, #gamesSheet.open, #feedbackSheet.open { display: block; }
+    #notesSheet.open, #gamesSheet.open { display: block; }
     .notes-box {
       max-width: 460px; margin: 0 auto; padding: 12px;
       border-radius: 16px; background: var(--card); border: 1px solid var(--line);
@@ -1367,51 +1367,6 @@
     }
     #notesOff:hover, #notesOff:focus-visible { color: var(--txt); border-color: var(--amber); }
 
-    /* ---------- feedback: the pill beside the wordmark, and the card behind it ---------- */
-    .build-line.feedback { color: var(--amber); border-color: rgba(255, 176, 32, 0.5); }
-    .build-line.feedback:hover, .build-line.feedback:focus-visible { border-color: var(--amber); color: #ffd25e; }
-    .fb-kinds { display: flex; gap: 6px; margin: 0 0 10px; flex-wrap: wrap; }
-    .fb-kind {
-      flex: 1 1 0; min-width: 74px; padding: 8px 6px; border-radius: 9px; cursor: pointer;
-      border: 1px solid var(--line); background: var(--card2); color: var(--mut);
-      font: inherit; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-    }
-    .fb-kind.on { color: #1a1206; border-color: transparent;
-      background: linear-gradient(160deg, rgba(255, 176, 32, 0.95), rgba(255, 122, 24, 0.9)); }
-    .fb-field { display: block; margin: 0 0 9px; color: var(--mut);
-      font-size: 0.52rem; letter-spacing: 0.12em; text-transform: uppercase; }
-    .fb-field b { color: var(--amber); font-weight: 800; }
-    .fb-field i { font-style: normal; letter-spacing: 0; text-transform: none; opacity: 0.65; }
-    .fb-field textarea, .fb-field input {
-      display: block; width: 100%; box-sizing: border-box; margin-top: 5px; padding: 9px 10px;
-      border-radius: 9px; border: 1px solid var(--line); background: var(--card2); color: var(--txt);
-      font: inherit; font-size: 0.72rem; letter-spacing: 0; text-transform: none;
-    }
-    .fb-field textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
-    .fb-field textarea:focus, .fb-field input:focus { outline: none; border-color: var(--amber); }
-    .fb-count { float: right; font-size: 0.5rem; letter-spacing: 0; opacity: 0.6; }
-    .fb-count.over { color: #ff7a6a; opacity: 1; }
-    .notes-foot .fb-ghost {
-      margin-right: auto; padding: 8px 11px; border-radius: 9px; cursor: pointer;
-      background: var(--card2); color: var(--mut); border: 1px solid var(--line);
-      font: inherit; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.06em;
-    }
-    .notes-foot .fb-ghost:hover { color: var(--txt); border-color: var(--amber); }
-    .notes-foot .fb-ghost.gh { margin-right: 6px; color: var(--violet); border-color: rgba(168, 85, 247, 0.45); }
-    .notes-foot .fb-ghost.gh:hover { color: #d8b4fe; border-color: var(--violet); }
-    .notes-sub b { color: var(--amber); font-weight: 800; }
-    .notes-foot .fb-send {
-      padding: 9px 14px; border-radius: 9px; border: 1px solid transparent; cursor: pointer;
-      font: inherit; font-size: 0.58rem; font-weight: 900; letter-spacing: 0.08em;
-      background: linear-gradient(160deg, #ffb020, #ff7a18); color: #1a1206;
-      box-shadow: 0 4px 14px rgba(255, 140, 26, 0.25);
-    }
-    .notes-foot .fb-send:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
-    #fbNote { color: var(--amber); }
-    #fbNote.bad { color: #ff9a86; }
-    .fb-fine { margin: 10px 0 0; font-size: 0.5rem; line-height: 1.55; color: var(--mut); }
-    .fb-fine b { color: var(--amber); }
-    .fb-fine a { color: var(--cyan); }
     .build-line.games { color: var(--violet); border-color: rgba(168, 85, 247, 0.45); }
     .game-chair {
       display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 8px; padding: 11px;
@@ -1706,16 +1661,15 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v30</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v31</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v30 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v31 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
           <div id="creatorLine" style="font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mut);margin-top:3px;">created by KDL</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <button id="feedbackBtn" class="build-line feedback" title="Tell the maker what to fix — opens a new issue on GitHub">✉ Feedback</button>
           <button id="backToGameBtn" style="display:none;">▶ Back to game</button>
           <button id="lobbyClose">✕</button>
         </div>
@@ -1901,50 +1855,6 @@
     </div>
   </div>
 
-  <!-- FEEDBACK: upper right of the header, level with the wordmark. Nothing is uploaded
-       from here: Send opens a new issue on GitHub with the report already written, and
-       the maker presses Create. -->
-  <div id="feedbackSheet" role="dialog" aria-modal="true" aria-label="Feedback">
-    <div class="notes-box">
-      <div class="notes-head">
-        <h2>✉ Feedback</h2>
-        <button id="feedbackClose" aria-label="Close feedback">✕</button>
-      </div>
-      <div class="notes-sub">goes straight to the maker · nothing of theirs is printed here</div>
-
-      <div class="fb-kinds" id="fbKinds" role="tablist" aria-label="Kind of feedback">
-        <button class="fb-kind on" data-kind="Bug" role="tab" aria-selected="true">🐞 Bug</button>
-        <button class="fb-kind" data-kind="Idea" role="tab" aria-selected="false">💡 Idea</button>
-        <button class="fb-kind" data-kind="Praise" role="tab" aria-selected="false">🔥 Praise</button>
-      </div>
-
-      <label class="fb-field" for="fbText">
-        <b>What happened?</b> <i>— the more exactly, the faster it is fixed</i>
-        <span class="fb-count" id="fbCount">0/1200</span>
-        <textarea id="fbText" maxlength="1200" rows="5" placeholder="Built a sniper on the corner and it ignored the bat that flew over it."></textarea>
-      </label>
-
-      <label class="fb-field" for="fbName">
-        <b>Your name</b> <i>— optional, so I can answer you</i>
-        <input id="fbName" maxlength="40" autocomplete="nickname" placeholder="KDL">
-      </label>
-
-      <p class="note" id="fbNote" hidden></p>
-
-      <div class="notes-foot">
-        <button id="fbCopy" class="fb-ghost" title="Copy the whole report, in case nothing opens">Copy report</button>
-        <button id="fbGh" class="fb-ghost gh" title="Prefer GitHub? Open the same report as a new issue">GitHub ↗</button>
-        <button id="fbSend" class="fb-send">✉ Send</button>
-      </div>
-
-      <p class="fb-fine"><b>Send</b> posts the report quietly to the maker — the address it goes to lives on
-        their server, never on this page, so there is nothing here for anyone else to read. Prefer to see
-        where it lands? <b>GitHub ↗</b> opens
-        <a id="fbRepoLink" href="https://github.com/gret521x-coder/Gretsanti/issues/new" target="_blank" rel="noopener">a new issue</a>
-        with the same report, and <b>Copy report</b> puts it on the clipboard. Your draft is kept on this phone until you send it.</p>
-    </div>
-  </div>
-
   <main class="arena">
     <div class="hud-strip">
       <div class="chip hot"><h3>Score</h3><div class="val" id="scoreVal">0</div></div>
@@ -2039,7 +1949,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v30";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v31";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -5561,13 +5471,6 @@
     const NOTES_OFF = "pindutan_notes_off";
     const CHANGES = [
       {
-        day: "Dec 1", items: [
-          "<b>✉ Feedback</b> sits in the upper right, level with the wordmark. Pick <b>Bug</b>, <b>Idea</b> or <b>Praise</b>, say what happened, and <b>Send</b> opens a new issue on GitHub with your words, the build, the room and the page already written — press <b>Create</b> there and it reaches the maker.",
-          "There is no server behind the form: your draft is kept on the phone until you send it, and <b>Copy report</b> puts the whole thing on the clipboard if the browser will not open a tab.",
-          "<b>Send now posts the report straight to the maker</b>, quietly, with the build, the page and the room already in it. The address it goes to sits on their server, not on this page, so nothing of theirs is printed for anyone else to read — and <b>GitHub ↗</b> is still there if you would rather see where it lands."
-        ]
-      },
-      {
         day: "Nov 30", items: [
           "<b>The Games pill opens all four chairs</b> — Chess, Zumang and Fortress are in the sheet beside Pindutan, and each one opens the build the feed names, checked before it runs, exactly the way the deck does it. The two empty chairs that said TBD are gone.",
           "<b>Fortress is the fourth chair</b>, and it is a tower defence: nine towers, thirteen monsters, five maps that swap every five waves, flyers the cannon and mortar cannot reach, and a stage that loops at +50% after wave twenty."
@@ -6651,17 +6554,6 @@
       }
     });
 
-    const FB = {
-      kind: "Bug",
-      /* the inbox is a script on the maker's host: it knows the address, this page never does */
-      endpoint: "https://aidekupal.unaux.com/api-feedback.php",
-      repo: "https://github.com/gret521x-coder/Gretsanti/issues/new",
-      feed: "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json",
-      draftKey: "pindutan_feedback_draft",
-      sending: false,
-      lastUrl: ""
-    };
-
     document.getElementById("gamesBtn").addEventListener("click", () => openGames());
     document.getElementById("gamesClose").addEventListener("click", () => closeGames());
     document.getElementById("gamesSheet").addEventListener("click", e => {
@@ -6676,44 +6568,6 @@
       if (deckLink) deckLink.href = DECK_URL;
     } catch (e) { }
 
-
-    /* feedback: the pill in the header, the card behind it */
-    const fbBtnEl = document.getElementById("feedbackBtn");
-    if (fbBtnEl) fbBtnEl.addEventListener("click", () => feedbackOpen());
-    const fbCloseEl = document.getElementById("feedbackClose");
-    if (fbCloseEl) fbCloseEl.addEventListener("click", () => feedbackClose());
-    const fbSheetEl = document.getElementById("feedbackSheet");
-    if (fbSheetEl) {
-      fbSheetEl.addEventListener("click", (e) => {
-        if (e.target && e.target.id === "feedbackSheet") feedbackClose();
-      });
-      fbSheetEl.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") feedbackClose();
-      });
-    }
-    const fbKindsEl = document.getElementById("fbKinds");
-    if (fbKindsEl) fbKindsEl.addEventListener("click", (e) => {
-      const btn = e.target && e.target.closest ? e.target.closest(".fb-kind") : null;
-      if (!btn) return;
-      feedbackKind(btn.getAttribute("data-kind"));
-      fbDraftSave();
-    });
-    const fbTextEl = document.getElementById("fbText");
-    if (fbTextEl) fbTextEl.addEventListener("input", () => fbCount());
-    const fbNameEl = document.getElementById("fbName");
-    if (fbNameEl) fbNameEl.addEventListener("input", () => fbDraftSave());
-    const fbSendEl = document.getElementById("fbSend");
-    if (fbSendEl) fbSendEl.addEventListener("click", () => feedbackSend());
-    const fbGhEl = document.getElementById("fbGh");
-    if (fbGhEl) fbGhEl.addEventListener("click", () => feedbackGitHub());
-    const fbCopyEl = document.getElementById("fbCopy");
-    if (fbCopyEl) fbCopyEl.addEventListener("click", () => feedbackCopy());
-    (function setupFeedback() {
-      feedbackKind();
-      fbDraftLoad();
-      fbCount();
-      feedbackDestination();     /* the feed may name a different inbox */
-    })();
 
     document.getElementById("notesToggle").addEventListener("click", () => notesOpen());
     document.getElementById("notesClose").addEventListener("click", () => notesClose());
@@ -7330,12 +7184,7 @@
     } catch (e) { }
 
     /* =========================================================
-       v30 — ✉ Feedback goes privately: Send posts the report to the maker's inbox
-             script, so no address is printed on the page at all.
-       v29 — ✉ Feedback goes to the inbox: Send fills a mail to the maker, and GitHub
-             ↗ is still there for anyone with no mail app.
-       v28 — ✉ Feedback sits in the upper right, level with the wordmark: it opens a
-             prefilled issue on GitHub, with the build, the page and the room in it.
+       v31 — the feedback card is gone: the page is the game again, nothing else.
        v27 — the Games pill opens all four chairs, each from its own field in the feed.
        v26 — the hall of fame has two boards, 1v1 and Royale. Royale's rank is
        read off Royale wins (a tier every five), so losing never costs a rank;
@@ -7420,264 +7269,6 @@
       return true;
     }
 
-
-    /* =========================================================
-       v28 — feedback, in the upper right, level with the wordmark.
-       There is no server behind this page, so "send" means: open a new issue on
-       GitHub with the report already written. The draft stays on the phone, and
-       the whole report can be copied if the browser refuses to open a tab.
-       ========================================================= */
-    function fbEl(id) { return document.getElementById(id); }
-
-    function feedbackNote(text, bad) {
-      const note = fbEl("fbNote");
-      if (!note) return false;
-      note.hidden = !text;
-      note.textContent = text || "";
-      note.className = bad ? "note bad" : "note";
-      return true;
-    }
-
-    function feedbackKind(kind) {
-      if (kind) FB.kind = kind;
-      const wrap = fbEl("fbKinds");
-      if (wrap && wrap.querySelectorAll) {
-        wrap.querySelectorAll(".fb-kind").forEach((btn) => {
-          const on = btn.getAttribute("data-kind") === FB.kind;
-          btn.classList.toggle("on", on);
-          btn.setAttribute("aria-selected", on ? "true" : "false");
-        });
-      }
-      const send = fbEl("fbSend");
-      if (send) send.title = "Opens a new " + FB.kind.toLowerCase() + " issue on GitHub";
-      return FB.kind;
-    }
-
-    function fbCount() {
-      const t = fbEl("fbText"), c = fbEl("fbCount"), send = fbEl("fbSend");
-      if (!t) return 0;
-      const n = t.value.length;
-      if (c) { c.textContent = n + "/1200"; c.classList.toggle("over", n >= 1200); }
-      if (send) send.disabled = t.value.trim().length < 8;
-      return n;
-    }
-
-    function fbDraftSave() {
-      try {
-        const text = (fbEl("fbText") && fbEl("fbText").value) || "";
-        const name = (fbEl("fbName") && fbEl("fbName").value) || "";
-        if (!text && !name) localStorage.removeItem(FB.draftKey);
-        else localStorage.setItem(FB.draftKey, JSON.stringify({ text: text, name: name, kind: FB.kind }));
-      } catch (e) { }
-    }
-
-    function fbDraftLoad() {
-      try {
-        const raw = localStorage.getItem(FB.draftKey);
-        if (!raw) return false;
-        const d = JSON.parse(raw);
-        if (d && typeof d.text === "string" && fbEl("fbText")) fbEl("fbText").value = d.text;
-        if (d && typeof d.name === "string" && fbEl("fbName")) fbEl("fbName").value = d.name;
-        if (d && d.kind) feedbackKind(d.kind);
-        return true;
-      } catch (e) { return false; }
-    }
-
-    /* the report: what they wrote, then everything needed to reproduce it */
-    function feedbackReport() {
-      const text = ((fbEl("fbText") && fbEl("fbText").value) || "").trim();
-      const name = ((fbEl("fbName") && fbEl("fbName").value) || "").trim();
-      let page = "unknown page";
-      try { page = location.href; } catch (e) { }
-      const room = (typeof roomCode === "string" && roomCode) ? roomCode : "lobby";
-      const lines = [
-        text,
-        "",
-        "---",
-        "kind: " + FB.kind,
-        "from: " + (name || "anonymous"),
-        "build: " + BUILD_TAG,
-        "page: " + page,
-        "room: " + room,
-        "screen: " + (window.innerWidth || 0) + "x" + (window.innerHeight || 0),
-        "browser: " + String((navigator && navigator.userAgent) || "").slice(0, 150),
-        "when: " + new Date().toISOString()
-      ];
-      const first = (text.split("\n")[0] || "").trim().slice(0, 70);
-      return {
-        text: text,
-        name: name,
-        title: "[" + FB.kind + "] " + (first || "feedback from the arena"),
-        body: lines.join("\n")
-      };
-    }
-
-    function feedbackUrl() {
-      const r = feedbackReport();
-      return FB.repo + "?title=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
-    }
-
-    function feedbackPayload() {
-      const r = feedbackReport();
-      let page = "";
-      try { page = String(location.href || ""); } catch (e) { }
-      return {
-        subject: r.title,
-        body: r.body,
-        kind: FB.kind,
-        text: r.text,
-        name: r.name,
-        build: BUILD_TAG,
-        page: page,
-        room: (typeof roomCode === "string" && roomCode) ? roomCode : "lobby",
-        screen: (window.innerWidth || 0) + "x" + (window.innerHeight || 0),
-        browser: String((navigator && navigator.userAgent) || "").slice(0, 150),
-        when: new Date().toISOString()
-      };
-    }
-
-    /* the inbox may move: the feed can name another endpoint, and a bad one is ignored */
-    function feedbackDestination() {
-      try {
-        if (typeof fetch !== "function") return Promise.resolve(FB.endpoint);
-        return fetch(FB.feed + "?t=" + Date.now(), { cache: "no-store" })
-          .then((r) => (r && r.ok && typeof r.json === "function") ? r.json() : null)
-          .then((feed) => {
-            const url = feed && typeof feed.feedback === "string" ? feed.feedback.trim() : "";
-            if (/^https:\/\/[^\s]+$/i.test(url)) FB.endpoint = url;
-            return FB.endpoint;
-          })
-          .catch(() => FB.endpoint);
-      } catch (e) { return Promise.resolve(FB.endpoint); }
-    }
-
-    function feedbackSend() {
-      const r = feedbackReport();
-      if (r.text.length < 8) {
-        feedbackNote("A few more words first — what happened?", true);
-        fbCount();
-        return false;
-      }
-      if (FB.sending) return false;
-      const send = fbEl("fbSend");
-      const started = send ? send.textContent : "";
-      FB.sending = true;
-      if (send) { send.disabled = true; send.textContent = "✉ Sending…"; }
-      feedbackNote("Sending your report…");
-
-      const done = (good, msg) => {
-        FB.sending = false;
-        if (send) { send.textContent = started || "✉ Send"; send.disabled = false; }
-        fbCount();
-        feedbackNote(msg, !good);
-        if (good) {
-          try { if (localStorage) localStorage.removeItem(FB.draftKey); } catch (e) { }
-        }
-        return good;
-      };
-
-      const posted = (() => {
-        try {
-          return fetch(FB.endpoint + "?t=" + Date.now(), {
-            method: "POST",
-            mode: "cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(feedbackPayload())
-          });
-        } catch (e) { return null; }
-      })();
-
-      if (!posted || typeof posted.then !== "function") {
-        return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
-      }
-
-      return posted
-        .then((res) => {
-          if (!res || !res.ok) return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
-          return (res.json ? res.json().catch(() => ({ ok: true })) : Promise.resolve({ ok: true }))
-            .then((data) => {
-              if (data && data.ok === false) return done(false, "The inbox said no — try GitHub ↗, or Copy report.");
-              return done(true, "Sent — thank you. It is in the maker's inbox.");
-            });
-        })
-        .catch(() => done(false, "Could not reach the inbox — try GitHub ↗, or Copy report."));
-    }
-
-    function feedbackGitHub() {
-      const r = feedbackReport();
-      if (r.text.length < 8) {
-        feedbackNote("A few more words first — what happened?", true);
-        fbCount();
-        return false;
-      }
-      const url = feedbackUrl();
-      FB.lastUrl = url;
-      feedbackNote("Opening GitHub — press Create there and it is in the queue.");
-      let opened = null;
-      try { opened = window.open(url, "_blank", "noopener"); } catch (e) { opened = null; }
-      if (!opened) {
-        try { location.href = url; return true; } catch (e) {
-          feedbackNote("The browser blocked the tab — use Copy report and paste it into a new issue.", true);
-          return false;
-        }
-      }
-      try { if (localStorage) localStorage.removeItem(FB.draftKey); } catch (e) { }
-      return true;
-    }
-
-    function feedbackCopyFallback(text) {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.setAttribute("readonly", "readonly");
-        ta.style.position = "fixed";
-        ta.style.top = "-1000px";
-        document.body.appendChild(ta);
-        if (ta.select) ta.select();
-        const ok = !!(document.execCommand && document.execCommand("copy"));
-        document.body.removeChild(ta);
-        feedbackNote(ok ? "Copied — paste it into a new issue." : "Select the text and copy it by hand, sorry.", !ok);
-        return !!ok;
-      } catch (e) {
-        feedbackNote("The browser would not copy — select the text by hand.", true);
-        return false;
-      }
-    }
-
-    function feedbackCopy() {
-      const r = feedbackReport();
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(r.body).then(
-            () => feedbackNote("Copied — paste it into a new issue."),
-            () => feedbackCopyFallback(r.body)
-          );
-          return true;
-        }
-      } catch (e) { }
-      return feedbackCopyFallback(r.body);
-    }
-
-    function feedbackOpen() {
-      const sheet = fbEl("feedbackSheet");
-      if (!sheet) return false;
-      fbDraftLoad();
-      feedbackKind();
-      fbCount();
-      feedbackNote("");
-      sheet.classList.add("open");
-      feedbackDestination();
-      const t = fbEl("fbText");
-      try { if (t && t.focus) t.focus({ preventScroll: true }); } catch (e) { }
-      return true;
-    }
-
-    function feedbackClose() {
-      fbDraftSave();
-      const sheet = fbEl("feedbackSheet");
-      if (sheet) sheet.classList.remove("open");
-      return true;
-    }
 
     /* =========================================================
        v22.7 — the page is its own runner.

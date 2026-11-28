@@ -9,5 +9,5 @@
   "note": "The first runner reads this file and opens html: the game hub, so the runner always lands on the games. All three chairs work the same way: arena/(build) is Pindutan, chess/(chessBuild) is Chess, three/(threeBuild) is Zumang, and each game updates itself from its own field. menu/menuBuild let the hub keep itself current. The hub asks for the password before any game opens; the games themselves start at the nickname. To publish a new build: put it on main, then bump the matching tag here. Set \"ladder\" to a full https address to move the leaderboard to a host of its own; leave it empty to keep api-leaderboard.php on aidekupal.unaux.com.",
   "ladder": "https://pindutan-ladder.pindutan-ladder1x.workers.dev/",
   "three": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/zuma.html",
-  "threeBuild": "m2"
+  "threeBuild": "m3"
 }

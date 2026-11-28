@@ -191,7 +191,7 @@
     <div class="mark">KDL</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m11</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m12</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -266,9 +266,9 @@
       </span>
       <span class="body">
         <span class="name">Fortress</span>
-        <span class="desc">tower defence — four towers that fork at level four, seven heroes to pick three
-            from, and three stages on roads of their own</span>
-        <span class="meta"><span>TOWER DEFENCE</span><span>7 HEROES</span><span>3 STAGES</span></span>
+        <span class="desc">pixel-orc tower defence — nine towers, thirteen monsters, five maps that swap every
+            five waves, and flyers the cannons cannot touch</span>
+        <span class="meta"><span>9 TOWERS</span><span>13 MONSTERS</span><span>5 MAPS</span></span>
       </span>
       <span class="go" id="fortressGo">▶ Play</span>
     </button>
@@ -277,14 +277,15 @@
       <h2>What changed</h2>
       <h3><span class="day">NOV 30</span></h3>
       <ul>
-        <li><b>The fourth chair opened: Fortress.</b> A tower-defence game sits beside the other three —
-            four families of tower that fork into a level-four path of their own, seven heroes to pick three
-            from, and three stages, each on a road built for it. Its art travels <b>inside the file</b>, so
-            the chair opens with nothing but the page itself: no folder of pictures to lose.</li>
+        <li><b>The fourth chair opened: Fortress.</b> A pixel-orc tower defence sits beside the other three —
+            nine towers on a 15x10 grid, thirteen monsters, five maps that swap in every five waves, and
+            flyers that go straight over your walls, so the cannon and the mortar cannot touch them. After
+            wave twenty the stage loops with everything at <b>+50%</b>. Every sprite is drawn from a grid of
+            characters on the canvas, so the game carries <b>no pictures at all</b> — nothing to lose.</li>
         <li><b>Every chair now has a tag in the file.</b> The feed names <b>fortressBuild</b> the way it
             names the other three, the hub opens the copy the feed points at, and the game introduces
-            itself as <b>fortress f1</b> on its muster screen — so the picker and the game can never
-            quietly disagree about which build is live.</li>
+            itself as <b>fortress f2</b> under its HUD — so the picker and the game can never quietly
+            disagree about which build is live.</li>
         <li><b>The hall of fame is two boards.</b> The <b>All</b> tab is gone — it added two games together and
             flattered nobody. <b>1V1</b> is the duel board it always was, and <b>Royale</b> is the group game,
             named for the ladder it now keeps.</li>
@@ -409,7 +410,7 @@
       <p style="margin-top:10px;">One thing worth saying plainly: all four chairs are games now, in one file
          each — <b>labs/pindutan-v21.html</b> for the arena, <b>labs/chess.html</b> for chess,
          <b>labs/zuma.html</b> for Zumang and <b>labs/fortress.html</b> for Fortress. Each one carries its
-         own tag (<b>v26</b>, <b>c6</b>, <b>m3</b>, <b>f1</b>), and the file above is the only place those
+         own tag (<b>v26</b>, <b>c6</b>, <b>m3</b>, <b>f2</b>), and the file above is the only place those
          tags are compared. Rename a chair here and you rename it everywhere.</p>
     </section>
 
@@ -432,7 +433,7 @@
   var FORT = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/fortress.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m11";                /* this copy of the hub */
+  var DECK = "m12";                /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 

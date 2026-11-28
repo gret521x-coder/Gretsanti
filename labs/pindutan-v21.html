@@ -1397,6 +1397,9 @@
       font: inherit; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.06em;
     }
     .notes-foot .fb-ghost:hover { color: var(--txt); border-color: var(--amber); }
+    .notes-foot .fb-ghost.gh { margin-right: 6px; color: var(--violet); border-color: rgba(168, 85, 247, 0.45); }
+    .notes-foot .fb-ghost.gh:hover { color: #d8b4fe; border-color: var(--violet); }
+    .notes-sub b { color: var(--amber); font-weight: 800; }
     .notes-foot .fb-send {
       padding: 9px 14px; border-radius: 9px; border: 1px solid transparent; cursor: pointer;
       font: inherit; font-size: 0.58rem; font-weight: 900; letter-spacing: 0.08em;
@@ -1703,9 +1706,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v28</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v29</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v28 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v29 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1907,7 +1910,7 @@
         <h2>✉ Feedback</h2>
         <button id="feedbackClose" aria-label="Close feedback">✕</button>
       </div>
-      <div class="notes-sub">straight to the maker · you press Create on GitHub</div>
+      <div class="notes-sub">to the maker's inbox · <b id="fbTo">gret521x@gmail.com</b></div>
 
       <div class="fb-kinds" id="fbKinds" role="tablist" aria-label="Kind of feedback">
         <button class="fb-kind on" data-kind="Bug" role="tab" aria-selected="true">🐞 Bug</button>
@@ -1929,14 +1932,16 @@
       <p class="note" id="fbNote" hidden></p>
 
       <div class="notes-foot">
-        <button id="fbCopy" class="fb-ghost" title="Copy the whole report, in case GitHub does not open">Copy report</button>
-        <button id="fbSend" class="fb-send">Send to GitHub ↗</button>
+        <button id="fbCopy" class="fb-ghost" title="Copy the whole report, in case nothing opens">Copy report</button>
+        <button id="fbGh" class="fb-ghost gh" title="No mail app? Open a new issue on GitHub instead">GitHub ↗</button>
+        <button id="fbSend" class="fb-send">✉ Send by email</button>
       </div>
 
-      <p class="fb-fine">This form has no server behind it. <b>Send</b> opens
+      <p class="fb-fine">This form has no server behind it: <b>Send by email</b> opens your mail app with the report
+        already written, addressed to <b id="fbToFine">gret521x@gmail.com</b> — press <b>send</b> there and it is in the inbox.
+        No mail app? <b>GitHub ↗</b> opens
         <a id="fbRepoLink" href="https://github.com/gret521x-coder/Gretsanti/issues/new" target="_blank" rel="noopener">a new issue</a>
-        with your words, the build and the page already in it — press <b>Create</b> there and it is in the queue.
-        Your draft is kept on this phone until you send it.</p>
+        with the same report, and <b>Copy report</b> puts it on the clipboard. Your draft is kept on this phone until you send it.</p>
     </div>
   </div>
 
@@ -2034,7 +2039,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v28";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v29";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -5558,7 +5563,8 @@
       {
         day: "Dec 1", items: [
           "<b>✉ Feedback</b> sits in the upper right, level with the wordmark. Pick <b>Bug</b>, <b>Idea</b> or <b>Praise</b>, say what happened, and <b>Send</b> opens a new issue on GitHub with your words, the build, the room and the page already written — press <b>Create</b> there and it reaches the maker.",
-          "There is no server behind the form: your draft is kept on the phone until you send it, and <b>Copy report</b> puts the whole thing on the clipboard if the browser will not open a tab."
+          "There is no server behind the form: your draft is kept on the phone until you send it, and <b>Copy report</b> puts the whole thing on the clipboard if the browser will not open a tab.",
+          "<b>Send now fills an email</b> addressed to the maker, with the report, the build and the page already written — press send in your mail app. No mail app? <b>GitHub ↗</b> opens the same report as a new issue, and the address itself lives in the build file, so it can change without a new build."
         ]
       },
       {
@@ -6647,7 +6653,9 @@
 
     const FB = {
       kind: "Bug",
+      to: "gret521x@gmail.com",      /* where the report is addressed; the feed can change it */
       repo: "https://github.com/gret521x-coder/Gretsanti/issues/new",
+      feed: "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json",
       draftKey: "pindutan_feedback_draft",
       lastUrl: ""
     };
@@ -6694,12 +6702,16 @@
     if (fbNameEl) fbNameEl.addEventListener("input", () => fbDraftSave());
     const fbSendEl = document.getElementById("fbSend");
     if (fbSendEl) fbSendEl.addEventListener("click", () => feedbackSend());
+    const fbGhEl = document.getElementById("fbGh");
+    if (fbGhEl) fbGhEl.addEventListener("click", () => feedbackGitHub());
     const fbCopyEl = document.getElementById("fbCopy");
     if (fbCopyEl) fbCopyEl.addEventListener("click", () => feedbackCopy());
     (function setupFeedback() {
       feedbackKind();
+      fbPaintTo();
       fbDraftLoad();
       fbCount();
+      feedbackDestination();     /* the feed may name a different inbox */
     })();
 
     document.getElementById("notesToggle").addEventListener("click", () => notesOpen());
@@ -7317,6 +7329,8 @@
     } catch (e) { }
 
     /* =========================================================
+       v29 — ✉ Feedback goes to the inbox: Send fills a mail to the maker, and GitHub
+             ↗ is still there for anyone with no mail app.
        v28 — ✉ Feedback sits in the upper right, level with the wordmark: it opens a
              prefilled issue on GitHub, with the build, the page and the room in it.
        v27 — the Games pill opens all four chairs, each from its own field in the feed.
@@ -7500,7 +7514,58 @@
       return FB.repo + "?title=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
     }
 
+    /* the mail app every phone already has: no server, nothing to deploy */
+    function feedbackMailUrl() {
+      const r = feedbackReport();
+      return "mailto:" + FB.to + "?subject=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
+    }
+
+    function fbPaintTo() {
+      const a = fbEl("fbTo"), b = fbEl("fbToFine");
+      if (a) a.textContent = FB.to;
+      if (b) b.textContent = FB.to;
+      const send = fbEl("fbSend");
+      if (send) send.title = "Open your mail app with the report addressed to " + FB.to;
+      return FB.to;
+    }
+
+    /* the address is not baked in for good: change feedbackTo in the feed and every copy follows */
+    function feedbackDestination() {
+      try {
+        if (typeof fetch !== "function") return Promise.resolve(FB.to);
+        return fetch(FB.feed + "?t=" + Date.now(), { cache: "no-store" })
+          .then((r) => (r && r.ok && typeof r.json === "function") ? r.json() : null)
+          .then((feed) => {
+            const to = feed && typeof feed.feedbackTo === "string" ? feed.feedbackTo.trim() : "";
+            if (/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(to)) { FB.to = to; fbPaintTo(); }
+            return FB.to;
+          })
+          .catch(() => FB.to);
+      } catch (e) { return Promise.resolve(FB.to); }
+    }
+
     function feedbackSend() {
+      const r = feedbackReport();
+      if (r.text.length < 8) {
+        feedbackNote("A few more words first — what happened?", true);
+        fbCount();
+        return false;
+      }
+      const url = feedbackMailUrl();
+      FB.lastUrl = url;
+      feedbackNote("Opening your mail app — the report is written and addressed to " + FB.to + ". Press send there.");
+      let opened = null;
+      try { opened = window.open(url, "_blank"); } catch (e) { opened = null; }
+      if (!opened) {
+        try { location.href = url; return true; } catch (e) {
+          feedbackNote("The mail app would not open — use Copy report, or GitHub ↗ instead.", true);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function feedbackGitHub() {
       const r = feedbackReport();
       if (r.text.length < 8) {
         feedbackNote("A few more words first — what happened?", true);
@@ -7563,6 +7628,7 @@
       fbCount();
       feedbackNote("");
       sheet.classList.add("open");
+      feedbackDestination();
       const t = fbEl("fbText");
       try { if (t && t.focus) t.focus({ preventScroll: true }); } catch (e) { }
       return true;

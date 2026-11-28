@@ -1378,6 +1378,7 @@
     .game-chair.here { border-color: rgba(74, 222, 128, 0.45); }
     .game-chair.here .go { color: var(--lime); }
     .game-chair.tbd { opacity: 0.68; }
+    .game-chair.busy { opacity: 0.55; pointer-events: none; }
     .deck-link {
       color: var(--cyan); font-size: 0.55rem; font-weight: 800; letter-spacing: 0.14em;
       text-transform: uppercase; text-decoration: none; border-bottom: 1px dotted rgba(61, 214, 245, 0.5);
@@ -1659,9 +1660,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v26</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v27</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v26 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v27 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1836,13 +1837,17 @@
         <span><b>Pindutan</b><small>the neon block arena — you are here</small></span>
         <span class="go">▶</span>
       </button>
-      <button class="game-chair tbd" id="gameTwo">
-        <span><b>Game two</b><small>the chair is built and wired — the game is not written yet</small></span>
-        <span class="go">TBD</span>
+      <button class="game-chair" id="gameChess">
+        <span><b>Chess</b><small>the whole game — castling, en passant, promotion, mate, draws</small></span>
+        <span class="go">▶</span>
       </button>
-      <button class="game-chair tbd" id="gameThree">
-        <span><b>Game three</b><small>one more chair, waiting for its game</small></span>
-        <span class="go">TBD</span>
+      <button class="game-chair" id="gameZumang">
+        <span><b>Zumang</b><small>a marble shooter — match three before the snake reaches the skull</small></span>
+        <span class="go">▶</span>
+      </button>
+      <button class="game-chair" id="gameFortress">
+        <span><b>Fortress</b><small>pixel-orc tower defence — nine towers, thirteen monsters, flyers overhead</small></span>
+        <span class="go">▶</span>
       </button>
       <p class="note" id="gamesNote" hidden></p>
       <div class="notes-foot"><a id="deckLink" class="deck-link" href="#">open the deck ↗</a></div>
@@ -1943,7 +1948,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v26";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v27";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -3019,7 +3024,9 @@
     /* ---------- the storm ----------
        One maker taps ⚡ (or walks in with the key) and every phone in the room
        gets the lightning. Nothing is stored; it is a moment, not a record. */
-    let stormAt = 0;
+    /* far in the past, so the very first bolt of a fresh page is never held
+       back by the one-at-a-time guard — only a second bolt right behind it is */
+    let stormAt = -1e9;
     let royalSent = false;
 
     function thunderClap() {
@@ -5463,6 +5470,12 @@
     const NOTES_OFF = "pindutan_notes_off";
     const CHANGES = [
       {
+        day: "Nov 30", items: [
+          "<b>The Games pill opens all four chairs</b> — Chess, Zumang and Fortress are in the sheet beside Pindutan, and each one opens the build the feed names, checked before it runs, exactly the way the deck does it. The two empty chairs that said TBD are gone.",
+          "<b>Fortress is the fourth chair</b>, and it is a tower defence: nine towers, thirteen monsters, five maps that swap every five waves, flyers the cannon and mortar cannot reach, and a stage that loops at +50% after wave twenty."
+        ]
+      },
+      {
         day: "Nov 29", items: [
           "<b>The hall of fame has two boards.</b> The <b>All</b> tab is gone: <b>1V1</b> shows the battles one against one, and <b>Royale</b> is the group game, renamed to say what it is.",
           "<b>Royale has ranks of its own</b> — Unranked, Herald, Guardian, Crusader, Archon, Legend, Ancient, Divine, Immortal. Every five Royale wins is one step up, read straight off the wins, so <b>a match you lose never takes a rank away</b>.",
@@ -6546,12 +6559,9 @@
       if (e.target && e.target.id === "gamesSheet") closeGames();      /* a tap outside the box */
     });
     document.getElementById("gameOne").addEventListener("click", () => { closeGames(); });
-    document.getElementById("gameTwo").addEventListener("click", () => {
-      gamesNote("Game two is not built yet — the chair is wired and waiting for it.");
-    });
-    document.getElementById("gameThree").addEventListener("click", () => {
-      gamesNote("Game three is not built yet — one more chair, waiting the same way.");
-    });
+    document.getElementById("gameChess").addEventListener("click", (e) => chairOpen("chess", e.currentTarget));
+    document.getElementById("gameZumang").addEventListener("click", (e) => chairOpen("zumang", e.currentTarget));
+    document.getElementById("gameFortress").addEventListener("click", (e) => chairOpen("fortress", e.currentTarget));
     try {
       const deckLink = document.getElementById("deckLink");
       if (deckLink) deckLink.href = DECK_URL;
@@ -7172,6 +7182,7 @@
     } catch (e) { }
 
     /* =========================================================
+       v27 — the Games pill opens all four chairs, each from its own field in the feed.
        v26 — the hall of fame has two boards, 1v1 and Royale. Royale's rank is
        read off Royale wins (a tier every five), so losing never costs a rank;
        God mode resets 1v1 and Royale apart, and a reset can take a rank down.
@@ -7183,9 +7194,55 @@
        v22.8 — the arena is the second runner.
        The first runner opens this page, so the other chairs live here:
        a Games pill in the header lists them. Pindutan is the one you are
-       looking at; the other two are built, named and waiting for their games.
+       looking at; Chess, Zumang and Fortress open from the same sheet, each
+       read out of the feed by its own field and checked before it runs.
        The deck page still exists for anyone who wants the menu on its own.
        ========================================================= */
+
+    /* the three chairs beside Pindutan, each with the field the feed names it by */
+    const CHAIRS = {
+      chess: { field: "chess", build: "chessBuild", marker: "CHESS-APP", label: "chess",
+        url: "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html" },
+      zumang: { field: "three", build: "threeBuild", marker: "ZUMANG-APP", label: "zumang",
+        url: "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/zuma.html" },
+      fortress: { field: "fortress", build: "fortressBuild", marker: "FORTRESS-APP", label: "fortress",
+        url: "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/fortress.html" }
+    };
+
+    /* one tap opens the game the feed points at — the same check the deck makes */
+    async function chairOpen(name, btn) {
+      const chair = CHAIRS[name];
+      if (!chair) return false;
+      if (btn && btn.classList.contains("busy")) return false;
+      if (btn) btn.classList.add("busy");
+      const bust = "?t=" + Date.now();
+      try {
+        let url = chair.url, build = "";
+        try {
+          const r = await fetch(UPDATE_FEED + bust, { cache: "no-store" });
+          if (r && r.ok && typeof r.json === "function") {
+            const feed = await r.json();
+            const named = String((feed && feed[chair.field]) || "").trim();
+            if (named) url = named;
+            build = String((feed && feed[chair.build]) || "").trim();
+          }
+        } catch (e) { }
+        gamesNote("Opening " + chair.label + (build ? " " + build : "") + "…");
+        const res = await fetch(url + (url.indexOf("?") < 0 ? bust : "&" + bust.slice(1)), { cache: "no-store" });
+        if (!res || !res.ok || typeof res.text !== "function") throw new Error("no answer");
+        const text = await res.text();
+        if (!text || text.length < 20000 || text.indexOf("</html>") < 0 || text.indexOf(chair.marker) < 0) {
+          throw new Error("that file is not a whole game");
+        }
+        document.open(); document.write(text); document.close();
+        return true;
+      } catch (e) {
+        if (btn) btn.classList.remove("busy");
+        gamesNote("Could not open " + chair.label + " (" + String((e && e.message) || e) +
+          "). Check your signal and tap it again — nothing is lost.");
+        return false;
+      }
+    }
 
     function gamesNote(text) {
       const note = document.getElementById("gamesNote");

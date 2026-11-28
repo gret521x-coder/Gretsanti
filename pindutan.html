@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
-<title>KDL — pick a game</title>
+<title>Alpha — pick a game</title>
 <!-- HUB-MENU -->
 <!-- SELF-UPDATE: this page keeps itself current from labs/pindutan-build.json (menuBuild/menu),
      and the game it opens keeps itself current too (build/html/arena). No game code lives here. -->
@@ -260,7 +260,7 @@
   <!-- the way in: the password lives here now, before any game is opened -->
   <div class="gate" id="gate">
     <div class="gate-box">
-      <div class="mark">KDL</div>
+      <div class="mark">Alpha</div>
       <p>Enter the secret password to open the hub.</p>
       <input type="password" id="pwInput" placeholder="password" autocomplete="off" />
       <div class="gate-row">
@@ -275,14 +275,14 @@
 
   <main>
     <div class="markrow">
-      <div class="mark">KDL</div>
+      <div class="mark">Alpha</div>
       <button class="fb-pill" id="feedbackBtn" type="button" title="Tell the maker what broke — it goes straight to the inbox">
         <span class="ico" aria-hidden="true">✉</span><span class="lbl">Feedback</span>
       </button>
     </div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m13</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m14</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -368,14 +368,14 @@
       <h2>What changed</h2>
       <h3><span class="day">DEC 1</span></h3>
       <ul>
-        <li><b>✉ Feedback, beside the wordmark.</b> A small pill sits in the upper right, level with
-            <b>KDL</b>. It takes a Bug, an Idea or a Praise, a message and an optional name, then
-            <b>Send by email</b> fills a mail to the maker with the report already written — the build,
-            the page, the room, the screen and the time go in with it, so nothing has to be explained
-            twice. No mail app? <b>GitHub ↗</b> opens the same report as a new issue, and
-            <b>Copy report</b> covers everything else. There is still no server: the draft waits on the
-            phone, the address lives in the feed (<b>feedbackTo</b>), and even the password gate has a
-            dotted little link for anyone who cannot get in.</li>
+        <li><b>✉ Feedback, beside the wordmark — and the wordmark is Alpha now.</b> A small pill sits in
+            the upper right, level with <b>Alpha</b>. It takes a Bug, an Idea or a Praise, a message and an
+            optional name, then <b>Send</b> posts it quietly to the maker's inbox — the build, the page,
+            the room, the screen and the time go in with it, so nothing has to be explained twice.
+            <b>GitHub ↗</b> opens the same report as a new issue for anyone who would rather see where it
+            lands, and <b>Copy report</b> covers everything else. <b>No address is printed anywhere on
+            this page</b>: it lives on the server, in the script that receives the report. The draft waits
+            on the phone, and even the password gate has a dotted little link for anyone who cannot get in.</li>
       </ul>
       <h3><span class="day">NOV 30</span></h3>
       <ul>
@@ -517,7 +517,7 @@
     </section>
 
     <p class="tiny">
-      <b>KDL</b> — created by KDL. This page holds no game code; it reads <b>labs/pindutan-build.json</b>,
+      <b>Alpha</b> — created by Alpha. This page holds no game code; it reads <b>labs/pindutan-build.json</b>,
       opens the game named there, and checks for a newer hub of its own on every open.
     </p>
   </main>
@@ -528,7 +528,7 @@
         <h2>✉ Feedback</h2>
         <button class="fb-close" id="feedbackClose" type="button" aria-label="Close">✕</button>
       </div>
-      <p class="fb-to">to the maker's inbox · <b id="fbTo">gret521x@gmail.com</b></p>
+      <p class="fb-to">goes straight to the maker · nothing of theirs is printed here</p>
       <div class="fb-kinds" id="fbKinds" role="tablist" aria-label="What kind of report">
         <button class="fb-kind on" type="button" role="tab" aria-selected="true" data-kind="Bug">🐞 Bug</button>
         <button class="fb-kind" type="button" role="tab" aria-selected="false" data-kind="Idea">💡 Idea</button>
@@ -543,18 +543,18 @@
       <p class="fb-note" id="fbNote" hidden></p>
       <div class="fb-foot">
         <button class="fb-ghost" id="fbCopy" type="button" title="Copy the whole report, in case nothing opens">Copy report</button>
-        <button class="fb-ghost" id="fbGh" type="button" title="No mail app? Open the same report as a GitHub issue">GitHub ↗</button>
-        <button class="fb-send" id="fbSend" type="button">✉ Send by email</button>
+        <button class="fb-ghost" id="fbGh" type="button" title="Prefer GitHub? Open the same report as a new issue">GitHub ↗</button>
+        <button class="fb-send" id="fbSend" type="button">✉ Send</button>
       </div>
-      <p class="fb-fine">This page has no server behind it: <b>Send by email</b> opens your mail app with the report
-        already written and addressed to <b id="fbToFine">gret521x@gmail.com</b> — press send there and it is in the inbox.
-        No mail app? <b>GitHub ↗</b> opens the same report as a
+      <p class="fb-fine"><b>Send</b> posts the report quietly to the maker — the address it goes to lives on
+        their server, never on this page, so there is nothing here for anyone else to read. Prefer to see
+        where it lands? <b>GitHub ↗</b> opens the same report as a
         <a id="fbRepoLink" href="https://github.com/gret521x-coder/Gretsanti/issues/new" target="_blank" rel="noopener">new issue</a>,
         and <b>Copy report</b> puts it on the clipboard. Your draft is kept on this phone until you send it.</p>
     </div>
   </div>
 
-  <noscript><p>KDL needs JavaScript. Turn it on, then reload this page.</p></noscript>
+  <noscript><p>Alpha needs JavaScript. Turn it on, then reload this page.</p></noscript>
 
 <script>
 (function () {
@@ -567,7 +567,7 @@
   var FORT = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/fortress.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m13";                /* this copy of the hub */
+  var DECK = "m14";                /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 
@@ -709,7 +709,7 @@
         throw new Error("the file that came back is not a whole game");
       }
       percent(100);
-      document.title = "KDL " + (got.build || "");
+      document.title = "Alpha " + (got.build || "");
       document.open();
       document.write(text);
       document.close();
@@ -840,9 +840,11 @@
     var byId = function (id) { return document.getElementById(id); };
     var FB = {
       kind: "Bug",
-      to: "gret521x@gmail.com",
+      /* the inbox is a script on the maker's host: it knows the address, this page never does */
+      endpoint: "https://aidekupal.unaux.com/api-feedback.php",
       repo: "https://github.com/gret521x-coder/Gretsanti/issues/new",
       draftKey: "pindutan_feedback_draft",
+      sending: false,
       lastUrl: ""
     };
     var text = byId("fbText"), name = byId("fbName"), count = byId("fbCount"),
@@ -862,7 +864,7 @@
         btns[i].classList.toggle("on", on);
         btns[i].setAttribute("aria-selected", on ? "true" : "false");
       }
-      if (send) send.title = "Open your mail app with the report addressed to " + FB.to;
+      if (send) send.title = "Post the report privately to the maker's inbox";
     }
 
     function paintCount() {
@@ -890,13 +892,6 @@
         if (d.name && name) name.value = d.name;
         if (d.kind) FB.kind = d.kind;
       } catch (e) { }
-    }
-
-    function paintTo() {
-      var a = byId("fbTo"), b = byId("fbToFine");
-      if (a) a.textContent = FB.to;
-      if (b) b.textContent = FB.to;
-      return FB.to;
     }
 
     function where() {
@@ -927,9 +922,27 @@
       };
     }
 
-    function mailUrl() {
+    function payload() {
       var r = report();
-      return "mailto:" + FB.to + "?subject=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
+      return {
+        subject: r.title,
+        body: r.body,
+        kind: FB.kind,
+        text: r.text,
+        name: r.name,
+        build: "hub " + DECK,
+        page: String(location.href || ""),
+        where: where(),
+        screen: (window.screen ? (window.screen.width + "x" + window.screen.height) : "unknown"),
+        browser: String(navigator.userAgent || "").slice(0, 160),
+        when: new Date().toISOString()
+      };
+    }
+
+    /* the inbox may move: the feed can name another endpoint, and a bad one is ignored */
+    function endpointFrom(feed) {
+      var url = feed && typeof feed.feedback === "string" ? feed.feedback.trim() : "";
+      return /^https:\/\/[^\s]+$/i.test(url) ? url : "";
     }
 
     function issueUrl() {
@@ -944,15 +957,51 @@
       return true;
     }
 
-    function sendMail() {
+    function sendReport() {
       if (!report().text || report().text.length < 8) {
         say("A few more words first — what happened?", true);
         paintCount();
         return false;
       }
-      FB.lastUrl = mailUrl();
-      say("Opening your mail app — the report is written and addressed to " + FB.to + ". Press send there.");
-      return openUrl(FB.lastUrl);
+      if (FB.sending) return false;
+      FB.sending = true;
+      var started = send ? send.textContent : "✉ Send";
+      if (send) { send.disabled = true; send.textContent = "✉ Sending…"; }
+      say("Sending your report…");
+
+      var done = function (good, msg) {
+        FB.sending = false;
+        if (send) { send.textContent = started; send.disabled = false; }
+        paintCount();
+        say(msg, !good);
+        if (good) { try { localStorage.removeItem(FB.draftKey); } catch (e) { } }
+        return good;
+      };
+
+      var posted = null;
+      try {
+        posted = fetch(FB.endpoint + "?t=" + Date.now(), {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload())
+        });
+      } catch (e) { posted = null; }
+
+      if (!posted || typeof posted.then !== "function") {
+        return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
+      }
+
+      return posted
+        .then(function (res) {
+          if (!res || !res.ok) return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report.");
+          return (res.json ? res.json().catch(function () { return { ok: true }; }) : Promise.resolve({ ok: true }))
+            .then(function (data) {
+              if (data && data.ok === false) return done(false, "The inbox said no — try GitHub ↗, or Copy report.");
+              return done(true, "Sent — thank you. It is in the maker's inbox.");
+            });
+        })
+        .catch(function () { return done(false, "Could not reach the inbox — try GitHub ↗, or Copy report."); });
     }
 
     function sendIssue() {
@@ -999,7 +1048,6 @@
       paintCount();
       loadDraft();
       paintKinds();
-      paintTo();
       try { if (text) text.focus(); } catch (e) { }
     }
 
@@ -1015,8 +1063,9 @@
         fetch(FEED + "?t=" + Date.now(), { cache: "no-store" })
           .then(function (r) { return (r && r.ok && r.json) ? r.json() : null; })
           .then(function (feed) {
-            var to = feed && typeof feed.feedbackTo === "string" ? feed.feedbackTo.trim() : "";
-            if (/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(to)) { FB.to = to; paintTo(); paintKinds(); }
+            var url = endpointFrom(feed);
+            if (url) { FB.endpoint = url; }
+            return FB.endpoint;
           })
           .catch(function () { });
       } catch (e) { }
@@ -1040,14 +1089,13 @@
     });
     if (text) text.addEventListener("input", function () { paintCount(); saveDraft(); });
     if (name) name.addEventListener("input", saveDraft);
-    if (send) send.addEventListener("click", sendMail);
+    if (send) send.addEventListener("click", sendReport);
     var gh = byId("fbGh");
     if (gh) gh.addEventListener("click", sendIssue);
     var cp = byId("fbCopy");
     if (cp) cp.addEventListener("click", copyReport);
 
     paintKinds();
-    paintTo();
     loadDraft();
     paintCount();
     destination();          /* the feed may name a different inbox */

@@ -656,7 +656,11 @@
       display: grid;
       place-items: center;
       user-select: none;
-      touch-action: manipulation;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      /* a hold must not turn into a scroll: that cancels the pointer and the
+         piece stops sliding after one column */
+      touch-action: none;
     }
 
     .touch-controls button small {
@@ -1560,7 +1564,7 @@
       <div class="glide-head">
         <div>
           <div class="glide-title">GLIDE</div>
-          <div class="glide-sub">HOW YOUR PIECES MOVE · SAVED ON THIS DEVICE</div>
+          <div class="glide-sub">HOW YOUR PIECES MOVE · ARROWS AND ◀ ▶ ▼ · SAVED ON THIS DEVICE</div>
         </div>
         <button id="glideClose" aria-label="Close">✕</button>
       </div>
@@ -1625,9 +1629,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v24</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v25</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v24 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v25 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1883,7 +1887,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v24";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v25";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -2050,6 +2054,10 @@
       sessionStorage.setItem("pindutan_unlocked", "1");
       lockScreen.style.display = "none";
       lockError.textContent = "";
+      /* let go of the name field: while an input has focus the arrow keys belong
+         to it, and a browser that keeps focus in a hidden field would leave the
+         board deaf to the keyboard */
+      try { gateNick.blur(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) { }
       if (typeof afterGateName === "function") afterGateName(name);
     }
 
@@ -5297,6 +5305,13 @@
         ]
       },
       {
+        day: "Nov 28", items: [
+          "<b>Glide now drives the arrows</b> — ← → and ▼ repeat at the speed in the panel instead of the system's own repeat. Set 200 ms and it is slow; set 12 ms and it flies. The same panel governs ◀ ▶ ▼ on the screen.",
+          "A glide setting changed <b>while a button is held</b> takes effect on the next step, instead of waiting for the next press.",
+          "Holding a button and <b>letting go no longer adds one extra column</b>, and a finger that drifts while holding no longer cancels the slide."
+        ]
+      },
+      {
         day: "Nov 25", items: [
           "Your <b>opponent's board</b>, live, in 1v1 and group battles.",
           "<b>Hold ◀ / ▶</b> to slide, at Slow, Normal or Fast.",
@@ -5360,6 +5375,8 @@
     }
 
     function closeLobby() {
+      const chat = document.getElementById("chatInput");
+      if (chat && document.activeElement === chat) { try { chat.blur(); } catch (e) { } }
       document.getElementById("lobbySheet").style.display = "none";
       document.getElementById("backToGameBtn").style.display = gameRunning ? "inline-block" : "none";
       closeGod();
@@ -6456,10 +6473,22 @@
       if (!slideCanPlay()) return false;
       if (move(dir)) slideKick(dir);
       drawBoard();
+      /* a small clock, not a fixed tempo: the step is due when the glide speed
+         says so, read fresh every time, so a setting changed while a piece is
+         held lands on the very next step. An interval rather than a chain, so
+         one bad frame cannot leave a button stuck on. */
+      let nextAt = 0;
+      const tick = () => {
+        if (!slideCanPlay()) { slideStop(); return; }
+        const now = nowMs();
+        if (now < nextAt) return;
+        nextAt = now + Math.max(4, glide.glide);
+        slideStep(dir);
+      };
       slideWait = setTimeout(() => {
         slideWait = 0;
-        const gap = Math.max(4, glide.glide);
-        slideEvery = setInterval(() => slideStep(dir), gap);
+        nextAt = nowMs() + Math.max(4, glide.glide);
+        slideEvery = setInterval(tick, 8);
       }, Math.max(0, glide.delay));
       return true;
     }
@@ -6476,26 +6505,40 @@
       if (!slideCanPlay()) return false;
       softStep();
       drawBoard();
-      softEvery = setInterval(softHoldStep, Math.max(4, glide.soft));
+      let nextAt = 0;
+      const tick = () => {
+        if (!slideCanPlay()) { softHoldStop(); return; }
+        const now = nowMs();
+        if (now < nextAt) return;
+        nextAt = now + Math.max(4, glide.soft);
+        softHoldStep();
+      };
+      nextAt = nowMs() + Math.max(4, glide.soft);
+      softEvery = setInterval(tick, 8);
       return true;
     }
 
     function bindHold(btn, onHold, onClick) {
       if (!btn) return;
-      let pressedAt = 0;
+      let pointerDriven = false;
       btn.addEventListener("pointerdown", e => {
         if (e.button && e.button !== 0) return;
-        pressedAt = Date.now();
+        pointerDriven = true;
         try { btn.setPointerCapture(e.pointerId); } catch (err) { /* older browser */ }
         e.preventDefault();
         onHold();
       });
       ["pointerup", "pointercancel", "lostpointercapture"].forEach(evt =>
-        btn.addEventListener(evt, () => { slideStop(); softHoldStop(); }));
+        btn.addEventListener(evt, () => {
+          slideStop(); softHoldStop();
+          /* the click that follows this release belongs to the press that just
+             ended, however long it was held; let it go by */
+          setTimeout(() => { pointerDriven = false; }, 0);
+        }));
       btn.addEventListener("click", e => {
-        if (Date.now() - pressedAt < 600) { e.preventDefault(); return; }   /* the press did it */
+        if (pointerDriven) { pointerDriven = false; e.preventDefault(); return; }   /* the press did it */
         if (onClick) onClick();
-        else onHold();                     /* keyboard, or a browser with no pointer events */
+        else onHold();                     /* keyboard focus, or a browser with no pointer events */
       });
     }
 
@@ -6580,10 +6623,19 @@
       }
       if (!gameRunning || isPaused || isSpectator) return;
 
+      /* ← → ▼ are holds, exactly like the ◀ ▶ ▼ buttons: the glide panel decides
+         how fast they repeat, and the keyboard's own auto-repeat is ignored so
+         the two never fight over the same piece */
+      if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+        if (!e.repeat) slideStart(e.code === "ArrowLeft" ? -1 : 1);
+        return;
+      }
+      if (e.code === "ArrowDown") {
+        if (!e.repeat) softHoldStart();
+        return;
+      }
+
       switch (e.code) {
-        case "ArrowLeft": move(-1); break;
-        case "ArrowRight": move(1); break;
-        case "ArrowDown": softStep(); break;
         case "ArrowUp":
         case "KeyX": tryRotate(1); break;
         case "KeyZ": tryRotate(-1); break;
@@ -6595,6 +6647,13 @@
       }
       drawBoard();
     });
+
+    /* a key let go of stops the glide it started; so does the window losing focus */
+    document.addEventListener("keyup", e => {
+      if (e.code === "ArrowLeft" || e.code === "ArrowRight") slideStop();
+      else if (e.code === "ArrowDown") softHoldStop();
+    });
+    window.addEventListener("blur", () => { slideStop(); softHoldStop(); });
 
     document.getElementById("backToGameBtn").addEventListener("click", () => {
       closeLobby();
@@ -6720,6 +6779,8 @@
     } catch (e) { }
 
     /* =========================================================
+       v25 — the glide panel governs the arrow keys too, holds survive a finger
+       drifting, and a released hold no longer adds a step of its own.
        v24 — a new season: the hall of fame has a button that clears the ladder.
        v23 — the password moved to the hub; the gate here opens straight on the name.
        v22.9 — the arena is the second runner, and the feed names the file it updates from.

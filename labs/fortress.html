@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b1008">
 <title>KDL // FORTRESS</title>
+<!-- FORTRESS-APP · the hub opens this file from the feed and checks for that string -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -126,6 +128,9 @@ body{position:fixed;inset:0;color:var(--text);font-family:var(--sans)}
 .roster .card .tick{position:absolute;top:0;right:0;background:#ffd166;color:#241a08;font-family:var(--mono);
   font-size:9px;font-weight:700;padding:1px 3px;line-height:1.2;border-bottom-left-radius:5px}
 #m-skill{font-family:var(--mono);font-size:9px;color:#ffd166;min-height:22px;margin:8px 0 2px;line-height:1.4}
+.muster-build{font-family:var(--mono);font-size:9px;letter-spacing:1.2px;text-transform:lowercase;
+  color:var(--faint);margin:0 0 10px}
+.muster-build b{color:#9aa88c;font-weight:700}
 #bar .divider{width:1px;background:var(--line);margin:2px 1px}
 
 /* ---------------- overlays ---------------- */
@@ -199,6 +204,7 @@ body{position:fixed;inset:0;color:var(--text);font-family:var(--sans)}
     <p>Tap a card to add or drop a hero. Each one brings their own skill to the fight.</p>
     <div id="roster" class="roster"></div>
     <div id="m-skill"></div>
+    <div class="muster-build" id="musterBuild">fortress <b>f1</b></div>
     <button id="m-go" class="btn primary">Ride out</button>
   </div>
 </div>
@@ -454,6 +460,9 @@ var TINTS = {
   brute: 'saturate(.65) hue-rotate(-24deg) brightness(.85)',
   boss: 'saturate(.9) hue-rotate(-40deg) brightness(.72)'
 };
+
+/* the tag the hub compares against the feed; bump it when the game changes */
+var BUILD_TAG = 'f1';
 
 /* --------------------------------------------------------------- state */
 var G = null, IMG = {}, loaded = 0, total = 0;
@@ -1788,6 +1797,8 @@ function wireIcons() {
 }
 
 function boot() {
+  var mb = document.getElementById('musterBuild');
+  if (mb) mb.innerHTML = 'fortress <b>' + BUILD_TAG + '</b>';
   size();
   wireIcons();
   paintRosterSlots();
@@ -1806,6 +1817,7 @@ boot();
 loadImages(function () { wireIcons(); });
 
 window.KDL_FORTRESS = {
+  buildTag: BUILD_TAG,
   state: function () { return G; },
   step: step,
   build: buildTower,

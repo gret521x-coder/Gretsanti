@@ -25,8 +25,9 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `api-free.php` | 10 KB | FreeModel relay — key typed once in a browser form, streamed answers |
 | `worker-free.js` | 5 KB | Same relay as a free Cloudflare Worker, for a host that blocks cross-site calls |
 | `aurora-v3.html` · `aurora-v2.html` · `Aurora.html` | 96 · 83 · 53 KB | Older Aurora builds, kept as fallback |
-| `pindutan.html` | 30 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then three chairs, all three live (Pindutan, Chess, Zumang), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess` and `feed.three` |
+| `pindutan.html` | 30 KB | **The game hub — KDL** — the page the first runner opens: **the password gate**, then four chairs, all four live (Pindutan, Chess, Zumang, Fortress), what changed and a short about-this-page. Holds no game code, keeps itself current from `menuBuild`; its chairs load `feed.arena`, `feed.chess`, `feed.three` and `feed.fortress` |
 | `labs/zuma.html` | 108 KB | **Zumang, game three** — a zuma-style marble shooter on a carved stone board: a jade frog idol flanked by two gold sunbursts aims at your pointer (or your finger) and fires on click or **Space**, a chain that inserts where the marble lands, 3+ of a colour pops, a cut chain **pulls its back half up** to the front and chains the reaction, power-up marbles (🌀 reverse, 🐌 slow, 💣 bomb), a shot that misses breaks on the wall instead of bouncing, rings blooming where a colour pops, a gold quota gauge and green life gems on an ornate bar over the board (score, lives, quota — no level plate), a gold skull at the end of the track, the levels a name has **finished** ticked ✓ in the grid so they can be picked again, **100 levels in ten temples, each with a board of its own** (spiral, serpent, corridor, rosette or ring, fixed by the level number) with the pace, colours and quota tightening, Web Audio sound made from oscillators, a nickname door, and a score kept **by name** on the device with a **solo** post to the ladder when there is a signal |
+| `labs/fortress.html` | 415 KB | **Fortress, game four** — tower defence on three stages, each with a road of its own: four families of tower (archer, warrior barracks, mage, catapult) on stone pads beside the road, each upgrading through levels 1–3 and then **forking at level four** (Rangers Hideout or Frost Archers, Holy Order or Barbarian Hall, Pyromancer or Sorcerer, Big Bertha or Tesla x104), a panel per tower for upgrade, path and target priority, **seven heroes on cards** (Gerald, Alleria, Malik, Bolin, Magnus, Ignus, Denas) with three picked at the muster and a skill each, plus a militia spell; zombies, runners, orcs, bombers, knights, brutes and a boss a wave. Art is **inside the file** — 43 data-URI sprites from Tiny Swords (`labs/assets/fortress` holds the sources and the slicing scripts), so it opens with nothing but the page. Build tag **f1**, opened from `fortress`/`fortressBuild` |
 | `labs/chess.html` | 96 KB | **Chess, game two** — complete rules (castling, en passant, promotion, mate, stalemate, fifty-move, threefold, dead positions), VS CPU at three levels, two players on one page, **an online lobby over three relays with tap-to-challenge, a coin toss for colours, chess clocks, rematch, PGN/FEN and a scoresheet you can tap back through**, keeps itself current from `chessBuild`, six page themes, eight board palettes with a tint slider, three piece styles |
 | `Screenshot.html` · `save.php` | 3 · 1 KB | Collectibles vault — password-gated image board |
 | `index-v1…v4.html` · `gc`/`gc-v2…v4` · `api-v2…v4.php` | — | Archive, one design generation each |
@@ -56,7 +57,7 @@ too, and `pindutan-run.html` is left exactly as it was. No signal, and it says s
 hosted copy. Both launchers carry it, `index.html` and `index-v5.html`, and a saved grid moves with it —
 `pindutan.html`, `pindutan-v18/20/21.html`, `labs/pindutan-v21.html`, the hosted copies and even
 `pindutan-run.html` all open the list now. To fill an empty row, give it a `url` in `PINDUTAN_SLOTS`. The deck
-at `pindutan.html` keeps its own three chairs for the runner and for anyone who opens it directly; nothing
+at `pindutan.html` keeps its own four chairs for the runner and for anyone who opens it directly; nothing
 here changes it. Also fixed in both launchers: the wording and upgrade tables were declared below the
 "still unlocked" check, so a reload hit a dead zone inside `getApps()`, the `catch` swallowed it and the
 player's saved grid was thrown away — they are declared above that check now.
@@ -74,8 +75,9 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    it is byte-for-byte the version from Nov 26 and is not to be touched again — which is exactly why the hub
    below is 29 KB and still carries that marker.
 2. `pindutan.html` — the **game hub (m8)**, wordmark **KDL**, 29 KB, no game code. It asks for **the
-   password** first — that is where the lock lives now — and then shows three chairs: **Pindutan** opens the
-   build the feed calls `arena`, **Chess** opens `chess`, and **Zumang** opens `three`. Under the chairs:
+   password** first — that is where the lock lives now — and then shows four chairs: **Pindutan** opens the
+   build the feed calls `arena`, **Chess** opens `chess`, **Zumang** opens `three`, and **Fortress**
+   opens `fortress`. Under the chairs:
    **what changed** and a short **about this page**. The hub keeps *itself* current
    from `menuBuild`/`menu`, and it checks the feed on every open and on every tap of its strip.
 3. `labs/pindutan-v21.html` — the **arena** (v26): the game. It carries the same three chairs behind a
@@ -191,12 +193,12 @@ win straight back.
 
 The feed names an address per link: `html` (the hub the runner opens), `arena` (the game the hub
 opens, and the file the game updates itself from), `chess`/`chessBuild`, `three`/`threeBuild` for Zumang,
-and `menu`/`menuBuild` (the hub's own address and tag).
+`fortress`/`fortressBuild` for Fortress, and `menu`/`menuBuild` (the hub's own address and tag).
 Pointing `html` at the game instead takes the runner straight to Pindutan and skips the hub — one field, no
 upload.
 
 **And the hub keeps itself current too.** On opening — and on a tap of its strip — the hub compares its own
-tag with `menuBuild` in the feed (currently `m8`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
+tag with `menuBuild` in the feed (currently `m11`). If a newer hub is out it fetches it, checks it (`HUB-MENU` marker, `</html>`,
 size, and that it really calls itself that build), then hands the page over; `sessionStorage` stops a hub that
 was just swapped in from swapping again. The strip says which copy you are on in one line — `hub m4 · newest ·
 arena v22.9` — turns cyan while it looks, amber when it cannot, and admits `offline` without losing the menu.
@@ -289,7 +291,8 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
-- **Pindutan v17** — 48 · **Pindutan v18** — 262 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 27 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
+- **Pindutan v17** — 48 · **Pindutan v18** — 262 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 30 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
+- **Fortress** — 117 · **Castle Defense** — 34
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

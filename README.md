@@ -34,7 +34,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `pindutan-run.html` | 7 KB | **The first runner, frozen at the Nov 26 file** — no game code and no menu; reads the feed and opens `feed.html`, the hub. Left alone on purpose: every change since lives in the hub and the game |
-| `labs/pindutan-v21.html` | 264 KB | Pindutan v26 — the game: the arena, its three chairs behind ☰ Games, a hall of fame with two boards (**1V1** and **Royale**, no **All**), Royale tiers read off Royale wins, and a **new season** button, and the build that keeps itself current. The gate opens straight on the nickname now. The **GLIDE** panel sets how a held piece moves, for the arrow keys and the on-screen ◀ ▶ ▼ alike |
+| `labs/pindutan-v21.html` | 268 KB | Pindutan v27 — the game: the arena, its four chairs behind ☰ Games (**Chess**, **Zumang** and **Fortress** each open from the feed by their own field, checked before they run), a hall of fame with two boards (**1V1** and **Royale**, no **All**), Royale tiers read off Royale wins, and a **new season** button, and the build that keeps itself current. The gate opens straight on the nickname now. The **GLIDE** panel sets how a held piece moves, for the arrow keys and the on-screen ◀ ▶ ▼ alike |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, where the deck lives (`menu` / `menuBuild`), and the ladder's address |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
@@ -80,8 +80,11 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    opens `fortress`. Under the chairs:
    **what changed** and a short **about this page**. The hub keeps *itself* current
    from `menuBuild`/`menu`, and it checks the feed on every open and on every tap of its strip.
-3. `labs/pindutan-v21.html` — the **arena** (v26): the game. It carries the same three chairs behind a
-   **☰ Games** pill in its header, and it updates itself from `arena` in the feed. Its gate opens **straight on
+3. `labs/pindutan-v21.html` — the **arena** (v27): the game. It carries the same four chairs behind a
+   **☰ Games** pill in its header, and it updates itself from `arena` in the feed. A chair reads its own field
+   (`arena`, `chess`, `three`, `fortress`), fetches that file, refuses anything that is not a whole page with
+   the right marker, and only then hands the tab over to it — so the pill opens the newest Fortress, not a copy
+   kept inside the arena. Its gate opens **straight on
    the nickname**: the password step is gone, because it is asked one page earlier, in the hub.
 
 ![Fortress — the pixel-orc tower defence](labs/assets/fortress-cover.png)
@@ -299,7 +302,7 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
-- **Pindutan v17** — 48 · **Pindutan v18** — 262 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 30 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
+- **Pindutan v17** — 48 · **Pindutan v18** — 273 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 30 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
 - **Fortress** — 56 · **Castle Defense** — 34
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request

@@ -1294,6 +1294,36 @@
     .god-row button.unban { border-color: rgba(74, 222, 128, 0.5); color: var(--lime); }
     .god-empty { color: var(--mut); font-size: 0.6rem; padding: 7px 4px; }
 
+    /* ---- God mode, the ladder: one board at a time ---- */
+    .god-section { margin-top: 14px; }
+    .god-section .god-head { border-top: 1px solid var(--line); padding-top: 10px; }
+    .god-lb-row {
+      display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center;
+      padding: 6px 8px; border-radius: 9px; margin-bottom: 5px;
+      background: #0a0f18; border: 1px solid var(--line);
+    }
+    .god-lb-row .gname { font-size: 0.66rem; font-weight: 800; color: var(--txt); }
+    .god-lb-row .gsub { font-size: 0.52rem; color: var(--mut); display: flex; align-items: center; gap: 4px; }
+    .god-lb-row .gsub .rank-chip { font-size: 0.46rem; padding: 0 4px; }
+    .god-lb-row button { padding: 4px 9px; font-size: 0.55rem; border-radius: 7px; }
+    .god-lb-row button.reset { border-color: rgba(255, 77, 109, 0.5); color: var(--red); }
+    .god-wipe {
+      width: 100%; margin-top: 4px; padding: 7px 9px; font-size: 0.56rem; font-weight: 800;
+      letter-spacing: 0.06em; border-radius: 9px; cursor: pointer;
+      color: var(--red); border: 1px solid rgba(255, 77, 109, 0.45); background: rgba(255, 77, 109, 0.07);
+    }
+    .god-wipe:active { background: rgba(255, 77, 109, 0.18); }
+    .god-confirm {
+      margin-top: 10px; padding: 9px 10px; border-radius: 10px;
+      border: 1px solid rgba(255, 77, 109, 0.55); background: rgba(255, 77, 109, 0.1);
+    }
+    .god-confirm[hidden] { display: none; }
+    .god-confirm p { margin: 0 0 7px; font-size: 0.58rem; line-height: 1.55; color: var(--txt); }
+    .god-confirm .row { display: flex; gap: 7px; }
+    .god-confirm button { flex: 1; padding: 7px 8px; font-size: 0.58rem; border-radius: 8px; }
+    .god-confirm button.yes { border-color: var(--red); color: #fff; background: rgba(255, 77, 109, 0.4); }
+    .god-note { color: var(--lime); font-size: 0.55rem; line-height: 1.5; margin-top: 7px; }
+
     /* a kicked or banned phone is told, in the line beside the word Lobby */
     #roomStatus.warn { color: var(--red); }
     #godNotice {
@@ -1629,9 +1659,9 @@
       <div class="sheet-head">
         <div class="wordmark-wrap">
           <canvas id="logoCanvasBig" width="240" height="52" role="img" aria-label="Pindutan"></canvas>
-          <div class="hero-sub">neon block arena · one lobby for everyone · v25</div>
+          <div class="hero-sub">neon block arena · one lobby for everyone · v26</div>
           <div class="build-row">
-            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v25 · checking…</button>
+            <button id="buildLine" class="build-line busy" title="This copy — tap to look for a newer one">v26 · checking…</button>
             <button id="gamesBtn" class="build-line games" title="The other chairs">☰ Games</button>
             <a id="runnerLink" class="build-runner" href="#" hidden>open the runner ↗</a>
           </div>
@@ -1701,10 +1731,10 @@
           </span>
         </div>
         <div class="lb-tabs" id="lbTabs">
-          <button class="lb-tab active" data-lb="all">ALL</button>
-          <button class="lb-tab" data-lb="duel">1V1</button>
-          <button class="lb-tab" data-lb="group">GROUP</button>
+          <button class="lb-tab active" data-lb="duel">1V1</button>
+          <button class="lb-tab" data-lb="group">ROYALE</button>
         </div>
+        <div class="lb-note" id="lbModeNote">1v1 — wins and losses, with a star rank won in 1v1 only.</div>
         <div class="lb-list" id="lbList">
           <div class="lb-empty">Loading the ladder…</div>
         </div>
@@ -1749,6 +1779,32 @@
       <div id="godList"></div>
       <div class="god-head" style="margin-top:12px;color:var(--mut);"><span>Banned</span><span id="godBanCount">0</span></div>
       <div id="godBans"></div>
+
+      <!-- the ladder, one board at a time: 1v1 and Royale are reset apart -->
+      <div class="god-section" id="godDuelSection">
+        <div class="god-head"><span>Ladder · 1v1</span><span id="godDuelCount">0</span></div>
+        <div class="god-sub">Wins and losses on the 1v1 board. <b>Reset 1v1</b> takes both away and the
+          star rank follows them down; the best score stays.</div>
+        <div id="godDuelList"></div>
+        <button class="god-wipe" id="godWipeDuel">↺ Reset every 1v1 win</button>
+      </div>
+
+      <div class="god-section" id="godGroupSection">
+        <div class="god-head"><span>Ladder · Royale</span><span id="godGroupCount">0</span></div>
+        <div class="god-sub">Royale wins decide the tier — every five is one step, and a match you lose
+          never lowers it. <b>Reset wins and rank</b> puts a player back at <b>Unranked</b>.</div>
+        <div id="godGroupList"></div>
+        <button class="god-wipe" id="godWipeGroup">↺ Reset every Royale win</button>
+      </div>
+
+      <div id="godConfirm" class="god-confirm" hidden>
+        <p id="godConfirmText"></p>
+        <div class="row">
+          <button class="yes" id="godConfirmYes">Yes, reset</button>
+          <button id="godConfirmNo">Cancel</button>
+        </div>
+      </div>
+      <div class="god-note" id="godLadderNote"></div>
     </div>
   </div>
 
@@ -1887,7 +1943,7 @@
     /* the few long-lived timers this page sets. An update that writes a newer
        copy over this one stops them first, so the old page cannot keep talking
        to the lobby behind the new one. */
-    const BUILD_TAG = "v25";     /* first, because the update log reads it on the way in */
+    const BUILD_TAG = "v26";     /* first, because the update log reads it on the way in */
     const DECK_URL = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
     const pageTimers = [];
     (function trackIntervals() {
@@ -3272,6 +3328,16 @@
         return;
       }
 
+      /* the maker cleared a board: a copy that keeps the old number would put
+         it straight back, so every phone drops its own */
+      if (p.t === "LBRS") {
+        if (!p.crown) return;                 /* only the creator may say this */
+        lbApplyReset(p.mode === "group" ? "group" : "duel", p.name || "");
+        lbRepaint();
+        if (godOpen()) paintGod();
+        return;
+      }
+
       if (p.t === "CHAT") {
         chatReceive(p);
         return;
@@ -3558,7 +3624,7 @@
     const LB_CACHE = "pindutan_lb_cache";
     const LB_MINE = "pindutan_lb_mine";
 
-    let lbMode = "all";
+    let lbMode = "duel";            /* the two boards: "duel" (1v1) and "group" (Royale) */
     let lbBusy = false;
     let battleReported = false;
 
@@ -3649,15 +3715,6 @@
       return rec;
     }
 
-    function lbMineTotal(rec) {
-      const pick = m => rec[m] || { wins: 0, losses: 0, best: 0 };
-      return {
-        wins: pick("duel").wins + pick("group").wins,
-        losses: pick("duel").losses + pick("group").losses,
-        best: Math.max(pick("duel").best || 0, pick("group").best || 0)
-      };
-    }
-
     function lbKeepMine(payload) {
       const mine = lbMine();
       const rec = lbMineRec(mine, payload.name);
@@ -3679,10 +3736,7 @@
       const key = lbNameKey(myDisplayName());
       const rec = (key && mine.byName[key]) || (mine.name ? mine.byName[lbNameKey(mine.name)] : null);
       if (!rec) return null;
-      const pick = m => rec[m] || { wins: 0, losses: 0, best: 0 };
-      const slot = mode === "all"
-        ? lbMineTotal(rec)
-        : pick(mode);
+      const slot = rec[mode] || { wins: 0, losses: 0, best: 0 };
       if (!slot.wins && !slot.losses) return null;
       return {
         name: rec.name, wins: slot.wins, losses: slot.losses, best: slot.best,
@@ -3743,16 +3797,16 @@
       return fresh;
     }
 
-    /* one row per name; "all" adds the two columns together */
+    /* one row per name, for one board: "duel" or "group" */
     function lbPeerRows(mode) {
       const map = lbPeers();
       const cut = Date.now() - LB_KEEP_MS;
-      const want = mode || "all";
+      const want = mode === "group" ? "group" : "duel";
       const out = new Map();
       Object.keys(map).forEach(k => {
         const r = map[k];
         if (!r || (r.seen || 0) <= cut) return;
-        if (want !== "all" && r.mode !== want) return;
+        if (r.mode !== want) return;
         const key = lbNameKey(r.name);
         const row = out.get(key) || { name: r.name, wins: 0, losses: 0, best: 0, peer: true };
         row.wins += r.wins | 0;
@@ -3794,9 +3848,13 @@
       if (!force && Date.now() - lbShareAt < 15000) return false;
       const mine = lbMyRows();
       const heard = [];
-      lbPeerRows().forEach(r => {          /* pass on what this phone heard */
+      const names = new Set();
+      ["duel", "group"].forEach(mode => {
+        lbPeerRows(mode).forEach(r => names.add(r.name));     /* pass on what this phone heard */
+      });
+      names.forEach(name => {
         ["duel", "group"].forEach(mode => {
-          const slot = lbPeerSlot(r.name, mode);
+          const slot = lbPeerSlot(name, mode);
           if (slot) heard.push(slot);
         });
       });
@@ -3858,6 +3916,56 @@
       } finally {
         if (btn) btn.disabled = false;
       }
+    }
+
+    /* ---------- clearing one board, here and on the phones ----------
+       A ladder only ever counts upwards, so a reset is the one thing the
+       numbers cannot do for themselves: whatever already copied a win keeps
+       it. This wipes the record on this phone, the rows the other phones told
+       it about, and the copy it kept for the next visit. The caller takes care
+       of the host and of telling the room. */
+    function lbApplyReset(mode, name) {
+      const board = mode === "group" ? "group" : "duel";
+      const target = lbNameKey(cleanName(String(name || "")));
+      const all = !target;
+
+      const mine = lbMine();
+      Object.keys(mine.byName).forEach(k => {
+        if (!all && k !== target) return;
+        const rec = mine.byName[k];
+        const slot = rec && rec[board];
+        if (!slot) return;
+        slot.wins = 0;
+        slot.losses = 0;
+        rec.streak = 0;
+      });
+      lbMineSave(mine);
+
+      const peers = lbPeers();
+      Object.keys(peers).forEach(k => {
+        const r = peers[k];
+        if (!r || r.mode !== board) return;
+        if (!all && lbNameKey(r.name) !== target) return;
+        delete peers[k];
+      });
+      lbPeersSave(peers);
+
+      const cache = lbCacheRead();
+      if (cache && Array.isArray(cache[board])) {
+        cache[board] = all ? [] :
+          cache[board].filter(r => lbNameKey(cleanName(String((r && r.name) || ""))) !== target);
+        try { localStorage.setItem(LB_CACHE, JSON.stringify(cache)); } catch (e) { }
+      }
+
+      /* a result still waiting to be sent would put the win straight back */
+      const waiting = lbPending();
+      const kept = waiting.filter(p => {
+        if (!p || p.mode !== board) return true;
+        if (all) return false;
+        return lbNameKey(cleanName(String(p.name || ""))) !== target;
+      });
+      if (kept.length !== waiting.length) lbPendingSave(kept);
+      return true;
     }
 
     function lbNote(text, cls) {
@@ -3927,8 +4035,61 @@
         '</b><span class="rk-dots">' + rankDots(rank) + "</span></span>";
     }
 
+    /* ---------- Royale: a rank that is only ever earned ----------
+       The 1v1 ranks count stars and hand one back for a loss. Royale does not
+       work that way: the tier is read straight off the number of Royale wins,
+       so nothing but a win can move it and a loss can never take one away.
+       Every five wins is one step, and the last tier has no ceiling. */
+    const ROYALE_STEP = 5;
+    const ROYALE_TIERS = [
+      { id: "unranked", name: "Unranked", color: "#93a0b4", min: 0 },
+      { id: "herald", name: "Herald", color: "#9fd0ff", min: 5 },
+      { id: "guardian", name: "Guardian", color: "#6fe8a0", min: 10 },
+      { id: "crusader", name: "Crusader", color: "#ffd257", min: 15 },
+      { id: "archon", name: "Archon", color: "#ffa14a", min: 20 },
+      { id: "legend", name: "Legend", color: "#ff7b6b", min: 25 },
+      { id: "ancient", name: "Ancient", color: "#c58bff", min: 30 },
+      { id: "divine", name: "Divine", color: "#7ad4ff", min: 35 },
+      { id: "immortal", name: "Immortal", color: "#ff5bd0", min: 40 }
+    ];
+
+    /* wins in, tier out. Nothing else is consulted: not losses, not points. */
+    function royaleRank(wins) {
+      const w = Math.max(0, Math.floor(Number(wins) || 0));
+      let at = 0;
+      for (let i = ROYALE_TIERS.length - 1; i >= 0; i--) {
+        if (w >= ROYALE_TIERS[i].min) { at = i; break; }
+      }
+      const tier = ROYALE_TIERS[at];
+      const next = ROYALE_TIERS[at + 1] || null;
+      const into = w - tier.min;
+      return {
+        id: tier.id, name: tier.name, color: tier.color,
+        index: at, wins: w, min: tier.min, step: ROYALE_STEP, into: into,
+        next: next ? next.name : "", toNext: next ? Math.max(0, next.min - w) : 0,
+        max: !next, label: tier.name
+      };
+    }
+
+    /* the same chip the 1v1 board wears, so the two tabs read as one board */
+    function royaleChip(rank) {
+      const pips = rank.max ? "" : '<span class="rk-dots">' + "●".repeat(rank.into) +
+        "○".repeat(Math.max(0, rank.step - rank.into)) + "</span>";
+      const tip = rank.max ? rank.name + " · " + rank.wins + " Royale wins · the top tier"
+        : rank.name + " · " + rank.wins + " Royale wins · " + rank.toNext + " to " + rank.next;
+      return '<span class="rank-chip royale-rank" style="--rk:' + rank.color + '" title="' + tip + '">' +
+        "<b>" + rank.name + "</b>" + pips + "</span>";
+    }
+
+    /* the one line a player card shows for a Royale player */
+    function royaleStanding(rank) {
+      if (rank.max) return rank.name + " · " + rank.wins + " Royale wins · the top tier";
+      return rank.name + " · " + rank.wins + " Royale wins · " + rank.toNext + " to " + rank.next;
+    }
+
     let lbLastRows = null;
     let lbLastSource = "";
+    let lbLastMode = "";          /* which board those rows belong to */
 
     function lbRepaint() {
       lbRender(lbLastRows || [], lbLastSource);
@@ -3937,10 +4098,17 @@
     function lbRender(rows, source) {
       lbLastRows = rows || [];
       lbLastSource = source || "";
+      lbLastMode = lbMode;
       const list = document.getElementById("lbList");
       const count = document.getElementById("lbCount");
       if (!list) return;
       const me = myDisplayName();
+      const modeNote = document.getElementById("lbModeNote");
+      if (modeNote) {
+        modeNote.textContent = lbMode === "group"
+          ? "Royale (the group game) — the tier is read off Royale wins: every 5 wins is one step, and a loss takes nothing away."
+          : "1v1 — wins and losses, with a star rank won in 1v1 only.";
+      }
       list.innerHTML = "";
 
       const local = lbLocalRow(lbMode);
@@ -4007,8 +4175,12 @@
         nmSpan.className = "nm";
         nmSpan.textContent = row.name + (row.local ? " (you)" : "");
         nmCell.appendChild(nmSpan);
-        const rank = rankFor(row);
-        if (rank) nmCell.insertAdjacentHTML("beforeend", rankChip(rank));
+        if (lbMode === "group") {
+          nmCell.insertAdjacentHTML("beforeend", royaleChip(royaleRank(row.wins)));
+        } else {
+          const rank = rankFor(row);
+          if (rank) nmCell.insertAdjacentHTML("beforeend", rankChip(rank));
+        }
         list.appendChild(el);
       });
       if (count) count.textContent = String(all.length);
@@ -4041,9 +4213,11 @@
       box.appendChild(title);
       const played = (row.wins | 0) + (row.losses | 0);
       const rate = typeof row.rate === "number" ? Math.round(row.rate) : (played > 0 ? Math.round(row.wins * 100 / played) : 0);
-      const rank = rankFor(row);
+      const royale = lbMode === "group";
+      const rank = royale ? royaleRank(row.wins) : rankFor(row);
       const bits = [
-        ["Rank", rank ? rank.label + " · " + rank.filled + "/" + rank.need + " ★" + (rank.max ? " (top)" : "")
+        [royale ? "Royale rank" : "Rank", royale ? royaleStanding(rank)
+          : rank ? rank.label + " · " + rank.filled + "/" + rank.need + " ★" + (rank.max ? " (top)" : "")
           : "— (1v1 only)"],
         ["Wins", String(row.wins | 0)],
         ["Best", Number(row.best || 0).toLocaleString() + " pts"],
@@ -4064,7 +4238,9 @@
       });
       const hint = document.createElement("div");
       hint.style.cssText = "color:var(--mut);font-size:0.55rem;margin-top:3px;";
-      hint.textContent = "tap the row again to close · ranks count 1v1 battles";
+      hint.textContent = royale
+        ? "tap the row again to close · a Royale tier is read off wins alone, so it never falls"
+        : "tap the row again to close · ranks count 1v1 battles";
       box.appendChild(hint);
       return row.name;
     }
@@ -5287,6 +5463,14 @@
     const NOTES_OFF = "pindutan_notes_off";
     const CHANGES = [
       {
+        day: "Nov 29", items: [
+          "<b>The hall of fame has two boards.</b> The <b>All</b> tab is gone: <b>1V1</b> shows the battles one against one, and <b>Royale</b> is the group game, renamed to say what it is.",
+          "<b>Royale has ranks of its own</b> — Unranked, Herald, Guardian, Crusader, Archon, Legend, Ancient, Divine, Immortal. Every five Royale wins is one step up, read straight off the wins, so <b>a match you lose never takes a rank away</b>.",
+          "Every Royale row wears its tier beside the win count, with five pips for the wins into the next one, and the tap card says how far the next tier is.",
+          "<b>A board can be tidied without wiping the season</b> — 1v1 and Royale are cleared apart, for one name or for the whole board, behind a confirm panel, and the tier follows a Royale reset back to <b>Unranked</b>. The ladder host and every phone in the room are told, so a cleared win does not come back."
+        ]
+      },
+      {
         day: "Nov 27", items: [
           "<b>Ranks</b> — Bronze, Silver, Gold, Diamond. Three tiers each, three stars a tier and a fourth that steps you up — won in <b>1v1</b> only, so a group win lifts nothing.",
           "The tap card tells the truth: win rate worked out from what was played, the run of wins you are on, and when they were last here. Your own row just says <b>(you)</b>.",
@@ -5438,6 +5622,7 @@
       const count = document.getElementById("godBanCount");
       if (!list || !banBox) return;
       godPaintAt = Date.now();
+      if (typeof paintGodLadder === "function") paintGodLadder();
       list.innerHTML = "";
       banBox.innerHTML = "";
 
@@ -5556,6 +5741,200 @@
       renderLobby();
       return true;
     }
+
+
+    /* =========================================================
+       God mode, the ladder: 1v1 and Royale are two boards, so they are reset
+       apart. Kick and Ban say what happens to a phone in this room; these say
+       what happens to a win.
+         · 1v1 — wins and losses go, the star rank follows them down, the best
+           score stays where it is.
+         · Royale — the tier is only ever read off the wins, so taking the wins
+           to zero is what puts a player back at Unranked. Losing a match never
+           does that; only this does.
+       Nothing here is done on one tap: the request lands in a confirm panel
+       first, with the board and the name spelled out. A reset reaches the
+       host and every phone in the room, because a copy that already counted a
+       win would hand it straight back.
+       ========================================================= */
+    let godLadderAsk = null;              /* the reset waiting for a yes */
+
+    /* everyone this phone can see on one board: its own records, what the
+       other phones told it, and the rows the host answered with */
+    function godLadderRows(mode) {
+      const board = mode === "group" ? "group" : "duel";
+      const out = new Map();
+      const add = (name, wins, losses) => {
+        const clean = cleanName(String(name || ""));
+        const key = lbNameKey(clean);
+        if (key.length < 2) return;
+        const prev = out.get(key);
+        if (!prev) { out.set(key, { key: key, name: clean, wins: Math.max(0, wins | 0), losses: Math.max(0, losses | 0) }); return; }
+        prev.wins = Math.max(prev.wins, wins | 0);
+        prev.losses = Math.max(prev.losses, losses | 0);
+      };
+      const mine = lbMine();
+      Object.keys(mine.byName).forEach(k => {
+        const rec = mine.byName[k];
+        const slot = rec && rec[board];
+        if (!slot || (!slot.wins && !slot.losses)) return;
+        add(rec.name || k, slot.wins, slot.losses);
+      });
+      lbPeerRows(board).forEach(r => add(r.name, r.wins, r.losses));
+      if (lbLastMode === board) {
+        (lbLastRows || []).forEach(r => add(r.name, r.wins, r.losses));   /* what the host last said */
+      }
+      return Array.from(out.values())
+        .filter(r => r.wins || r.losses)
+        .sort((a, b) => (b.wins - a.wins) || String(a.name).localeCompare(String(b.name)));
+    }
+
+    function paintGodLadder() {
+      ["duel", "group"].forEach(board => {
+        const box = document.getElementById(board === "duel" ? "godDuelList" : "godGroupList");
+        const count = document.getElementById(board === "duel" ? "godDuelCount" : "godGroupCount");
+        if (!box) return;
+        box.innerHTML = "";
+        const rows = godLadderRows(board);
+        if (count) count.textContent = String(rows.length);
+        if (!rows.length) {
+          const none = document.createElement("div");
+          none.className = "god-empty";
+          none.textContent = board === "duel"
+            ? "No 1v1 wins on this phone yet."
+            : "No Royale wins on this phone yet.";
+          box.appendChild(none);
+          return;
+        }
+        rows.forEach(r => {
+          const row = document.createElement("div");
+          row.className = "god-lb-row";
+          row.dataset.mode = board;
+          row.dataset.name = r.name;
+          const who = document.createElement("div");
+          const nm = document.createElement("div");
+          nm.className = "gname";
+          nm.textContent = r.name;
+          const sub = document.createElement("div");
+          sub.className = "gsub";
+          const stat = document.createElement("span");
+          stat.textContent = r.wins + " W · " + r.losses + " L";
+          sub.appendChild(stat);
+          if (board === "group") sub.insertAdjacentHTML("beforeend", royaleChip(royaleRank(r.wins)));
+          who.appendChild(nm);
+          who.appendChild(sub);
+          const reset = document.createElement("button");
+          reset.className = "reset";
+          reset.dataset.action = board === "duel" ? "reset-duel" : "reset-group";
+          reset.textContent = board === "group" ? "Reset wins + rank" : "Reset 1v1";
+          reset.addEventListener("click", () => godAskLadder(board, r.name));
+          row.appendChild(who);
+          row.appendChild(reset);
+          box.appendChild(row);
+        });
+      });
+    }
+
+    /* the question, before anything is taken away */
+    function godAskLadder(mode, name) {
+      const board = mode === "group" ? "group" : "duel";
+      const who = cleanName(String(name || ""));
+      const box = document.getElementById("godConfirm");
+      const text = document.getElementById("godConfirmText");
+      if (!box || !text) return false;
+      godLadderAsk = { mode: board, name: who };
+      const target = who ? "<b>" + escapeHtml(who) + "</b>" : "<b>every name this phone can see</b>";
+      text.innerHTML = board === "group"
+        ? "Reset <b>Royale</b> wins for " + target + "?<br>The tier goes back to <b>Unranked</b> with them. This cannot be undone."
+        : "Reset <b>1v1</b> wins for " + target + "?<br>The star rank follows the wins down. The best score stays. This cannot be undone.";
+      box.hidden = false;
+      return true;
+    }
+
+    function godAskClose() {
+      godLadderAsk = null;
+      const box = document.getElementById("godConfirm");
+      if (box) box.hidden = true;
+      return true;
+    }
+
+    function godLadderSay(text, ok) {
+      const el = document.getElementById("godLadderNote");
+      if (!el) return false;
+      el.textContent = text || "";
+      el.style.color = ok === false ? "var(--amber)" : "var(--lime)";
+      return true;
+    }
+
+    /* the reset itself: this phone, the room, then the host */
+    async function godResetLadder(mode, name) {
+      if (!isCreator()) return { ok: false, why: "not the maker" };
+      const board = mode === "group" ? "group" : "duel";
+      const who = cleanName(String(name || ""));
+      const all = !who;
+
+      lbApplyReset(board, who);
+
+      /* the rows already drawn: take them out at once, so the board is right
+         even if the host cannot be reached */
+      if (lbLastMode === board) {
+        lbLastRows = (lbLastRows || []).filter(r =>
+          all || lbNameKey(cleanName(String((r && r.name) || ""))) !== lbNameKey(who));
+        lbRepaint();
+      }
+
+      /* the copy the other phones hold */
+      try {
+        if (typeof sendPacket === "function") sendPacket({ t: "LBRS", mode: board, name: all ? "" : who });
+      } catch (e) { /* no room open: nothing to tell */ }
+
+      /* and the host, so the next visit does not read the old number back */
+      let where = "offline";
+      try {
+        const res = await fetch(lbUrl + "?action=reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: LB_KEY, mode: board, name: all ? "" : who }),
+          cache: "no-store"
+        });
+        const data = await res.json().catch(() => null);
+        where = res.ok && data && data.ok ? "host" : (res.status === 403 ? "refused" : "host");
+      } catch (e) { where = "offline"; }
+
+      paintGodLadder();
+      godAskClose();
+
+      const what = board === "group" ? "Royale" : "1v1";
+      const tail = where === "host" ? "the host was cleared too"
+        : where === "refused" ? "the host refused the key, so its copy still stands"
+          : "the host could not be reached, so its copy still stands";
+      godLadderSay("Reset " + what + " for " + (all ? "every name" : who) + " — this phone and the room · " + tail + ".", where === "host");
+      if (board === "group") {
+        lbNote("Royale wins cleared — the tier is read off them, so those names are back at Unranked.", "live");
+      } else {
+        lbNote("1v1 wins cleared — the star rank follows the wins down.", "live");
+      }
+      if (typeof lbFetch === "function") lbFetch(lbMode, true);
+      return { ok: true, mode: board, name: all ? "" : who, host: where };
+    }
+
+    function godWireLadder() {
+      const wipeDuel = document.getElementById("godWipeDuel");
+      const wipeGroup = document.getElementById("godWipeGroup");
+      const yes = document.getElementById("godConfirmYes");
+      const no = document.getElementById("godConfirmNo");
+      if (wipeDuel) wipeDuel.addEventListener("click", () => godAskLadder("duel", ""));
+      if (wipeGroup) wipeGroup.addEventListener("click", () => godAskLadder("group", ""));
+      if (no) no.addEventListener("click", () => { godAskClose(); godLadderSay(""); });
+      if (yes) yes.addEventListener("click", () => {
+        const ask = godLadderAsk;
+        if (!ask) return godAskClose();
+        return godResetLadder(ask.mode, ask.name);
+      });
+      return true;
+    }
+
+    try { godWireLadder(); } catch (e) { }
 
     /* the creator took this phone out: the game stays, the room goes */
     function godBooted(banned) {
@@ -6452,12 +6831,21 @@
       return slideFx.dx * BLOCK * (1 - eased);
     }
 
+    /* Every hold takes a number of its own, and letting go takes the next one.
+       A step that was already queued in the browser's timer queue when the
+       button came up belongs to the old number, and a dead number does nothing
+       — so a released hold can never land one more square. */
+    let slideHold = 0;
+    let softHold = 0;
+
     function slideStop() {
+      slideHold++;
       if (slideWait) { clearTimeout(slideWait); slideWait = 0; }
       if (slideEvery) { clearInterval(slideEvery); slideEvery = 0; }
     }
 
     function softHoldStop() {
+      softHold++;
       if (softEvery) { clearInterval(softEvery); softEvery = 0; }
     }
 
@@ -6478,7 +6866,9 @@
          held lands on the very next step. An interval rather than a chain, so
          one bad frame cannot leave a button stuck on. */
       let nextAt = 0;
+      const id = slideHold;                 /* the number this hold answers to */
       const tick = () => {
+        if (id !== slideHold) return;       /* the button was let go: say nothing */
         if (!slideCanPlay()) { slideStop(); return; }
         const now = nowMs();
         if (now < nextAt) return;
@@ -6487,6 +6877,7 @@
       };
       slideWait = setTimeout(() => {
         slideWait = 0;
+        if (id !== slideHold) return;       /* let go before the delay ran out */
         nextAt = nowMs() + Math.max(4, glide.glide);
         slideEvery = setInterval(tick, 8);
       }, Math.max(0, glide.delay));
@@ -6506,7 +6897,9 @@
       softStep();
       drawBoard();
       let nextAt = 0;
+      const id = softHold;
       const tick = () => {
+        if (id !== softHold) return;        /* the button was let go */
         if (!slideCanPlay()) { softHoldStop(); return; }
         const now = nowMs();
         if (now < nextAt) return;
@@ -6779,6 +7172,9 @@
     } catch (e) { }
 
     /* =========================================================
+       v26 — the hall of fame has two boards, 1v1 and Royale. Royale's rank is
+       read off Royale wins (a tier every five), so losing never costs a rank;
+       God mode resets 1v1 and Royale apart, and a reset can take a rank down.
        v25 — the glide panel governs the arrow keys too, holds survive a finger
        drifting, and a released hold no longer adds a step of its own.
        v24 — a new season: the hall of fame has a button that clears the ladder.

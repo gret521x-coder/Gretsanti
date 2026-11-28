@@ -510,20 +510,73 @@ if ($action === 'report') {
 
 /* ----------------------------------------------------------------- wipe it */
 if ($action === 'reset') {
+    /* A body with only the key clears the season. A body that names a board
+       narrows it: {key, mode} clears that board for everyone, {key, mode,
+       name} clears it for one player. A rank is read off wins, so a Royale
+       reset is the only thing that can bring one down — the tier follows the
+       wins to zero. Losses go with the wins, the totals are added up again
+       from the two battle boards, and a best score stays: it is a score, not
+       a rank. */
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
         fail('reset must be POST', 405);
     }
-    $posted = $_POST['key'] ?? null;
-    if ($posted === null) {
-        $raw = json_decode(file_get_contents('php://input') ?: '', true);
-        $posted = is_array($raw) ? ($raw['key'] ?? '') : '';
-    }
-    $key = (string) $posted;
+    $raw = json_decode(file_get_contents('php://input') ?: '', true);
+    $body = is_array($raw) ? $raw : [];
+    $posted = $_POST['key'] ?? ($body['key'] ?? null);
+    $key = (string) ($posted ?? '');
     if (!hash_equals(LB_SECRET, $key)) {
         fail('nope', 403);
     }
-    write_json($table_file, ['updated' => time(), 'players' => []]);
-    out(['ok' => true, 'cleared' => true]);
+
+    $board_in = strtolower((string) ($_POST['mode'] ?? ($body['mode'] ?? '')));
+    if ($board_in === '') {
+        write_json($table_file, ['updated' => time(), 'players' => []]);
+        out(['ok' => true, 'cleared' => true, 'mode' => 'all']);
+    }
+    if (!in_array($board_in, ['duel', 'group', 'solo'], true)) {
+        fail('unknown mode');
+    }
+
+    $name_in = clean_name((string) ($_POST['name'] ?? ($body['name'] ?? '')));
+    $target = $name_in === '' ? '' : name_key($name_in);
+    $cleared = 0;
+
+    foreach ($table['players'] as $player_key => $p) {
+        if ($target !== '' && (string) $player_key !== $target) {
+            continue;
+        }
+        if (!is_array($p) || !isset($p[$board_in]) || !is_array($p[$board_in])) {
+            continue;
+        }
+        $slot = $p[$board_in];
+        if ((int) ($slot['wins'] ?? 0) === 0 && (int) ($slot['losses'] ?? 0) === 0) {
+            continue;
+        }
+        $table['players'][$player_key][$board_in]['wins'] = 0;
+        $table['players'][$player_key][$board_in]['losses'] = 0;
+        $cleared++;
+
+        $duel = $table['players'][$player_key]['duel'] ?? ['wins' => 0, 'losses' => 0, 'best' => 0];
+        $group = $table['players'][$player_key]['group'] ?? ['wins' => 0, 'losses' => 0, 'best' => 0];
+        $table['players'][$player_key]['wins'] = (int) ($duel['wins'] ?? 0) + (int) ($group['wins'] ?? 0);
+        $table['players'][$player_key]['losses'] = (int) ($duel['losses'] ?? 0) + (int) ($group['losses'] ?? 0);
+        $table['players'][$player_key]['best'] = max((int) ($duel['best'] ?? 0), (int) ($group['best'] ?? 0));
+        $table['players'][$player_key]['streak'] = 0;
+    }
+
+    $table['updated'] = time();
+    if (!write_json($table_file, $table)) {
+        fail('could not save the table', 500);
+    }
+    out([
+        'ok' => true,
+        'cleared' => true,
+        'mode' => $board_in,
+        'name' => $name_in,
+        'reset' => $cleared,
+        'players' => count($table['players']),
+        'rows' => sorted_rows($table['players'], $board_in, 10)
+    ]);
 }
 
 fail('unknown action', 404);

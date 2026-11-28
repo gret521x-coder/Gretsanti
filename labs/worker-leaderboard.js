@@ -350,14 +350,58 @@ async function handle(request, env) {
 
   /* ------------------------------------------------------------- wipe it */
   if (action === "reset") {
-    /* POST {key} from a script, or ?action=reset&key=… from a browser tab */
+    /* POST {key} from a script, or ?action=reset&key=… from a browser tab.
+       The body may narrow it down instead of clearing the season:
+         {key, mode}         one board, every player      (God mode · all)
+         {key, mode, name}   one board, one player        (God mode · a row)
+       A win is the only thing that ever moves a rank, so this is the one place
+       a rank can come down: zero the wins and the tier follows them. Losses go
+       with them, and the totals are added up again from the two battle boards
+       so ?mode=all keeps saying the truth. A best score is a score, not a
+       rank, and it stays. */
     if (request.method !== "POST" && request.method !== "GET") return fail("reset must be POST or GET", 405);
     let body = null;
     try { body = await request.json(); } catch (e) { body = null; }
     const key = String((body && body.key) || url.searchParams.get("key") || "");
     if (key !== LB_SECRET) return fail("nope", 403);
-    await writeTable(env, { updated: Math.floor(Date.now() / 1000), players: {} });
-    return out({ ok: true, cleared: true });
+
+    const boardIn = String((body && body.mode) || url.searchParams.get("mode") || "").toLowerCase();
+    if (boardIn === "") {
+      await writeTable(env, { updated: Math.floor(Date.now() / 1000), players: {} });
+      return out({ ok: true, cleared: true, mode: "all" });
+    }
+    if (["duel", "group", "solo"].indexOf(boardIn) < 0) return fail("unknown mode");
+
+    const nameIn = cleanName((body && body.name) || url.searchParams.get("name") || "");
+    const target = nameIn === "" ? "" : nameKey(nameIn);
+    let cleared = 0;
+    Object.keys(table.players).forEach(k => {
+      if (target !== "" && k !== target) return;
+      const p = table.players[k];
+      if (!p || typeof p !== "object" || !p[boardIn]) return;
+      const slot = p[boardIn];
+      if (!(Number(slot.wins) || 0) && !(Number(slot.losses) || 0)) return;
+      slot.wins = 0;
+      slot.losses = 0;
+      cleared += 1;
+      p.duel = p.duel || { wins: 0, losses: 0, best: 0 };
+      p.group = p.group || { wins: 0, losses: 0, best: 0 };
+      p.wins = (Number(p.duel.wins) || 0) + (Number(p.group.wins) || 0);
+      p.losses = (Number(p.duel.losses) || 0) + (Number(p.group.losses) || 0);
+      p.best = Math.max(Number(p.duel.best) || 0, Number(p.group.best) || 0);
+      p.streak = 0;
+    });
+    table.updated = Math.floor(Date.now() / 1000);
+    if (!await writeTable(env, table)) return fail("could not save the table", 500);
+    return out({
+      ok: true,
+      cleared: true,
+      mode: boardIn,
+      name: nameIn,
+      reset: cleared,
+      players: Object.keys(table.players).length,
+      rows: sortedRows(table.players, boardIn, 10)
+    });
   }
 
   return fail("unknown action", 404);

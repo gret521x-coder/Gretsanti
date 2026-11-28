@@ -191,7 +191,7 @@
     <div class="mark">KDL</div>
     <div class="sub">the game hub · pick a game</div>
     <button class="strip" id="strip" title="Tap to look for a newer hub">
-      <span id="deckBuild">hub m9</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
+      <span id="deckBuild">hub m10</span> · <span id="deckState">checking…</span> · arena <b id="arenaBuild">—</b>
     </button>
 
     <div class="bar"><i id="bar"></i></div>
@@ -256,6 +256,20 @@
 
     <section class="panelbox">
       <h2>What changed</h2>
+      <h3><span class="day">NOV 30</span></h3>
+      <ul>
+        <li><b>The hall of fame is two boards.</b> The <b>All</b> tab is gone — it added two games together and
+            flattered nobody. <b>1V1</b> is the duel board it always was, and <b>Royale</b> is the group game,
+            named for the ladder it now keeps.</li>
+        <li><b>Royale ranks</b> — Unranked, Herald, Guardian, Crusader, Archon, Legend, Ancient, Divine and
+            Immortal. Every five Royale wins is one step, and the tier is read straight off the wins, so
+            <b>a match you lose never costs you a rank</b>. Every Royale row wears its tier beside the wins,
+            with five pips for the climb into the next one.</li>
+        <li><b>The ladder can be cleaned without a new season.</b> The maker's window now works on the boards
+            themselves: 1v1 and Royale are reset apart, for one name or for the whole board, and both ask
+            before anything goes. A Royale reset takes the wins, and the tier follows them back to Unranked.</li>
+      </ul>
+
       <h3><span class="day">NOV 29</span></h3>
       <ul>
         <li><b>Zumang m3 — a shot that misses stays where it lands</b> — fire into bare stone and the marble
@@ -367,7 +381,7 @@
       <div class="rule"></div>
       <p style="margin-top:10px;">One thing worth saying plainly: all three chairs are games now, in one file
          each — <b>labs/pindutan-v21.html</b> for the arena, <b>labs/chess.html</b> for chess and
-         <b>labs/zuma.html</b> for Zumang. Each one carries its own tag (<b>v25</b>, <b>c6</b>, <b>m3</b>),
+         <b>labs/zuma.html</b> for Zumang. Each one carries its own tag (<b>v26</b>, <b>c6</b>, <b>m3</b>),
          and the file above is the only place those tags are compared. Rename a chair here and you rename it
          everywhere.</p>
     </section>
@@ -390,7 +404,7 @@
   var ZUMANG = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/zuma.html";
   var HUB = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html";
   var MIN_BYTES = 20000;
-  var DECK = "m9";                 /* this copy of the hub */
+  var DECK = "m10";                /* this copy of the hub */
   var DECK_APPLIED = "pindutan_deck_applied";   /* a hub that was just swapped in must not swap again */
   var MIN_DECK_BYTES = 3000;
 

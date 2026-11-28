@@ -33,7 +33,7 @@ from there. The repository is public, which is what lets a hosted page read a bu
 | `agent-widget.js` · `api-ai.php` · `agent-demo.html` | 22 · 13 · 4 KB | Floating agent bubble any page can load |
 | `diag.html` | 8 KB | Link diagnostic — says whether the PHP host answers, and why not |
 | `pindutan-run.html` | 7 KB | **The first runner, frozen at the Nov 26 file** — no game code and no menu; reads the feed and opens `feed.html`, the hub. Left alone on purpose: every change since lives in the hub and the game |
-| `labs/pindutan-v21.html` | 264 KB | Pindutan v25 — the game: the arena, its three chairs behind ☰ Games, a hall of fame with a **new season** button, and the build that keeps itself current. The gate opens straight on the nickname now. The **GLIDE** panel sets how a held piece moves, for the arrow keys and the on-screen ◀ ▶ ▼ alike |
+| `labs/pindutan-v21.html` | 264 KB | Pindutan v26 — the game: the arena, its three chairs behind ☰ Games, a hall of fame with two boards (**1V1** and **Royale**, no **All**), Royale tiers read off Royale wins, and a **new season** button, and the build that keeps itself current. The gate opens straight on the nickname now. The **GLIDE** panel sets how a held piece moves, for the arrow keys and the on-screen ◀ ▶ ▼ alike |
 | `labs/pindutan-v20.html` | 192 KB | Previous Pindutan build, kept as the tested copy |
 | `labs/pindutan-build.json` | 1 KB | The build pointer — which Pindutan is newest, where the deck lives (`menu` / `menuBuild`), and the ladder's address |
 | `labs/worker-leaderboard.js` | 14 KB | The ladder as a Cloudflare Worker, for when a PHP host is not wanted |
@@ -78,7 +78,7 @@ never goes stale. If the repo cannot be reached it says so, offers a retry and a
    build the feed calls `arena`, **Chess** opens `chess`, and **Zumang** opens `three`. Under the chairs:
    **what changed** and a short **about this page**. The hub keeps *itself* current
    from `menuBuild`/`menu`, and it checks the feed on every open and on every tap of its strip.
-3. `labs/pindutan-v21.html` — the **arena** (v25): the game. It carries the same three chairs behind a
+3. `labs/pindutan-v21.html` — the **arena** (v26): the game. It carries the same three chairs behind a
    **☰ Games** pill in its header, and it updates itself from `arena` in the feed. Its gate opens **straight on
    the nickname**: the password step is gone, because it is asked one page earlier, in the hub.
 
@@ -160,6 +160,16 @@ Moves travel as squares and are re-checked with the local rules before they are 
 packet cannot put an illegal piece on your board; resign, draw offers and rematches travel the same way, and a
 player who goes quiet is named on the match bar rather than left hanging.
 
+**Two boards on the hall of fame, and two kinds of rank.** The tabs are **1V1** (`mode=duel`) and **Royale**
+(`mode=group`) — the old **All** tab is gone, because a board that adds two games together ranks nobody.
+1v1 keeps the star rank, built from wins minus losses: bronze, silver, gold, diamond, three tiers of three
+stars and a fourth that steps you up. Royale has a rank of its own and a kinder one: the tier is read straight
+off the Royale wins — **Unranked** to 4, then **Herald** at 5, **Guardian** 10, **Crusader** 15, **Archon** 20,
+**Legend** 25, **Ancient** 30, **Divine** 35 and **Immortal** from 40, with no ceiling above it. Only a win
+moves it, so **a match you lose can never take a Royale tier away**; the five pips beside the tier are the wins
+into the next one. Nothing about a tier is stored — `royaleRank(wins)` in the game is the whole rule, which is
+also why resetting the wins is all it takes to reset a rank.
+
 **Three modes, and the third one is not a battle.** The ladder takes `duel`, `group` and, since Zumang,
 `solo`. A solo report carries a score and the level reached, and it lands on its own board: the worker and the
 PHP both keep it out of the win/loss/streak counters and out of the battle best, so a Zumang run can never
@@ -169,6 +179,15 @@ make somebody look like a better duellist. `?action=top&mode=solo` reads that bo
 once, then posts `?action=reset` with the shared key to whichever host the ladder lives on, throws away the local
 copy, and redraws an empty board for everyone. A refused key and an unreachable host both say so on the note
 under the list instead of pretending the wipe happened.
+
+**Resetting one board, from the maker's window.** The same endpoint takes a narrower body: `{key, mode}` clears
+that board for everyone and `{key, mode, name}` clears it for one player, in the worker and in the PHP alike.
+Wins and losses go, a best score stays, and the totals for `mode=all` are added up again from `duel` and `group`
+so the older board cannot keep saying a number nobody has any more. God mode draws it as two sections — 1v1 and
+Royale — with a reset on every name and one for the whole board; each asks first, then clears the records on
+that phone, the rows other phones handed it, the cached copy, the host, and every phone in the room (an `LBRS`
+packet only a crowned maker can send). A ladder only counts upwards, so a copy that is not told would hand the
+win straight back.
 
 The feed names an address per link: `html` (the hub the runner opens), `arena` (the game the hub
 opens, and the file the game updates itself from), `chess`/`chessBuild`, `three`/`threeBuild` for Zumang,
@@ -255,8 +274,9 @@ All suites run in Node with jsdom, no browser needed.
   on an arc and a climb rather than a straight line, dimming when nobody is playing, and a
   Christmas night whose snow falls over the whole page and is stopped by the table itself — the player card
   behind a row tap (wins, best, the win rate worked out from what was played, the run of wins you are on,
-  last seen — no losses), the ladder (ten names, no more, a rank for each of them earned in 1v1 alone — bronze,
-  silver, gold, diamond, three tiers of three stars and a fourth that steps you up, so a group win lifts nothing —
+  last seen — no losses), the ladder (two boards, 1V1 and Royale, ten names each: the 1v1 stars — bronze,
+  silver, gold, diamond, three tiers of three stars and a fourth that steps you up — and the Royale tiers read
+  off Royale wins, Unranked to Immortal, which a loss can never lower —
   your own row reading "(you)", and
   the note that speaks of Cloudflare when the board lives there), an update log that opens by itself the first time
   you reach the lobby on a new build — three days of notes, and "Do not show again" in the lower right corner, with a
@@ -269,7 +289,7 @@ All suites run in Node with jsdom, no browser needed.
 - **Launcher picker** — the Pindutan card opens the list, rows 1–2 are TBD and unclickable, row 3 reads the
   feed, a half download is refused, an offline start offers retry and the hosted copy, and a saved grid from
   any old Pindutan target lands on the list
-- **Pindutan v17** — 48 · **Pindutan v18** — 246 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 27 · **labs pages** — 20 · **leaderboard PHP** — 27 · **leaderboard worker** — 20
+- **Pindutan v17** — 48 · **Pindutan v18** — 262 · **Chess** — 84 · **Zumang** — 53 · **hub and runner** — 27 · **labs pages** — 20 · **leaderboard PHP** — 36 · **leaderboard worker** — 26
 - **Aurora v4** — 49 + 54: only FreeModel survives, proxy sends no key, CORS wall named, dead relay gets its
   own message, Test connection proves a chat request
 - `api-free.php` and `api-v5.php` are parsed with a real PHP grammar (no PHP binary in the sandbox), and

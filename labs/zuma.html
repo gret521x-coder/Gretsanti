@@ -293,6 +293,18 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
   }
   .lgrid button.open { border-color: var(--gold-2); background: linear-gradient(180deg, #7a2c2c, #3e1414); color: #ffe9b8; }
+  .lgrid button.cleared {
+    position: relative;
+    border-color: #6fbf72; color: #d6ffd6;
+    background: linear-gradient(180deg, #23542c, #102a15);
+    text-shadow: 0 0 8px rgba(120, 240, 140, .45);
+  }
+  /* a cleared level keeps its number and wears the tick in the corner */
+  .lgrid button.cleared::after {
+    content: "✓"; position: absolute; top: -2px; right: 1px;
+    font: 700 8px Georgia, serif; color: #b8ffbe;
+    text-shadow: 0 0 6px rgba(120, 240, 140, .8);
+  }
   .lgrid button.here { border-color: #ffe9b8; box-shadow: 0 0 9px rgba(255, 200, 90, .55); }
   .lgrid button.locked { color: #6c7078; cursor: not-allowed; opacity: .7; }
 
@@ -336,7 +348,6 @@
 <div class="shell">
   <div class="hud">
     <div class="gems" id="hudLives" title="lives"><i class="gem"></i><i class="gem"></i><i class="gem"></i></div>
-    <div class="plate nameplate" title="level"><span id="hudTemple">JAG</span> <b id="hudLevel">1</b></div>
     <div class="plate scoreplate" id="hudScore" title="score">0</div>
     <div class="gauge" id="quotaBar" title="quota"><i id="quotaFill"></i><span id="quotaText">0 / 0</span></div>
     <button class="hbtn icon on" id="btnSound" title="Sound (M)">♪</button>
@@ -358,7 +369,7 @@
     <div class="gate-err" id="gateErr"></div>
     <div class="gate-note">Two characters or more. Your best score and the levels you have opened are kept
       under this name — on this device, and on the ladder when there is a signal.</div>
-    <div class="gate-build" id="gateBuild">zumang <b>m2</b></div>
+    <div class="gate-build" id="gateBuild">zumang <b>m3</b></div>
   </div>
 </div>
 
@@ -377,7 +388,7 @@
       </button>
       <button class="cardbtn" id="cardLevels">
         <span class="t">🗺 Levels</span>
-        <span class="d" id="cardLevelsD">1 opened</span>
+        <span class="d" id="cardLevelsD">0 of 100 finished</span>
       </button>
       <button class="cardbtn wide" id="cardScores">
         <span class="t">🏆 Scores</span>
@@ -861,6 +872,13 @@
     { name: "rose", a: "#ffabd8", b: "#8d1450", c: "#ff6ec7" }
   ];
 
+  /* a #rrggbb colour as rgba, for the hit flash */
+  function rgba(hex, a) {
+    var n = parseInt(String(hex).replace("#", ""), 16);
+    if (isNaN(n)) return "rgba(255,255,255," + a + ")";
+    return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+  }
+
   /* lighten or darken a #rrggbb colour */
   function shade(hex, amt) {
     var n = parseInt(String(hex).replace("#", ""), 16);
@@ -929,7 +947,7 @@
   var FEED = "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-build.json";
   var LADDER_FALLBACK = "https://pindutan-ladder.pindutan-ladder1x.workers.dev/";
   var LB_KEY = atob("a2RsLXBpbmR1dGFuLWxiLTIwMjYtN2YzYQ==");
-  var BUILD = "m2";
+  var BUILD = "m3";
 
   var canvas = document.getElementById("stage");
   var ctx = canvas.getContext ? canvas.getContext("2d") : null;
@@ -1015,6 +1033,7 @@
     S.chains = [];
     S.shots = [];
     S.fx = [];
+    S.rings = [];
     S.pops = [];
     S.spawned = 0;
     S.dir = 1;
@@ -1148,6 +1167,13 @@
     var mid = spots[Math.floor(spots.length / 2)] || spots[0];
     if (mid) addPopup(mid.x, mid.y, "+" + points, combo > 1 ? "#ffd75e" : "#fff3d0", combo > 1 ? 1.25 : 1);
 
+    /* the hit: a flash on every marble that went, the big one where the run was */
+    spots.forEach(function (p) {
+      if (mid && p !== mid) hitFlash(p.x, p.y, p.c, 1);
+    });
+    if (mid) hitFlash(mid.x, mid.y, mid.c, combo);
+    if (combo >= 3) shake();
+
     spots.forEach(function (p) {
       for (var i = 0; i < 6; i++) {
         S.fx.push({
@@ -1172,6 +1198,19 @@
     });
     updateHud();
     return { count: removed.length, points: points };
+  }
+
+  /* three rings and a bloom where a colour matched: white for the strike, the
+     marble's own colour for the burst, and a soft glow under both */
+  function hitFlash(x, y, colorIdx, combo) {
+    var col = COLORS[((colorIdx % COLORS.length) + COLORS.length) % COLORS.length];
+    var strong = Math.min(3, Math.max(1, combo || 1));
+    S.rings.push({ x: x, y: y, c: "#ffffff", life: 0.24, max: 0.24,
+      r0: S.ballR * 0.45, r1: S.ballR * (1.8 + strong * 0.45), w: 3.4 });
+    S.rings.push({ x: x, y: y, c: col.c, life: 0.5, max: 0.5,
+      r0: S.ballR * 0.7, r1: S.ballR * (2.6 + strong * 0.9), w: 5 });
+    S.rings.push({ x: x, y: y, c: col.a, life: 0.33, max: 0.33, glow: true,
+      r0: S.ballR * 0.2, r1: S.ballR * (2 + strong * 0.4), w: 0 });
   }
 
   function bombBlast(x, y, radius) {
@@ -1256,14 +1295,36 @@
       var sh = S.shots[i];
       sh.x += sh.vx * dt;
       sh.y += sh.vy * dt;
-      if (sh.x < S.ballR) { sh.x = S.ballR; sh.vx = Math.abs(sh.vx); sh.bounces++; }
-      if (sh.x > view.w - S.ballR) { sh.x = view.w - S.ballR; sh.vx = -Math.abs(sh.vx); sh.bounces++; }
-      if (sh.y < S.ballR) { sh.y = S.ballR; sh.vy = Math.abs(sh.vy); sh.bounces++; }
-      if (sh.y > view.h - S.ballR) { sh.y = view.h - S.ballR; sh.vy = -Math.abs(sh.vy); sh.bounces++; }
       var hit = findHit(sh);
       if (hit) { S.shots.splice(i, 1); landShot(hit, sh); continue; }
-      if (sh.bounces > 3) S.shots.splice(i, 1);
+      /* no rebounds: a shot that reaches the wall without meeting a marble is
+         spent, and says so with a little dust where it struck */
+      if (sh.x <= S.ballR || sh.x >= view.w - S.ballR || sh.y <= S.ballR || sh.y >= view.h - S.ballR) {
+        S.shots.splice(i, 1);
+        wallPuff(sh.x, sh.y, sh.c);
+      }
     }
+  }
+
+  /* the dust a spent shot leaves on the stone */
+  function puff(x, y, c) {
+    for (var i = 0; i < 9; i++) {
+      var a = Math.random() * TAU;
+      var sp = 40 + Math.random() * 95;
+      S.fx.push({
+        x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 0.26 + Math.random() * 0.18, max: 0.44, c: c, r: S.ballR * (0.13 + Math.random() * 0.13)
+      });
+    }
+  }
+
+  /* a shot that met the wall: the dust is kept inside the carved frame, where
+     it can be seen, and a short white ring says exactly where it struck */
+  function wallPuff(x, y, c) {
+    var px = clamp(x, 30, view.w - 30), py = clamp(y, 30, view.h - 30);
+    puff(px, py, c);
+    S.rings.push({ x: px, y: py, c: "#ffffff", life: 0.18, max: 0.18,
+      r0: S.ballR * 0.5, r1: S.ballR * 1.6, w: 2.6 });
   }
 
   /* ---------- lives, levels, the end ---------- */
@@ -1281,6 +1342,7 @@
     sfx("lose");
     shake();
     S.fx.length = 0;
+    S.rings.length = 0;
     toast(S.lives > 0
       ? "💀 the snake reached the skull — " + S.lives + (S.lives === 1 ? " life left" : " lives left")
       : "💀 the skull has it — game over");
@@ -1295,7 +1357,7 @@
     S.chains = [];
     var bonus = S.lives * 500 + S.level * 120;
     S.score += bonus;
-    rememberRun(S.score, S.level + 1);
+    rememberRun(S.score, S.level + 1, S.level);
     reportOnline(S.score, S.level + 1);
     sfx("win");
     var last = S.level >= LEVELS;
@@ -1358,6 +1420,10 @@
       f.vx *= 0.97;
       f.vy *= 0.97;
     }
+    for (i = S.rings.length - 1; i >= 0; i--) {
+      S.rings[i].life -= dt;
+      if (S.rings[i].life <= 0) S.rings.splice(i, 1);
+    }
     for (i = S.pops.length - 1; i >= 0; i--) {
       var p = S.pops[i];
       p.life -= dt;
@@ -1402,11 +1468,35 @@
     return Math.max(1, Math.min(LEVELS, (e && e.level) || 1));
   }
 
-  function rememberRun(score, level) {
+  /* the levels this name has cleared, in order. Older saves only kept the
+     furthest level reached, so the ones below it count as finished. */
+  function finishedLevels() {
+    var e = myEntry();
+    if (!e) return [];
+    if (e.done && e.done.length) {
+      return e.done.map(function (n) { return n | 0; })
+        .filter(function (n) { return n >= 1 && n <= LEVELS; })
+        .sort(function (a, b) { return a - b; });
+    }
+    var out = [];
+    for (var n = 1; n < Math.min(LEVELS, (e.level || 1)); n++) out.push(n);
+    return out;
+  }
+
+  function levelIsFinished(n) { return finishedLevels().indexOf(n | 0) >= 0; }
+
+  function rememberRun(score, level, finished) {
     var save = loadSave();
     save.names = save.names || {};
     var key = String(S.name).toLowerCase();
     var e = save.names[key] || { best: 0, level: 1, plays: 0 };
+    /* a level that was cleared is written down as cleared, whatever else happens
+       to the score — that is what the level picker reads */
+    if (finished) {
+      e.done = e.done || [];
+      var f = Math.max(1, Math.min(LEVELS, finished | 0));
+      if (e.done.indexOf(f) < 0) e.done.push(f);
+    }
     e.name = S.name;
     e.plays = (e.plays || 0) + 1;
     e.best = Math.max(e.best || 0, score | 0);
@@ -2359,6 +2449,34 @@
     }
   }
 
+  function drawRings() {
+    for (var i = 0; i < S.rings.length; i++) {
+      var r = S.rings[i];
+      var t = 1 - r.life / r.max;
+      var a = Math.max(0, 1 - t);
+      var rad = r.r0 + (r.r1 - r.r0) * Math.sqrt(t);
+      if (rad <= 0.5) continue;
+      if (r.glow) {
+        var g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, rad);
+        g.addColorStop(0, rgba(r.c, 0.5 * a));
+        g.addColorStop(0.55, rgba(r.c, 0.18 * a));
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, rad, 0, TAU);
+        ctx.fill();
+      } else {
+        ctx.globalAlpha = a * 0.92;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, rad, 0, TAU);
+        ctx.strokeStyle = r.c;
+        ctx.lineWidth = Math.max(1, r.w * a);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
   function drawFx() {
     for (var i = 0; i < S.fx.length; i++) {
       var f = S.fx[i];
@@ -2412,19 +2530,18 @@
     var inset = Math.max(10, Math.min(view.w, view.h) * 0.042);
     var pts = [{ x: x, y: y }];
     var stepLen = Math.max(6, S.ballR * 0.5);
-    var bounces = 0;
-
-    /* walk the shot forward until it would hit something, the way the real aim line does */
     var guard = 0;
+
+    /* walk the shot forward until it meets a marble or the wall — it does not
+       rebound, so the line stops there too */
     while (guard++ < 900) {
       x += dx * stepLen;
       y += dy * stepLen;
-      if (x < inset || x > view.w - inset) { dx = -dx; bounces++; }
-      if (y < inset || y > view.h - inset) { dy = -dy; bounces++; }
-      if (x < inset) x = inset;
-      if (x > view.w - inset) x = view.w - inset;
-      if (y < inset) y = inset;
-      if (y > view.h - inset) y = view.h - inset;
+      if (x <= inset || x >= view.w - inset || y <= inset || y >= view.h - inset) {
+        x = Math.max(inset, Math.min(view.w - inset, x));
+        y = Math.max(inset, Math.min(view.h - inset, y));
+        break;
+      }
       var hit = false;
       for (var k = 0; k < S.chains.length && !hit; k++) {
         var ch = S.chains[k];
@@ -2435,7 +2552,6 @@
         }
       }
       if (hit) break;
-      if (bounces > 2) break;
     }
     pts.push({ x: x, y: y });
 
@@ -2501,6 +2617,7 @@
     drawChains();
     drawShots();
     drawFx();
+    drawRings();
     ctx.restore();
 
     drawFrog();
@@ -2534,8 +2651,6 @@
     lastHud = sig;
 
     document.getElementById("hudScore").textContent = String(S.score);
-    document.getElementById("hudLevel").textContent = String(levelName(S.level).n);
-    document.getElementById("hudTemple").textContent = levelName(S.level).temple;
 
     var gems = document.getElementById("hudLives").children;
     for (var i = 0; i < gems.length; i++) {
@@ -2665,7 +2780,9 @@
     var best = myBestScore();
     document.getElementById("cardPlayD").textContent =
       "level " + opened + " · " + levelLabel(opened) + (best ? " · best " + best : "");
-    document.getElementById("cardLevelsD").textContent = opened + " of " + LEVELS + " opened";
+    var clearedCount = finishedLevels().length;
+    document.getElementById("cardLevelsD").textContent =
+      clearedCount + " of " + LEVELS + " finished · pick any of them";
     paintLevels(opened);
     paintBoard();
     paintSound();
@@ -2679,6 +2796,7 @@
   function paintLevels(opened) {
     var host = document.getElementById("levelGrid");
     var here = opened;
+    var done = finishedLevels();
     var html = "";
     for (var t = 0; t < TEMPLES.length; t++) {
       html += '<div class="temple"><div class="tname"><b>' + TEMPLES[t] + "</b> · levels " +
@@ -2686,15 +2804,19 @@
       for (var i = 1; i <= 10; i++) {
         var n = t * 10 + i;
         var open = n <= opened;
-        var cls = open ? (n === here ? "open here" : "open") : "locked";
+        var cleared = done.indexOf(n) >= 0;
+        var cls = !open ? "locked" : (n === here ? "open here" : "open") + (cleared ? " cleared" : "");
+        var tip = !open ? "clear level " + (n - 1) + " first"
+          : cleared ? "level " + n + " cleared — " + mapForLevel(n).shape
+          : "level " + n + " — " + mapForLevel(n).shape;
         html += '<button data-level="' + n + '" class="' + cls + '"' + (open ? "" : " disabled") +
-          ' title="' + (open ? "level " + n + " — " + mapForLevel(n).shape : "clear level " + (n - 1) + " first") +
-          '">' + n + "</button>";
+          ' title="' + tip + '" aria-label="level ' + n + (cleared ? ", cleared" : "") + '">' + n + "</button>";
       }
       html += "</div></div>";
     }
     host.innerHTML = html;
-    document.getElementById("levelHint").textContent = LEVELS + " levels · every one a different track";
+    document.getElementById("levelHint").textContent =
+      "finished ones are ticked — tap any you have cleared";
   }
 
   function paintBoard() {
@@ -3013,6 +3135,7 @@
       remember: rememberRun,
       best: myBestScore,
       levels: openedLevels,
+    done: finishedLevels,
       board: localBoard
     },
     report: reportOnline,
@@ -3032,8 +3155,6 @@
     hud: function () {
       return {
         score: document.getElementById("hudScore").textContent,
-        temple: document.getElementById("hudTemple").textContent,
-        level: document.getElementById("hudLevel").textContent,
         lives: [].filter.call(document.getElementById("hudLives").children, function (g) {
           return g.className.indexOf("off") < 0;
         }).length,

@@ -1,11 +1,12 @@
 {
-  "build": "v28",
+  "build": "v29",
   "html": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html",
   "arena": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/pindutan-v21.html",
   "chess": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/chess.html",
   "chessBuild": "c6",
   "fortress": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/labs/fortress.html",
   "fortressBuild": "f3",
+  "feedbackTo": "gret521x@gmail.com",
   "menu": "https://raw.githubusercontent.com/gret521x-coder/Gretsanti/main/pindutan.html",
   "menuBuild": "m12",
   "note": "The first runner reads this file and opens html: the game hub, so the runner always lands on the games. All four chairs work the same way: arena/(build) is Pindutan, chess/(chessBuild) is Chess, three/(threeBuild) is Zumang, fortress/(fortressBuild) is Fortress, and each game updates itself from its own field. menu/menuBuild let the hub keep itself current. The hub asks for the password before any game opens; the games themselves start at the nickname. To publish a new build: put it on main, then bump the matching tag here. Set \"ladder\" to a full https address to move the leaderboard to a host of its own; leave it empty to keep api-leaderboard.php on aidekupal.unaux.com.",
